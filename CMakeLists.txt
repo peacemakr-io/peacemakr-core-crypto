@@ -5,4 +5,4 @@ set(CMAKE_CXX_STANDARD 11)
 
 find_package(OpenSSL REQUIRED)
 
-add_subdirectory(src/sdk-core)
+add_subdirectory(src/core)
