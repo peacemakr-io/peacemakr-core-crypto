@@ -15,8 +15,8 @@ if (NOT __CLANG_FORMAT_INCLUDED)
                 clang-format
                 COMMAND ${CLANG_FORMAT}
                 -i
-                -style=file
-                ${ALL_CXX_SOURCE_FILES}
+                -style=llvm
+                ${ALL_C_SOURCE_FILES}
 
         )
     endif(CLANG_FORMAT)

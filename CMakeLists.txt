@@ -9,13 +9,13 @@
 cmake_minimum_required(VERSION 3.10)
 project(peacemakr_core_crypto)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_C_STANDARD 11)
 
-set(CMAKE_CXX_FLAGS "-Os")
+set(CMAKE_C_FLAGS "-Os")
 
 find_package(OpenSSL REQUIRED)
 
-set(ALL_CXX_SOURCE_FILES "")
+set(ALL_C_SOURCE_FILES "")
 
 add_subdirectory(src/core)
 

@@ -1,5 +1,5 @@
 //
-// Created by Aman LaChapelle on 7/21/18.
+// Created by Aman LaChapelle on 7/22/18.
 //
 // peacemakr_core_crypto
 // Copyright (c) 2018 Aman LaChapelle
@@ -10,9 +10,9 @@
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
-
+    
         http://www.apache.org/licenses/LICENSE-2.0
-
+    
     Unless required by applicable law or agreed to in writing, software
     distributed under the License is distributed on an "AS IS" BASIS,
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,12 +20,20 @@
     limitations under the License.
  */
 
-#include <CryptoAllocator.hpp>
-#include <CryptoContext.hpp>
 
-peacemakr::CryptoContext::CryptoContext(size_t secure_heap_size,
-                                        int min_obj_size) {
-  SecureHeapInit(secure_heap_size, min_obj_size);
-}
+#ifndef PEACEMAKR_CORE_CRYPTO_CRYPTOCONTEXT_H
+#define PEACEMAKR_CORE_CRYPTO_CRYPTOCONTEXT_H
 
-peacemakr::CryptoContext::~CryptoContext() { SecureHeapDone(); }
+#include <stddef.h>
+#include <stdbool.h>
+
+typedef struct CryptoContext crypto_context_t;
+
+crypto_context_t *CryptoContext_new();
+void CryptoContext_free(crypto_context_t *);
+
+void CryptoContext_init(crypto_context_t *, size_t);
+bool CryptoContext_init_called(crypto_context_t *);
+
+
+#endif //PEACEMAKR_CORE_CRYPTO_CRYPTOCONTEXT_H
