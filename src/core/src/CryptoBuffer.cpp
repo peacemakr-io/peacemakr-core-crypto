@@ -20,13 +20,9 @@ CryptoBuffer::CryptoBuffer(CryptoBuffer &&other) noexcept
     : m_ctx_(other.m_ctx_), m_buf_(other.m_buf_.begin(), other.m_buf_.end()) {}
 
 CryptoBuffer::CryptoBuffer(CryptoContext &ctx, size_t size_bits)
-    : m_ctx_(ctx), m_buf_(size_bits / CHAR_BIT) {
-}
+    : m_ctx_(ctx), m_buf_(size_bits / CHAR_BIT) {}
 
-void CryptoBuffer::InitZero() {
-  m_buf_ =
-      std::move(std::vector<unsigned char, CryptoAllocator<unsigned char>>(m_buf_.size(), 0));
-}
+void CryptoBuffer::InitZero() { std::fill(m_buf_.begin(), m_buf_.end(), 0); }
 
 void CryptoBuffer::InitRandom() {
   std::ifstream urandom("/dev/urandom", std::ios::in | std::ios::binary);
