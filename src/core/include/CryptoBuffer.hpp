@@ -30,12 +30,13 @@ public:
 
   CryptoBuffer(CryptoBuffer &&other) noexcept;
 
-  // Initialize to random
   CryptoBuffer(CryptoContext &ctx, size_t size_bits);
 
   virtual ~CryptoBuffer() = default;
 
-  void InitZero(size_t n);
+  void InitZero();
+
+  void InitRandom();
 
   void Resize(size_t newsize);
 

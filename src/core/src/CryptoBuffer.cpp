@@ -21,18 +21,21 @@ CryptoBuffer::CryptoBuffer(CryptoBuffer &&other) noexcept
 
 CryptoBuffer::CryptoBuffer(CryptoContext &ctx, size_t size_bits)
     : m_ctx_(ctx), m_buf_(size_bits / CHAR_BIT) {
+}
+
+void CryptoBuffer::InitZero() {
+  m_buf_ =
+      std::move(std::vector<unsigned char, CryptoAllocator<unsigned char>>(m_buf_.size(), 0));
+}
+
+void CryptoBuffer::InitRandom() {
   std::ifstream urandom("/dev/urandom", std::ios::in | std::ios::binary);
   if (urandom.is_open()) {
-    if (!urandom.read((char *)m_buf_.data(), size_bits / CHAR_BIT)) {
+    if (!urandom.read((char *)m_buf_.data(), m_buf_.size() / CHAR_BIT)) {
       throw std::runtime_error("random buffer creation failed");
     }
     urandom.close();
   }
-}
-
-void CryptoBuffer::InitZero(size_t n) {
-  m_buf_ =
-      std::move(std::vector<unsigned char, CryptoAllocator<unsigned char>>(n));
 }
 
 void CryptoBuffer::Resize(size_t newsize) { m_buf_.resize(newsize); }
