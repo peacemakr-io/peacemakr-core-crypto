@@ -12,6 +12,7 @@
 #include <stdlib.h>
 
 #include <openssl/crypto.h>
+#include <memory.h>
 
 #define GLUE(prefix, name) prefix##name
 #define API(name) GLUE(SecureBuffer_, name)
@@ -25,7 +26,7 @@ struct SecureBuffer {
 typedef struct SecureBuffer secure_buffer_t;
 
 secure_buffer_t *API(new)(crypto_context_t *ctx, size_t size) {
-  if (!CryptoContext_init_called(ctx)) {
+  if (!CryptoContext_ready(ctx)) {
     printf("context uninitialized or null");
     return NULL;
   }
@@ -67,13 +68,27 @@ void API(init_rand) (secure_buffer_t *buf, random_device_t *rng) {
   }
 }
 
-const unsigned char *API(get_bytes)(secure_buffer_t *buf, size_t *out_size) {
+void API(set) (secure_buffer_t *buf, const void *mem, size_t size_bytes) {
+  if (buf->m_size_bytes_ != size_bytes) {
+    printf("secure buffer size and buffer size mismatch, aborting");
+    return;
+  }
+
+  // Don't use the passed in size just in case
+  memcpy(buf->m_mem_, mem, buf->m_size_bytes_);
+}
+
+const unsigned char *API(get_bytes) (secure_buffer_t *buf, size_t *out_size) {
   if (out_size == NULL) {
     printf("out_size is null, terminating");
     return NULL;
   }
   *out_size = buf->m_size_bytes_;
   return buf->m_mem_;
+}
+
+const size_t API(get_size) (secure_buffer_t *buf) {
+  return buf->m_size_bytes_;
 }
 
 
