@@ -38,16 +38,16 @@ public:
 
   T *allocate(size_t n) {
     if (n > OPENSSL_MALLOC_MAX_NELEMS(T)) {
-      DLOG(FATAL) << "too many elements";
+      throw std::runtime_error("too many elements requested");
     }
 
     if (1 != CRYPTO_secure_malloc_initialized()) {
-      DLOG(ERROR) << "secure malloc uninitialized";
+      throw std::runtime_error("secure malloc uninitialized");
     }
 
     T *ptr = static_cast<T *>(OPENSSL_secure_malloc(n));
     if (ptr == nullptr) {
-      DLOG(FATAL) << "malloc returned nullptr";
+      throw std::runtime_error("malloc returned nullptr");
     }
 
     return ptr;

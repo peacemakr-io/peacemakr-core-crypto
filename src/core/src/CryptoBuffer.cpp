@@ -26,8 +26,10 @@ CryptoBuffer::CryptoBuffer(CryptoContext &ctx, size_t size_bytes)
 
 void CryptoBuffer::InitZero() { std::fill(m_buf_.begin(), m_buf_.end(), 0); }
 
-void CryptoBuffer::InitRandom(RandomDevice rng) {
-  rng(m_buf_.data(), m_buf_.size());
+void CryptoBuffer::InitRandom(RandomDevice &rng) {
+  if (!rng.FillRandom(m_buf_.data(), m_buf_.size())) {
+    throw std::runtime_error("rng failed, " + rng.GetLastError());
+  }
 }
 
 void CryptoBuffer::Resize(size_t newsize) { m_buf_.resize(newsize); }

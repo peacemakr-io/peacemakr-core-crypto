@@ -14,11 +14,10 @@ file(GLOB SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
 
 set(ALL_CXX_SOURCE_FILES ${SOURCES} ${INCLUDES} ${ALL_CXX_SOURCE_FILES} PARENT_SCOPE)
 
-add_library(peacemakr-core-crypto STATIC ${SOURCES} ${INCLUDES})
+add_library(peacemakr-core-crypto SHARED ${SOURCES} ${INCLUDES})
 target_include_directories(peacemakr-core-crypto
         PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 target_link_libraries(peacemakr-core-crypto
         PUBLIC OpenSSL::SSL OpenSSL::Crypto
-        PRIVATE glog::glog
 )

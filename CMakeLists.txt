@@ -10,9 +10,8 @@ cmake_minimum_required(VERSION 3.10)
 project(peacemakr_core_crypto)
 
 set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_FIND_LIBRARY_SUFFIXES .a .so .dylib)
 
-include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/AddGlog.cmake)
+set(CMAKE_CXX_FLAGS "-Os")
 
 find_package(OpenSSL REQUIRED)
 

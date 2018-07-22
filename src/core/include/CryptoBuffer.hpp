@@ -18,8 +18,11 @@ namespace peacemakr {
 
 class CryptoContext;
 
-// A RandomDevice fills the buffer of unsigned char * with size_t random elements.
-typedef void(*RandomDevice)(unsigned char *, size_t);
+class RandomDevice {
+public:
+  virtual bool FillRandom(unsigned char *, size_t) = 0;
+  virtual std::string GetLastError() = 0;
+};
 
 class CryptoBuffer {
 
@@ -36,7 +39,7 @@ public:
 
   void InitZero();
 
-  void InitRandom(RandomDevice rng);
+  void InitRandom(RandomDevice &rng);
 
   void Resize(size_t newsize);
 
