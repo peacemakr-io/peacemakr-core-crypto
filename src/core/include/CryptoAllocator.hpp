@@ -15,14 +15,16 @@
 
 #include <openssl/crypto.h>
 
+#include <glog/logging.h>
+
 namespace peacemakr {
 
-void SecureHeapInit(size_t size, int minsize) {
+inline void SecureHeapInit(size_t size, int minsize) {
   if (1 != CRYPTO_secure_malloc_initialized()) // not initialized
     CRYPTO_secure_malloc_init(size, minsize);
 }
 
-void SecureHeapDone() {
+inline void SecureHeapDone() {
   if (1 == CRYPTO_secure_malloc_initialized()) // already initialized
     CRYPTO_secure_malloc_done();
 }
@@ -36,16 +38,17 @@ public:
 
   T *allocate(size_t n) {
     if (n > OPENSSL_MALLOC_MAX_NELEMS(T)) {
-      throw std::bad_alloc();
+      DLOG(FATAL) << "too many elements";
     }
 
     if (1 != CRYPTO_secure_malloc_initialized()) {
-      throw std::bad_alloc();
+      DLOG(ERROR) << "secure malloc uninitialized";
     }
 
     T *ptr = static_cast<T *>(OPENSSL_secure_malloc(n));
-    if (ptr == nullptr)
-      throw std::bad_alloc();
+    if (ptr == nullptr) {
+      DLOG(FATAL) << "malloc returned nullptr";
+    }
 
     return ptr;
   }

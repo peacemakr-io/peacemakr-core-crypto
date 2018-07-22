@@ -8,6 +8,8 @@
 
 #include "CryptoBuffer.hpp"
 
+#include <fstream>
+#include <iostream>
 #include <string>
 
 namespace peacemakr {
@@ -24,14 +26,8 @@ CryptoBuffer::CryptoBuffer(CryptoContext &ctx, size_t size_bytes)
 
 void CryptoBuffer::InitZero() { std::fill(m_buf_.begin(), m_buf_.end(), 0); }
 
-void CryptoBuffer::InitRandom() {
-  std::ifstream urandom("/dev/urandom", std::ios::in | std::ios::binary);
-  if (urandom.is_open()) {
-    if (!urandom.read((char *)m_buf_.data(), m_buf_.size())) {
-      throw std::runtime_error("random buffer creation failed");
-    }
-    urandom.close();
-  }
+void CryptoBuffer::InitRandom(RandomDevice rng) {
+  rng(m_buf_.data(), m_buf_.size());
 }
 
 void CryptoBuffer::Resize(size_t newsize) { m_buf_.resize(newsize); }

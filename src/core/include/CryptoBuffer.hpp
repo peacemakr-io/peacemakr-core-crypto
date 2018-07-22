@@ -10,9 +10,6 @@
 #define PEACEMAKR_SDK_CRYPTOBUFFER_HPP
 
 #include <cstddef>
-#include <fstream>
-#include <iostream>
-#include <string>
 #include <vector>
 
 #include <CryptoAllocator.hpp>
@@ -20,6 +17,8 @@
 namespace peacemakr {
 
 class CryptoContext;
+
+typedef void(*RandomDevice)(unsigned char *, size_t);
 
 class CryptoBuffer {
 
@@ -36,7 +35,7 @@ public:
 
   void InitZero();
 
-  void InitRandom();
+  void InitRandom(RandomDevice rng);
 
   void Resize(size_t newsize);
 
