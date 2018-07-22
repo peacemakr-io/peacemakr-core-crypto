@@ -18,6 +18,7 @@ namespace peacemakr {
 
 class CryptoContext;
 
+// A RandomDevice fills the buffer of unsigned char * with size_t random elements.
 typedef void(*RandomDevice)(unsigned char *, size_t);
 
 class CryptoBuffer {
