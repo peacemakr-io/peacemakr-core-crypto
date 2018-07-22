@@ -19,15 +19,15 @@ CryptoBuffer::CryptoBuffer(const CryptoBuffer &other)
 CryptoBuffer::CryptoBuffer(CryptoBuffer &&other) noexcept
     : m_ctx_(other.m_ctx_), m_buf_(other.m_buf_.begin(), other.m_buf_.end()) {}
 
-CryptoBuffer::CryptoBuffer(CryptoContext &ctx, size_t size_bits)
-    : m_ctx_(ctx), m_buf_(size_bits / CHAR_BIT) {}
+CryptoBuffer::CryptoBuffer(CryptoContext &ctx, size_t size_bytes)
+    : m_ctx_(ctx), m_buf_(size_bytes) {}
 
 void CryptoBuffer::InitZero() { std::fill(m_buf_.begin(), m_buf_.end(), 0); }
 
 void CryptoBuffer::InitRandom() {
   std::ifstream urandom("/dev/urandom", std::ios::in | std::ios::binary);
   if (urandom.is_open()) {
-    if (!urandom.read((char *)m_buf_.data(), m_buf_.size() / CHAR_BIT)) {
+    if (!urandom.read((char *)m_buf_.data(), m_buf_.size())) {
       throw std::runtime_error("random buffer creation failed");
     }
     urandom.close();

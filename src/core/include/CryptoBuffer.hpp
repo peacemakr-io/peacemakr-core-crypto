@@ -30,7 +30,7 @@ public:
 
   CryptoBuffer(CryptoBuffer &&other) noexcept;
 
-  CryptoBuffer(CryptoContext &ctx, size_t size_bits);
+  CryptoBuffer(CryptoContext &ctx, size_t size_bytes);
 
   virtual ~CryptoBuffer() = default;
 
