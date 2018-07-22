@@ -1,18 +1,18 @@
 //
-// Created by Aman LaChapelle on 7/20/18.
+// Created by Aman LaChapelle on 7/21/18.
 //
-// peacemakr_sdk
+// peacemakr_core_crypto
 // Copyright (c) 2018 Aman LaChapelle
-// Full license at peacemakr_sdk/LICENSE.txt
+// Full license at peacemakr_core_crypto/LICENSE.txt
 //
 
 /*
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
-    
+
         http://www.apache.org/licenses/LICENSE-2.0
-    
+
     Unless required by applicable law or agreed to in writing, software
     distributed under the License is distributed on an "AS IS" BASIS,
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,23 +20,12 @@
     limitations under the License.
  */
 
+#include <CryptoAllocator.hpp>
+#include <CryptoContext.hpp>
 
-#include "CryptoRandomBuffer.hpp"
-
-#include <iostream>
-#include <fstream>
-
-peacemakr::CryptoRandomBuffer::CryptoRandomBuffer(size_t size) : m_buf_(size, '\0'){
-  std::ifstream urandom ("/dev/urandom", std::ios::in|std::ios::binary);
-  if (urandom.is_open()) {
-    if (!urandom.read(&m_buf_[0], size)) {
-      throw std::runtime_error("random buffer creation failed");
-    }
-    urandom.close();
-  }
+peacemakr::CryptoContext::CryptoContext(size_t secure_heap_size,
+                                        int min_obj_size) {
+  SecureHeapInit(secure_heap_size, min_obj_size);
 }
 
-peacemakr::CryptoRandomBuffer::operator const char *() {
-  return m_buf_.c_str();
-}
-
+peacemakr::CryptoContext::~CryptoContext() { SecureHeapDone(); }
