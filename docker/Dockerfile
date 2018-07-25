@@ -1,7 +1,7 @@
 FROM debian:latest
 
 # libssl-dev has libssl and libcrypto
-RUN apt-get update -y && apt-get install -y wget gnupg software-properties-common libssl-dev make git
+RUN apt-get update -y && apt-get install -y wget gnupg software-properties-common openssl libssl-dev make git
 
 RUN wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -
 

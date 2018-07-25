@@ -26,14 +26,14 @@ typedef struct {
 typedef struct SecureBuffer secure_buffer_t;
 
 // Allocates a buffer of zeros
-secure_buffer_t *SecureBuffer_new(crypto_context_t *, size_t);
-void SecureBuffer_free(secure_buffer_t *);
+secure_buffer_t *SecureBuffer_new(crypto_context_t *ctx, size_t size);
+void SecureBuffer_free(secure_buffer_t *buf);
 
-void SecureBuffer_init_rand(secure_buffer_t *, random_device_t *);
+void SecureBuffer_init_rand(secure_buffer_t *buf, random_device_t *rng);
 
-void SecureBuffer_set_bytes(secure_buffer_t *, const void *, size_t);
+void SecureBuffer_set(secure_buffer_t *buf, const void *mem, size_t size_bytes);
 
-const unsigned char *SecureBuffer_get_bytes(secure_buffer_t *, size_t *);
-const size_t SecureBuffer_get_size(secure_buffer_t *);
+const unsigned char *SecureBuffer_get_bytes(secure_buffer_t *buf, size_t *out_size);
+const size_t SecureBuffer_get_size(secure_buffer_t *buf);
 
 #endif //PEACEMAKR_CORE_CRYPTO_CRYPTOMEMORY_H
