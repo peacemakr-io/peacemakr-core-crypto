@@ -8,9 +8,9 @@
 
 #include <CryptoContext.h>
 
+#include <memory.h>
 #include <openssl/crypto.h>
 #include <stdbool.h>
-#include <memory.h>
 
 struct CryptoContext {
   char *m_cipher_mode_;
@@ -30,19 +30,22 @@ typedef struct CryptoContext crypto_context_t;
 #define GLUE(prefix, name) prefix##name
 #define API(name) GLUE(CryptoContext_, name)
 
-crypto_context_t *API(new)() {
-  return malloc(sizeof(crypto_context_t));
-}
+crypto_context_t *API(new)() { return malloc(sizeof(crypto_context_t)); }
 
-void API(free) (crypto_context_t *ctx) {
+void API(free)(crypto_context_t *ctx) {
   int rc = -1;
   if (1 == CRYPTO_secure_malloc_initialized()) // already initialized
     rc = CRYPTO_secure_malloc_done();
 
   switch (rc) {
-    case 0: printf("heap not freed"); return;
-    case 1: break;
-    default: printf("unknown value"); return;
+  case 0:
+    printf("heap not freed");
+    return;
+  case 1:
+    break;
+  default:
+    printf("unknown value");
+    return;
   }
 
   free(ctx);
@@ -54,10 +57,17 @@ void API(init)(crypto_context_t *ctx, context_config cfg) {
     rc = CRYPTO_secure_malloc_init(cfg.secure_heap_size, sizeof(unsigned char));
 
   switch (rc) {
-    case 0: printf("init failed"); return;
-    case 1: break;
-    case 2: printf("mmap failed"); return;
-    default: printf("unknown value"); return;
+  case 0:
+    printf("init failed");
+    return;
+  case 1:
+    break;
+  case 2:
+    printf("mmap failed");
+    return;
+  default:
+    printf("unknown value");
+    return;
   }
 
   ctx->m_cipher_mode_ = malloc(strlen(cfg.cipher_mode));

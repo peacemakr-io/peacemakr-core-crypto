@@ -6,16 +6,15 @@
 // Full license at peacemakr-core-crypto/LICENSE.txt
 //
 
-
 #ifndef PEACEMAKR_CORE_CRYPTO_CRYPTOCONTEXT_H
 #define PEACEMAKR_CORE_CRYPTO_CRYPTOCONTEXT_H
 
-#include <stddef.h>
 #include <stdbool.h>
+#include <stddef.h>
 
 typedef enum Mode {
 #include "OpenSSLModes.def"
-} crypto_mode_t ;
+} crypto_mode_t;
 
 typedef struct {
   char *cipher_mode;
@@ -38,5 +37,4 @@ const char *CryptoContext_get_cipher_mode(crypto_context_t *ctx);
 // CryptoContext_enqueue_malloc(size_t)
 // CryptoContext_resolve_malloc()
 
-
-#endif //PEACEMAKR_CORE_CRYPTO_CRYPTOCONTEXT_H
+#endif // PEACEMAKR_CORE_CRYPTO_CRYPTOCONTEXT_H

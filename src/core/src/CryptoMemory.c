@@ -6,13 +6,13 @@
 // Full license at peacemakr-core-crypto/LICENSE.txt
 //
 
-#include <CryptoMemory.h>
 #include <CryptoContext.h>
+#include <CryptoMemory.h>
 
 #include <stdlib.h>
 
-#include <openssl/crypto.h>
 #include <memory.h>
+#include <openssl/crypto.h>
 
 #define GLUE(prefix, name) prefix##name
 #define API(name) GLUE(SecureBuffer_, name)
@@ -61,14 +61,14 @@ void API(free)(secure_buffer_t *buf) {
   OPENSSL_secure_clear_free(buf, sizeof(secure_buffer_t));
 }
 
-void API(init_rand) (secure_buffer_t *buf, random_device_t *rng) {
+void API(init_rand)(secure_buffer_t *buf, random_device_t *rng) {
   int rc = rng->generator(buf->m_mem_, buf->m_size_bytes_);
   if (rc != 0) {
     printf("rng encountered error, %s", rng->err(rc));
   }
 }
 
-void API(set) (secure_buffer_t *buf, const void *mem, size_t size_bytes) {
+void API(set)(secure_buffer_t *buf, const void *mem, size_t size_bytes) {
   if (buf->m_size_bytes_ != size_bytes) {
     printf("secure buffer size and buffer size mismatch, aborting");
     return;
@@ -78,19 +78,19 @@ void API(set) (secure_buffer_t *buf, const void *mem, size_t size_bytes) {
   memcpy(buf->m_mem_, mem, buf->m_size_bytes_);
 }
 
-unsigned char *API(get_bytes) (secure_buffer_t *buf, size_t *out_size) {
+unsigned char *API(get_bytes)(secure_buffer_t *buf, size_t *out_size) {
   if (out_size != NULL) {
     *out_size = buf->m_size_bytes_;
   }
   return buf->m_mem_;
 }
 
-const size_t API(get_size) (secure_buffer_t *buf) {
-  return buf->m_size_bytes_;
-}
+const size_t API(get_size)(secure_buffer_t *buf) { return buf->m_size_bytes_; }
 
-void API(set_size) (secure_buffer_t *buf, size_t size) {
+void API(set_size)(secure_buffer_t *buf, size_t size) {
   buf->m_size_bytes_ = size;
 }
 
-
+const crypto_context_t *API(get_ctx)(secure_buffer_t *buf) {
+  return buf->m_ctx_;
+}

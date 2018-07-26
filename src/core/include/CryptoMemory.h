@@ -6,7 +6,6 @@
 // Full license at peacemakr-core-crypto/LICENSE.txt
 //
 
-
 #ifndef PEACEMAKR_CORE_CRYPTO_CRYPTOMEMORY_H
 #define PEACEMAKR_CORE_CRYPTO_CRYPTOMEMORY_H
 
@@ -36,5 +35,6 @@ void SecureBuffer_set(secure_buffer_t *buf, const void *mem, size_t size_bytes);
 unsigned char *SecureBuffer_get_bytes(secure_buffer_t *buf, size_t *out_size);
 const size_t SecureBuffer_get_size(secure_buffer_t *buf);
 void SecureBuffer_set_size(secure_buffer_t *buf, size_t size);
+const crypto_context_t *SecureBuffer_get_ctx(secure_buffer_t *buf);
 
-#endif //PEACEMAKR_CORE_CRYPTO_CRYPTOMEMORY_H
+#endif // PEACEMAKR_CORE_CRYPTO_CRYPTOMEMORY_H
