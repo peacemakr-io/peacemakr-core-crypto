@@ -19,6 +19,7 @@ add_custom_target(get-modes
 set(ALL_C_SOURCE_FILES ${SOURCES} ${INCLUDES} ${ALL_C_SOURCE_FILES} PARENT_SCOPE)
 
 add_library(peacemakr-core-crypto SHARED ${SOURCES} ${INCLUDES})
+add_definitions(-DOPENSSL_MIN_API=0x10100000L)
 add_dependencies(peacemakr-core-crypto get-modes)
 target_include_directories(peacemakr-core-crypto
         PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include

@@ -13,8 +13,17 @@
 #include <memory.h>
 
 struct CryptoContext {
+  char *m_cipher_mode_;
   bool m_alloc_ready_;
 };
+
+const char *evp_cipher_modes[] = {
+#include "OpenSSLModeStrings.def"
+};
+
+const char *get_cipher_mode(crypto_mode_t mode) {
+  return evp_cipher_modes[(uint32_t)mode];
+}
 
 typedef struct CryptoContext crypto_context_t;
 
@@ -51,9 +60,16 @@ void API(init)(crypto_context_t *ctx, context_config cfg) {
     default: printf("unknown value"); return;
   }
 
+  ctx->m_cipher_mode_ = malloc(strlen(cfg.cipher_mode));
+  strncpy(ctx->m_cipher_mode_, cfg.cipher_mode, strlen(cfg.cipher_mode));
+
   ctx->m_alloc_ready_ = true;
 }
 
 bool API(ready)(crypto_context_t *ctx) {
   return (ctx != NULL && ctx->m_alloc_ready_);
+}
+
+const char *API(get_cipher_mode)(crypto_context_t *ctx) {
+  return ctx->m_cipher_mode_;
 }

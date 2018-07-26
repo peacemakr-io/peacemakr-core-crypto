@@ -33,7 +33,8 @@ void SecureBuffer_init_rand(secure_buffer_t *buf, random_device_t *rng);
 
 void SecureBuffer_set(secure_buffer_t *buf, const void *mem, size_t size_bytes);
 
-const unsigned char *SecureBuffer_get_bytes(secure_buffer_t *buf, size_t *out_size);
+unsigned char *SecureBuffer_get_bytes(secure_buffer_t *buf, size_t *out_size);
 const size_t SecureBuffer_get_size(secure_buffer_t *buf);
+void SecureBuffer_set_size(secure_buffer_t *buf, size_t size);
 
 #endif //PEACEMAKR_CORE_CRYPTO_CRYPTOMEMORY_H

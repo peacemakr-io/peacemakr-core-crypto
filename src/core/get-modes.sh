@@ -7,4 +7,4 @@ openssl ciphers \
 | tee ${1}/src/OpenSSLModeStrings.def \
 | sed -e 's/-/_/g' \
 | tr -d "\"" \
-> ${1}/src/OpenSSLModes.def
+> ${1}/include/OpenSSLModes.def

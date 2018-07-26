@@ -18,7 +18,7 @@
 #define API(name) GLUE(SecureBuffer_, name)
 
 struct SecureBuffer {
-  unsigned char *m_mem_;
+  uint8_t *m_mem_;
   size_t m_size_bytes_;
   crypto_context_t *m_ctx_;
 };
@@ -36,11 +36,11 @@ secure_buffer_t *API(new)(crypto_context_t *ctx, size_t size) {
     return NULL;
   }
 
-  secure_buffer_t *ret = OPENSSL_secure_malloc(sizeof(secure_buffer_t));
+  secure_buffer_t *ret = OPENSSL_secure_zalloc(sizeof(secure_buffer_t));
   ret->m_size_bytes_ = size;
   ret->m_ctx_ = ctx;
 
-  if (size > OPENSSL_MALLOC_MAX_NELEMS(unsigned char)) {
+  if (size > OPENSSL_MALLOC_MAX_NELEMS(uint8_t)) {
     printf("too many elements requested");
     OPENSSL_secure_clear_free(ret, sizeof(secure_buffer_t));
     return NULL;
@@ -78,17 +78,19 @@ void API(set) (secure_buffer_t *buf, const void *mem, size_t size_bytes) {
   memcpy(buf->m_mem_, mem, buf->m_size_bytes_);
 }
 
-const unsigned char *API(get_bytes) (secure_buffer_t *buf, size_t *out_size) {
-  if (out_size == NULL) {
-    printf("out_size is null, terminating");
-    return NULL;
+unsigned char *API(get_bytes) (secure_buffer_t *buf, size_t *out_size) {
+  if (out_size != NULL) {
+    *out_size = buf->m_size_bytes_;
   }
-  *out_size = buf->m_size_bytes_;
   return buf->m_mem_;
 }
 
 const size_t API(get_size) (secure_buffer_t *buf) {
   return buf->m_size_bytes_;
+}
+
+void API(set_size) (secure_buffer_t *buf, size_t size) {
+  buf->m_size_bytes_ = size;
 }
 
 
