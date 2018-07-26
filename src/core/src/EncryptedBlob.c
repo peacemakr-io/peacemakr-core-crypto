@@ -129,7 +129,7 @@ encrypted_blob_t *API(new)(crypto_context_t *ctx, random_device_t *rng,
   return ret_blob;
 }
 
-secure_buffer_t *API(read)(crypto_context_t *ctx, encrypted_blob_t *blob) {
+secure_buffer_t *API(read)(crypto_context_t *ctx, encrypted_blob_t *blob, secure_buffer_t *key) {
 
   EVP_CIPHER_CTX *cipher_ctx;
   if (!(cipher_ctx = EVP_CIPHER_CTX_new())) {
@@ -142,6 +142,13 @@ secure_buffer_t *API(read)(crypto_context_t *ctx, encrypted_blob_t *blob) {
 
   if (1 != EVP_DecryptInit_ex(cipher_ctx, cipher, NULL, NULL, NULL)) {
     printf("openssl decryptinit failed");
+    return NULL;
+  }
+
+  if (1 != EVP_EncryptInit_ex(cipher_ctx, NULL, NULL,
+                              SecureBuffer_get_bytes(key, NULL),
+                              SecureBuffer_get_bytes(blob->m_iv_, NULL))) {
+    printf("encrypt init - key init failed");
     return NULL;
   }
 

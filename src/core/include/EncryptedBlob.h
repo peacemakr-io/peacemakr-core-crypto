@@ -18,7 +18,7 @@ encrypted_blob_t *EncryptedBlob_new(crypto_context_t *ctx, random_device_t *rng,
                                     secure_buffer_t *plaintext, secure_buffer_t *aad,
                                     secure_buffer_t *key);
 
-secure_buffer_t *EncryptedBlob_read(crypto_context_t *ctx, encrypted_blob_t *blob);
+secure_buffer_t *EncryptedBlob_read(crypto_context_t *ctx, encrypted_blob_t *blob, secure_buffer_t *key);
 
 void EncryptedBlob_free(encrypted_blob_t *blob);
 
