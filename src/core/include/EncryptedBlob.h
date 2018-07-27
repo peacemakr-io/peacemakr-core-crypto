@@ -14,6 +14,7 @@
 
 typedef struct EncryptedBlob encrypted_blob_t;
 
+// put the encrypting device id and the key id inside the plaintext to be encrypted?
 encrypted_blob_t *EncryptedBlob_new(crypto_context_t *ctx, random_device_t *rng,
                                     secure_buffer_t *plaintext, secure_buffer_t *aad,
                                     secure_buffer_t *key);

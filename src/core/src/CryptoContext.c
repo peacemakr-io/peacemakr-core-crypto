@@ -13,6 +13,7 @@
 #include <stdbool.h>
 
 struct CryptoContext {
+  uint8_t *m_device_id_;
   char *m_cipher_mode_;
   bool m_alloc_ready_;
 };
@@ -30,7 +31,11 @@ typedef struct CryptoContext crypto_context_t;
 #define GLUE(prefix, name) prefix##name
 #define API(name) GLUE(CryptoContext_, name)
 
-crypto_context_t *API(new)() { return malloc(sizeof(crypto_context_t)); }
+crypto_context_t *API(new)() {
+  crypto_context_t *ctx = malloc(sizeof(crypto_context_t));
+  ctx->m_device_id_ = calloc(PEACEMAKR_DEVICE_ID_LEN, sizeof(uint8_t));
+  return ctx;
+}
 
 void API(free)(crypto_context_t *ctx) {
   int rc = -1;
@@ -48,13 +53,15 @@ void API(free)(crypto_context_t *ctx) {
     return;
   }
 
+  free(ctx->m_device_id_);
+  free(ctx->m_cipher_mode_);
   free(ctx);
 }
 
-void API(init)(crypto_context_t *ctx, context_config cfg) {
+void API(init)(crypto_context_t *ctx, const context_config *cfg) {
   int rc = -1;
   if (1 != CRYPTO_secure_malloc_initialized()) // not already initialized
-    rc = CRYPTO_secure_malloc_init(cfg.secure_heap_size, sizeof(unsigned char));
+    rc = CRYPTO_secure_malloc_init(cfg->secure_heap_size, sizeof(unsigned char));
 
   switch (rc) {
   case 0:
@@ -70,8 +77,9 @@ void API(init)(crypto_context_t *ctx, context_config cfg) {
     return;
   }
 
-  ctx->m_cipher_mode_ = malloc(strlen(cfg.cipher_mode));
-  strncpy(ctx->m_cipher_mode_, cfg.cipher_mode, strlen(cfg.cipher_mode));
+  ctx->m_cipher_mode_ = malloc(strlen(cfg->cipher_mode)+1);
+  strncpy(ctx->m_cipher_mode_, cfg->cipher_mode, strlen(cfg->cipher_mode));
+  ctx->m_cipher_mode_[strlen(cfg->cipher_mode)] = '\0';
 
   ctx->m_alloc_ready_ = true;
 }
@@ -82,4 +90,8 @@ bool API(ready)(crypto_context_t *ctx) {
 
 const char *API(get_cipher_mode)(crypto_context_t *ctx) {
   return ctx->m_cipher_mode_;
+}
+
+const uint8_t *API(get_device_id)(crypto_context_t *ctx) {
+  return ctx->m_device_id_;
 }

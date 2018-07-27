@@ -20,8 +20,11 @@ static uint16_t taglen = 16;
 
 // version first, tag last
 struct EncryptedBlob {
-  uint8_t m_version_[3]; // major, minor, patch
+  uint8_t m_version_major_;
+  uint8_t m_version_minor_;
+  uint8_t m_version_patch_;
   char *m_cipher_name_;  // the name of the cipher used - openssl tracks valid combinations on its own
+  uint8_t *m_encrypting_device_id_;
   secure_buffer_t *m_iv_;
   secure_buffer_t *m_aad_;
   secure_buffer_t *m_tag_;
@@ -114,12 +117,16 @@ encrypted_blob_t *API(new)(crypto_context_t *ctx, random_device_t *rng,
   EVP_CIPHER_CTX_free(cipher_ctx);
 
   encrypted_blob_t *ret_blob = malloc(sizeof(encrypted_blob_t));
-  ret_blob->m_version_[0] = 0;
-  ret_blob->m_version_[1] = 1;
-  ret_blob->m_version_[2] = 0;
+  ret_blob->m_version_major_ = 0;
+  ret_blob->m_version_minor_ = 1;
+  ret_blob->m_version_patch_= 0;
 
   ret_blob->m_cipher_name_ = malloc(strlen(cipher_name) + 1);
-  strncpy(ret_blob->m_cipher_name_, cipher_name, strlen(cipher_name) + 1);
+  strncpy(ret_blob->m_cipher_name_, cipher_name, strlen(cipher_name));
+  ret_blob->m_cipher_name_[strlen(cipher_name)] = '\0';
+
+  ret_blob->m_encrypting_device_id_ = calloc(PEACEMAKR_DEVICE_ID_LEN, sizeof(uint8_t));
+  memcpy(ret_blob->m_encrypting_device_id_, CryptoContext_get_device_id(ctx), PEACEMAKR_DEVICE_ID_LEN);
 
   ret_blob->m_iv_ = iv;
   ret_blob->m_aad_ = aad;
@@ -197,6 +204,7 @@ secure_buffer_t *API(read)(crypto_context_t *ctx, encrypted_blob_t *blob, secure
 
 void API(free)(encrypted_blob_t *blob) {
   free(blob->m_cipher_name_);
+  free(blob->m_encrypting_device_id_);
   SecureBuffer_free(blob->m_iv_);
   SecureBuffer_free(blob->m_aad_);
   SecureBuffer_free(blob->m_tag_);
