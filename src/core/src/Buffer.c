@@ -9,13 +9,45 @@
 #include <Buffer.h>
 
 #define __STDC_WANT_LIB_EXT1__ 1
-#include <errno.h>
 #include <memory.h>
 #include <stddef.h>
 #include <stdlib.h>
 
 #include <openssl/crypto.h>
-#include <stdbool.h>
+
+#ifdef PEACEMAKR_NO_MEMSET_S
+
+#include <stdint.h>
+#include <errno.h>
+#include <limits.h>
+
+#ifndef RSIZE_MAX
+#if defined(SIZE_MAX)
+#define RSIZE_MAX (SIZE_MAX >> 1)
+#elif defined(__LP64__)
+#define RSIZE_MAX 0x7fffffffffffffffUL
+#else
+#define RSIZE_MAX 0x7fffffffU
+#endif
+#endif
+
+int memset_s(void *restrict v, size_t smax, uint8_t c, size_t n) {
+  int ret = 0;
+
+  if (v == NULL || smax > RSIZE_MAX)
+    return EINVAL;
+  if (n > smax)
+    return EINVAL;
+
+  volatile uint8_t *p = v;
+  while (smax-- && n--) {
+    *p++ = c;
+  }
+
+  return 0;
+}
+
+#endif
 
 #define GLUE(prefix, name) prefix##name
 #define API(name) GLUE(Buffer_, name)

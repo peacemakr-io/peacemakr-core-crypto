@@ -9,6 +9,13 @@
 cmake_minimum_required(VERSION 3.10)
 project(peacemakr_core_crypto C)
 
+include(CheckFunctionExists)
+check_function_exists(memset_s HAS_MEMSET_S)
+if (NOT HAS_MEMSET_S)
+    message(WARNING "memset_s function does not exist in this compiler, zeroing secure memory may be optimized away")
+    add_definitions(-DPEACEMAKR_NO_MEMSET_S)
+endif (NOT HAS_MEMSET_S)
+
 file(GLOB INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/include/*.h)
 file(GLOB SOURCES_C ${CMAKE_CURRENT_SOURCE_DIR}/src/*.c)
 file(GLOB SOURCES_H ${CMAKE_CURRENT_SOURCE_DIR}/src/*.h)

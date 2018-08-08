@@ -9,8 +9,8 @@
 #include <Buffer.h>
 
 #include <crypto.h>
-#include <printf.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 struct CiphertextBlob {
