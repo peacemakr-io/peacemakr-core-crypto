@@ -10,8 +10,9 @@ cmake_minimum_required(VERSION 3.10)
 project(peacemakr_core_crypto C)
 
 set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD_REQUIRED ON)
 
-set(CMAKE_C_FLAGS "-Os -std=c11")  # just in case we try compiling under gnu
+set(CMAKE_C_FLAGS "-Os -std=c11 -fstack-protector-strong")
 
 find_package(OpenSSL REQUIRED)
 
