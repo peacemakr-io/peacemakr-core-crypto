@@ -7,6 +7,7 @@
 //
 
 #include <Buffer.h>
+#include <Logging.h>
 
 #include <crypto.h>
 #include <stdint.h>
@@ -67,7 +68,7 @@ ciphertext_blob_t *API(new)(crypto_config_t cfg, size_t iv_len, size_t tag_len,
 
 void API(free)(ciphertext_blob_t *ciphertext) {
   if (ciphertext == NULL) {
-    printf("invalid argument passed");
+    PEACEMAKR_ERROR("invalid argument passed");
     return;
   }
 

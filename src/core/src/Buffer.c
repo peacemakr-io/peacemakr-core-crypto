@@ -7,6 +7,7 @@
 //
 
 #include <Buffer.h>
+#include <Logging.h>
 
 #define __STDC_WANT_LIB_EXT1__ 1
 #include <memory.h>
@@ -17,13 +18,13 @@
 
 #define RETURN_VOID_IF_ARG_IS_NULL(arg)                                        \
   if ((arg) == NULL) {                                                         \
-    printf("arg %s is null, %s %s", #arg, __FILE__, __LINE__);                 \
+    PEACEMAKR_ERROR("arg %s is null", #arg);                                   \
     return;                                                                    \
   }
 
 #define RETURN_VALUE_IF_ARG_IS_NULL(arg, retval)                               \
   if ((arg) == NULL) {                                                         \
-    printf("arg %s is null, %s %s", #arg, __FILE__, __LINE__);                 \
+    PEACEMAKR_ERROR("arg %s is null, %s %s", #arg);                            \
     return (retval);                                                           \
   }
 
@@ -75,6 +76,7 @@ buffer_t *API(new)(size_t size) {
   buffer_t *ret = malloc(sizeof(buffer_t));
 
   if (size <= 0) {
+    PEACEMAKR_INFO("size passed was zero");
     return NULL;
   }
 
@@ -82,7 +84,7 @@ buffer_t *API(new)(size_t size) {
 
   ret->m_mem_ = calloc(size, sizeof(uint8_t));
   if (ret->m_mem_ == NULL) {
-    printf("malloc returned nullptr");
+    PEACEMAKR_ERROR("malloc returned nullptr");
     free(ret);
     return NULL;
   }
@@ -91,11 +93,14 @@ buffer_t *API(new)(size_t size) {
 }
 
 void API(free)(buffer_t *buf) {
-  RETURN_VOID_IF_ARG_IS_NULL(buf);
+  if (buf == NULL) {
+    PEACEMAKR_INFO("buf was null, no-op");
+    return;
+  }
 
   int err = memset_s(buf->m_mem_, buf->m_size_bytes_, 0, buf->m_size_bytes_);
   if (err != 0) {
-    printf("memset failed, aborting (memory NOT freed)");
+    PEACEMAKR_ERROR("memset failed, aborting (memory NOT freed)");
   }
   free(buf->m_mem_);
   buf->m_mem_ = NULL;
@@ -110,7 +115,7 @@ void API(init_rand)(buffer_t *buf, random_device_t *rng) {
 
   int rc = rng->generator(buf->m_mem_, buf->m_size_bytes_);
   if (rc != 0) {
-    printf("rng encountered error, %s", rng->err(rc));
+    PEACEMAKR_ERROR("rng encountered error, %s", rng->err(rc));
   }
 }
 

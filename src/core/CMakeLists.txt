@@ -9,6 +9,11 @@
 cmake_minimum_required(VERSION 3.10)
 project(peacemakr_core_crypto C)
 
+IF(CMAKE_BUILD_TYPE MATCHES RELEASE)
+    message("Disabling all logging")
+    add_definitions(-DPEACEMAKR_LOG_LEVEL=5)
+ENDIF(CMAKE_BUILD_TYPE MATCHES RELEASE)
+
 include(CheckFunctionExists)
 check_function_exists(memset_s HAS_MEMSET_S)
 if (NOT HAS_MEMSET_S)
