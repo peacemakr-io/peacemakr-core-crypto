@@ -15,11 +15,23 @@
 
 #include <openssl/crypto.h>
 
+#define CHECK_IF_ARG_IS_NULL_VOID(arg)                                         \
+  if ((arg) == NULL) {                                                         \
+    printf("arg %s is null, %s %s", #arg, __FILE__, __LINE__);                 \
+    return;                                                                    \
+  }
+
+#define CHECK_IF_ARG_IS_NULL(arg, retval)                                      \
+  if ((arg) == NULL) {                                                         \
+    printf("arg %s is null, %s %s", #arg, __FILE__, __LINE__);                 \
+    return (retval);                                                           \
+  }
+
 #ifdef PEACEMAKR_NO_MEMSET_S
 
-#include <stdint.h>
 #include <errno.h>
 #include <limits.h>
+#include <stdint.h>
 
 #ifndef RSIZE_MAX
 #if defined(SIZE_MAX)
@@ -61,6 +73,11 @@ typedef struct Buffer buffer_t;
 
 buffer_t *API(new)(size_t size) {
   buffer_t *ret = malloc(sizeof(buffer_t));
+
+  if (size <= 0) {
+    return NULL;
+  }
+
   ret->m_size_bytes_ = size;
 
   ret->m_mem_ = calloc(size, sizeof(uint8_t));
@@ -74,10 +91,7 @@ buffer_t *API(new)(size_t size) {
 }
 
 void API(free)(buffer_t *buf) {
-  if (buf == NULL) {
-    printf("invalid argument buf");
-    return;
-  }
+  CHECK_IF_ARG_IS_NULL_VOID(buf);
 
   int err = memset_s(buf->m_mem_, buf->m_size_bytes_, 0, buf->m_size_bytes_);
   if (err != 0) {
@@ -91,10 +105,8 @@ void API(free)(buffer_t *buf) {
 }
 
 void API(init_rand)(buffer_t *buf, random_device_t *rng) {
-  if (buf == NULL) {
-    printf("invalid argument buf");
-    return;
-  }
+  CHECK_IF_ARG_IS_NULL_VOID(buf);
+  CHECK_IF_ARG_IS_NULL_VOID(rng);
 
   int rc = rng->generator(buf->m_mem_, buf->m_size_bytes_);
   if (rc != 0) {
@@ -103,15 +115,8 @@ void API(init_rand)(buffer_t *buf, random_device_t *rng) {
 }
 
 void API(set_bytes)(buffer_t *buf, const void *mem, size_t size_bytes) {
-  if (buf == NULL) {
-    printf("invalid argument buf");
-    return;
-  }
-
-  if (mem == NULL) {
-    printf("invalid argument mem");
-    return;
-  }
+  CHECK_IF_ARG_IS_NULL_VOID(buf);
+  CHECK_IF_ARG_IS_NULL_VOID(mem);
 
   if (buf->m_size_bytes_ < size_bytes) {
     printf("buffer size less than input size");
@@ -123,10 +128,7 @@ void API(set_bytes)(buffer_t *buf, const void *mem, size_t size_bytes) {
 }
 
 unsigned char *API(get_bytes)(const buffer_t *buf, size_t *out_size) {
-  if (buf == NULL) {
-    printf("invalid argument buf");
-    return NULL;
-  }
+  CHECK_IF_ARG_IS_NULL(buf, NULL);
 
   if (out_size != NULL) {
     *out_size = buf->m_size_bytes_;
@@ -136,19 +138,13 @@ unsigned char *API(get_bytes)(const buffer_t *buf, size_t *out_size) {
 }
 
 const size_t API(get_size)(const buffer_t *buf) {
-  if (buf == NULL) {
-    printf("invalid argument buf");
-    return 0;
-  }
+  CHECK_IF_ARG_IS_NULL(buf, 0);
 
   return buf->m_size_bytes_;
 }
 
 void API(set_size)(buffer_t *buf, size_t size) {
-  if (buf == NULL) {
-    printf("invalid argument buf");
-    return;
-  }
+  CHECK_IF_ARG_IS_NULL_VOID(buf);
 
   buf->m_size_bytes_ = size;
 }
