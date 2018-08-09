@@ -22,8 +22,9 @@ typedef struct {
 
 typedef struct Buffer buffer_t;
 
-// Allocates a buffer of zeros
+// Allocates a buffer of zeros - also doesn't allocate anything if size <= 0
 buffer_t *Buffer_new(size_t size);
+// no-op if buf == NULL
 void Buffer_free(buffer_t *buf);
 
 void Buffer_init_rand(buffer_t *buf, random_device_t *rng);
