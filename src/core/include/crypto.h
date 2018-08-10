@@ -53,8 +53,10 @@ typedef enum {
 } symmetric_cipher;
 
 typedef enum {
+  NONE,
   EC25519,
-  RSA,
+  RSA_2048,
+  RSA_4096,
 } asymmetric_cipher;
 
 typedef enum { SHA_224, SHA_256, SHA_384, SHA_512 } message_digest_algorithm;
@@ -64,15 +66,12 @@ typedef enum { SYMMETRIC, ASYMMETRIC } encryption_mode;
 typedef struct {
   encryption_mode mode;
 
-  union {
-    symmetric_cipher symm;
-    asymmetric_cipher asymm;
-  } cipher;
+  // OpenSSL uses the asymmetric cipher to encrypt a symmetric key, so we need
+  // asymmetric and symmetric ciphers
+  symmetric_cipher symm_cipher;
+  asymmetric_cipher asymm_cipher;
 
   message_digest_algorithm digest_algorithm;
-  // are we using symmetric or asymmetric encryption
-  // which cipher are we using (symmetric or asymmetric will have different
-  // reqs)
 } crypto_config_t;
 
 typedef struct {
@@ -90,11 +89,11 @@ typedef struct PeacemakrKey
     peacemakr_key_t; // this will have inside it the EVP_PKEY or
                      // alternatively just the symmetric key
 
-peacemakr_key_t *PeacemakrKey_new(crypto_config_t cfg);
+peacemakr_key_t *PeacemakrKey_new(crypto_config_t cfg, random_device_t rand);
 void PeacemakrKey_free(peacemakr_key_t *key);
 
-ciphertext_blob_t *encrypt(peacemakr_key_t *key, plaintext_t *plain);
-int decrypt(peacemakr_key_t *key, ciphertext_blob_t *cipher,
+ciphertext_blob_t *encrypt(const peacemakr_key_t *key, const plaintext_t *plain);
+int decrypt(const peacemakr_key_t *key, const ciphertext_blob_t *cipher,
             plaintext_t *plain);
 
 // base64 encoded

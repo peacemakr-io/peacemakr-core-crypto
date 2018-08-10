@@ -11,14 +11,7 @@
 
 #include <stddef.h>
 
-// Must return zero on success
-typedef int (*rng_buf)(unsigned char *, size_t);
-typedef const char *(*rng_err)(int);
-
-typedef struct {
-  rng_buf generator;
-  rng_err err;
-} random_device_t;
+#include <random.h>
 
 typedef struct Buffer buffer_t;
 

@@ -20,10 +20,8 @@ struct CiphertextBlob {
 
   encryption_mode m_encryption_mode_;
 
-  union {
-    symmetric_cipher symm;
-    asymmetric_cipher asymm;
-  } m_cipher_;
+  symmetric_cipher m_symm_cipher_;
+  asymmetric_cipher m_asymm_cipher_;
 
   message_digest_algorithm m_digest_algorithm_;
 
@@ -48,10 +46,11 @@ ciphertext_blob_t *API(new)(crypto_config_t cfg, size_t iv_len, size_t tag_len,
   out->m_encryption_mode_ = cfg.mode;
   switch (out->m_encryption_mode_) {
   case SYMMETRIC:
-    out->m_cipher_.symm = cfg.cipher.symm;
+    out->m_symm_cipher_ = cfg.symm_cipher;
     break;
   case ASYMMETRIC:
-    out->m_cipher_.asymm = cfg.cipher.asymm;
+    out->m_asymm_cipher_ = cfg.asymm_cipher;
+    out->m_symm_cipher_ = cfg.symm_cipher;
     break;
   }
   out->m_digest_algorithm_ = cfg.digest_algorithm;
