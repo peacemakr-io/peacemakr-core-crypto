@@ -93,7 +93,7 @@ typedef struct PeacemakrKey
 peacemakr_key_t *PeacemakrKey_new(crypto_config_t cfg, random_device_t rand);
 void PeacemakrKey_free(peacemakr_key_t *key);
 
-ciphertext_blob_t *encrypt(const peacemakr_key_t *key, const plaintext_t *plain);
+ciphertext_blob_t *encrypt(crypto_config_t cfg, const peacemakr_key_t *key, const plaintext_t *plain);
 int decrypt(const peacemakr_key_t *key, const ciphertext_blob_t *cipher,
             plaintext_t *plain);
 

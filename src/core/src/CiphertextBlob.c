@@ -79,3 +79,23 @@ void API(free)(ciphertext_blob_t *ciphertext) {
   free(ciphertext);
   ciphertext = NULL;
 }
+
+void API(init_iv)(ciphertext_blob_t *ciphertext, random_device_t *rng) {
+  Buffer_init_rand(ciphertext->m_iv_, rng);
+}
+
+buffer_t *API(mutable_tag)(ciphertext_blob_t *ciphertext) {
+  return ciphertext->m_tag_;
+}
+
+buffer_t *API(mutable_aad)(ciphertext_blob_t *ciphertext) {
+  return ciphertext->m_aad_;
+}
+
+buffer_t *API(mutable_ciphertext)(ciphertext_blob_t *ciphertext) {
+  return ciphertext->m_ciphertext_;
+}
+
+buffer_t *API(mutable_digest)(ciphertext_blob_t *ciphertext) {
+  return ciphertext->m_digest_;
+}

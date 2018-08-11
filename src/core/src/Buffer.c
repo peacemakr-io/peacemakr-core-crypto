@@ -132,7 +132,7 @@ void API(set_bytes)(buffer_t *buf, const void *mem, size_t size_bytes) {
   memcpy((void *)buf->m_mem_, mem, buf->m_size_bytes_);
 }
 
-unsigned char *API(get_bytes)(const buffer_t *buf, size_t *out_size) {
+const uint8_t *API(get_bytes)(const buffer_t *buf, size_t *out_size) {
   RETURN_VALUE_IF_ARG_IS_NULL(buf, NULL);
 
   if (out_size != NULL) {
