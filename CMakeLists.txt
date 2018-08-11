@@ -15,7 +15,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CMAKE_C_FLAGS "-Os -fstack-protector-strong")
 
-find_package(OpenSSL REQUIRED)
+find_package(OpenSSL 1.1 REQUIRED)
 
 set(ALL_C_SOURCE_FILES "")
 

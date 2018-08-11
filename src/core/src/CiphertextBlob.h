@@ -10,6 +10,7 @@
 #define PEACEMAKR_CORE_CRYPTO_CIPHERTEXT_H
 
 #include <crypto.h>
+
 #include <stdint.h>
 
 typedef struct CiphertextBlob ciphertext_blob_t;
