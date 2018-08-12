@@ -42,6 +42,7 @@ static bool symmetric_encrypt(const peacemakr_key_t *peacemakrkey,
   if (1 != EVP_EncryptInit_ex(ctx, cipher, NULL, Buffer_get_bytes(key, NULL),
                               Buffer_get_bytes(iv, NULL))) {
     PEACEMAKR_ERROR("encryptinit_ex failed");
+    EVP_CIPHER_CTX_free(ctx);
     return false;
   }
 
@@ -52,12 +53,14 @@ static bool symmetric_encrypt(const peacemakr_key_t *peacemakrkey,
         if (1 != EVP_EncryptUpdate(ctx, NULL, &len, aad + i, (INT_MAX >> 1))) {
           PEACEMAKR_ERROR("encryptupdate failed on aad, chunk %d of %d", i,
                           aad_len / (INT_MAX >> 1));
+          EVP_CIPHER_CTX_free(ctx);
           return false;
         }
       }
     } else {
       if (1 != EVP_EncryptUpdate(ctx, NULL, &len, aad, (int)aad_len)) {
         PEACEMAKR_ERROR("encryptupdate failed on aad");
+        EVP_CIPHER_CTX_free(ctx);
         return false;
       }
     }
@@ -72,6 +75,7 @@ static bool symmetric_encrypt(const peacemakr_key_t *peacemakrkey,
 
   if (plaintext == NULL || plaintext_len == 0) {
     PEACEMAKR_ERROR("cannot encrypt an empty string");
+    EVP_CIPHER_CTX_free(ctx);
     return false;
   }
 
@@ -85,6 +89,7 @@ static bool symmetric_encrypt(const peacemakr_key_t *peacemakrkey,
                                  (INT_MAX >> 1))) {
         PEACEMAKR_ERROR("encryptupdate failed, chunk %d of %d", i,
                         plaintext_len / (INT_MAX >> 1));
+        EVP_CIPHER_CTX_free(ctx);
         return false;
       }
       ciphertext_len += len;
@@ -94,6 +99,7 @@ static bool symmetric_encrypt(const peacemakr_key_t *peacemakrkey,
     if (1 != EVP_EncryptUpdate(ctx, ciphertext, &len, plaintext,
                                (int)plaintext_len)) {
       PEACEMAKR_ERROR("encryptupdate failed");
+      EVP_CIPHER_CTX_free(ctx);
       return false;
     }
     ciphertext_len = (size_t)len;
@@ -104,6 +110,7 @@ static bool symmetric_encrypt(const peacemakr_key_t *peacemakrkey,
    */
   if (1 != EVP_EncryptFinal_ex(ctx, ciphertext + len, &len)) {
     PEACEMAKR_ERROR("encryptfinal_ex failed");
+    EVP_CIPHER_CTX_free(ctx);
     return false;
   }
   ciphertext_len += len;
@@ -118,6 +125,7 @@ static bool symmetric_encrypt(const peacemakr_key_t *peacemakrkey,
     if (1 !=
         EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, (int)taglen, tag_buf)) {
       PEACEMAKR_ERROR("getting the tag failed");
+      EVP_CIPHER_CTX_free(ctx);
       return false;
     }
     Buffer_set_bytes(tag, tag_buf, taglen); // store the tag in the buffer
@@ -147,6 +155,10 @@ static bool symmetric_decrypt(const peacemakr_key_t *peacemakrkey,
   const unsigned char *aad_buf = Buffer_get_bytes(stored_aad, NULL);
   const size_t aad_len = Buffer_get_size(stored_aad);
 
+  const buffer_t *stored_tag = CiphertextBlob_tag(in);
+  const unsigned char *tag_buf = Buffer_get_bytes(stored_tag, NULL);
+  const size_t taglen = Buffer_get_size(stored_tag);
+
   const buffer_t *iv = CiphertextBlob_iv(in);
 
   /* Create and initialise the context */
@@ -160,6 +172,7 @@ static bool symmetric_decrypt(const peacemakr_key_t *peacemakrkey,
   if (1 != EVP_DecryptInit_ex(ctx, cipher, NULL, Buffer_get_bytes(key, NULL),
                               Buffer_get_bytes(iv, NULL))) {
     PEACEMAKR_ERROR("encryptinit_ex failed");
+    EVP_CIPHER_CTX_free(ctx);
     return false;
   }
 
@@ -171,12 +184,14 @@ static bool symmetric_decrypt(const peacemakr_key_t *peacemakrkey,
             EVP_DecryptUpdate(ctx, NULL, &len, aad_buf + i, (INT_MAX >> 1))) {
           PEACEMAKR_ERROR("encryptupdate failed on aad, chunk %d of %d", i,
                           aad_len / (INT_MAX >> 1));
+          EVP_CIPHER_CTX_free(ctx);
           return false;
         }
       }
     } else {
       if (1 != EVP_DecryptUpdate(ctx, NULL, &len, aad_buf, (int)aad_len)) {
         PEACEMAKR_ERROR("encryptupdate failed on aad");
+        EVP_CIPHER_CTX_free(ctx);
         return false;
       }
     }
@@ -187,6 +202,7 @@ static bool symmetric_decrypt(const peacemakr_key_t *peacemakrkey,
 
   if (plaintext == NULL) {
     PEACEMAKR_ERROR("cannot decrypt into an empty buffer");
+    EVP_CIPHER_CTX_free(ctx);
     return false;
   }
 
@@ -200,6 +216,7 @@ static bool symmetric_decrypt(const peacemakr_key_t *peacemakrkey,
                                  (INT_MAX >> 1))) {
         PEACEMAKR_ERROR("encryptupdate failed, chunk %d of %d", i,
                         ciphertext_len / (INT_MAX >> 1));
+        EVP_CIPHER_CTX_free(ctx);
         return false;
       }
       plaintext_len += len;
@@ -208,10 +225,18 @@ static bool symmetric_decrypt(const peacemakr_key_t *peacemakrkey,
   } else {
     if (1 != EVP_DecryptUpdate(ctx, plaintext_buf, &len, ciphertext_buf,
                                (int)plaintext_len)) {
-      PEACEMAKR_ERROR("encryptupdate failed");
+      PEACEMAKR_ERROR("decryptupdate failed");
+      EVP_CIPHER_CTX_free(ctx);
       return false;
     }
     plaintext_len = (size_t)len;
+  }
+
+  if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, (int)taglen,
+                           (void *)tag_buf)) {
+    PEACEMAKR_ERROR("setting the tag failed");
+    EVP_CIPHER_CTX_free(ctx);
+    return false;
   }
 
   /* Finalise the decryption. */
@@ -231,6 +256,8 @@ static bool symmetric_decrypt(const peacemakr_key_t *peacemakrkey,
     return true;
   } else {
     /* Verify failed */
+    *plaintext = NULL;
+    *aad = NULL;
     return false;
   }
 }
@@ -274,6 +301,7 @@ static bool asymmetric_encrypt(const peacemakr_key_t **pub_key,
   if (1 != EVP_SealInit(ctx, cipher, &encrypted_key_buf, NULL, iv_buf, pkeys,
                         num_pub_keys)) {
     PEACEMAKR_ERROR("sealinit failed");
+    EVP_CIPHER_CTX_free(ctx);
     return false;
   }
   CiphertextBlob_set_iv(out, iv_buf, ivlen);
@@ -287,12 +315,14 @@ static bool asymmetric_encrypt(const peacemakr_key_t **pub_key,
         if (1 != EVP_SealUpdate(ctx, NULL, &len, aad + i, (INT_MAX >> 1))) {
           PEACEMAKR_ERROR("sealupdate failed on aad, chunk %d of %d", i,
                           aad_len / (INT_MAX >> 1));
+          EVP_CIPHER_CTX_free(ctx);
           return false;
         }
       }
     } else {
       if (1 != EVP_SealUpdate(ctx, NULL, &len, aad, (int)aad_len)) {
         PEACEMAKR_ERROR("sealupdate failed on aad");
+        EVP_CIPHER_CTX_free(ctx);
         return false;
       }
     }
@@ -310,6 +340,7 @@ static bool asymmetric_encrypt(const peacemakr_key_t **pub_key,
                               (INT_MAX >> 1))) {
         PEACEMAKR_ERROR("sealupdate failed, on batch %d of %d", i,
                         plaintext_len / (INT_MAX >> 1));
+        EVP_CIPHER_CTX_free(ctx);
         return false;
       }
       ciphertext_len += len;
@@ -318,6 +349,7 @@ static bool asymmetric_encrypt(const peacemakr_key_t **pub_key,
     if (1 != EVP_SealUpdate(ctx, ciphertext_buf, &len, plaintext,
                             (int)plaintext_len)) {
       PEACEMAKR_ERROR("sealupdate failed");
+      EVP_CIPHER_CTX_free(ctx);
       return false;
     }
     ciphertext_len += len;
@@ -328,6 +360,7 @@ static bool asymmetric_encrypt(const peacemakr_key_t **pub_key,
    */
   if (1 != EVP_SealFinal(ctx, ciphertext_buf + len, &len)) {
     PEACEMAKR_ERROR("sealfinal failed");
+    EVP_CIPHER_CTX_free(ctx);
     return false;
   }
   ciphertext_len += len;
@@ -341,6 +374,7 @@ static bool asymmetric_encrypt(const peacemakr_key_t **pub_key,
     if (1 !=
         EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, (int)taglen, tag_buf)) {
       PEACEMAKR_ERROR("getting the tag failed");
+      EVP_CIPHER_CTX_free(ctx);
       return false;
     }
     Buffer_set_bytes(tag, tag_buf, taglen); // store the tag in the buffer
@@ -377,6 +411,10 @@ static bool asymmetric_decrypt(const peacemakr_key_t *peacemakrkey,
   const unsigned char *aad_buf = Buffer_get_bytes(stored_aad, NULL);
   const size_t aad_len = Buffer_get_size(stored_aad);
 
+  const buffer_t *stored_tag = CiphertextBlob_tag(in);
+  const unsigned char *tag_buf = Buffer_get_bytes(stored_tag, NULL);
+  const size_t taglen = Buffer_get_size(stored_tag);
+
   unsigned char plaintext_buf[ciphertext_len];
 
   /* Create and initialise the context */
@@ -392,6 +430,7 @@ static bool asymmetric_decrypt(const peacemakr_key_t *peacemakrkey,
                         (int)encrypted_key_len, Buffer_get_bytes(iv, NULL),
                         priv_key)) {
     PEACEMAKR_ERROR("openinit failed");
+    EVP_CIPHER_CTX_free(ctx);
     return false;
   }
 
@@ -402,12 +441,14 @@ static bool asymmetric_decrypt(const peacemakr_key_t *peacemakrkey,
         if (1 != EVP_OpenUpdate(ctx, NULL, &len, aad_buf + i, (INT_MAX >> 1))) {
           PEACEMAKR_ERROR("openupdate failed on aad, chunk %d of %d", i,
                           aad_len / (INT_MAX >> 1));
+          EVP_CIPHER_CTX_free(ctx);
           return false;
         }
       }
     } else {
       if (1 != EVP_OpenUpdate(ctx, NULL, &len, aad_buf, (int)aad_len)) {
         PEACEMAKR_ERROR("openupdate failed on aad");
+        EVP_CIPHER_CTX_free(ctx);
         return false;
       }
     }
@@ -422,6 +463,7 @@ static bool asymmetric_decrypt(const peacemakr_key_t *peacemakrkey,
                               (INT_MAX >> 1))) {
         PEACEMAKR_ERROR("openupdate failed, on batch %d of %d", i,
                         ciphertext_len / (INT_MAX >> 1));
+        EVP_CIPHER_CTX_free(ctx);
         return false;
       }
       plaintext_len += len;
@@ -430,9 +472,20 @@ static bool asymmetric_decrypt(const peacemakr_key_t *peacemakrkey,
     if (1 != EVP_OpenUpdate(ctx, plaintext_buf, &len, ciphertext_buf,
                             (int)ciphertext_len)) {
       PEACEMAKR_ERROR("openupdate failed");
+      EVP_CIPHER_CTX_free(ctx);
       return false;
     }
     plaintext_len += len;
+  }
+
+  /* Get the tag at this point, if the algorithm provides one */
+  if (taglen > 0) {
+    if (1 != EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, (int)taglen,
+                                 (void *)tag_buf)) {
+      PEACEMAKR_ERROR("getting the tag failed");
+      EVP_CIPHER_CTX_free(ctx);
+      return false;
+    }
   }
 
   /* Finalise the decryption. Further plaintext bytes may be written at
@@ -440,6 +493,7 @@ static bool asymmetric_decrypt(const peacemakr_key_t *peacemakrkey,
    */
   if (1 != EVP_OpenFinal(ctx, plaintext_buf + len, &len)) {
     PEACEMAKR_ERROR("openfinal failed");
+    EVP_CIPHER_CTX_free(ctx);
     return false;
   }
   plaintext_len += len;
