@@ -12,6 +12,7 @@
 #include <random.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 #define PEACEMAKR_CORE_CRYPTO_VERSION (uint32_t)0x010
 
@@ -93,9 +94,9 @@ typedef struct PeacemakrKey
 peacemakr_key_t *PeacemakrKey_new(crypto_config_t cfg, random_device_t rand);
 void PeacemakrKey_free(peacemakr_key_t *key);
 
-ciphertext_blob_t *encrypt(crypto_config_t cfg, const peacemakr_key_t **key, int num_keys,
-                           const plaintext_t *plain);
-int decrypt(const peacemakr_key_t *key, const ciphertext_blob_t *cipher,
+ciphertext_blob_t *encrypt(crypto_config_t cfg, const peacemakr_key_t **key,
+                           int num_keys, const plaintext_t *plain);
+bool decrypt(const peacemakr_key_t *key, const ciphertext_blob_t *cipher,
             plaintext_t *plain);
 
 // base64 encoded

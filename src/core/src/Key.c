@@ -63,7 +63,7 @@ typedef struct PeacemakrKey peacemakr_key_t;
 peacemakr_key_t *API(new)(crypto_config_t cfg, random_device_t rand) {
   peacemakr_key_t *out = malloc(sizeof(peacemakr_key_t));
 
-  const EVP_CIPHER *cipher = parse_cipher(cfg);
+  const EVP_CIPHER *cipher = parse_cipher(cfg.symm_cipher);
   size_t keylen = (size_t)EVP_CIPHER_key_length(cipher);
 
   out->m_contents_ = Buffer_new(keylen);
@@ -117,7 +117,7 @@ const buffer_t *API(symmetric)(const peacemakr_key_t *key) {
   return key->m_contents_;
 }
 
-const EVP_PKEY *API(asymmetric)(const peacemakr_key_t *key) {
+EVP_PKEY *API(asymmetric)(const peacemakr_key_t *key) {
   if (key->m_evp_pkey_ == NULL) {
     PEACEMAKR_DEBUG("key is in symmetric mode");
     return NULL;

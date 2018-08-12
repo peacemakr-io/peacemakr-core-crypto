@@ -124,7 +124,7 @@ void API(set_bytes)(buffer_t *buf, const void *mem, size_t size_bytes) {
   RETURN_VOID_IF_ARG_IS_NULL(mem);
 
   if (buf->m_size_bytes_ < size_bytes) {
-    printf("buffer size less than input size");
+    PEACEMAKR_ERROR("buffer size less than input size");
     return;
   }
 

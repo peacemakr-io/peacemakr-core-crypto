@@ -9,7 +9,9 @@
 #include <Buffer.h>
 #include <Logging.h>
 
+#include "CiphertextBlob.h"
 #include "EVPHelper.h"
+
 #include <crypto.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -52,8 +54,8 @@ ciphertext_blob_t *API(new)(crypto_config_t cfg, size_t iv_len, size_t tag_len,
     out->m_symm_cipher_ = cfg.symm_cipher;
     break;
   case ASYMMETRIC:
-    out->m_encrypted_key_ =
-        Buffer_new((size_t)EVP_CIPHER_key_length(parse_cipher(cfg)));
+    out->m_encrypted_key_ = Buffer_new(
+        (size_t)EVP_CIPHER_key_length(parse_cipher(cfg.symm_cipher)));
     out->m_asymm_cipher_ = cfg.asymm_cipher;
     out->m_symm_cipher_ = cfg.symm_cipher;
     break;
@@ -93,7 +95,16 @@ const buffer_t *API(get_iv)(ciphertext_blob_t *ciphertext) {
   return ciphertext->m_iv_;
 }
 
+void API(set_iv)(ciphertext_blob_t *ciphertext, const unsigned char *iv,
+                 size_t ivlen) {
+  Buffer_set_bytes(ciphertext->m_iv_, iv, ivlen);
+}
+
 buffer_t *API(mutable_encrypted_key)(ciphertext_blob_t *ciphertext) {
+  return ciphertext->m_encrypted_key_;
+}
+
+const buffer_t *API(encrypted_key)(const ciphertext_blob_t *ciphertext) {
   return ciphertext->m_encrypted_key_;
 }
 
@@ -101,7 +112,15 @@ buffer_t *API(mutable_tag)(ciphertext_blob_t *ciphertext) {
   return ciphertext->m_tag_;
 }
 
+const buffer_t *API(tag)(const ciphertext_blob_t *ciphertext) {
+  return ciphertext->m_tag_;
+}
+
 buffer_t *API(mutable_aad)(ciphertext_blob_t *ciphertext) {
+  return ciphertext->m_aad_;
+}
+
+const buffer_t *API(aad)(const ciphertext_blob_t *ciphertext) {
   return ciphertext->m_aad_;
 }
 
@@ -109,6 +128,26 @@ buffer_t *API(mutable_ciphertext)(ciphertext_blob_t *ciphertext) {
   return ciphertext->m_ciphertext_;
 }
 
+const buffer_t *API(ciphertext)(const ciphertext_blob_t *ciphertext) {
+  return ciphertext->m_ciphertext_;
+}
+
 buffer_t *API(mutable_digest)(ciphertext_blob_t *ciphertext) {
   return ciphertext->m_digest_;
+}
+
+const symmetric_cipher API(symm_cipher)(const ciphertext_blob_t *ciphertext) {
+  return ciphertext->m_symm_cipher_;
+}
+
+const asymmetric_cipher API(asymm_cipher)(const ciphertext_blob_t *ciphertext) {
+  return ciphertext->m_asymm_cipher_;
+}
+
+const message_digest_algorithm API(digest_algo)(const ciphertext_blob_t *ciphertext) {
+  return ciphertext->m_digest_algorithm_;
+}
+
+const encryption_mode API(encryption_mode)(const ciphertext_blob_t *ciphertext) {
+  return ciphertext->m_encryption_mode_;
 }

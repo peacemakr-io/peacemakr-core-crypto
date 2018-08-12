@@ -28,9 +28,9 @@
 
 #include <openssl/evp.h>
 
-static inline const EVP_CIPHER *parse_cipher(crypto_config_t cfg) {
+static inline const EVP_CIPHER *parse_cipher(symmetric_cipher cfg) {
 
-  switch (cfg.symm_cipher) {
+  switch (cfg) {
   case AES_128_GCM:
     return EVP_aes_128_gcm();
   case AES_192_GCM:
@@ -106,8 +106,8 @@ static inline const EVP_CIPHER *parse_cipher(crypto_config_t cfg) {
   return NULL;
 }
 
-static inline size_t get_taglen(crypto_config_t cfg) {
-  switch (cfg.symm_cipher) {
+static inline size_t get_taglen(symmetric_cipher cfg) {
+  switch (cfg) {
   case AES_128_GCM:
     return 16;
   case AES_192_GCM:
@@ -182,8 +182,8 @@ static inline size_t get_taglen(crypto_config_t cfg) {
   return 0;
 }
 
-static inline const EVP_MD *parse_digest(crypto_config_t cfg) {
-  switch (cfg.digest_algorithm) {
+static inline const EVP_MD *parse_digest(message_digest_algorithm cfg) {
+  switch (cfg) {
   case SHA_224:
     return EVP_sha224();
   case SHA_256:
@@ -196,8 +196,8 @@ static inline const EVP_MD *parse_digest(crypto_config_t cfg) {
   return 0;
 }
 
-static inline size_t get_digest_len(crypto_config_t cfg) {
-  switch (cfg.digest_algorithm) {
+static inline size_t get_digest_len(message_digest_algorithm cfg) {
+  switch (cfg) {
   case SHA_224:
     return 224 / sizeof(uint8_t);
   case SHA_256:

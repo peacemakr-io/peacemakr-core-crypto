@@ -13,7 +13,7 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-set(CMAKE_C_FLAGS "-Os -fstack-protector-strong")
+set(CMAKE_C_FLAGS "-Os -fstack-protector-strong -Wall")
 
 find_package(OpenSSL 1.1 REQUIRED)
 
