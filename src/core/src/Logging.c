@@ -14,7 +14,7 @@
 #include <stdlib.h>
 
 #ifndef PEACEMAKR_LOG_LEVEL
-#define PEACEMAKR_LOG_LEVEL 1 // Info by default
+#define PEACEMAKR_LOG_LEVEL 0 // Info by default
 #endif
 
 void fwd_stdout(const char *fmt, va_list argp) { vfprintf(stdout, fmt, argp); }

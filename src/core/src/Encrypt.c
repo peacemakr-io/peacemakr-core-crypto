@@ -30,6 +30,8 @@ static bool symmetric_encrypt(const peacemakr_key_t *peacemakrkey,
 
   const buffer_t *iv = CiphertextBlob_iv(out);
   buffer_t *tag = CiphertextBlob_mutable_tag(out);
+  buffer_t *aad_buf = CiphertextBlob_mutable_aad(out);
+  buffer_t *ciphertext_buf = CiphertextBlob_mutable_ciphertext(out);
 
   /* Create and initialise the context */
   ctx = EVP_CIPHER_CTX_new();
@@ -66,12 +68,12 @@ static bool symmetric_encrypt(const peacemakr_key_t *peacemakrkey,
     }
 
     // Set the AAD in the CiphertextBlob
-    Buffer_set_bytes(CiphertextBlob_mutable_aad(out), aad, aad_len);
+    Buffer_set_bytes(aad_buf, aad, aad_len);
   }
 
   /* Now set up to do the actual encryption */
   unsigned char
-      ciphertext[Buffer_get_size(CiphertextBlob_mutable_ciphertext(out))];
+      ciphertext[Buffer_get_size(ciphertext_buf)];
 
   if (plaintext == NULL || plaintext_len == 0) {
     PEACEMAKR_ERROR("cannot encrypt an empty string");
@@ -114,8 +116,7 @@ static bool symmetric_encrypt(const peacemakr_key_t *peacemakrkey,
     return false;
   }
   ciphertext_len += len;
-  Buffer_set_bytes(CiphertextBlob_mutable_ciphertext(out), ciphertext,
-                   ciphertext_len);
+  Buffer_set_bytes(ciphertext_buf, ciphertext, ciphertext_len);
 
   /* Get the tag at this point, if the algorithm provides one */
   size_t taglen = Buffer_get_size(tag);
@@ -198,7 +199,7 @@ static bool symmetric_decrypt(const peacemakr_key_t *peacemakrkey,
   }
 
   /* Now set up to do the actual decryption */
-  unsigned char plaintext_buf[Buffer_get_size(CiphertextBlob_ciphertext(in))];
+  unsigned char *plaintext_buf = alloca(ciphertext_len);
 
   if (plaintext == NULL) {
     PEACEMAKR_ERROR("cannot decrypt into an empty buffer");
@@ -224,7 +225,7 @@ static bool symmetric_decrypt(const peacemakr_key_t *peacemakrkey,
     }
   } else {
     if (1 != EVP_DecryptUpdate(ctx, plaintext_buf, &len, ciphertext_buf,
-                               (int)plaintext_len)) {
+                               (int)ciphertext_len)) {
       PEACEMAKR_ERROR("decryptupdate failed");
       EVP_CIPHER_CTX_free(ctx);
       return false;
@@ -232,11 +233,14 @@ static bool symmetric_decrypt(const peacemakr_key_t *peacemakrkey,
     plaintext_len = (size_t)len;
   }
 
-  if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, (int)taglen,
-                           (void *)tag_buf)) {
-    PEACEMAKR_ERROR("setting the tag failed");
-    EVP_CIPHER_CTX_free(ctx);
-    return false;
+  if (taglen > 0) {
+
+    if (1 !=
+        EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, (int)taglen, (void *)tag_buf)) {
+      PEACEMAKR_ERROR("setting the tag failed");
+      EVP_CIPHER_CTX_free(ctx);
+      return false;
+    }
   }
 
   /* Finalise the decryption. */
@@ -289,9 +293,9 @@ static bool asymmetric_encrypt(const peacemakr_key_t **pub_key,
   size_t keylen = Buffer_get_size(CiphertextBlob_mutable_encrypted_key(out));
   unsigned char *encrypted_key_buf = alloca(keylen);
   size_t ivlen = Buffer_get_size(CiphertextBlob_iv(out));
-  unsigned char iv_buf[ivlen];
+  unsigned char *iv_buf = alloca(ivlen);
   buffer_t *mutable_ciphertext = CiphertextBlob_mutable_ciphertext(out);
-  unsigned char ciphertext_buf[Buffer_get_size(mutable_ciphertext)];
+  unsigned char *ciphertext_buf = alloca(Buffer_get_size(mutable_ciphertext));
 
   /* Initialise the envelope seal operation. This operation generates
    * a key for the provided cipher, and then encrypts that key a number
@@ -510,7 +514,8 @@ static bool asymmetric_decrypt(const peacemakr_key_t *peacemakrkey,
 }
 
 ciphertext_blob_t *encrypt(crypto_config_t cfg, const peacemakr_key_t **key,
-                           int num_keys, const plaintext_t *plain) {
+                           int num_keys, const plaintext_t *plain,
+                           random_device_t *rand) {
 
   const EVP_CIPHER *cipher = parse_cipher(cfg.symm_cipher);
   const int cipher_block_size = EVP_CIPHER_block_size(cipher);
@@ -530,6 +535,7 @@ ciphertext_blob_t *encrypt(crypto_config_t cfg, const peacemakr_key_t **key,
 
   ciphertext_blob_t *out = CiphertextBlob_new(cfg, iv_len, tag_len, aad_len,
                                               ciphertext_len, digest_len);
+  CiphertextBlob_init_iv(out, rand);
 
   bool success = false;
   switch (cfg.mode) {
@@ -549,10 +555,10 @@ ciphertext_blob_t *encrypt(crypto_config_t cfg, const peacemakr_key_t **key,
   }
   }
 
-  if (!success) {
-    PEACEMAKR_ERROR("encryption failed");
-    return NULL;
-  }
+//  if (!success) {
+//    PEACEMAKR_ERROR("encryption failed");
+//    return NULL;
+//  }
 
   return out;
 }

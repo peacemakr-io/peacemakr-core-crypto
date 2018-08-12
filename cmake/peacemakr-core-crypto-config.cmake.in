@@ -1,3 +1,10 @@
+#
+# Created by Aman LaChapelle on 7/20/18.
+#
+# peacemakr-core-crypto
+# Copyright (c) 2018 peacemakr
+# Full license at peacemakr-core-crypto/LICENSE.txt
+#
 # - Config file for the FooBar package
 # It defines the following variables
 #  PEACEMAKR_CORE_CRYPTO_INCLUDE_DIRS - include directories for peacemakr-core-crypto

@@ -22,7 +22,7 @@
 static bool keygen_inner(int key_type, EVP_PKEY **pkey, int rsa_bits) {
   EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_id(key_type, NULL);
   if (!ctx) {
-    PEACEMAKR_ERROR("EVP_PKEY_CTX_new_id(NID_X25519) failed");
+    PEACEMAKR_ERROR("EVP_PKEY_CTX_new_id failed");
     return false;
   }
 
@@ -41,7 +41,7 @@ static bool keygen_inner(int key_type, EVP_PKEY **pkey, int rsa_bits) {
     }
   }
 
-  rc = EVP_PKEY_keygen(ctx, pkey);
+  rc = EVP_PKEY_keygen(ctx, pkey); // segfault here? why?
   if (rc <= 0) {
     PEACEMAKR_ERROR("EVP_PKEY_keygen failed");
     return false;
@@ -70,6 +70,7 @@ peacemakr_key_t *API(new)(crypto_config_t cfg, random_device_t rand) {
   Buffer_init_rand(out->m_contents_, &rand);
 
   if (cfg.mode == ASYMMETRIC) {
+    out->m_evp_pkey_ = malloc(sizeof(EVP_PKEY *));
     switch (cfg.asymm_cipher) {
     case NONE: {
       PEACEMAKR_WARNING("asymmetric cipher not specified for asymmetric mode");

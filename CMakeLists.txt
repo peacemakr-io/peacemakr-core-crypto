@@ -15,6 +15,8 @@ set(PEACEMAKR_CORE_CRYPTO_PATCH_VERSION 0)
 set(PEACEMAKR_CORE_CRYPTO_VERSION
         ${PEACEMAKR_CORE_CRYPTO_MAJOR_VERSION}.${PEACEMAKR_CORE_CRYPTO_MINOR_VERSION}.${PEACEMAKR_CORE_CRYPTO_PATCH_VERSION})
 
+option(BUILD_TESTS "Whether or not to build the tests" ON)
+
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
@@ -27,13 +29,16 @@ find_package(OpenSSL 1.1 REQUIRED)
 set(ALL_C_SOURCE_FILES "")
 
 add_subdirectory(src/core)
+if (BUILD_TESTS)
+    add_subdirectory(src/test)
+endif(BUILD_TESTS)
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/AddClangFormat.cmake)
 
 # INSTALL
 
 export(TARGETS peacemakr-core-crypto FILE ${CMAKE_BINARY_DIR}/peacemakr_core_crypto_targets.cmake)
-export(PACKAGE peacemakr_core_crypto)
+export(PACKAGE peacemakr-core-crypto)
 
 # Create the FooBarConfig.cmake and FooBarConfigVersion files
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/peacemakr-core-crypto-config.cmake.in

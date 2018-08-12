@@ -9,7 +9,8 @@
 #ifndef PEACEMAKR_CORE_CRYPTO_CRYPTO_H
 #define PEACEMAKR_CORE_CRYPTO_CRYPTO_H
 
-#include <random.h>
+#include "random.h"
+
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -95,7 +96,9 @@ peacemakr_key_t *PeacemakrKey_new(crypto_config_t cfg, random_device_t rand);
 void PeacemakrKey_free(peacemakr_key_t *key);
 
 ciphertext_blob_t *encrypt(crypto_config_t cfg, const peacemakr_key_t **key,
-                           int num_keys, const plaintext_t *plain);
+                           int num_keys, const plaintext_t *plain,
+                           random_device_t *rand);
+
 bool decrypt(const peacemakr_key_t *key, const ciphertext_blob_t *cipher,
              plaintext_t *plain);
 
