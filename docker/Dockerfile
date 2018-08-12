@@ -25,6 +25,6 @@ ADD CMakeLists.txt /opt/CMakeLists.txt
 ADD src /opt/src
 ADD cmake /opt/cmake
 
-RUN mkdir -p build && cd build && cmake .. && make
+RUN mkdir -p build && cd build && cmake .. && make install
 
 CMD ["bash"]

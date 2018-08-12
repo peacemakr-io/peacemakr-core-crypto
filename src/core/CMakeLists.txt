@@ -30,8 +30,18 @@ set(ALL_C_SOURCE_FILES ${SOURCES_C} ${SOURCES_H} ${INCLUDES} ${ALL_C_SOURCE_FILE
 add_library(peacemakr-core-crypto SHARED ${SOURCES_C} ${SOURCES_H} ${INCLUDES})
 add_definitions(-DOPENSSL_MIN_API=0x10100000L)
 target_include_directories(peacemakr-core-crypto
-        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
+        PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include
         PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 target_link_libraries(peacemakr-core-crypto
         PUBLIC OpenSSL::SSL OpenSSL::Crypto)
+set_target_properties(peacemakr-core-crypto PROPERTIES
+        PUBLIC_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/include/crypto.h;${CMAKE_CURRENT_SOURCE_DIR}/include/random.h"
+)
+
+install(TARGETS peacemakr-core-crypto
+        EXPORT peacemakr-core-crypto-targets
+        LIBRARY DESTINATION lib
+        PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_PREFIX}/include/peacemakr"
+        COMPONENT dev
+)
