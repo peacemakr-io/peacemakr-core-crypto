@@ -25,7 +25,7 @@ void CiphertextBlob_free(ciphertext_blob_t *ciphertext);
 void CiphertextBlob_init_iv(ciphertext_blob_t *ciphertext,
                             random_device_t *rng);
 
-const buffer_t *CiphertextBlob_get_iv(ciphertext_blob_t *ciphertext);
+const buffer_t *CiphertextBlob_iv(const ciphertext_blob_t *ciphertext);
 
 void CiphertextBlob_set_iv(ciphertext_blob_t *ciphertext,
                            const unsigned char *iv, size_t ivlen);

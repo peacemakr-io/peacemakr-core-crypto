@@ -15,43 +15,6 @@
 #include <openssl/evp.h>
 #include <stdbool.h>
 
-static void digest_message(const unsigned char *message, size_t message_len,
-                           const EVP_MD *digest_algo, buffer_t *digest) {
-  EVP_MD_CTX *mdctx;
-
-  if ((mdctx = EVP_MD_CTX_create()) == NULL) {
-    PEACEMAKR_ERROR("mdctx_create failed");
-    return;
-  }
-
-  if (1 != EVP_DigestInit_ex(mdctx, digest_algo, NULL)) {
-    PEACEMAKR_ERROR("digestinit_ex failed");
-    return;
-  }
-
-  if (1 != EVP_DigestUpdate(mdctx, message, message_len)) {
-    PEACEMAKR_ERROR("digestupdate failed");
-    return;
-  }
-
-  size_t digest_len = Buffer_get_size(digest);
-  unsigned char digest_buf[digest_len];
-  unsigned int size;
-  if (1 != EVP_DigestFinal_ex(mdctx, digest_buf, &size)) {
-    PEACEMAKR_ERROR("digestfinal_ex failed");
-    return;
-  }
-
-  if (size != digest_len) {
-    PEACEMAKR_ERROR("sizes different than expected for message digest");
-    return;
-  }
-
-  Buffer_set_bytes(digest, digest_buf, digest_len);
-
-  EVP_MD_CTX_destroy(mdctx);
-}
-
 static bool symmetric_encrypt(const peacemakr_key_t *peacemakrkey,
                               ciphertext_blob_t *out,
                               const unsigned char *plaintext,
@@ -65,7 +28,7 @@ static bool symmetric_encrypt(const peacemakr_key_t *peacemakrkey,
   const EVP_CIPHER *cipher = parse_cipher(CiphertextBlob_symm_cipher(out));
   const buffer_t *key = PeacemakrKey_symmetric(peacemakrkey);
 
-  const buffer_t *iv = CiphertextBlob_get_iv(out);
+  const buffer_t *iv = CiphertextBlob_iv(out);
   buffer_t *tag = CiphertextBlob_mutable_tag(out);
 
   /* Create and initialise the context */
@@ -184,7 +147,7 @@ static bool symmetric_decrypt(const peacemakr_key_t *peacemakrkey,
   const unsigned char *aad_buf = Buffer_get_bytes(stored_aad, NULL);
   const size_t aad_len = Buffer_get_size(stored_aad);
 
-  const buffer_t *iv = CiphertextBlob_get_iv(in);
+  const buffer_t *iv = CiphertextBlob_iv(in);
 
   /* Create and initialise the context */
   ctx = EVP_CIPHER_CTX_new();
@@ -219,9 +182,8 @@ static bool symmetric_decrypt(const peacemakr_key_t *peacemakrkey,
     }
   }
 
-  /* Now set up to do the actual encryption */
-  unsigned char
-      plaintext_buf[Buffer_get_size(CiphertextBlob_mutable_ciphertext(in))];
+  /* Now set up to do the actual decryption */
+  unsigned char plaintext_buf[Buffer_get_size(CiphertextBlob_ciphertext(in))];
 
   if (plaintext == NULL) {
     PEACEMAKR_ERROR("cannot decrypt into an empty buffer");
@@ -299,7 +261,7 @@ static bool asymmetric_encrypt(const peacemakr_key_t **pub_key,
 
   size_t keylen = Buffer_get_size(CiphertextBlob_mutable_encrypted_key(out));
   unsigned char *encrypted_key_buf = alloca(keylen);
-  size_t ivlen = Buffer_get_size(CiphertextBlob_get_iv(out));
+  size_t ivlen = Buffer_get_size(CiphertextBlob_iv(out));
   unsigned char iv_buf[ivlen];
   buffer_t *mutable_ciphertext = CiphertextBlob_mutable_ciphertext(out);
   unsigned char ciphertext_buf[Buffer_get_size(mutable_ciphertext)];
@@ -409,7 +371,7 @@ static bool asymmetric_decrypt(const peacemakr_key_t *peacemakrkey,
   const unsigned char *ciphertext_buf = Buffer_get_bytes(ciphertext, NULL);
   const size_t ciphertext_len = Buffer_get_size(ciphertext);
 
-  const buffer_t *iv = CiphertextBlob_get_iv(in);
+  const buffer_t *iv = CiphertextBlob_iv(in);
 
   const buffer_t *stored_aad = CiphertextBlob_aad(in);
   const unsigned char *aad_buf = Buffer_get_bytes(stored_aad, NULL);

@@ -91,7 +91,7 @@ void API(init_iv)(ciphertext_blob_t *ciphertext, random_device_t *rng) {
   Buffer_init_rand(ciphertext->m_iv_, rng);
 }
 
-const buffer_t *API(get_iv)(ciphertext_blob_t *ciphertext) {
+const buffer_t *API(iv)(const ciphertext_blob_t *ciphertext) {
   return ciphertext->m_iv_;
 }
 
