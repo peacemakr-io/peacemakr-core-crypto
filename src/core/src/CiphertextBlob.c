@@ -144,10 +144,12 @@ const asymmetric_cipher API(asymm_cipher)(const ciphertext_blob_t *ciphertext) {
   return ciphertext->m_asymm_cipher_;
 }
 
-const message_digest_algorithm API(digest_algo)(const ciphertext_blob_t *ciphertext) {
+const message_digest_algorithm
+API(digest_algo)(const ciphertext_blob_t *ciphertext) {
   return ciphertext->m_digest_algorithm_;
 }
 
-const encryption_mode API(encryption_mode)(const ciphertext_blob_t *ciphertext) {
+const encryption_mode
+API(encryption_mode)(const ciphertext_blob_t *ciphertext) {
   return ciphertext->m_encryption_mode_;
 }

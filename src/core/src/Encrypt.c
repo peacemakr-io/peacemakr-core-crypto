@@ -391,8 +391,8 @@ static bool asymmetric_encrypt(const peacemakr_key_t **pub_key,
 }
 
 static bool asymmetric_decrypt(const peacemakr_key_t *peacemakrkey,
-                               const ciphertext_blob_t *in, buffer_t **plaintext,
-                               buffer_t **aad) {
+                               const ciphertext_blob_t *in,
+                               buffer_t **plaintext, buffer_t **aad) {
   EVP_CIPHER_CTX *ctx;
 
   int len = 0;
@@ -417,7 +417,7 @@ static bool asymmetric_decrypt(const peacemakr_key_t *peacemakrkey,
 
   unsigned char plaintext_buf[ciphertext_len];
 
-      /* Create and initialise the context */
+  /* Create and initialise the context */
   if (!(ctx = EVP_CIPHER_CTX_new())) {
     PEACEMAKR_ERROR("cipher_ctx_new failed");
     return false;
@@ -426,8 +426,9 @@ static bool asymmetric_decrypt(const peacemakr_key_t *peacemakrkey,
   /* Initialise the decryption operation. The asymmetric private key is
    * provided and priv_key, whilst the encrypted session key is held in
    * encrypted_key */
-  if (1 !=
-      EVP_OpenInit(ctx, cipher, Buffer_get_bytes(encrypted_key, NULL), (int)encrypted_key_len, Buffer_get_bytes(iv, NULL), priv_key)) {
+  if (1 != EVP_OpenInit(ctx, cipher, Buffer_get_bytes(encrypted_key, NULL),
+                        (int)encrypted_key_len, Buffer_get_bytes(iv, NULL),
+                        priv_key)) {
     PEACEMAKR_ERROR("openinit failed");
     return false;
   }
@@ -471,7 +472,6 @@ static bool asymmetric_decrypt(const peacemakr_key_t *peacemakrkey,
     }
     plaintext_len += len;
   }
-
 
   /* Finalise the decryption. Further plaintext bytes may be written at
    * this stage.
@@ -522,9 +522,8 @@ ciphertext_blob_t *encrypt(crypto_config_t cfg, const peacemakr_key_t **key,
       PEACEMAKR_ERROR("only support single key for symmetric encryption");
       return NULL;
     }
-    success =
-        symmetric_encrypt(key[0], out, plain->data,
-                          plain->data_len, plain->aad, plain->aad_len);
+    success = symmetric_encrypt(key[0], out, plain->data, plain->data_len,
+                                plain->aad, plain->aad_len);
     break;
   }
   case ASYMMETRIC: {
@@ -543,18 +542,18 @@ ciphertext_blob_t *encrypt(crypto_config_t cfg, const peacemakr_key_t **key,
 }
 
 bool decrypt(const peacemakr_key_t *key, const ciphertext_blob_t *cipher,
-            plaintext_t *plain) {
+             plaintext_t *plain) {
   bool success = false;
   buffer_t *plaintext, *aad;
   switch (CiphertextBlob_encryption_mode(cipher)) {
-    case SYMMETRIC: {
-      success = symmetric_decrypt(key, cipher, &plaintext, &aad);
-      break;
-    }
-    case ASYMMETRIC: {
-      success = asymmetric_decrypt(key, cipher, &plaintext, &aad);
-      break;
-    }
+  case SYMMETRIC: {
+    success = symmetric_decrypt(key, cipher, &plaintext, &aad);
+    break;
+  }
+  case ASYMMETRIC: {
+    success = asymmetric_decrypt(key, cipher, &plaintext, &aad);
+    break;
+  }
   }
 
   if (success) {

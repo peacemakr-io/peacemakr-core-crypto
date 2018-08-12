@@ -10,9 +10,9 @@
 #define PEACEMAKR_CORE_CRYPTO_CRYPTO_H
 
 #include <random.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <stdbool.h>
 
 #define PEACEMAKR_CORE_CRYPTO_VERSION (uint32_t)0x010
 
@@ -97,7 +97,7 @@ void PeacemakrKey_free(peacemakr_key_t *key);
 ciphertext_blob_t *encrypt(crypto_config_t cfg, const peacemakr_key_t **key,
                            int num_keys, const plaintext_t *plain);
 bool decrypt(const peacemakr_key_t *key, const ciphertext_blob_t *cipher,
-            plaintext_t *plain);
+             plaintext_t *plain);
 
 // base64 encoded
 const uint8_t *serialize_blob(const ciphertext_blob_t *cipher);
