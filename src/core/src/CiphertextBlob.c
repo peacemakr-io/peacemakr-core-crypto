@@ -9,6 +9,7 @@
 #include <Buffer.h>
 #include <Logging.h>
 
+#include "EVPHelper.h"
 #include <crypto.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -25,6 +26,7 @@ struct CiphertextBlob {
 
   message_digest_algorithm m_digest_algorithm_;
 
+  buffer_t *m_encrypted_key_;
   buffer_t *m_iv_;
   buffer_t *m_tag_;
   buffer_t *m_aad_;
@@ -46,9 +48,12 @@ ciphertext_blob_t *API(new)(crypto_config_t cfg, size_t iv_len, size_t tag_len,
   out->m_encryption_mode_ = cfg.mode;
   switch (out->m_encryption_mode_) {
   case SYMMETRIC:
+    out->m_encrypted_key_ = NULL;
     out->m_symm_cipher_ = cfg.symm_cipher;
     break;
   case ASYMMETRIC:
+    out->m_encrypted_key_ =
+        Buffer_new((size_t)EVP_CIPHER_key_length(parse_cipher(cfg)));
     out->m_asymm_cipher_ = cfg.asymm_cipher;
     out->m_symm_cipher_ = cfg.symm_cipher;
     break;
@@ -82,6 +87,14 @@ void API(free)(ciphertext_blob_t *ciphertext) {
 
 void API(init_iv)(ciphertext_blob_t *ciphertext, random_device_t *rng) {
   Buffer_init_rand(ciphertext->m_iv_, rng);
+}
+
+const buffer_t *API(get_iv)(ciphertext_blob_t *ciphertext) {
+  return ciphertext->m_iv_;
+}
+
+buffer_t *API(mutable_encrypted_key)(ciphertext_blob_t *ciphertext) {
+  return ciphertext->m_encrypted_key_;
 }
 
 buffer_t *API(mutable_tag)(ciphertext_blob_t *ciphertext) {

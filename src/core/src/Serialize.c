@@ -15,4 +15,3 @@ const uint8_t *serialize_blob(const ciphertext_blob_t *cipher) {
 const ciphertext_blob_t *deserialize_blob(const uint8_t *serialized_cipher) {
   return NULL; // TODO
 }
-

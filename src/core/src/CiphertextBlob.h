@@ -9,8 +9,8 @@
 #ifndef PEACEMAKR_CORE_CRYPTO_CIPHERTEXT_H
 #define PEACEMAKR_CORE_CRYPTO_CIPHERTEXT_H
 
-#include <crypto.h>
 #include <Buffer.h>
+#include <crypto.h>
 
 #include <stdint.h>
 
@@ -22,7 +22,11 @@ ciphertext_blob_t *CiphertextBlob_new(crypto_config_t cfg, size_t iv_len,
 
 void CiphertextBlob_free(ciphertext_blob_t *ciphertext);
 
-void CiphertextBlob_init_iv(ciphertext_blob_t *ciphertext, random_device_t *rng);
+void CiphertextBlob_init_iv(ciphertext_blob_t *ciphertext,
+                            random_device_t *rng);
+
+const buffer_t *CiphertextBlob_get_iv(ciphertext_blob_t *ciphertext);
+buffer_t *CiphertextBlob_mutable_encrypted_key(ciphertext_blob_t *ciphertext);
 buffer_t *CiphertextBlob_mutable_tag(ciphertext_blob_t *ciphertext);
 buffer_t *CiphertextBlob_mutable_aad(ciphertext_blob_t *ciphertext);
 buffer_t *CiphertextBlob_mutable_ciphertext(ciphertext_blob_t *ciphertext);

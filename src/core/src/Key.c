@@ -7,13 +7,13 @@
 //
 
 #include <Buffer.h>
+#include <EVPHelper.h>
 #include <Logging.h>
 #include <crypto.h>
 #include <random.h>
-#include <EVPHelper.h>
 
-#include <stdlib.h>
 #include <stdbool.h>
+#include <stdlib.h>
 
 #include <openssl/ec.h>
 #include <openssl/evp.h>
@@ -113,11 +113,11 @@ void API(free)(peacemakr_key_t *key) {
   key = NULL;
 }
 
-const uint8_t *API(symmetric)(peacemakr_key_t *key, size_t *len) {
-  return Buffer_get_bytes(key->m_contents_, len);
+const buffer_t *API(symmetric)(const peacemakr_key_t *key) {
+  return key->m_contents_;
 }
 
-const EVP_PKEY *API(asymmetric)(peacemakr_key_t *key) {
+const EVP_PKEY *API(asymmetric)(const peacemakr_key_t *key) {
   if (key->m_evp_pkey_ == NULL) {
     PEACEMAKR_DEBUG("key is in symmetric mode");
     return NULL;
