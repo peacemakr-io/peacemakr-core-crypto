@@ -77,13 +77,13 @@ peacemakr_key_t *API(new)(crypto_config_t cfg, random_device_t rand) {
           "asymmetric cipher not specified for asymmetric mode\n");
       return NULL;
     }
-    case EC25519: {
-      if (keygen_inner(NID_X25519, &out->m_evp_pkey_, 0) == false) {
-        PEACEMAKR_ERROR("keygen failed\n");
-        return NULL;
-      }
-      break;
-    }
+      //    case EC25519: {
+      //      if (keygen_inner(NID_X25519, &out->m_evp_pkey_, 0) == false) {
+      //        PEACEMAKR_ERROR("keygen failed\n");
+      //        return NULL;
+      //      }
+      //      break;
+      //    }
     case RSA_2048: {
       if (keygen_inner(EVP_PKEY_RSA, &out->m_evp_pkey_, 2048) == false) {
         PEACEMAKR_ERROR("keygen failed\n");

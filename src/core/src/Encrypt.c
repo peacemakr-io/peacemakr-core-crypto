@@ -41,11 +41,20 @@ static bool symmetric_encrypt(const peacemakr_key_t *peacemakrkey,
   }
 
   /* Initialize the encryption */
-  if (1 != EVP_EncryptInit_ex(ctx, cipher, NULL, Buffer_get_bytes(key, NULL),
-                              Buffer_get_bytes(iv, NULL))) {
-    PEACEMAKR_ERROR("encryptinit_ex failed\n");
-    EVP_CIPHER_CTX_free(ctx);
-    return false;
+  if (iv != NULL) {
+    if (1 != EVP_EncryptInit_ex(ctx, cipher, NULL, Buffer_get_bytes(key, NULL),
+                                Buffer_get_bytes(iv, NULL))) {
+      PEACEMAKR_ERROR("encryptinit_ex failed\n");
+      EVP_CIPHER_CTX_free(ctx);
+      return false;
+    }
+  } else {
+    if (1 != EVP_EncryptInit_ex(ctx, cipher, NULL, Buffer_get_bytes(key, NULL),
+                                NULL)) {
+      PEACEMAKR_ERROR("encryptinit_ex failed\n");
+      EVP_CIPHER_CTX_free(ctx);
+      return false;
+    }
   }
 
   /* Handle any AAD */
@@ -72,7 +81,7 @@ static bool symmetric_encrypt(const peacemakr_key_t *peacemakrkey,
   }
 
   /* Now set up to do the actual encryption */
-  unsigned char ciphertext[Buffer_get_size(ciphertext_buf)];
+  unsigned char *ciphertext = alloca(Buffer_get_size(ciphertext_buf));
 
   if (plaintext == NULL || plaintext_len == 0) {
     PEACEMAKR_ERROR("cannot encrypt an empty string\n");
@@ -118,17 +127,19 @@ static bool symmetric_encrypt(const peacemakr_key_t *peacemakrkey,
   Buffer_set_bytes(ciphertext_buf, ciphertext, ciphertext_len);
 
   /* Get the tag at this point, if the algorithm provides one */
-  size_t taglen = Buffer_get_size(tag);
-  if (taglen > 0) {
-    unsigned char tag_buf[taglen];
+  if (tag != NULL) {
+    size_t taglen = Buffer_get_size(tag);
+    if (taglen > 0) {
+      unsigned char tag_buf[taglen];
 
-    if (1 !=
-        EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, (int)taglen, tag_buf)) {
-      PEACEMAKR_ERROR("getting the tag failed\n");
-      EVP_CIPHER_CTX_free(ctx);
-      return false;
+      if (1 != EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, (int)taglen,
+                                   tag_buf)) {
+        PEACEMAKR_ERROR("getting the tag failed\n");
+        EVP_CIPHER_CTX_free(ctx);
+        return false;
+      }
+      Buffer_set_bytes(tag, tag_buf, taglen); // store the tag in the buffer
     }
-    Buffer_set_bytes(tag, tag_buf, taglen); // store the tag in the buffer
   }
 
   /* Clean up */
@@ -156,8 +167,12 @@ static bool symmetric_decrypt(const peacemakr_key_t *peacemakrkey,
   const size_t aad_len = Buffer_get_size(stored_aad);
 
   const buffer_t *stored_tag = CiphertextBlob_tag(in);
-  const unsigned char *tag_buf = Buffer_get_bytes(stored_tag, NULL);
-  const size_t taglen = Buffer_get_size(stored_tag);
+  unsigned char *tag_buf = NULL;
+  size_t taglen = 0;
+  if (stored_tag != NULL) {
+    tag_buf = (unsigned char *)Buffer_get_bytes(stored_tag, NULL);
+    taglen = Buffer_get_size(stored_tag);
+  }
 
   const buffer_t *iv = CiphertextBlob_iv(in);
 
@@ -169,11 +184,20 @@ static bool symmetric_decrypt(const peacemakr_key_t *peacemakrkey,
   }
 
   /* Initialize the decryption */
-  if (1 != EVP_DecryptInit_ex(ctx, cipher, NULL, Buffer_get_bytes(key, NULL),
-                              Buffer_get_bytes(iv, NULL))) {
-    PEACEMAKR_ERROR("encryptinit_ex failed\n");
-    EVP_CIPHER_CTX_free(ctx);
-    return false;
+  if (iv != NULL) {
+    if (1 != EVP_DecryptInit_ex(ctx, cipher, NULL, Buffer_get_bytes(key, NULL),
+                                Buffer_get_bytes(iv, NULL))) {
+      PEACEMAKR_ERROR("encryptinit_ex failed\n");
+      EVP_CIPHER_CTX_free(ctx);
+      return false;
+    }
+  } else {
+    if (1 != EVP_DecryptInit_ex(ctx, cipher, NULL, Buffer_get_bytes(key, NULL),
+                                NULL)) {
+      PEACEMAKR_ERROR("encryptinit_ex failed\n");
+      EVP_CIPHER_CTX_free(ctx);
+      return false;
+    }
   }
 
   /* Handle any AAD */
@@ -198,13 +222,7 @@ static bool symmetric_decrypt(const peacemakr_key_t *peacemakrkey,
   }
 
   /* Now set up to do the actual decryption */
-  unsigned char *plaintext_buf = alloca(ciphertext_len);
-
-  if (plaintext == NULL) {
-    PEACEMAKR_ERROR("cannot decrypt into an empty buffer\n");
-    EVP_CIPHER_CTX_free(ctx);
-    return false;
-  }
+  unsigned char *plaintext_buf = alloca(ciphertext_len << 1);
 
   /* Provide the message to be encrypted, and obtain the encrypted output.
    * EVP_DecryptUpdate can be called multiple times if necessary
@@ -232,8 +250,7 @@ static bool symmetric_decrypt(const peacemakr_key_t *peacemakrkey,
     plaintext_len = (size_t)len;
   }
 
-  if (taglen > 0) {
-
+  if (taglen > 0 && tag_buf != NULL) {
     if (1 != EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, (int)taglen,
                                  (void *)tag_buf)) {
       PEACEMAKR_ERROR("setting the tag failed\n");
@@ -265,7 +282,7 @@ static bool symmetric_decrypt(const peacemakr_key_t *peacemakrkey,
   }
 }
 
-static bool asymmetric_encrypt(const peacemakr_key_t *pub_key, int num_pub_keys,
+static bool asymmetric_encrypt(const peacemakr_key_t *pub_key,
                                ciphertext_blob_t *out,
                                const unsigned char *plaintext,
                                size_t plaintext_len, const unsigned char *aad,
@@ -288,7 +305,7 @@ static bool asymmetric_encrypt(const peacemakr_key_t *pub_key, int num_pub_keys,
 
   buffer_t *encrypted_key = CiphertextBlob_mutable_encrypted_key(out);
   size_t keylen = Buffer_get_size(encrypted_key);
-  int encrypted_key_len;
+  int encrypted_key_len = 0;
   unsigned char *encrypted_key_buf = alloca(keylen);
 
   size_t ivlen = Buffer_get_size(CiphertextBlob_iv(out));
@@ -306,7 +323,7 @@ static bool asymmetric_encrypt(const peacemakr_key_t *pub_key, int num_pub_keys,
   }
 
   CiphertextBlob_set_iv(out, iv_buf, ivlen);
-  Buffer_set_bytes(encrypted_key, encrypted_key_buf, keylen);
+  Buffer_set_bytes(encrypted_key, encrypted_key_buf, (size_t)encrypted_key_len);
 
   /* Handle any AAD */
   if (aad != NULL && aad_len > 0) {
@@ -367,17 +384,19 @@ static bool asymmetric_encrypt(const peacemakr_key_t *pub_key, int num_pub_keys,
   Buffer_set_bytes(mutable_ciphertext, ciphertext_buf, ciphertext_len);
 
   /* Get the tag at this point, if the algorithm provides one */
-  size_t taglen = Buffer_get_size(tag);
-  if (taglen > 0) {
-    unsigned char tag_buf[taglen];
+  if (tag != NULL) {
+    size_t taglen = Buffer_get_size(tag);
+    if (taglen > 0) {
+      unsigned char tag_buf[taglen];
 
-    if (1 !=
-        EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, (int)taglen, tag_buf)) {
-      PEACEMAKR_ERROR("getting the tag failed\n");
-      EVP_CIPHER_CTX_free(ctx);
-      return false;
+      if (1 != EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, (int)taglen,
+                                   tag_buf)) {
+        PEACEMAKR_ERROR("getting the tag failed\n");
+        EVP_CIPHER_CTX_free(ctx);
+        return false;
+      }
+      Buffer_set_bytes(tag, tag_buf, taglen); // store the tag in the buffer
     }
-    Buffer_set_bytes(tag, tag_buf, taglen); // store the tag in the buffer
   }
 
   /* Clean up */
@@ -420,7 +439,7 @@ static bool asymmetric_decrypt(const peacemakr_key_t *peacemakrkey,
     taglen = Buffer_get_size(stored_tag);
   }
 
-  unsigned char plaintext_buf[ciphertext_len];
+  unsigned char *plaintext_buf = alloca(ciphertext_len << 1);
 
   /* Create and initialise the context */
   if (!(ctx = EVP_CIPHER_CTX_new())) {
@@ -431,12 +450,21 @@ static bool asymmetric_decrypt(const peacemakr_key_t *peacemakrkey,
   /* Initialise the decryption operation. The asymmetric private key is
    * provided and priv_key, whilst the encrypted session key is held in
    * encrypted_key */
-  if (1 != EVP_OpenInit(ctx, cipher, Buffer_get_bytes(encrypted_key, NULL),
-                        (int)encrypted_key_len, Buffer_get_bytes(iv, NULL),
-                        priv_key)) {
-    PEACEMAKR_ERROR("openinit failed\n");
-    EVP_CIPHER_CTX_free(ctx);
-    return false;
+  if (iv != NULL) {
+    if (1 != EVP_OpenInit(ctx, cipher, Buffer_get_bytes(encrypted_key, NULL),
+                          (int)encrypted_key_len, Buffer_get_bytes(iv, NULL),
+                          priv_key)) {
+      PEACEMAKR_ERROR("openinit failed\n");
+      EVP_CIPHER_CTX_free(ctx);
+      return false;
+    }
+  } else {
+    if (1 != EVP_OpenInit(ctx, cipher, Buffer_get_bytes(encrypted_key, NULL),
+                          (int)encrypted_key_len, NULL, priv_key)) {
+      PEACEMAKR_ERROR("openinit failed\n");
+      EVP_CIPHER_CTX_free(ctx);
+      return false;
+    }
   }
 
   /* Handle any AAD */
@@ -480,11 +508,11 @@ static bool asymmetric_decrypt(const peacemakr_key_t *peacemakrkey,
       EVP_CIPHER_CTX_free(ctx);
       return false;
     }
-    plaintext_len += len;
+    plaintext_len = (size_t)len;
   }
 
   /* Get the tag at this point, if the algorithm provides one */
-  if (taglen > 0) {
+  if (taglen > 0 && tag_buf != NULL) {
     if (1 != EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, (int)taglen,
                                  (void *)tag_buf)) {
       PEACEMAKR_ERROR("getting the tag failed\n");
@@ -539,14 +567,16 @@ ciphertext_blob_t *encrypt(crypto_config_t cfg, const peacemakr_key_t *key,
   bool success = false;
   switch (cfg.mode) {
   case SYMMETRIC: {
-    CiphertextBlob_init_iv(out, rand);
+    if (iv_len != 0) {
+      CiphertextBlob_init_iv(out, rand);
+    }
 
     success = symmetric_encrypt(key, out, plain->data, plain->data_len,
                                 plain->aad, plain->aad_len);
     break;
   }
   case ASYMMETRIC: {
-    success = asymmetric_encrypt(key, 1, out, plain->data, plain->data_len,
+    success = asymmetric_encrypt(key, out, plain->data, plain->data_len,
                                  plain->aad, plain->aad_len);
     break;
   }

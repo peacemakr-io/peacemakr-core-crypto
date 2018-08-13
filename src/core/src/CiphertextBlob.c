@@ -54,8 +54,17 @@ ciphertext_blob_t *API(new)(crypto_config_t cfg, size_t iv_len, size_t tag_len,
     out->m_symm_cipher_ = cfg.symm_cipher;
     break;
   case ASYMMETRIC:
-    out->m_encrypted_key_ = Buffer_new(
-        (size_t)EVP_CIPHER_key_length(parse_cipher(cfg.symm_cipher)));
+    switch (cfg.asymm_cipher) {
+    case NONE:
+      break;
+      //      case EC25519: out->m_encrypted_key_ = Buffer_new(1024); break;
+    case RSA_2048:
+      out->m_encrypted_key_ = Buffer_new(256);
+      break;
+    case RSA_4096:
+      out->m_encrypted_key_ = Buffer_new(512);
+      break;
+    }
     out->m_asymm_cipher_ = cfg.asymm_cipher;
     out->m_symm_cipher_ = cfg.symm_cipher;
     break;

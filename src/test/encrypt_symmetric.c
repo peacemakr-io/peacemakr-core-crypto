@@ -10,16 +10,17 @@
 #include <peacemakr/random.h>
 #include <memory.h>
 #include <assert.h>
+#include <printf.h>
 
 #include "test_helper.h"
 
 const char *message = "Hello, world! I'm testing encryption."; // 37 + 1
 const char *message_aad = "And I'm AAD"; // 11 + 1
 
-int main() {
+void test_symmetric_algo(symmetric_cipher cipher) {
   crypto_config_t cfg = {
           .mode = SYMMETRIC,
-          .symm_cipher = CHACHA20_POLY1305,
+          .symm_cipher = cipher,
           .digest_algorithm = SHA_512
   };
 
@@ -48,5 +49,10 @@ int main() {
 
   assert(strncmp((const char *)plaintext_out.data, (const char *)plaintext_in.data, plaintext_in.data_len) == 0);
   assert(strncmp((const char *)plaintext_out.aad, (const char *)plaintext_in.aad, plaintext_in.data_len) == 0);
+}
 
+int main() {
+  for (int i = AES_128_GCM; i <= CHACHA20_POLY1305; ++i) {
+    test_symmetric_algo(i);
+  }
 }
