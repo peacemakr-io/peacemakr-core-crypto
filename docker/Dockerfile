@@ -9,7 +9,7 @@
 FROM debian:latest
 
 # libssl-dev has libssl and libcrypto
-RUN apt-get update -y && apt-get install -y wget gnupg software-properties-common openssl libssl-dev make git
+RUN apt-get update -y && apt-get install -y pkg-config libbsd-dev wget gnupg software-properties-common openssl libssl-dev make git
 
 RUN wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -
 
@@ -33,6 +33,6 @@ ADD CMakeLists.txt /opt/CMakeLists.txt
 ADD src /opt/src
 ADD cmake /opt/cmake
 
-RUN mkdir -p build && cd build && cmake .. && make install
+RUN mkdir -p build && cd build && cmake .. && make check install
 
 CMD ["bash"]

@@ -19,15 +19,15 @@ const char *message_aad = "And I'm AAD"; // 11 + 1
 int main() {
   crypto_config_t cfg = {
           .mode = ASYMMETRIC,
-          .asymm_cipher = RSA_2048, // ec25519 causes problems
-          .symm_cipher = AES_256_CTR,
+          .asymm_cipher = EC25519, // ec25519 causes problems
+          .symm_cipher = AES_256_GCM,
           .digest_algorithm = SHA_512
   };
 
   plaintext_t plaintext_in = {
-          .data = message,
+          .data = (const unsigned char *)message,
           .data_len = strlen(message) + 1,
-          .aad = message_aad,
+          .aad = (const unsigned char *)message_aad,
           .aad_len = strlen(message_aad) + 1
   };
 
@@ -40,15 +40,15 @@ int main() {
 
   peacemakr_key_t *key = PeacemakrKey_new(cfg, rand);
 
-  ciphertext_blob_t *ciphertext = encrypt(cfg, &key, 1, &plaintext_in, &rand);
+  ciphertext_blob_t *ciphertext = encrypt(cfg, key, &plaintext_in, &rand);
   assert(ciphertext != NULL);
 
   bool success = decrypt(key, ciphertext, &plaintext_out);
 
   assert(success);
 
-  assert(strncmp(plaintext_out.data, plaintext_in.data, plaintext_in.data_len) == 0);
-  assert(strncmp(plaintext_out.aad, plaintext_in.aad, plaintext_in.data_len) == 0);
+  assert(strncmp((const char *)plaintext_out.data, (const char *)plaintext_in.data, plaintext_in.data_len) == 0);
+  assert(strncmp((const char *)plaintext_out.aad, (const char *)plaintext_in.aad, plaintext_in.data_len) == 0);
 
 }
 

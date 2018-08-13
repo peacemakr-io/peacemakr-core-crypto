@@ -18,13 +18,13 @@
 
 #define RETURN_VOID_IF_ARG_IS_NULL(arg)                                        \
   if ((arg) == NULL) {                                                         \
-    PEACEMAKR_ERROR("arg %s is null", #arg);                                   \
+    PEACEMAKR_ERROR("arg %s is null\n", #arg);                                 \
     return;                                                                    \
   }
 
 #define RETURN_VALUE_IF_ARG_IS_NULL(arg, retval)                               \
   if ((arg) == NULL) {                                                         \
-    PEACEMAKR_ERROR("arg %s is null, %s %s", #arg);                            \
+    PEACEMAKR_ERROR("arg %s is null, %s %s\n", #arg);                          \
     return (retval);                                                           \
   }
 
@@ -45,8 +45,6 @@
 #endif
 
 int memset_s(void *restrict v, size_t smax, uint8_t c, size_t n) {
-  int ret = 0;
-
   if (v == NULL || smax > RSIZE_MAX)
     return EINVAL;
   if (n > smax)
@@ -76,7 +74,7 @@ buffer_t *API(new)(size_t size) {
   buffer_t *ret = malloc(sizeof(buffer_t));
 
   if (size <= 0) {
-    PEACEMAKR_INFO("size passed was zero");
+    PEACEMAKR_INFO("size passed was zero\n");
     return NULL;
   }
 
@@ -84,7 +82,7 @@ buffer_t *API(new)(size_t size) {
 
   ret->m_mem_ = calloc(size, sizeof(uint8_t));
   if (ret->m_mem_ == NULL) {
-    PEACEMAKR_ERROR("malloc returned nullptr");
+    PEACEMAKR_ERROR("malloc returned nullptr\n");
     free(ret);
     return NULL;
   }
@@ -94,13 +92,13 @@ buffer_t *API(new)(size_t size) {
 
 void API(free)(buffer_t *buf) {
   if (buf == NULL) {
-    PEACEMAKR_INFO("buf was null, no-op");
+    PEACEMAKR_INFO("buf was null, no-op\n");
     return;
   }
 
   int err = memset_s(buf->m_mem_, buf->m_size_bytes_, 0, buf->m_size_bytes_);
   if (err != 0) {
-    PEACEMAKR_ERROR("memset failed, aborting (memory NOT freed)");
+    PEACEMAKR_ERROR("memset failed, aborting (memory NOT freed)\n");
   }
   free(buf->m_mem_);
   buf->m_mem_ = NULL;
@@ -115,7 +113,7 @@ void API(init_rand)(buffer_t *buf, random_device_t *rng) {
 
   int rc = rng->generator(buf->m_mem_, buf->m_size_bytes_);
   if (rc != 0) {
-    PEACEMAKR_ERROR("rng encountered error, %s", rng->err(rc));
+    PEACEMAKR_ERROR("rng encountered error, %s\n", rng->err(rc));
   }
 }
 
@@ -124,7 +122,7 @@ void API(set_bytes)(buffer_t *buf, const void *mem, size_t size_bytes) {
   RETURN_VOID_IF_ARG_IS_NULL(mem);
 
   if (buf->m_size_bytes_ < size_bytes) {
-    PEACEMAKR_ERROR("buffer size less than input size");
+    PEACEMAKR_ERROR("buffer size less than input size\n");
     return;
   }
 

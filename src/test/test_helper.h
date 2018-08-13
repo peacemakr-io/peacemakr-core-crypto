@@ -10,7 +10,11 @@
 #define PEACEMAKR_CORE_CRYPTO_HELPER_H
 
 #include <stddef.h>
+#ifdef linux
+#include <bsd/stdlib.h>
+#else
 #include <stdlib.h>
+#endif
 
 static inline int fill_rand(unsigned char *buf, size_t num) {
   arc4random_buf(buf, num);

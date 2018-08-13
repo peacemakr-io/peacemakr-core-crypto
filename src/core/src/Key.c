@@ -22,28 +22,28 @@
 static bool keygen_inner(int key_type, EVP_PKEY **pkey, int rsa_bits) {
   EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_id(key_type, NULL);
   if (!ctx) {
-    PEACEMAKR_ERROR("EVP_PKEY_CTX_new_id failed");
+    PEACEMAKR_ERROR("EVP_PKEY_CTX_new_id failed\n");
     return false;
   }
 
   int rc = EVP_PKEY_keygen_init(ctx);
   if (rc <= 0) {
-    PEACEMAKR_ERROR("EVP_PKEY_keygen_init failed");
+    PEACEMAKR_ERROR("EVP_PKEY_keygen_init failed with rc %d\n", rc);
     return false;
   }
 
   if (key_type == EVP_PKEY_RSA && rsa_bits > 0 &&
       (rsa_bits == 2048 || rsa_bits == 4096)) {
     rc = EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, rsa_bits);
-    if (rc == 0) {
-      PEACEMAKR_ERROR("set_rsa_keygen_bits failed");
+    if (rc <= 0) {
+      PEACEMAKR_ERROR("set_rsa_keygen_bits failed\n");
       return false;
     }
   }
 
-  rc = EVP_PKEY_keygen(ctx, pkey); // segfault here? why?
+  rc = EVP_PKEY_keygen(ctx, pkey);
   if (rc <= 0) {
-    PEACEMAKR_ERROR("EVP_PKEY_keygen failed");
+    PEACEMAKR_ERROR("EVP_PKEY_keygen failed\n");
     return false;
   }
 
@@ -70,29 +70,30 @@ peacemakr_key_t *API(new)(crypto_config_t cfg, random_device_t rand) {
   Buffer_init_rand(out->m_contents_, &rand);
 
   if (cfg.mode == ASYMMETRIC) {
-    out->m_evp_pkey_ = malloc(sizeof(EVP_PKEY *));
+    out->m_evp_pkey_ = NULL;
     switch (cfg.asymm_cipher) {
     case NONE: {
-      PEACEMAKR_WARNING("asymmetric cipher not specified for asymmetric mode");
+      PEACEMAKR_WARNING(
+          "asymmetric cipher not specified for asymmetric mode\n");
       return NULL;
     }
     case EC25519: {
       if (keygen_inner(NID_X25519, &out->m_evp_pkey_, 0) == false) {
-        PEACEMAKR_ERROR("keygen failed");
+        PEACEMAKR_ERROR("keygen failed\n");
         return NULL;
       }
       break;
     }
     case RSA_2048: {
       if (keygen_inner(EVP_PKEY_RSA, &out->m_evp_pkey_, 2048) == false) {
-        PEACEMAKR_ERROR("keygen failed");
+        PEACEMAKR_ERROR("keygen failed\n");
         return NULL;
       }
       break;
     }
     case RSA_4096: {
       if (keygen_inner(EVP_PKEY_RSA, &out->m_evp_pkey_, 4096) == false) {
-        PEACEMAKR_ERROR("keygen failed");
+        PEACEMAKR_ERROR("keygen failed\n");
         return NULL;
       }
       break;
@@ -105,7 +106,7 @@ peacemakr_key_t *API(new)(crypto_config_t cfg, random_device_t rand) {
 
 void API(free)(peacemakr_key_t *key) {
   if (key == NULL) {
-    PEACEMAKR_INFO("key was null, no-op");
+    PEACEMAKR_INFO("key was null, no-op\n");
     return;
   }
 
@@ -120,7 +121,7 @@ const buffer_t *API(symmetric)(const peacemakr_key_t *key) {
 
 EVP_PKEY *API(asymmetric)(const peacemakr_key_t *key) {
   if (key->m_evp_pkey_ == NULL) {
-    PEACEMAKR_DEBUG("key is in symmetric mode");
+    PEACEMAKR_DEBUG("key is in symmetric mode\n");
     return NULL;
   }
 
