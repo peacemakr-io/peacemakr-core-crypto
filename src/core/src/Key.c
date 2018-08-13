@@ -104,6 +104,50 @@ peacemakr_key_t *API(new)(crypto_config_t cfg, random_device_t rand) {
   return out;
 }
 
+peacemakr_key_t *API(new_bytes)(crypto_config_t cfg, const uint8_t *buf) {
+  peacemakr_key_t *out = malloc(sizeof(peacemakr_key_t));
+
+  const EVP_CIPHER *cipher = parse_cipher(cfg.symm_cipher);
+  size_t keylen = (size_t)EVP_CIPHER_key_length(cipher);
+
+  out->m_contents_ = Buffer_new(keylen);
+  Buffer_set_bytes(out->m_contents_, buf, keylen);
+
+  if (cfg.mode == ASYMMETRIC) {
+    out->m_evp_pkey_ = NULL;
+    switch (cfg.asymm_cipher) {
+      case NONE: {
+        PEACEMAKR_WARNING(
+                "asymmetric cipher not specified for asymmetric mode\n");
+        return NULL;
+      }
+        //    case EC25519: {
+        //      if (keygen_inner(NID_X25519, &out->m_evp_pkey_, 0) == false) {
+        //        PEACEMAKR_ERROR("keygen failed\n");
+        //        return NULL;
+        //      }
+        //      break;
+        //    }
+      case RSA_2048: {
+        if (keygen_inner(EVP_PKEY_RSA, &out->m_evp_pkey_, 2048) == false) {
+          PEACEMAKR_ERROR("keygen failed\n");
+          return NULL;
+        }
+        break;
+      }
+      case RSA_4096: {
+        if (keygen_inner(EVP_PKEY_RSA, &out->m_evp_pkey_, 4096) == false) {
+          PEACEMAKR_ERROR("keygen failed\n");
+          return NULL;
+        }
+        break;
+      }
+    }
+  }
+
+  return out;
+}
+
 void API(free)(peacemakr_key_t *key) {
   if (key == NULL) {
     PEACEMAKR_INFO("key was null, no-op\n");

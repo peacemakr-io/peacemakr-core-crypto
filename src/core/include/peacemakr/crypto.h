@@ -62,6 +62,7 @@ typedef struct PeacemakrKey
                      // alternatively just the symmetric key
 
 peacemakr_key_t *PeacemakrKey_new(crypto_config_t cfg, random_device_t rand);
+peacemakr_key_t *PeacemakrKey_new_bytes(crypto_config_t cfg, const uint8_t *buf);
 void PeacemakrKey_free(peacemakr_key_t *key);
 
 ciphertext_blob_t *encrypt(crypto_config_t cfg, const peacemakr_key_t *key,
