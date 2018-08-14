@@ -116,32 +116,32 @@ peacemakr_key_t *API(new_bytes)(crypto_config_t cfg, const uint8_t *buf) {
   if (cfg.mode == ASYMMETRIC) {
     out->m_evp_pkey_ = NULL;
     switch (cfg.asymm_cipher) {
-      case NONE: {
-        PEACEMAKR_WARNING(
-                "asymmetric cipher not specified for asymmetric mode\n");
+    case NONE: {
+      PEACEMAKR_WARNING(
+          "asymmetric cipher not specified for asymmetric mode\n");
+      return NULL;
+    }
+      //    case EC25519: {
+      //      if (keygen_inner(NID_X25519, &out->m_evp_pkey_, 0) == false) {
+      //        PEACEMAKR_ERROR("keygen failed\n");
+      //        return NULL;
+      //      }
+      //      break;
+      //    }
+    case RSA_2048: {
+      if (keygen_inner(EVP_PKEY_RSA, &out->m_evp_pkey_, 2048) == false) {
+        PEACEMAKR_ERROR("keygen failed\n");
         return NULL;
       }
-        //    case EC25519: {
-        //      if (keygen_inner(NID_X25519, &out->m_evp_pkey_, 0) == false) {
-        //        PEACEMAKR_ERROR("keygen failed\n");
-        //        return NULL;
-        //      }
-        //      break;
-        //    }
-      case RSA_2048: {
-        if (keygen_inner(EVP_PKEY_RSA, &out->m_evp_pkey_, 2048) == false) {
-          PEACEMAKR_ERROR("keygen failed\n");
-          return NULL;
-        }
-        break;
+      break;
+    }
+    case RSA_4096: {
+      if (keygen_inner(EVP_PKEY_RSA, &out->m_evp_pkey_, 4096) == false) {
+        PEACEMAKR_ERROR("keygen failed\n");
+        return NULL;
       }
-      case RSA_4096: {
-        if (keygen_inner(EVP_PKEY_RSA, &out->m_evp_pkey_, 4096) == false) {
-          PEACEMAKR_ERROR("keygen failed\n");
-          return NULL;
-        }
-        break;
-      }
+      break;
+    }
     }
   }
 

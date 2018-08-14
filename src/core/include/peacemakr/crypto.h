@@ -15,7 +15,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define PEACEMAKR_CORE_CRYPTO_VERSION (uint32_t)0x010
+#define PEACEMAKR_CORE_CRYPTO_VERSION (uint8_t)0x010
 
 typedef enum {
   AES_128_GCM,
@@ -62,7 +62,8 @@ typedef struct PeacemakrKey
                      // alternatively just the symmetric key
 
 peacemakr_key_t *PeacemakrKey_new(crypto_config_t cfg, random_device_t rand);
-peacemakr_key_t *PeacemakrKey_new_bytes(crypto_config_t cfg, const uint8_t *buf);
+peacemakr_key_t *PeacemakrKey_new_bytes(crypto_config_t cfg,
+                                        const uint8_t *buf);
 void PeacemakrKey_free(peacemakr_key_t *key);
 
 ciphertext_blob_t *encrypt(crypto_config_t cfg, const peacemakr_key_t *key,
@@ -72,7 +73,7 @@ bool decrypt(const peacemakr_key_t *key, const ciphertext_blob_t *cipher,
              plaintext_t *plain);
 
 // base64 encoded
-const uint8_t *serialize_blob(const ciphertext_blob_t *cipher);
+const uint8_t *serialize_blob(ciphertext_blob_t *cipher, size_t *out_size);
 const ciphertext_blob_t *deserialize_blob(const uint8_t *serialized_cipher);
 
 #endif // PEACEMAKR_CORE_CRYPTO_CRYPTO_H
