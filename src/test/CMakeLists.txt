@@ -24,4 +24,5 @@ function(add_ptest test_name)
 endfunction(add_ptest)
 
 add_ptest(encrypt_symmetric)
-add_ptest(encrypt_asymmetric) # NOT CURRENTLY WORKING...?
+add_ptest(encrypt_asymmetric)
+add_ptest(serialize)

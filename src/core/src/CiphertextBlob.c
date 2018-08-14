@@ -96,6 +96,10 @@ void API(free)(ciphertext_blob_t *ciphertext) {
   ciphertext = NULL;
 }
 
+void API(set_version)(ciphertext_blob_t *ciphertext, uint32_t version) {
+  ciphertext->m_version_ = version;
+}
+
 const uint32_t API(version)(const ciphertext_blob_t *ciphertext) {
   return ciphertext->m_version_;
 }

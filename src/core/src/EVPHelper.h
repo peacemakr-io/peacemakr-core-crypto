@@ -75,13 +75,13 @@ static inline const EVP_MD *parse_digest(message_digest_algorithm cfg) {
 static inline size_t get_digest_len(message_digest_algorithm cfg) {
   switch (cfg) {
   case SHA_224:
-    return 224 / sizeof(uint8_t);
+    return (224 / 8);
   case SHA_256:
-    return 256 / sizeof(uint8_t);
+    return (256 / 8);
   case SHA_384:
-    return 384 / sizeof(uint8_t);
+    return (384 / 8);
   case SHA_512:
-    return 512 / sizeof(uint8_t);
+    return (512 / 8);
   }
   return 0;
 }

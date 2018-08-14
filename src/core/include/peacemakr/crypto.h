@@ -15,7 +15,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define PEACEMAKR_CORE_CRYPTO_VERSION (uint8_t)0x010
+#define PEACEMAKR_CORE_CRYPTO_VERSION (uint8_t)1
 
 typedef enum {
   AES_128_GCM,
