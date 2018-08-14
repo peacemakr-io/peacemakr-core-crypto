@@ -17,10 +17,11 @@
 const char *message = "Hello, world! I'm testing encryption."; // 37 + 1
 const char *message_aad = "And I'm AAD"; // 11 + 1
 
-void test_serialize(symmetric_cipher cipher) {
+void test_serialize(symmetric_cipher symm_cipher, asymmetric_cipher cipher) {
   crypto_config_t cfg = {
-          .mode = SYMMETRIC,
-          .symm_cipher = cipher,
+          .mode = ASYMMETRIC,
+          .symm_cipher = symm_cipher,
+          .asymm_cipher = cipher,
           .digest_algorithm = SHA_512
   };
 
@@ -57,8 +58,10 @@ void test_serialize(symmetric_cipher cipher) {
 }
 
 int main() {
-  for (int i = AES_128_GCM; i <= CHACHA20_POLY1305; ++i) {
-    test_serialize(i);
+  for (int i = RSA_2048; i <= RSA_4096; ++i) {
+    for (int j = AES_128_GCM; j <= CHACHA20_POLY1305; ++j) {
+      test_serialize(j, i);
+    }
   }
 }
 
