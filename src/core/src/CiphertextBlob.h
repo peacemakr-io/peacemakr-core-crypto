@@ -22,7 +22,8 @@ ciphertext_blob_t *CiphertextBlob_new(crypto_config_t cfg, size_t iv_len,
 
 void CiphertextBlob_free(ciphertext_blob_t *ciphertext);
 
-void CiphertextBlob_set_version(ciphertext_blob_t *ciphertext, uint32_t version);
+void CiphertextBlob_set_version(ciphertext_blob_t *ciphertext,
+                                uint32_t version);
 const uint32_t CiphertextBlob_version(const ciphertext_blob_t *ciphertext);
 
 void CiphertextBlob_init_iv(ciphertext_blob_t *ciphertext,

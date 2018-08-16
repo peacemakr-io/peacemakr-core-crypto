@@ -74,6 +74,7 @@ bool decrypt(const peacemakr_key_t *key, const ciphertext_blob_t *cipher,
 
 // base64 encoded
 const uint8_t *serialize_blob(ciphertext_blob_t *cipher, size_t *out_size);
-const ciphertext_blob_t *deserialize_blob(const uint8_t *serialized_cipher);
+const ciphertext_blob_t *deserialize_blob(const uint8_t *b64_serialized_cipher,
+                                          size_t serialized_len);
 
 #endif // PEACEMAKR_CORE_CRYPTO_CRYPTO_H

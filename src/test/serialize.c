@@ -48,7 +48,7 @@ void test_serialize(symmetric_cipher symm_cipher, asymmetric_cipher cipher) {
   const uint8_t *serialized = serialize_blob(ciphertext, &out_size);
   assert(serialized != NULL);
 
-  ciphertext_blob_t *deserialized = deserialize_blob(serialized);
+  ciphertext_blob_t *deserialized = deserialize_blob(serialized, out_size);
   bool success = decrypt(key, deserialized, &plaintext_out);
 
   assert(success);
