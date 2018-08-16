@@ -42,3 +42,7 @@ install(TARGETS peacemakr-core-crypto
         PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_PREFIX}/include/peacemakr"
         COMPONENT dev
 )
+
+if (BUILD_TESTS)
+    add_subdirectory(test)
+endif(BUILD_TESTS)

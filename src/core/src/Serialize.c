@@ -263,7 +263,7 @@ const ciphertext_blob_t *deserialize_blob(const uint8_t *b64_serialized_cipher,
       serialized_cipher + len_before_digest + sizeof(size_t);
 
   rc = memcmp(Buffer_get_bytes(digest_buf, NULL), serialized_digest_ptr,
-                  digestlen);
+              digestlen);
   if (rc != 0) {
     PEACEMAKR_ERROR("digests don't compare equal, aborting\n");
     return NULL;

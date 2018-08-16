@@ -29,9 +29,6 @@ find_package(OpenSSL 1.1 REQUIRED)
 set(ALL_C_SOURCE_FILES "")
 
 add_subdirectory(src/core)
-if (BUILD_TESTS)
-    add_subdirectory(src/test)
-endif(BUILD_TESTS)
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/AddClangFormat.cmake)
 

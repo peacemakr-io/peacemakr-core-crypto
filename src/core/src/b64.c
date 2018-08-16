@@ -8,6 +8,7 @@
 
 // From https://nachtimwald.com/2017/11/18/base64-encode-and-decode-in-c/
 
+#include "b64.h"
 #include "Logging.h"
 
 #include <stdlib.h>
@@ -31,9 +32,7 @@ size_t b64_encoded_size(size_t inlen) {
 char *b64_encode(const unsigned char *in, size_t len) {
   char *out;
   size_t elen;
-  size_t i;
-  size_t j;
-  size_t v;
+  size_t i, j, v;
 
   if (in == NULL || len == 0)
     return NULL;
@@ -93,29 +92,19 @@ const int b64invs[] = {62, -1, -1, -1, 63, 52, 53, 54, 55, 56, 57, 58, 59, 60,
                        28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41,
                        42, 43, 44, 45, 46, 47, 48, 49, 50, 51};
 
-void b64_generate_decode_table() {
-  int inv[80];
-  size_t i;
-
-  memset(inv, -1, sizeof(inv));
-  for (i = 0; i < sizeof(b64chars) - 1; i++) {
-    inv[b64chars[i] - 43] = i;
-  }
-}
-
-int b64_isvalidchar(char c) {
+bool b64_isvalidchar(char c) {
   if (c >= '0' && c <= '9')
-    return 1;
+    return true;
   if (c >= 'A' && c <= 'Z')
-    return 1;
+    return true;
   if (c >= 'a' && c <= 'z')
-    return 1;
+    return true;
   if (c == '+' || c == '/' || c == '=')
-    return 1;
-  return 0;
+    return true;
+  return false;
 }
 
-int b64_decode(const char *in, unsigned char *out, size_t outlen) {
+bool b64_decode(const char *in, unsigned char *out, size_t outlen) {
   size_t len;
   size_t i;
   size_t j;
@@ -146,11 +135,11 @@ int b64_decode(const char *in, unsigned char *out, size_t outlen) {
     v = in[i + 2] == '=' ? v << 6 : (v << 6) | b64invs[in[i + 2] - 43];
     v = in[i + 3] == '=' ? v << 6 : (v << 6) | b64invs[in[i + 3] - 43];
 
-    out[j] = (v >> 16) & 0xFF;
+    out[j] = (unsigned char)((v >> 16) & 0xFF);
     if (in[i + 2] != '=')
-      out[j + 1] = (v >> 8) & 0xFF;
+      out[j + 1] = (unsigned char)((v >> 8) & 0xFF);
     if (in[i + 3] != '=')
-      out[j + 2] = v & 0xFF;
+      out[j + 2] = (unsigned char)(v & 0xFF);
   }
 
   return 1;
