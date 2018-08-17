@@ -14,6 +14,7 @@
 
 #include <openssl/evp.h>
 #include <stdbool.h>
+#include <memory.h>
 
 static bool symmetric_encrypt(const peacemakr_key_t *peacemakrkey,
                               ciphertext_blob_t *out,
@@ -606,8 +607,15 @@ bool decrypt(const peacemakr_key_t *key, const ciphertext_blob_t *cipher,
   }
 
   if (success) {
-    plain->aad = Buffer_get_bytes(aad, &plain->aad_len);
-    plain->data = Buffer_get_bytes(plaintext, &plain->data_len);
+    unsigned char *tmp_aad = Buffer_get_bytes(aad, &plain->aad_len);
+    plain->aad = calloc(plain->aad_len, sizeof(unsigned char));
+    memcpy(plain->aad, tmp_aad, plain->aad_len);
+    Buffer_free(aad);
+
+    unsigned char *tmp_plain = Buffer_get_bytes(plaintext, &plain->data_len);
+    plain->data = calloc(plain->data_len, sizeof(unsigned char));
+    memcpy(plain->data, tmp_plain, plain->data_len);
+    Buffer_free(plaintext);
   }
 
   return success;

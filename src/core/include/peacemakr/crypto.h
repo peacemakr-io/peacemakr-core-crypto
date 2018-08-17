@@ -26,9 +26,9 @@ typedef enum {
 
 typedef enum {
   NONE,
-  //  EC25519, // SealInit fails when using EC25519 - reason unknown
   RSA_2048,
   RSA_4096,
+  //  EC25519, // SealInit fails when using EC25519 - reason unknown
 } asymmetric_cipher;
 
 typedef enum { SHA_224, SHA_256, SHA_384, SHA_512 } message_digest_algorithm;
@@ -61,7 +61,7 @@ typedef struct PeacemakrKey
     peacemakr_key_t; // this will have inside it the EVP_PKEY or
                      // alternatively just the symmetric key
 
-peacemakr_key_t *PeacemakrKey_new(crypto_config_t cfg, random_device_t rand);
+peacemakr_key_t *PeacemakrKey_new(crypto_config_t cfg, random_device_t *rand);
 peacemakr_key_t *PeacemakrKey_new_bytes(crypto_config_t cfg,
                                         const uint8_t *buf);
 void PeacemakrKey_free(peacemakr_key_t *key);

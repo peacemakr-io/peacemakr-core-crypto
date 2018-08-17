@@ -39,7 +39,7 @@ void test_serialize(symmetric_cipher symm_cipher, asymmetric_cipher cipher) {
           .err = &rand_err
   };
 
-  peacemakr_key_t *key = PeacemakrKey_new(cfg, rand);
+  peacemakr_key_t *key = PeacemakrKey_new(cfg, &rand);
 
   ciphertext_blob_t *ciphertext = encrypt(cfg, key, &plaintext_in, &rand);
   assert(ciphertext != NULL);

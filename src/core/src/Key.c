@@ -60,14 +60,14 @@ typedef struct PeacemakrKey peacemakr_key_t;
 #define GLUE(prefix, name) prefix##name
 #define API(name) GLUE(PeacemakrKey_, name)
 
-peacemakr_key_t *API(new)(crypto_config_t cfg, random_device_t rand) {
+peacemakr_key_t *API(new)(crypto_config_t cfg, random_device_t *rand) {
   peacemakr_key_t *out = malloc(sizeof(peacemakr_key_t));
 
   const EVP_CIPHER *cipher = parse_cipher(cfg.symm_cipher);
   size_t keylen = (size_t)EVP_CIPHER_key_length(cipher);
 
   out->m_contents_ = Buffer_new(keylen);
-  Buffer_init_rand(out->m_contents_, &rand);
+  Buffer_init_rand(out->m_contents_, rand);
 
   if (cfg.mode == ASYMMETRIC) {
     out->m_evp_pkey_ = NULL;
