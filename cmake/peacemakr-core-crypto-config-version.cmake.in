@@ -1,0 +1,19 @@
+#
+# Created by Aman LaChapelle on 7/20/18.
+#
+# peacemakr-core-crypto
+# Copyright (c) 2018 peacemakr
+# Full license at peacemakr-core-crypto/LICENSE.txt
+#
+
+set(PACKAGE_VERSION "@PEACEMAKR_CORE_CRYPTO_VERSION@")
+
+# Check whether the requested PACKAGE_FIND_VERSION is compatible
+if("${PACKAGE_VERSION}" VERSION_LESS "${PACKAGE_FIND_VERSION}")
+  set(PACKAGE_VERSION_COMPATIBLE FALSE)
+else()
+  set(PACKAGE_VERSION_COMPATIBLE TRUE)
+  if ("${PACKAGE_VERSION}" VERSION_EQUAL "${PACKAGE_FIND_VERSION}")
+    set(PACKAGE_VERSION_EXACT TRUE)
+  endif()
+endif()

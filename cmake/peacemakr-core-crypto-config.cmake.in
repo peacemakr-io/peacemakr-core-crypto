@@ -1,0 +1,22 @@
+#
+# Created by Aman LaChapelle on 7/20/18.
+#
+# peacemakr-core-crypto
+# Copyright (c) 2018 peacemakr
+# Full license at peacemakr-core-crypto/LICENSE.txt
+#
+# - Config file for the FooBar package
+# It defines the following variables
+#  PEACEMAKR_CORE_CRYPTO_INCLUDE_DIRS - include directories for peacemakr-core-crypto
+#  PEACEMAKR_CORE_CRYPTO_LIBRARIES    - libraries to link against
+
+# Compute paths
+get_filename_component(PEACEMAKR_CORE_CRYPTO_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
+set(PEACEMAKR_CORE_CRYPTO_INCLUDE_DIRS "@CONF_INCLUDE_DIRS@")
+
+# Our library dependencies (contains definitions for IMPORTED targets)
+if(NOT TARGET peacemakr-core-crypto AND NOT PEACEMAKR_CORE_CRYPTO_BINARY_DIR)
+  include("${PEACEMAKR_CORE_CRYPTO_CMAKE_DIR}/peacemakr-core-crypto-targets.cmake")
+endif()
+
+set(PEACEMAKR_CORE_CRYPTO_LIBRARIES peacemakr-core-crypto)

@@ -17,7 +17,6 @@ if (NOT __CLANG_FORMAT_INCLUDED)
                 -i
                 -style=llvm
                 ${ALL_C_SOURCE_FILES}
-
         )
     endif(CLANG_FORMAT)
 endif (NOT __CLANG_FORMAT_INCLUDED)
