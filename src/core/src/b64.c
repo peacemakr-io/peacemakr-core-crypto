@@ -29,7 +29,7 @@ size_t b64_encoded_size(size_t inlen) {
   return ret;
 }
 
-char *b64_encode(const unsigned char *in, size_t len) {
+char *b64_encode(const unsigned char *in, size_t len, size_t *enc_len) {
   char *out;
   size_t elen;
   size_t i, j, v;
@@ -38,6 +38,7 @@ char *b64_encode(const unsigned char *in, size_t len) {
     return NULL;
 
   elen = b64_encoded_size(len);
+  *enc_len = elen + 1;
   out = malloc(elen + 1);
   out[elen] = '\0';
 
@@ -111,20 +112,20 @@ bool b64_decode(const char *in, unsigned char *out, size_t outlen) {
   int v;
 
   if (in == NULL || out == NULL) {
-    PEACEMAKR_ERROR("parameter was null");
+    PEACEMAKR_ERROR("parameter was null\n");
     return 0;
   }
 
   len = strlen(in);
   if (outlen < b64_decoded_size(in) || len % 4 != 0) {
     PEACEMAKR_ERROR("outlen was either too small or not divisible by 4 "
-                    "(corrupted message)");
+                    "(corrupted message)\n");
     return 0;
   }
 
   for (i = 0; i < len; i++) {
     if (!b64_isvalidchar(in[i])) {
-      PEACEMAKR_ERROR("invalid char encountered");
+      PEACEMAKR_ERROR("invalid char encountered\n");
       return 0;
     }
   }

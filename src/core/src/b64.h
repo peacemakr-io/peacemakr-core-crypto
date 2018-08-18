@@ -14,7 +14,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-char *b64_encode(const unsigned char *in, size_t len);
+char *b64_encode(const unsigned char *in, size_t len, size_t *enc_len);
 bool b64_decode(const char *in, unsigned char *out, size_t outlen);
 
 #endif // PEACEMAKR_CORE_CRYPTO_B64_H

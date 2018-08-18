@@ -12,9 +12,9 @@
 #include <EVPHelper.h>
 #include <Key.h>
 
+#include <memory.h>
 #include <openssl/evp.h>
 #include <stdbool.h>
-#include <memory.h>
 
 static bool symmetric_encrypt(const peacemakr_key_t *peacemakrkey,
                               ciphertext_blob_t *out,
@@ -594,7 +594,7 @@ ciphertext_blob_t *encrypt(crypto_config_t cfg, const peacemakr_key_t *key,
 bool decrypt(const peacemakr_key_t *key, const ciphertext_blob_t *cipher,
              plaintext_t *plain) {
   bool success = false;
-  buffer_t *plaintext, *aad;
+  buffer_t *plaintext = NULL, *aad = NULL;
   switch (CiphertextBlob_encryption_mode(cipher)) {
   case SYMMETRIC: {
     success = symmetric_decrypt(key, cipher, &plaintext, &aad);
@@ -607,14 +607,15 @@ bool decrypt(const peacemakr_key_t *key, const ciphertext_blob_t *cipher,
   }
 
   if (success) {
-    unsigned char *tmp_aad = Buffer_get_bytes(aad, &plain->aad_len);
+    const unsigned char *tmp_aad = Buffer_get_bytes(aad, &plain->aad_len);
     plain->aad = calloc(plain->aad_len, sizeof(unsigned char));
-    memcpy(plain->aad, tmp_aad, plain->aad_len);
+    memcpy((void *)plain->aad, tmp_aad, plain->aad_len);
     Buffer_free(aad);
 
-    unsigned char *tmp_plain = Buffer_get_bytes(plaintext, &plain->data_len);
+    const unsigned char *tmp_plain =
+        Buffer_get_bytes(plaintext, &plain->data_len);
     plain->data = calloc(plain->data_len, sizeof(unsigned char));
-    memcpy(plain->data, tmp_plain, plain->data_len);
+    memcpy((void *)plain->data, tmp_plain, plain->data_len);
     Buffer_free(plaintext);
   }
 

@@ -22,7 +22,7 @@ ENV PATH=/usr/lib/llvm-6.0/bin:$PATH
 
 RUN update-alternatives --install /usr/bin/cc cc /usr/lib/llvm-6.0/bin/clang 100
 
-ADD "https://cmake.org/files/v3.12/cmake-3.12.0-Linux-x86_64.sh" "/cmake-3.12.0-Linux-x86_64.sh"
+ADD "docker/resources/cmake-3.12.0-Linux-x86_64.sh" "/cmake-3.12.0-Linux-x86_64.sh"
 RUN mkdir /opt/cmake &&\
         sh /cmake-3.12.0-Linux-x86_64.sh --prefix=/opt/cmake --skip-license &&\
         ln -s /opt/cmake/bin/cmake /usr/local/bin/cmake

@@ -14,7 +14,7 @@
 
 #include "test_helper.h"
 
-const char *message = "Hello, world! I'm testing encryption."; // 37 + 1
+const char *message = "Hello, world! I'm testing encryption from C!"; // 37 + 1
 const char *message_aad = "And I'm AAD"; // 11 + 1
 
 void test_serialize(symmetric_cipher symm_cipher, asymmetric_cipher cipher) {
@@ -48,7 +48,7 @@ void test_serialize(symmetric_cipher symm_cipher, asymmetric_cipher cipher) {
   const uint8_t *serialized = serialize_blob(ciphertext, &out_size);
   assert(serialized != NULL);
 
-  ciphertext_blob_t *deserialized = deserialize_blob(serialized, out_size);
+  const ciphertext_blob_t *deserialized = deserialize_blob(serialized, out_size);
   bool success = decrypt(key, deserialized, &plaintext_out);
 
   assert(success);

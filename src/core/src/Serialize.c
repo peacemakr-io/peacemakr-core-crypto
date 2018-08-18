@@ -6,14 +6,15 @@
 // Full license at peacemakr-core-crypto/LICENSE.txt
 //
 
-#include <Buffer.h>
 #include <crypto.h>
 
+#include "Buffer.h"
 #include "CiphertextBlob.h"
 #include "EVPHelper.h"
+#include "Logging.h"
 #include "b64.h"
 
-#include <Logging.h>
+#include <arpa/inet.h>
 #include <memory.h>
 
 #include <openssl/bio.h>
@@ -65,7 +66,7 @@ const uint8_t *serialize_blob(ciphertext_blob_t *cipher, size_t *out_size) {
   size_t buffer_len = sizeof(uint32_t); // magic number
   buffer_len += sizeof(uint64_t);       // size of message up until digest
   buffer_len += sizeof(uint32_t);       // digest algo
-  buffer_len += sizeof(uint32_t) * 4;   // version, encryption mode, ciphers
+  buffer_len += sizeof(uint32_t) * 4;   // version, encryption mode, symm_cipher, asymm_cipher
 
   const buffer_t *encrypted_key = CiphertextBlob_encrypted_key(cipher);
   buffer_len += sizeof(size_t);
@@ -214,8 +215,7 @@ const uint8_t *serialize_blob(ciphertext_blob_t *cipher, size_t *out_size) {
     current_pos += sizeof(size_t);
   }
 
-  *out_size = current_pos;
-  return (uint8_t *)b64_encode(buf, *out_size);
+  return (uint8_t *)b64_encode(buf, current_pos, out_size);
 }
 
 const ciphertext_blob_t *deserialize_blob(const uint8_t *b64_serialized_cipher,
@@ -225,7 +225,7 @@ const ciphertext_blob_t *deserialize_blob(const uint8_t *b64_serialized_cipher,
   int rc = b64_decode((const char *)b64_serialized_cipher, serialized_cipher,
                       serialized_len);
   if (serialized_cipher == NULL || rc != 1) {
-    PEACEMAKR_ERROR("b64 decode failed");
+    PEACEMAKR_ERROR("b64 decode failed\n");
     return NULL;
   }
 
