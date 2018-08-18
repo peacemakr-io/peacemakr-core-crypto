@@ -1,0 +1,6 @@
+module PeacemakrCoreCrypto [system] [extern_c] {
+    header "@CMAKE_INSTALL_PREFIX@/peacemakr/crypto.h"
+    header "@CMAKE_INSTALL_PREFIX@/peacemakr/random.h"
+    link "peacemakr-core-crypto"
+    export *
+}
