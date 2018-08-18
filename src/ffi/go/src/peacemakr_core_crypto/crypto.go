@@ -21,8 +21,8 @@ package peacemakr_core_crypto
 import "C"
 import (
 	"crypto/rand"
-	"unsafe"
 	"fmt"
+	"unsafe"
 )
 
 //export go_rng
