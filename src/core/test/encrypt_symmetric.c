@@ -40,10 +40,10 @@ void test_symmetric_algo(symmetric_cipher cipher) {
 
   peacemakr_key_t *key = PeacemakrKey_new(cfg, &rand);
 
-  ciphertext_blob_t *ciphertext = encrypt(cfg, key, &plaintext_in, &rand);
+  ciphertext_blob_t *ciphertext = peacemakr_encrypt(cfg, key, &plaintext_in, &rand);
   assert(ciphertext != NULL);
 
-  bool success = decrypt(key, ciphertext, &plaintext_out);
+  bool success = peacemakr_decrypt(key, ciphertext, &plaintext_out);
 
   assert(success);
 
