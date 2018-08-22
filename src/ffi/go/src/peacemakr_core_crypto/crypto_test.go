@@ -32,7 +32,10 @@ func TestAsymmetricEncrypt(t *testing.T) {
 
 			key := NewPeacemakrKey(cfg, randomDevice)
 
-			ciphertext := Encrypt(cfg, key, plaintextIn, randomDevice)
+			ciphertext, err := Encrypt(cfg, key, plaintextIn, randomDevice)
+			if err != nil {
+				t.Fatalf("%v", err)
+			}
 
 			plaintextOut, success := Decrypt(key, ciphertext)
 			if !success {
@@ -68,7 +71,10 @@ func TestSymmetricEncrypt(t *testing.T) {
 
 		key := NewPeacemakrKey(cfg, randomDevice)
 
-		ciphertext := Encrypt(cfg, key, plaintextIn, randomDevice)
+		ciphertext, err := Encrypt(cfg, key, plaintextIn, randomDevice)
+		if err != nil {
+			t.Fatalf("%v", err)
+		}
 
 		plaintextOut, success := Decrypt(key, ciphertext)
 		if !success {
@@ -105,14 +111,23 @@ func TestSerialize(t *testing.T) {
 
 				key := NewPeacemakrKey(cfg, randomDevice)
 
-				ciphertext := Encrypt(cfg, key, plaintextIn, randomDevice)
+				ciphertext, err := Encrypt(cfg, key, plaintextIn, randomDevice)
+				if err != nil {
+					t.Fatalf("%v", err)
+				}
 
-				serialized := Serialize(ciphertext)
+				serialized, err := Serialize(ciphertext)
+				if err != nil {
+					t.Fatalf("%v", err)
+				}
 				if serialized == nil {
 					t.Fatalf("serialize failed")
 				}
 
-				newCiphertext := Deserialize(serialized)
+				newCiphertext, err := Deserialize(serialized)
+				if err != nil {
+					t.Fatalf("%v", err)
+				}
 
 				plaintextOut, success := Decrypt(key, newCiphertext)
 				if !success {

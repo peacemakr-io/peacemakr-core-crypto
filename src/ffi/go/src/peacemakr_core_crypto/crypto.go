@@ -29,7 +29,7 @@ package peacemakr_core_crypto
 import "C"
 import (
 	"crypto/rand"
-	"fmt"
+	"errors"
 	"unsafe"
 )
 
@@ -39,6 +39,12 @@ func go_rng(buf *C.uchar, size C.size_t) C.int {
 	_, err := rand.Read(randomBytes)
 	if err != nil {
 		return 1
+	}
+	if buf == nil {
+		return 2
+	}
+	if size == 0 {
+		return 3
 	}
 	C.memcpy(unsafe.Pointer(buf), unsafe.Pointer(&randomBytes[0]), size)
 	return 0
@@ -51,6 +57,10 @@ func go_rng_err(err C.int) *C.char {
 		return nil
 	case 1:
 		return C.CString("error ocurred while reading random numbers")
+	case 2:
+		return C.CString("buf passed in was nil")
+	case 3:
+		return C.CString("size passed in was zero")
 	}
 	return nil
 }
@@ -130,6 +140,10 @@ func plaintextToInternal(plaintext Plaintext) C.plaintext_t {
 }
 
 func freeInternalPlaintext(internalPlaintext C.plaintext_t) {
+	if internalPlaintext == nil {
+		return
+	}
+
 	C.free(unsafe.Pointer(internalPlaintext.data))
 	C.free(unsafe.Pointer(internalPlaintext.aad))
 }
@@ -160,20 +174,25 @@ func DestroyPeacemakrKey(key PeacemakrKey) {
 	C.PeacemakrKey_free((*C.peacemakr_key_t)(key.key))
 }
 
-func Encrypt(cfg CryptoConfig, key PeacemakrKey, plaintext Plaintext, rand RandomDevice) CiphertextBlob {
+func Encrypt(cfg CryptoConfig, key PeacemakrKey, plaintext Plaintext, rand RandomDevice) (*CiphertextBlob, error) {
 	cPlaintext := plaintextToInternal(plaintext)
 	defer freeInternalPlaintext(cPlaintext)
 
-	return CiphertextBlob{
-		C.encrypt(configToInternal(cfg), key.key, (*C.plaintext_t)(unsafe.Pointer(&cPlaintext)), (*C.random_device_t)(unsafe.Pointer(&rand.randomDevice))),
+	blob := C.peacemakr_encrypt(configToInternal(cfg), key.key, (*C.plaintext_t)(unsafe.Pointer(&cPlaintext)), (*C.random_device_t)(unsafe.Pointer(&rand.randomDevice)))
+
+	if blob == nil {
+		return nil, errors.New("encryption failed")
 	}
+	return &CiphertextBlob{
+		blob: blob,
+	}, nil
 }
 
-func Decrypt(key PeacemakrKey, ciphertext CiphertextBlob) (Plaintext, bool) {
+func Decrypt(key PeacemakrKey, ciphertext *CiphertextBlob) (Plaintext, bool) {
 	var plaintext C.plaintext_t
 	defer freeInternalPlaintext(plaintext)
 
-	out := C.decrypt(key.key, ciphertext.blob, (*C.plaintext_t)(unsafe.Pointer(&plaintext)))
+	out := C.peacemakr_decrypt(key.key, ciphertext.blob, (*C.plaintext_t)(unsafe.Pointer(&plaintext)))
 
 	return Plaintext{
 		data: C.GoBytes(unsafe.Pointer(plaintext.data), C.int(plaintext.data_len)),
@@ -181,20 +200,24 @@ func Decrypt(key PeacemakrKey, ciphertext CiphertextBlob) (Plaintext, bool) {
 	}, bool(out)
 }
 
-func Serialize(blob CiphertextBlob) []byte {
+func Serialize(blob *CiphertextBlob) ([]byte, error) {
 	var cSize C.size_t
 	serialized := C.serialize_blob(blob.blob, (*C.size_t)(unsafe.Pointer(&cSize)))
-	fmt.Println(cSize)
-	return C.GoBytes(unsafe.Pointer(serialized), C.int(cSize))
+	if serialized == nil {
+		return nil, errors.New("serialization failed")
+	}
+	return C.GoBytes(unsafe.Pointer(serialized), C.int(cSize)), nil
 }
 
-func Deserialize(serialized []byte) CiphertextBlob {
+func Deserialize(serialized []byte) (*CiphertextBlob, error) {
 	cBlobBytes := C.CBytes(serialized)
 	defer C.free(cBlobBytes)
 	cBlobLen := C.size_t(len(serialized))
-	fmt.Println(cBlobLen)
 	deserialized := C.deserialize_blob((*C.uchar)(cBlobBytes), cBlobLen)
-	return CiphertextBlob{
-		blob: deserialized,
+	if deserialized == nil {
+		return nil, errors.New("deserialization failed")
 	}
+	return &CiphertextBlob{
+		blob: deserialized,
+	}, nil
 }
