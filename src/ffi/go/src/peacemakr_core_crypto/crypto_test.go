@@ -10,8 +10,20 @@ package peacemakr_core_crypto
 
 import (
 	"bytes"
+	"math/rand"
 	"testing"
 )
+
+func SetUpPlaintext() Plaintext {
+	pData := make([]byte, rand.Uint32()%10000) // mod for test time
+	pAAD := make([]byte, rand.Uint32()%10000)
+	rand.Read(pData)
+	rand.Read(pAAD)
+	return Plaintext{
+		data: pData,
+		aad:  pAAD,
+	}
+}
 
 func TestAsymmetricEncrypt(t *testing.T) {
 	for i := RSA_2048; i <= RSA_4096; i++ {
@@ -23,10 +35,7 @@ func TestAsymmetricEncrypt(t *testing.T) {
 				digestAlgorithm:  SHA_512,
 			}
 
-			plaintextIn := Plaintext{
-				data: []byte("Hello world, I'm testing encryption from go!"),
-				aad:  []byte("And I'm AAD from go"),
-			}
+			plaintextIn := SetUpPlaintext()
 
 			randomDevice := NewRandomDevice()
 
@@ -62,10 +71,7 @@ func TestSymmetricEncrypt(t *testing.T) {
 			digestAlgorithm:  SHA_512,
 		}
 
-		plaintextIn := Plaintext{
-			data: []byte("Hello world, I'm testing encryption from go!"),
-			aad:  []byte("And I'm AAD from go"),
-		}
+		plaintextIn := SetUpPlaintext()
 
 		randomDevice := NewRandomDevice()
 
@@ -102,10 +108,7 @@ func TestSerialize(t *testing.T) {
 					digestAlgorithm:  k,
 				}
 
-				plaintextIn := Plaintext{
-					data: []byte("Hello world, I'm testing encryption from go!"),
-					aad:  []byte("And I'm AAD from go"),
-				}
+				plaintextIn := SetUpPlaintext()
 
 				randomDevice := NewRandomDevice()
 

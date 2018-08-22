@@ -35,7 +35,7 @@ import (
 
 //export go_rng
 func go_rng(buf *C.uchar, size C.size_t) C.int {
-	var randomBytes = make([]byte, size)
+	randomBytes := make([]byte, size)
 	_, err := rand.Read(randomBytes)
 	if err != nil {
 		return 1
@@ -139,7 +139,7 @@ func plaintextToInternal(plaintext Plaintext) C.plaintext_t {
 	}
 }
 
-func freeInternalPlaintext(internalPlaintext C.plaintext_t) {
+func freeInternalPlaintext(internalPlaintext *C.plaintext_t) {
 	if internalPlaintext == nil {
 		return
 	}
@@ -176,7 +176,7 @@ func DestroyPeacemakrKey(key PeacemakrKey) {
 
 func Encrypt(cfg CryptoConfig, key PeacemakrKey, plaintext Plaintext, rand RandomDevice) (*CiphertextBlob, error) {
 	cPlaintext := plaintextToInternal(plaintext)
-	defer freeInternalPlaintext(cPlaintext)
+	defer freeInternalPlaintext(&cPlaintext)
 
 	blob := C.peacemakr_encrypt(configToInternal(cfg), key.key, (*C.plaintext_t)(unsafe.Pointer(&cPlaintext)), (*C.random_device_t)(unsafe.Pointer(&rand.randomDevice)))
 
@@ -190,7 +190,7 @@ func Encrypt(cfg CryptoConfig, key PeacemakrKey, plaintext Plaintext, rand Rando
 
 func Decrypt(key PeacemakrKey, ciphertext *CiphertextBlob) (Plaintext, bool) {
 	var plaintext C.plaintext_t
-	defer freeInternalPlaintext(plaintext)
+	defer freeInternalPlaintext(&plaintext)
 
 	out := C.peacemakr_decrypt(key.key, ciphertext.blob, (*C.plaintext_t)(unsafe.Pointer(&plaintext)))
 
