@@ -543,7 +543,7 @@ static bool asymmetric_decrypt(const peacemakr_key_t *peacemakrkey,
   return true;
 }
 
-ciphertext_blob_t *encrypt(crypto_config_t cfg, const peacemakr_key_t *key,
+ciphertext_blob_t *peacemakr_encrypt(crypto_config_t cfg, const peacemakr_key_t *key,
                            const plaintext_t *plain, random_device_t *rand) {
 
   const EVP_CIPHER *cipher = parse_cipher(cfg.symm_cipher);
@@ -591,7 +591,7 @@ ciphertext_blob_t *encrypt(crypto_config_t cfg, const peacemakr_key_t *key,
   return out;
 }
 
-bool decrypt(const peacemakr_key_t *key, const ciphertext_blob_t *cipher,
+bool peacemakr_decrypt(const peacemakr_key_t *key, const ciphertext_blob_t *cipher,
              plaintext_t *plain) {
   bool success = false;
   buffer_t *plaintext = NULL, *aad = NULL;
