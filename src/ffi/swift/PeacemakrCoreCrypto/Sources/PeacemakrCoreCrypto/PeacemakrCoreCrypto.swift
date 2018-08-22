@@ -180,7 +180,7 @@ public class PeacemakrKey {
 public func Encrypt(config: CryptoConfig, key: PeacemakrKey, plaintext: Plaintext, rand: RandomDevice) -> CiphertextBlob {
     var p = GetPlaintext(plain: plaintext)
     return CiphertextBlob(
-            blob: encrypt(
+            blob: peacemakr_encrypt(
                     GetCryptoConfig(config: config),
                     key.key,
                     &p,
@@ -192,7 +192,7 @@ public func Encrypt(config: CryptoConfig, key: PeacemakrKey, plaintext: Plaintex
 public func Decrypt(key: PeacemakrKey, ciphertext: CiphertextBlob) -> (Plaintext, Bool) {
     var plaintext = plaintext_t(data: "", data_len: 0, aad: "", aad_len: 0)
 
-    let success = decrypt(key.key, ciphertext.blob, &plaintext)
+    let success = peacemakr_decrypt(key.key, ciphertext.blob, &plaintext)
     return (SetPlaintext(plain: plaintext), success)
 }
 
