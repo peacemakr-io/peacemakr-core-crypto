@@ -53,6 +53,8 @@ public func NewRandomDevice() -> RandomDevice {
 enum EncryptionMode {
     case SYMMETRIC
     case ASYMMETRIC
+
+    static let AllValues = [SYMMETRIC, ASYMMETRIC]
 }
 
 fileprivate func GetEncryptionMode(mode: EncryptionMode) -> encryption_mode {
@@ -69,6 +71,8 @@ public enum SymmetricCipher {
     case AES_192_GCM
     case AES_256_GCM
     case CHACHA20_POLY1305
+
+    static let AllValues = [AES_128_GCM, AES_192_GCM, AES_256_GCM, CHACHA20_POLY1305]
 }
 
 fileprivate func GetSymmetricCipher(algo: SymmetricCipher) -> symmetric_cipher {
@@ -89,6 +93,8 @@ public enum AsymmetricCipher {
     case RSA_2048
     case RSA_4096
 //    case EC25519
+
+    static let AllValues = [RSA_2048, RSA_4096]
 }
 
 fileprivate func GetAsymmetricCipher(algo: AsymmetricCipher) -> asymmetric_cipher {
@@ -107,6 +113,8 @@ public enum MessageDigestAlgorithm {
     case SHA_256
     case SHA_384
     case SHA_512
+
+    static let AllValues = [SHA_224, SHA_256, SHA_384, SHA_512]
 }
 
 fileprivate func GetMessageDigestAlgorithm(algo: MessageDigestAlgorithm) -> message_digest_algorithm {
