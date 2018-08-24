@@ -16,7 +16,7 @@ public struct RandomDevice {
     var generator: (@convention(c) (Optional<UnsafeMutablePointer<UInt8>>, Int) -> Int32)
     var err: (@convention(c) (Int32) -> Optional<UnsafePointer<CChar>>)
     
-    mutating func get() -> random_device_t {
+    fileprivate mutating func get() -> random_device_t {
         return random_device_t(
             generator: self.generator,
             err: self.err
