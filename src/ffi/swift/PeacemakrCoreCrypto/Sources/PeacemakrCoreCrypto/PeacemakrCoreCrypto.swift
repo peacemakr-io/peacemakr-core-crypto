@@ -15,6 +15,13 @@ import PeacemakrCoreCrypto_C
 public struct RandomDevice {
     var generator: (@convention(c) (Optional<UnsafeMutablePointer<UInt8>>, Int) -> Int32)
     var err: (@convention(c) (Int32) -> Optional<UnsafePointer<CChar>>)
+    
+    mutating func get() -> random_device_t {
+        return random_device_t(
+            generator: self.generator,
+            err: self.err
+        )
+    }
 }
 
 public func NewRandomDevice() -> RandomDevice {
@@ -23,7 +30,7 @@ public func NewRandomDevice() -> RandomDevice {
                 if buf == nil {
                     return 1
                 }
-                let status = SecRandomCopyBytes(kSecRandomDefault, num, buf)
+                let status = SecRandomCopyBytes(kSecRandomDefault, num, buf!)
                 if status != errSecSuccess {
                     return status
                 }
@@ -41,14 +48,6 @@ public func NewRandomDevice() -> RandomDevice {
                 }
             }
     )
-}
-
-fileprivate func GetRandomDevice(device: RandomDevice) -> UnsafeMutablePointer<random_device_t> {
-    var rand = random_device_t(
-            generator: device.generator,
-            err: device.err
-    )
-    return UnsafeMutablePointer(&rand)
 }
 
 enum EncryptionMode {
@@ -166,8 +165,9 @@ public struct CiphertextBlob {
 
 public class PeacemakrKey {
     var key: OpaquePointer
-    init(config: CryptoConfig, rand: RandomDevice) {
-        self.key = PeacemakrKey_new(GetCryptoConfig(config: config), GetRandomDevice(device: rand))
+    init(config: CryptoConfig, rand: inout RandomDevice) {
+        var innerRand = rand.get()
+        self.key = PeacemakrKey_new(GetCryptoConfig(config: config), &innerRand)
     }
     init(config: CryptoConfig, bytes: UnsafePointer<UInt8>) {
         self.key = PeacemakrKey_new_bytes(GetCryptoConfig(config: config), bytes)
@@ -177,14 +177,15 @@ public class PeacemakrKey {
     }
 }
 
-public func Encrypt(config: CryptoConfig, key: PeacemakrKey, plaintext: Plaintext, rand: RandomDevice) -> CiphertextBlob {
+public func Encrypt(config: CryptoConfig, key: PeacemakrKey, plaintext: Plaintext, rand: inout RandomDevice) -> CiphertextBlob {
     var p = GetPlaintext(plain: plaintext)
+    var innerRand = rand.get()
     return CiphertextBlob(
             blob: peacemakr_encrypt(
                     GetCryptoConfig(config: config),
                     key.key,
                     &p,
-                    GetRandomDevice(device: rand)
+                    &innerRand
             )
     )
 }
