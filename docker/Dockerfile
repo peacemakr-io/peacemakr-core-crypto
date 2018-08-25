@@ -37,8 +37,9 @@ RUN mkdir -p build && cd build && cmake .. && make check install
 
 FROM alpine:3.8
 
-COPY --from=builder /usr/local/lib /usr/local/lib
-COPY --from=builder /usr/local/include /usr/local/include
+COPY --from=builder /usr/local/lib/cmake /usr/local/lib/cmake
+COPY --from=builder /usr/local/lib/libpeacemakr* /usr/local/lib/
+COPY --from=builder /usr/local/include/peacemakr /usr/local/include/peacemakr
 COPY --from=builder /usr/lib/x86_64-linux-gnu/libcrypto* /usr/lib/
 COPY --from=builder /usr/lib/x86_64-linux-gnu/libssl* /usr/lib/
 COPY --from=builder /usr/include/openssl /usr/include/openssl
