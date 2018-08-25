@@ -49,6 +49,8 @@ void test_symmetric_algo(symmetric_cipher cipher) {
 
   assert(strncmp((const char *)plaintext_out.data, (const char *)plaintext_in.data, plaintext_in.data_len) == 0);
   assert(strncmp((const char *)plaintext_out.aad, (const char *)plaintext_in.aad, plaintext_in.data_len) == 0);
+
+  PeacemakrKey_free(key);
 }
 
 int main() {

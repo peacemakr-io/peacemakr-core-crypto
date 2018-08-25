@@ -62,11 +62,17 @@ static void digest_message(const unsigned char *message, size_t message_len,
   EVP_MD_CTX_destroy(mdctx);
 }
 
-const uint8_t *serialize_blob(ciphertext_blob_t *cipher, size_t *out_size) {
+uint8_t *serialize_blob(ciphertext_blob_t *cipher, size_t *out_size) {
+  if (cipher == NULL || out_size == NULL) {
+    PEACEMAKR_ERROR("cipher or out_size was null in call to serialize");
+    return NULL;
+  }
+
   size_t buffer_len = sizeof(uint32_t); // magic number
   buffer_len += sizeof(uint64_t);       // size of message up until digest
   buffer_len += sizeof(uint32_t);       // digest algo
-  buffer_len += sizeof(uint32_t) * 4;   // version, encryption mode, symm_cipher, asymm_cipher
+  buffer_len += sizeof(uint32_t) *
+                4; // version, encryption mode, symm_cipher, asymm_cipher
 
   const buffer_t *encrypted_key = CiphertextBlob_encrypted_key(cipher);
   buffer_len += sizeof(size_t);
@@ -104,7 +110,7 @@ const uint8_t *serialize_blob(ciphertext_blob_t *cipher, size_t *out_size) {
     buffer_len += Buffer_get_size(digest);
   }
 
-  uint8_t *buf = calloc(buffer_len, sizeof(uint8_t));
+  uint8_t *buf = alloca(buffer_len * sizeof(uint8_t));
 
   // magic
   uint32_t magic = htonl(_PEACEMAKR_MAGIC_);
@@ -215,15 +221,23 @@ const uint8_t *serialize_blob(ciphertext_blob_t *cipher, size_t *out_size) {
     current_pos += sizeof(size_t);
   }
 
+  CiphertextBlob_free(cipher);
+
   return (uint8_t *)b64_encode(buf, current_pos, out_size);
 }
 
-const ciphertext_blob_t *deserialize_blob(const uint8_t *b64_serialized_cipher,
-                                          size_t serialized_len) {
+ciphertext_blob_t *deserialize_blob(uint8_t *b64_serialized_cipher,
+                                    size_t serialized_len) {
+
+  if (b64_serialized_cipher == NULL || serialized_len == 0) {
+    PEACEMAKR_ERROR("b64 serialized cipher was NULL or serialized len was 0");
+    return NULL;
+  }
 
   uint8_t *serialized_cipher = alloca(serialized_len);
   int rc = b64_decode((const char *)b64_serialized_cipher, serialized_cipher,
                       serialized_len);
+  free(b64_serialized_cipher);
   if (serialized_cipher == NULL || rc != 1) {
     PEACEMAKR_ERROR("b64 decode failed\n");
     return NULL;
