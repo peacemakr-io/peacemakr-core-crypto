@@ -169,6 +169,9 @@ fileprivate func SetPlaintext(plain: plaintext_t) -> Plaintext {
 
 public struct CiphertextBlob {
     var blob: OpaquePointer
+    deinit {
+      cipher
+    }
 }
 
 public class PeacemakrKey {
