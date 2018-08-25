@@ -31,6 +31,13 @@ set(ALL_C_SOURCE_FILES "")
 add_subdirectory(src/core)
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/AddClangFormat.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/AddClangAnalyzer.cmake)
+
+# DOCS
+find_package(doxygen)
+if (DOXYGEN_FOUND)
+    doxygen_add_docs(doxygen ${CMAKE_CURRENT_SOURCE_DIR}/src COMMENT "Generate documentation pages")
+endif (DOXYGEN_FOUND)
 
 # INSTALL
 

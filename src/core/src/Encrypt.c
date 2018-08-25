@@ -543,8 +543,10 @@ static bool asymmetric_decrypt(const peacemakr_key_t *peacemakrkey,
   return true;
 }
 
-ciphertext_blob_t *peacemakr_encrypt(crypto_config_t cfg, const peacemakr_key_t *key,
-                           const plaintext_t *plain, random_device_t *rand) {
+ciphertext_blob_t *peacemakr_encrypt(crypto_config_t cfg,
+                                     const peacemakr_key_t *key,
+                                     const plaintext_t *plain,
+                                     random_device_t *rand) {
 
   const EVP_CIPHER *cipher = parse_cipher(cfg.symm_cipher);
   const int cipher_block_size = EVP_CIPHER_block_size(cipher);
@@ -591,8 +593,8 @@ ciphertext_blob_t *peacemakr_encrypt(crypto_config_t cfg, const peacemakr_key_t 
   return out;
 }
 
-bool peacemakr_decrypt(const peacemakr_key_t *key, const ciphertext_blob_t *cipher,
-             plaintext_t *plain) {
+bool peacemakr_decrypt(const peacemakr_key_t *key, ciphertext_blob_t *cipher,
+                       plaintext_t *plain) {
   bool success = false;
   buffer_t *plaintext = NULL, *aad = NULL;
   switch (CiphertextBlob_encryption_mode(cipher)) {
@@ -618,6 +620,9 @@ bool peacemakr_decrypt(const peacemakr_key_t *key, const ciphertext_blob_t *ciph
     memcpy((void *)plain->data, tmp_plain, plain->data_len);
     Buffer_free(plaintext);
   }
+
+  CiphertextBlob_free(cipher);
+  cipher = NULL;
 
   return success;
 }
