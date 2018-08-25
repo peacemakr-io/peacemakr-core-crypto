@@ -105,9 +105,9 @@ final class PeacemakrCoreCryptoTests: XCTestCase {
                     let ciphertext = Encrypt(config: cfg, key: key, plaintext: plaintextIn, rand: &randDevice)
                     XCTAssertNotNil(ciphertext.blob)
 
-                    let serialized = Serialize(ciphertext: ciphertext)
+                    var serialized = Serialize(ciphertext: ciphertext)
 
-                    let deserializedCiphertext = Deserialize(serialized: serialized)
+                    let deserializedCiphertext = Deserialize(serialized: &serialized)
 
                     let (plaintextOut, success) = Decrypt(key: key, ciphertext: deserializedCiphertext)
                     XCTAssertTrue(success)

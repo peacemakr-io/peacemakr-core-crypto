@@ -169,9 +169,9 @@ fileprivate func SetPlaintext(plain: plaintext_t) -> Plaintext {
 
 public struct CiphertextBlob {
     var blob: OpaquePointer
-    deinit {
-      cipher
-    }
+//    deinit {
+//      cipher
+//    }
 }
 
 public class PeacemakrKey {
@@ -211,11 +211,10 @@ public func Decrypt(key: PeacemakrKey, ciphertext: CiphertextBlob) -> (Plaintext
 public func Serialize(ciphertext: CiphertextBlob) -> [UInt8] {
     var out_size = 0
     let serialized = serialize_blob(ciphertext.blob, UnsafeMutablePointer<Int>(&out_size))
-    let out = UnsafeBufferPointer(start: serialized, count: out_size)
-    return Array(out)
+    return Array(UnsafeMutableBufferPointer(start: serialized, count: out_size))
 }
 
-public func Deserialize(serialized: [UInt8]) -> CiphertextBlob {
-    return CiphertextBlob(blob: deserialize_blob(UnsafePointer<UInt8>(serialized), serialized.count))
+public func Deserialize(serialized: inout [UInt8]) -> CiphertextBlob {
+    return CiphertextBlob(blob: deserialize_blob(&serialized, serialized.count))
 }
 
