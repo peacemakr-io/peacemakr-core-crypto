@@ -23,8 +23,6 @@
 
 #define _PEACEMAKR_MAGIC_ (uint32_t)1054
 
-// base64 encode - https://gist.github.com/barrysteyn/7308212
-
 static void digest_message(const unsigned char *message, size_t message_len,
                            const EVP_MD *digest_algo, buffer_t *digest) {
   EVP_MD_CTX *mdctx;
