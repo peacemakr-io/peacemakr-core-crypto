@@ -41,4 +41,4 @@ ENV LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
 
 WORKDIR /go/src
 
-RUN go test peacemakr_core_crypto
+RUN go test peacemakr/crypto

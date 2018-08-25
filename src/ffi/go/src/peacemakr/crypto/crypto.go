@@ -6,7 +6,7 @@
 // Full license at peacemakr-core-crypto/LICENSE.txt
 //
 
-package peacemakr_core_crypto
+package crypto
 
 // #cgo LDFLAGS: -lpeacemakr-core-crypto -lssl -lcrypto -L/usr/local/lib
 // #cgo CFLAGS: -I${SRCDIR}/../../../../core/include

@@ -6,7 +6,7 @@
 // Full license at peacemakr-core-crypto/LICENSE.txt
 //
 
-package peacemakr_core_crypto
+package crypto
 
 import (
 	"bytes"
