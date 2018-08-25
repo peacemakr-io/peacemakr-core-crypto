@@ -208,13 +208,13 @@ public func Decrypt(key: PeacemakrKey, ciphertext: CiphertextBlob) -> (Plaintext
     return (SetPlaintext(plain: plaintext), success)
 }
 
-public func Serialize(ciphertext: CiphertextBlob) -> [UInt8] {
+public func Serialize(ciphertext: CiphertextBlob) -> UnsafeMutableBufferPointer<UInt8> {
     var out_size = 0
     let serialized = serialize_blob(ciphertext.blob, UnsafeMutablePointer<Int>(&out_size))
-    return Array(UnsafeMutableBufferPointer(start: serialized, count: out_size))
+    return UnsafeMutableBufferPointer(start: serialized, count: out_size)
 }
 
-public func Deserialize(serialized: inout [UInt8]) -> CiphertextBlob {
-    return CiphertextBlob(blob: deserialize_blob(&serialized, serialized.count))
+public func Deserialize(serialized: UnsafeMutableBufferPointer<UInt8>) -> CiphertextBlob {
+    return CiphertextBlob(blob: deserialize_blob(serialized.baseAddress, serialized.count))
 }
 
