@@ -594,7 +594,7 @@ ciphertext_blob_t *peacemakr_encrypt(crypto_config_t cfg,
 }
 
 bool peacemakr_decrypt(const peacemakr_key_t *key,
-                       const ciphertext_blob_t *cipher, plaintext_t *plain) {
+                        ciphertext_blob_t *cipher, plaintext_t *plain) {
   bool success = false;
   buffer_t *plaintext = NULL, *aad = NULL;
   switch (CiphertextBlob_encryption_mode(cipher)) {
@@ -620,6 +620,9 @@ bool peacemakr_decrypt(const peacemakr_key_t *key,
     memcpy((void *)plain->data, tmp_plain, plain->data_len);
     Buffer_free(plaintext);
   }
+
+  CiphertextBlob_free(cipher);
+  cipher = NULL;
 
   return success;
 }

@@ -39,7 +39,7 @@ char *b64_encode(const unsigned char *in, size_t len, size_t *enc_len) {
 
   elen = b64_encoded_size(len);
   *enc_len = elen + 1;
-  out = malloc(elen + 1);
+  out = calloc(elen + 1, sizeof(char));
   out[elen] = '\0';
 
   for (i = 0, j = 0; i < len; i += 3, j += 4) {

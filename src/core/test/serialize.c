@@ -45,16 +45,18 @@ void test_serialize(symmetric_cipher symm_cipher, asymmetric_cipher cipher, mess
   assert(ciphertext != NULL);
 
   size_t out_size = 0;
-  const uint8_t *serialized = serialize_blob(ciphertext, &out_size);
+  uint8_t *serialized = serialize_blob(ciphertext, &out_size);
   assert(serialized != NULL);
 
-  const ciphertext_blob_t *deserialized = deserialize_blob(serialized, out_size);
+  ciphertext_blob_t *deserialized = deserialize_blob(serialized, out_size);
   bool success = peacemakr_decrypt(key, deserialized, &plaintext_out);
 
   assert(success);
 
   assert(strncmp((const char *)plaintext_out.data, (const char *)plaintext_in.data, plaintext_in.data_len) == 0);
   assert(strncmp((const char *)plaintext_out.aad, (const char *)plaintext_in.aad, plaintext_in.data_len) == 0);
+
+  PeacemakrKey_free(key);
 }
 
 int main() {
