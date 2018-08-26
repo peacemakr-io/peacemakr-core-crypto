@@ -18,6 +18,7 @@
 #include <openssl/ec.h>
 #include <openssl/evp.h>
 #include <openssl/rsa.h>
+#include <openssl/pem.h>
 
 static bool keygen_inner(int key_type, EVP_PKEY **pkey, int rsa_bits) {
   EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_id(key_type, NULL);
@@ -169,6 +170,40 @@ peacemakr_key_t *API(new_pkey)(crypto_config_t cfg, const EVP_PKEY *buf) {
   }
 
   return out;
+}
+
+peacemakr_key_t *API(new_pem_pub)(crypto_config_t cfg, const char *buf, const size_t buflen) {
+  if (buf == NULL || buflen == 0) {
+    PEACEMAKR_ERROR("buf was null or buflen was 0");
+    return NULL;
+  }
+
+  BIO* bo = BIO_new(BIO_s_mem());
+  BIO_write(bo, buf, (int)buflen);
+
+  EVP_PKEY* pkey = NULL;
+  PEM_read_bio_PUBKEY(bo, &pkey, 0, 0);
+
+  BIO_free(bo);
+
+  return API(new_pkey)(cfg, pkey);
+}
+
+peacemakr_key_t *API(new_pem_priv)(crypto_config_t cfg, const char *buf, const size_t buflen) {
+  if (buf == NULL || buflen == 0) {
+    PEACEMAKR_ERROR("buf was null or buflen was 0");
+    return NULL;
+  }
+
+  BIO* bo = BIO_new(BIO_s_mem());
+  BIO_write(bo, buf, (int)buflen);
+
+  EVP_PKEY* pkey = NULL;
+  PEM_read_bio_PrivateKey(bo, &pkey, 0, 0);
+
+  BIO_free(bo);
+
+  return API(new_pkey)(cfg, pkey);
 }
 
 void API(free)(peacemakr_key_t *key) {
