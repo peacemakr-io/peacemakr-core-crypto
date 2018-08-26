@@ -619,8 +619,7 @@ bool peacemakr_decrypt(const peacemakr_key_t *key, ciphertext_blob_t *cipher,
     plain->data = calloc(plain->data_len, sizeof(unsigned char));
     memcpy((void *)plain->data, tmp_plain, plain->data_len);
     Buffer_free(plaintext);
-  }
-  else { // fill with zeros
+  } else { // fill with zeros
     plain->aad = calloc(plain->aad_len, sizeof(unsigned char));
     plain->data = calloc(plain->data_len, sizeof(unsigned char));
   }

@@ -17,6 +17,7 @@
 
 #include <openssl/ec.h>
 #include <openssl/evp.h>
+#include <openssl/pem.h>
 #include <openssl/rsa.h>
 
 static bool keygen_inner(int key_type, EVP_PKEY **pkey, int rsa_bits) {
@@ -51,7 +52,7 @@ static bool keygen_inner(int key_type, EVP_PKEY **pkey, int rsa_bits) {
 }
 
 struct PeacemakrKey {
-  encryption_mode m_mode_;
+  crypto_config_t m_cfg_;
   union {
     buffer_t *symm;
     EVP_PKEY *asymm;
@@ -70,7 +71,7 @@ peacemakr_key_t *API(new)(crypto_config_t cfg, random_device_t *rand) {
   }
 
   peacemakr_key_t *out = malloc(sizeof(peacemakr_key_t));
-  out->m_mode_ = cfg.mode;
+  out->m_cfg_ = cfg;
 
   switch (cfg.mode) {
   case SYMMETRIC: {
@@ -135,7 +136,7 @@ peacemakr_key_t *API(new_bytes)(crypto_config_t cfg, const uint8_t *buf) {
   }
 
   peacemakr_key_t *out = malloc(sizeof(peacemakr_key_t));
-  out->m_mode_ = cfg.mode;
+  out->m_cfg_ = cfg;
 
   const EVP_CIPHER *cipher = parse_cipher(cfg.symm_cipher);
   size_t keylen = (size_t)EVP_CIPHER_key_length(cipher);
@@ -146,27 +147,50 @@ peacemakr_key_t *API(new_bytes)(crypto_config_t cfg, const uint8_t *buf) {
   return out;
 }
 
-peacemakr_key_t *API(new_pkey)(crypto_config_t cfg, const EVP_PKEY *buf) {
+peacemakr_key_t *API(new_pem_pub)(crypto_config_t cfg, const char *buf,
+                                  const size_t buflen) {
+  if (buf == NULL || buflen == 0) {
+    PEACEMAKR_ERROR("buf was null or buflen was 0");
+    return NULL;
+  }
+
   if (cfg.mode == SYMMETRIC) {
     PEACEMAKR_ERROR("Can't set a new EVP_PKEY for symmetric crypto\n");
     return NULL;
   }
 
-  if (buf == NULL) {
-    PEACEMAKR_ERROR("pkey is NULL\n");
+  peacemakr_key_t *out = malloc(sizeof(peacemakr_key_t));
+  out->m_cfg_ = cfg;
+
+  BIO *bo = BIO_new_mem_buf(buf, (int)buflen);
+
+  out->m_contents_.asymm = PEM_read_bio_PUBKEY(bo, NULL, NULL, NULL);
+
+  BIO_free(bo);
+
+  return out;
+}
+
+peacemakr_key_t *API(new_pem_priv)(crypto_config_t cfg, const char *buf,
+                                   const size_t buflen) {
+  if (buf == NULL || buflen == 0) {
+    PEACEMAKR_ERROR("buf was null or buflen was 0");
+    return NULL;
+  }
+
+  if (cfg.mode == SYMMETRIC) {
+    PEACEMAKR_ERROR("Can't set a new EVP_PKEY for symmetric crypto\n");
     return NULL;
   }
 
   peacemakr_key_t *out = malloc(sizeof(peacemakr_key_t));
-  out->m_mode_ = cfg.mode;
+  out->m_cfg_ = cfg;
 
-  out->m_contents_.asymm = EVP_PKEY_new();
-  int rc = EVP_PKEY_copy_parameters(out->m_contents_.asymm, buf);
-  if (rc != 1) {
-    PEACEMAKR_ERROR("EVP_PKEY parameter copy failed\n");
-    API(free)(out);
-    return NULL;
-  }
+  BIO *bo = BIO_new_mem_buf(buf, (int)buflen);
+
+  out->m_contents_.asymm = PEM_read_bio_PrivateKey(bo, NULL, NULL, NULL);
+
+  BIO_free(bo);
 
   return out;
 }
@@ -177,7 +201,7 @@ void API(free)(peacemakr_key_t *key) {
     return;
   }
 
-  switch (key->m_mode_) {
+  switch (key->m_cfg_.mode) {
   case SYMMETRIC: {
     Buffer_free(key->m_contents_.symm); // securely frees the memory
     break;
@@ -191,8 +215,12 @@ void API(free)(peacemakr_key_t *key) {
   key = NULL;
 }
 
+crypto_config_t API(get_config)(const peacemakr_key_t *key) {
+  return key->m_cfg_;
+}
+
 const buffer_t *API(symmetric)(const peacemakr_key_t *key) {
-  if (key->m_mode_ != SYMMETRIC) {
+  if (key->m_cfg_.mode != SYMMETRIC) {
     PEACEMAKR_ERROR(
         "Attempting to access the symmetric part of an asymmetric key\n");
     return NULL;
@@ -202,7 +230,7 @@ const buffer_t *API(symmetric)(const peacemakr_key_t *key) {
 }
 
 EVP_PKEY *API(asymmetric)(const peacemakr_key_t *key) {
-  if (key->m_mode_ != ASYMMETRIC) {
+  if (key->m_cfg_.mode != ASYMMETRIC) {
     PEACEMAKR_ERROR(
         "Attempting to access the asymmetric part of a symmetric key\n");
     return NULL;

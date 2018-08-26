@@ -17,6 +17,7 @@
 #include <stdint.h>
 
 #define PEACEMAKR_CORE_CRYPTO_VERSION (uint8_t)1
+#define PEACEMAKR_CORE_CRYPTO_VERSION_MAX (uint8_t)1
 
 /**
  * @brief Peacemakr supported symmetric cipher algorithms
@@ -96,6 +97,11 @@ typedef struct CiphertextBlob ciphertext_blob_t;
 //! Opaque type holding the key itself (EVP_PKEY or just a symmetric key)
 typedef struct PeacemakrKey peacemakr_key_t;
 
+//! Get max supported version
+static inline uint8_t get_max_version() {
+  return PEACEMAKR_CORE_CRYPTO_VERSION_MAX;
+}
+
 /**
  * @brief Create a new peacemakr_key_t from scratch using a user-defined secure
  * random source.
@@ -121,16 +127,35 @@ peacemakr_key_t *PeacemakrKey_new_bytes(crypto_config_t cfg,
                                         const uint8_t *buf);
 
 /**
- * @brief Create a new peacemakr_key_t from an existing OpenSSL EVP_PKEY. This
- * does not apply for symmetric encryption.
+ * @brief Create a new peacemakr_key_t from an existing pem file for a public
+ * key.
  * @param cfg The configuration for the cryptography calls - ensures that the
  * key is created correctly
- * @param buf The previously initialized EVP_PKEY to copy into the
- * peacemakr_key_t.
+ * @param buf The string with the contents of the pem file containing the key
+ * @param buflen The length of the string with the pem file contents
  * @return A newly created peacemakr key for use in other library calls
  */
-peacemakr_key_t *PeacemakrKey_new_pkey(crypto_config_t cfg,
-                                       const EVP_PKEY *buf);
+peacemakr_key_t *PeacemakrKey_new_pem_pub(crypto_config_t cfg, const char *buf,
+                                          const size_t buflen);
+
+/**
+ * @brief Create a new peacemakr_key_t from an existing pem file for a private
+ * key.
+ * @param cfg The configuration for the cryptography calls - ensures that the
+ * key is created correctly
+ * @param buf The string with the contents of the pem file containing the key
+ * @param buflen The length of the string with the pem file contents
+ * @return A newly created peacemakr key for use in other library calls
+ */
+peacemakr_key_t *PeacemakrKey_new_pem_priv(crypto_config_t cfg, const char *buf,
+                                           const size_t buflen);
+
+/**
+ * @brief Get the config used during key creation
+ * @param key The key to query
+ * @return An object that describes the config used in key creation
+ */
+crypto_config_t PeacemakrKey_get_config(const peacemakr_key_t *key);
 
 /**
  * @brief Free a peacemakr key. Clears all memory associated with the key.

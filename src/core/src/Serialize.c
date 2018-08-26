@@ -278,6 +278,7 @@ ciphertext_blob_t *deserialize_blob(uint8_t *b64_serialized_cipher,
               digestlen);
   if (rc != 0) {
     PEACEMAKR_ERROR("digests don't compare equal, aborting\n");
+    Buffer_free(digest_buf);
     return NULL;
   }
 
@@ -285,6 +286,11 @@ ciphertext_blob_t *deserialize_blob(uint8_t *b64_serialized_cipher,
   uint32_t version =
       ntohl(*((uint32_t *)(serialized_cipher + current_position)));
   current_position += sizeof(uint32_t);
+  if (version > PEACEMAKR_CORE_CRYPTO_VERSION_MAX) {
+    PEACEMAKR_ERROR("version greater than max supported");
+    Buffer_free(digest_buf);
+    return NULL;
+  }
 
   // encryption mode
   uint32_t encryption_mode =

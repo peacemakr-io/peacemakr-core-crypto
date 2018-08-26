@@ -10,7 +10,6 @@
 #include <peacemakr/random.h>
 #include <memory.h>
 #include <assert.h>
-#include <printf.h>
 
 #include "test_helper.h"
 
