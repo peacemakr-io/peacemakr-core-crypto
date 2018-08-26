@@ -1,0 +1,24 @@
+#!/bin/sh
+
+git clone -b OpenSSL_1_1_0-stable --single-branch --depth 1 https://github.com/openssl/openssl.git
+
+rsync -a openssl/ openssl-ios32
+rsync -a openssl/ openssl-ios64
+
+set -e
+
+export CC=clang;
+export AR="libtool -o"
+export CROSS_TOP=/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer;
+export CROSS_SDK=iPhoneOS.sdk;
+export PATH=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin:$PATH;
+
+cd openssl-ios32
+
+./Configure ios-cross no-shared no-dso no-hw no-engine --prefix=@CMAKE_BINARY_DIR@/openssl-ios32 --openssldir=@CMAKE_BINARY_DIR@/openssl-ios32
+make install
+
+cd ../openssl-ios64
+
+./Configure ios64-cross no-shared no-dso no-hw no-engine --prefix=@CMAKE_BINARY_DIR@/openssl-ios64 --openssldir=@CMAKE_BINARY_DIR@/openssl-ios64
+make install

@@ -26,6 +26,8 @@ set(CMAKE_C_FLAGS "-Os -fPIC -fstack-protector-strong -Wall")
 
 set(ALL_C_SOURCE_FILES "")
 
+include(${CMAKE_SOURCE_DIR}/cmake/BuildOpenSSL.cmake)
+
 add_subdirectory(src/core)
 add_subdirectory(src/ffi)
 

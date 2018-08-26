@@ -1,5 +1,7 @@
-cmake-build-debug/
+cmake-build-*
 build/
 .idea/
 archive/
 *.def
+cmake/openssl*
+build-openssl.sh
