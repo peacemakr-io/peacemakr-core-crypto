@@ -29,10 +29,10 @@ func TestAsymmetricEncrypt(t *testing.T) {
 	for i := RSA_2048; i <= RSA_4096; i++ {
 		for j := AES_128_GCM; j <= CHACHA20_POLY1305; j++ {
 			cfg := CryptoConfig{
-				mode:             ASYMMETRIC,
-				asymmetricCipher: i,
-				symmetricCipher:  j,
-				digestAlgorithm:  SHA_512,
+				Mode:             ASYMMETRIC,
+				AsymmetricCipher: i,
+				SymmetricCipher:  j,
+				DigestAlgorithm:  SHA_512,
 			}
 
 			plaintextIn := SetUpPlaintext()
@@ -65,10 +65,10 @@ func TestAsymmetricEncrypt(t *testing.T) {
 func TestSymmetricEncrypt(t *testing.T) {
 	for j := AES_128_GCM; j <= CHACHA20_POLY1305; j++ {
 		cfg := CryptoConfig{
-			mode:             SYMMETRIC,
-			asymmetricCipher: NONE,
-			symmetricCipher:  j,
-			digestAlgorithm:  SHA_512,
+			Mode:             SYMMETRIC,
+			AsymmetricCipher: NONE,
+			SymmetricCipher:  j,
+			DigestAlgorithm:  SHA_512,
 		}
 
 		plaintextIn := SetUpPlaintext()
@@ -102,10 +102,10 @@ func TestSerialize(t *testing.T) {
 		for j := AES_128_GCM; j <= CHACHA20_POLY1305; j++ {
 			for k := SHA_224; k <= SHA_512; k++ {
 				cfg := CryptoConfig{
-					mode:             ASYMMETRIC,
-					asymmetricCipher: i,
-					symmetricCipher:  j,
-					digestAlgorithm:  k,
+					Mode:             ASYMMETRIC,
+					AsymmetricCipher: i,
+					SymmetricCipher:  j,
+					DigestAlgorithm:  k,
 				}
 
 				plaintextIn := SetUpPlaintext()

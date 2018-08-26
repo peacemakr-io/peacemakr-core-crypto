@@ -110,18 +110,18 @@ const (
 )
 
 type CryptoConfig struct {
-	mode             EncryptionMode
-	symmetricCipher  SymmetricCipher
-	asymmetricCipher AsymmetricCipher
-	digestAlgorithm  MessageDigestAlgorithm
+	Mode             EncryptionMode
+	SymmetricCipher  SymmetricCipher
+	AsymmetricCipher AsymmetricCipher
+	DigestAlgorithm  MessageDigestAlgorithm
 }
 
 func configToInternal(config CryptoConfig) C.crypto_config_t {
 	return C.crypto_config_t{
-		mode:             C.encryption_mode(config.mode),
-		symm_cipher:      C.symmetric_cipher(config.symmetricCipher),
-		asymm_cipher:     C.asymmetric_cipher(config.asymmetricCipher),
-		digest_algorithm: C.message_digest_algorithm(config.digestAlgorithm),
+		mode:             C.encryption_mode(config.Mode),
+		symm_cipher:      C.symmetric_cipher(config.SymmetricCipher),
+		asymm_cipher:     C.asymmetric_cipher(config.AsymmetricCipher),
+		digest_algorithm: C.message_digest_algorithm(config.DigestAlgorithm),
 	}
 }
 
@@ -167,6 +167,22 @@ func NewPeacemakrKeyFromBytes(config CryptoConfig, contents []byte) PeacemakrKey
 	defer C.free(unsafe.Pointer(cBytes))
 	return PeacemakrKey{
 		key: C.PeacemakrKey_new_bytes(configToInternal(config), cBytes),
+	}
+}
+
+func NewPeacemakrKeyFromPubPem(config CryptoConfig, contents []byte) PeacemakrKey {
+	cBytes := (*C.char)(C.CBytes(contents))
+	defer C.free(unsafe.Pointer(cBytes))
+	return PeacemakrKey{
+		key: C.PeacemakrKey_new_pem_pub(configToInternal(config), cBytes, C.size_t(len(contents))),
+	}
+}
+
+func NewPeacemakrKeyFromPrivPem(config CryptoConfig, contents []byte) PeacemakrKey {
+	cBytes := (*C.char)(C.CBytes(contents))
+	defer C.free(unsafe.Pointer(cBytes))
+	return PeacemakrKey{
+		key: C.PeacemakrKey_new_pem_priv(configToInternal(config), cBytes, C.size_t(len(contents))),
 	}
 }
 
