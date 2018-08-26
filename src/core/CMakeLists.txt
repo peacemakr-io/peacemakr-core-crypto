@@ -37,7 +37,7 @@ target_include_directories(peacemakr-core-crypto
 )
 if (APPLE)
     target_link_libraries(peacemakr-core-crypto
-            PUBLIC -Wl,-all_load OpenSSL::SSL OpenSSL::Crypto -Wl,-noall_load ${CMAKE_THREAD_LIBS_INIT} dl)
+            PUBLIC -Wl,-all_load OpenSSL::SSL OpenSSL::Crypto -Wl,-noall_load)
 else()
     target_link_libraries(peacemakr-core-crypto
             PUBLIC -Wl,--whole-archive OpenSSL::SSL OpenSSL::Crypto -Wl,--no-whole-archive ${CMAKE_THREAD_LIBS_INIT} dl)
