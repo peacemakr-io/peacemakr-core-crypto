@@ -25,4 +25,5 @@ endfunction(add_ptest)
 
 add_ptest(encrypt_symmetric)
 add_ptest(encrypt_asymmetric)
+add_ptest(encrypt_asymmetric_from_pem)
 add_ptest(serialize)
