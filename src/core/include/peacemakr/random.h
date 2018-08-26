@@ -11,10 +11,26 @@
 
 #include <stddef.h>
 
-// Must return zero on success
+/**
+ * @brief User provided function for filling a random buffer with data.
+ *
+ * REQUIRES:
+ *  - Returns 0 on success
+ */
 typedef int (*rng_buf)(unsigned char *, size_t);
+
+/**
+ * @brief User provided function for interpreting errors in rng_buf
+ *
+ * REQUIRES:
+ *  - Must at least return `""`
+ */
 typedef const char *(*rng_err)(int);
 
+/**
+ * @brief Simple wrapper for user-provided functions to provide a uniform
+ *        interface to the rest of the crypto lib
+ */
 typedef struct {
   rng_buf generator;
   rng_err err;

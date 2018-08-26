@@ -10,7 +10,7 @@
 #include <peacemakr/random.h>
 #include <memory.h>
 #include <assert.h>
-#include <printf.h>
+#include <stdio.h>
 
 #include "test_helper.h"
 
@@ -83,6 +83,9 @@ int main() {
     privkey[priv_len] = '\0';
 
     fclose(priv);
+  } else {
+    printf("Opening pem file priv failed");
+    return 1;
   }
 
   FILE *pub = fopen("../../../../src/core/test/resources/test_publickey.pem", "r");
@@ -104,6 +107,9 @@ int main() {
     pubkey[pub_len] = '\0';
 
     fclose(pub);
+  } else {
+    printf("Opening pem file pub failed");
+    return 1;
   }
 
   for (int i = AES_128_GCM; i <= CHACHA20_POLY1305; ++i) {
