@@ -97,6 +97,7 @@ typedef struct CiphertextBlob ciphertext_blob_t;
 //! Opaque type holding the key itself (EVP_PKEY or just a symmetric key)
 typedef struct PeacemakrKey peacemakr_key_t;
 
+//! Get max supported version
 static inline uint8_t get_max_version() { return PEACEMAKR_CORE_CRYPTO_VERSION_MAX; }
 
 /**
