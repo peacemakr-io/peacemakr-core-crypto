@@ -97,6 +97,8 @@ typedef struct CiphertextBlob ciphertext_blob_t;
 //! Opaque type holding the key itself (EVP_PKEY or just a symmetric key)
 typedef struct PeacemakrKey peacemakr_key_t;
 
+static inline uint8_t get_max_version() { return PEACEMAKR_CORE_CRYPTO_VERSION_MAX; }
+
 /**
  * @brief Create a new peacemakr_key_t from scratch using a user-defined secure
  * random source.
@@ -144,6 +146,13 @@ peacemakr_key_t *PeacemakrKey_new_pem_pub(crypto_config_t cfg, const char *buf,
  */
 peacemakr_key_t *PeacemakrKey_new_pem_priv(crypto_config_t cfg, const char *buf,
                                            const size_t buflen);
+
+/**
+ * @brief Get the config used during key creation
+ * @param key The key to query
+ * @return An object that describes the config used in key creation
+ */
+crypto_config_t PeacemakrKey_get_config(const peacemakr_key_t *key);
 
 /**
  * @brief Free a peacemakr key. Clears all memory associated with the key.

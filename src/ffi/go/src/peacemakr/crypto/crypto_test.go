@@ -20,8 +20,8 @@ func SetUpPlaintext() Plaintext {
 	rand.Read(pData)
 	rand.Read(pAAD)
 	return Plaintext{
-		data: pData,
-		aad:  pAAD,
+		Data: pData,
+		Aad:  pAAD,
 	}
 }
 
@@ -51,11 +51,11 @@ func TestAsymmetricEncrypt(t *testing.T) {
 				t.Fatalf("Decrypt failed")
 			}
 
-			if !bytes.Equal(plaintextIn.data, plaintextOut.data) {
+			if !bytes.Equal(plaintextIn.Data, plaintextOut.Data) {
 				t.Fatalf("plaintext data did not match")
 			}
 
-			if !bytes.Equal(plaintextIn.aad, plaintextOut.aad) {
+			if !bytes.Equal(plaintextIn.Aad, plaintextOut.Aad) {
 				t.Fatalf("plaintext data did not match")
 			}
 		}
@@ -87,11 +87,11 @@ func TestSymmetricEncrypt(t *testing.T) {
 			t.Fatalf("Decrypt failed")
 		}
 
-		if !bytes.Equal(plaintextIn.data, plaintextOut.data) {
+		if !bytes.Equal(plaintextIn.Data, plaintextOut.Data) {
 			t.Fatalf("plaintext data did not match")
 		}
 
-		if !bytes.Equal(plaintextIn.aad, plaintextOut.aad) {
+		if !bytes.Equal(plaintextIn.Aad, plaintextOut.Aad) {
 			t.Fatalf("plaintext data did not match")
 		}
 	}
@@ -137,11 +137,11 @@ func TestSerialize(t *testing.T) {
 					t.Fatalf("Decrypt failed")
 				}
 
-				if !bytes.Equal(plaintextIn.data, plaintextOut.data) {
+				if !bytes.Equal(plaintextIn.Data, plaintextOut.Data) {
 					t.Fatalf("plaintext data did not match")
 				}
 
-				if !bytes.Equal(plaintextIn.aad, plaintextOut.aad) {
+				if !bytes.Equal(plaintextIn.Aad, plaintextOut.Aad) {
 					t.Fatalf("plaintext data did not match")
 				}
 			}
