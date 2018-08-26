@@ -41,7 +41,7 @@ final class PeacemakrCoreCryptoTests: XCTestCase {
             let key = PeacemakrKey(config: cfg, rand: &randDevice)
 
             let ciphertext = Encrypt(config: cfg, key: key, plaintext: plaintextIn, rand: &randDevice)
-            XCTAssertNotNil(ciphertext.blob)
+            XCTAssertNotNil(ciphertext)
 
             let (plaintextOut, success) = Decrypt(key: key, ciphertext: ciphertext)
             XCTAssertTrue(success)
@@ -71,7 +71,7 @@ final class PeacemakrCoreCryptoTests: XCTestCase {
                 let key = PeacemakrKey(config: cfg, rand: &randDevice)
 
                 let ciphertext = Encrypt(config: cfg, key: key, plaintext: plaintextIn, rand: &randDevice)
-                XCTAssertNotNil(ciphertext.blob)
+                XCTAssertNotNil(ciphertext)
 
                 let (plaintextOut, success) = Decrypt(key: key, ciphertext: ciphertext)
                 XCTAssertTrue(success)
@@ -103,13 +103,9 @@ final class PeacemakrCoreCryptoTests: XCTestCase {
                     let key = PeacemakrKey(config: cfg, rand: &randDevice)
 
                     let ciphertext = Encrypt(config: cfg, key: key, plaintext: plaintextIn, rand: &randDevice)
-                    XCTAssertNotNil(ciphertext.blob)
+                    XCTAssertNotNil(ciphertext)
 
-                    let serialized = Serialize(ciphertext: ciphertext)
-
-                    let deserializedCiphertext = Deserialize(serialized: serialized)
-
-                    let (plaintextOut, success) = Decrypt(key: key, ciphertext: deserializedCiphertext)
+                    let (plaintextOut, success) = Decrypt(key: key, ciphertext: ciphertext)
                     XCTAssertTrue(success)
 
                     XCTAssertEqual(plaintextIn.data, plaintextOut.data)

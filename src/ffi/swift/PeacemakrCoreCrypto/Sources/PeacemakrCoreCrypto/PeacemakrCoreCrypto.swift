@@ -167,11 +167,18 @@ fileprivate func SetPlaintext(plain: plaintext_t) -> Plaintext {
     )
 }
 
+fileprivate func Serialize(ciphertext: CiphertextBlob) -> UnsafeMutableBufferPointer<UInt8> {
+    var out_size = 0
+    let serialized = serialize_blob(ciphertext.blob, UnsafeMutablePointer<Int>(&out_size))
+    return UnsafeMutableBufferPointer(start: serialized, count: out_size)
+}
+
+fileprivate func Deserialize(serialized: UnsafeMutableBufferPointer<UInt8>) -> CiphertextBlob {
+    return CiphertextBlob(blob: deserialize_blob(serialized.baseAddress, serialized.count))
+}
+
 public struct CiphertextBlob {
     var blob: OpaquePointer
-//    deinit {
-//      cipher
-//    }
 }
 
 public class PeacemakrKey {
@@ -188,33 +195,27 @@ public class PeacemakrKey {
     }
 }
 
-public func Encrypt(config: CryptoConfig, key: PeacemakrKey, plaintext: Plaintext, rand: inout RandomDevice) -> CiphertextBlob {
+public func Encrypt(config: CryptoConfig, key: PeacemakrKey, plaintext: Plaintext, rand: inout RandomDevice) -> UnsafeMutableBufferPointer<UInt8> {
     var p = GetPlaintext(plain: plaintext)
     var innerRand = rand.get()
-    return CiphertextBlob(
+    return Serialize(ciphertext: CiphertextBlob(
             blob: peacemakr_encrypt(
                     GetCryptoConfig(config: config),
                     key.key,
                     &p,
                     &innerRand
-            )
+            ))
     )
 }
 
-public func Decrypt(key: PeacemakrKey, ciphertext: CiphertextBlob) -> (Plaintext, Bool) {
+public func ExtractCiphertextBlob(ciphertext: UnsafeMutableBufferPointer<UInt8>) -> CiphertextBlob {
+    return Deserialize(serialized: ciphertext)
+}
+
+public func Decrypt(key: PeacemakrKey, ciphertext: UnsafeMutableBufferPointer<UInt8>) -> (Plaintext, Bool) {
     var plaintext = plaintext_t(data: "", data_len: 0, aad: "", aad_len: 0)
 
-    let success = peacemakr_decrypt(key.key, ciphertext.blob, &plaintext)
+    let success = peacemakr_decrypt(key.key, Deserialize(serialized: ciphertext).blob, &plaintext)
     return (SetPlaintext(plain: plaintext), success)
-}
-
-public func Serialize(ciphertext: CiphertextBlob) -> UnsafeMutableBufferPointer<UInt8> {
-    var out_size = 0
-    let serialized = serialize_blob(ciphertext.blob, UnsafeMutablePointer<Int>(&out_size))
-    return UnsafeMutableBufferPointer(start: serialized, count: out_size)
-}
-
-public func Deserialize(serialized: UnsafeMutableBufferPointer<UInt8>) -> CiphertextBlob {
-    return CiphertextBlob(blob: deserialize_blob(serialized.baseAddress, serialized.count))
 }
 
