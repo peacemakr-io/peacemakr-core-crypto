@@ -17,6 +17,7 @@
 #include <stdint.h>
 
 #define PEACEMAKR_CORE_CRYPTO_VERSION (uint8_t)1
+#define PEACEMAKR_CORE_CRYPTO_VERSION_MAX (uint8_t)1
 
 /**
  * @brief Peacemakr supported symmetric cipher algorithms
@@ -96,6 +97,9 @@ typedef struct CiphertextBlob ciphertext_blob_t;
 //! Opaque type holding the key itself (EVP_PKEY or just a symmetric key)
 typedef struct PeacemakrKey peacemakr_key_t;
 
+//! Get max supported version
+static inline uint8_t get_max_version() { return PEACEMAKR_CORE_CRYPTO_VERSION_MAX; }
+
 /**
  * @brief Create a new peacemakr_key_t from scratch using a user-defined secure
  * random source.
@@ -121,18 +125,40 @@ peacemakr_key_t *PeacemakrKey_new_bytes(crypto_config_t cfg,
                                         const uint8_t *buf);
 
 /**
- * @brief Create a new peacemakr_key_t from an existing OpenSSL EVP_PKEY. This does not apply for symmetric encryption.
+ * @brief Create a new peacemakr_key_t from an existing pem file for a public
+ * key.
  * @param cfg The configuration for the cryptography calls - ensures that the
  * key is created correctly
- * @param buf The previously initialized EVP_PKEY to copy into the peacemakr_key_t.
+ * @param buf The string with the contents of the pem file containing the key
+ * @param buflen The length of the string with the pem file contents
  * @return A newly created peacemakr key for use in other library calls
  */
-peacemakr_key_t *PeacemakrKey_new_pkey(crypto_config_t cfg, const EVP_PKEY *buf);
+peacemakr_key_t *PeacemakrKey_new_pem_pub(crypto_config_t cfg, const char *buf,
+                                          const size_t buflen);
 
 /**
-* @brief Free a peacemakr key. Clears all memory associated with the key.
-* @param key The key to free
-*/
+ * @brief Create a new peacemakr_key_t from an existing pem file for a private
+ * key.
+ * @param cfg The configuration for the cryptography calls - ensures that the
+ * key is created correctly
+ * @param buf The string with the contents of the pem file containing the key
+ * @param buflen The length of the string with the pem file contents
+ * @return A newly created peacemakr key for use in other library calls
+ */
+peacemakr_key_t *PeacemakrKey_new_pem_priv(crypto_config_t cfg, const char *buf,
+                                           const size_t buflen);
+
+/**
+ * @brief Get the config used during key creation
+ * @param key The key to query
+ * @return An object that describes the config used in key creation
+ */
+crypto_config_t PeacemakrKey_get_config(const peacemakr_key_t *key);
+
+/**
+ * @brief Free a peacemakr key. Clears all memory associated with the key.
+ * @param key The key to free
+ */
 void PeacemakrKey_free(peacemakr_key_t *key);
 
 /**
@@ -163,18 +189,24 @@ bool peacemakr_decrypt(const peacemakr_key_t *key, ciphertext_blob_t *cipher,
                        plaintext_t *plain);
 
 /**
- * @brief Serializes a ciphertext_blob_t cipher into a base64 encoded buffer of uint8_t and stores the size of that buffer in out_size. Frees the ciphertext_blob_t
+ * @brief Serializes a ciphertext_blob_t cipher into a base64 encoded buffer of
+ * uint8_t and stores the size of that buffer in out_size. Frees the
+ * ciphertext_blob_t
  * @param cipher The ciphertext to serialize
- * @param out_size A non-null pointer to a size_t that will contain the size of the buffer created by this function.
+ * @param out_size A non-null pointer to a size_t that will contain the size of
+ * the buffer created by this function.
  * @return A byte buffer that is encoded in URL-safe base64.
  */
 uint8_t *serialize_blob(ciphertext_blob_t *cipher, size_t *out_size);
 
 /**
- * @brief Deserializes a previously serialized blob b64_serialized_cipher into a ciphertext_blob_t for use in a decryption operation (for example).
- * @param b64_serialized_cipher The byte buffer created by a call to serialize_blob
+ * @brief Deserializes a previously serialized blob b64_serialized_cipher into a
+ * ciphertext_blob_t for use in a decryption operation (for example).
+ * @param b64_serialized_cipher The byte buffer created by a call to
+ * serialize_blob
  * @param serialized_len The length of that buffer
- * @return A well-formed ciphertext_blob_t object that can be decrypted with the appropriate key.
+ * @return A well-formed ciphertext_blob_t object that can be decrypted with the
+ * appropriate key.
  */
 ciphertext_blob_t *deserialize_blob(uint8_t *b64_serialized_cipher,
                                     size_t serialized_len);

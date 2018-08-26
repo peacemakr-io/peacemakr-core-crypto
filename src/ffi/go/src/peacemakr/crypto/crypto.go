@@ -110,32 +110,32 @@ const (
 )
 
 type CryptoConfig struct {
-	mode             EncryptionMode
-	symmetricCipher  SymmetricCipher
-	asymmetricCipher AsymmetricCipher
-	digestAlgorithm  MessageDigestAlgorithm
+	Mode             EncryptionMode
+	SymmetricCipher  SymmetricCipher
+	AsymmetricCipher AsymmetricCipher
+	DigestAlgorithm  MessageDigestAlgorithm
 }
 
 func configToInternal(config CryptoConfig) C.crypto_config_t {
 	return C.crypto_config_t{
-		mode:             C.encryption_mode(config.mode),
-		symm_cipher:      C.symmetric_cipher(config.symmetricCipher),
-		asymm_cipher:     C.asymmetric_cipher(config.asymmetricCipher),
-		digest_algorithm: C.message_digest_algorithm(config.digestAlgorithm),
+		mode:             C.encryption_mode(config.Mode),
+		symm_cipher:      C.symmetric_cipher(config.SymmetricCipher),
+		asymm_cipher:     C.asymmetric_cipher(config.AsymmetricCipher),
+		digest_algorithm: C.message_digest_algorithm(config.DigestAlgorithm),
 	}
 }
 
 type Plaintext struct {
-	data []byte
-	aad  []byte
+	Data []byte
+	Aad  []byte
 }
 
 func plaintextToInternal(plaintext Plaintext) C.plaintext_t {
 	return C.plaintext_t{
-		data_len: C.size_t(len(plaintext.data)),
-		data:     (*C.uchar)(C.CBytes(plaintext.data)),
-		aad_len:  C.size_t(len(plaintext.aad)),
-		aad:      (*C.uchar)(C.CBytes(plaintext.aad)),
+		data_len: C.size_t(len(plaintext.Data)),
+		data:     (*C.uchar)(C.CBytes(plaintext.Data)),
+		aad_len:  C.size_t(len(plaintext.Aad)),
+		aad:      (*C.uchar)(C.CBytes(plaintext.Aad)),
 	}
 }
 
@@ -146,6 +146,10 @@ func freeInternalPlaintext(internalPlaintext *C.plaintext_t) {
 
 	C.free(unsafe.Pointer(internalPlaintext.data))
 	C.free(unsafe.Pointer(internalPlaintext.aad))
+}
+
+func GetMaxSupportedVersion() uint8 {
+	return uint8(C.get_max_version())
 }
 
 type CiphertextBlob struct {
@@ -167,6 +171,22 @@ func NewPeacemakrKeyFromBytes(config CryptoConfig, contents []byte) PeacemakrKey
 	defer C.free(unsafe.Pointer(cBytes))
 	return PeacemakrKey{
 		key: C.PeacemakrKey_new_bytes(configToInternal(config), cBytes),
+	}
+}
+
+func NewPeacemakrKeyFromPubPem(config CryptoConfig, contents []byte) PeacemakrKey {
+	cBytes := (*C.char)(C.CBytes(contents))
+	defer C.free(unsafe.Pointer(cBytes))
+	return PeacemakrKey{
+		key: C.PeacemakrKey_new_pem_pub(configToInternal(config), cBytes, C.size_t(len(contents))),
+	}
+}
+
+func NewPeacemakrKeyFromPrivPem(config CryptoConfig, contents []byte) PeacemakrKey {
+	cBytes := (*C.char)(C.CBytes(contents))
+	defer C.free(unsafe.Pointer(cBytes))
+	return PeacemakrKey{
+		key: C.PeacemakrKey_new_pem_priv(configToInternal(config), cBytes, C.size_t(len(contents))),
 	}
 }
 
@@ -195,8 +215,8 @@ func Decrypt(key PeacemakrKey, ciphertext *CiphertextBlob) (Plaintext, bool) {
 	out := C.peacemakr_decrypt(key.key, ciphertext.blob, (*C.plaintext_t)(unsafe.Pointer(&plaintext)))
 
 	return Plaintext{
-		data: C.GoBytes(unsafe.Pointer(plaintext.data), C.int(plaintext.data_len)),
-		aad:  C.GoBytes(unsafe.Pointer(plaintext.aad), C.int(plaintext.aad_len)),
+		Data: C.GoBytes(unsafe.Pointer(plaintext.data), C.int(plaintext.data_len)),
+		Aad:  C.GoBytes(unsafe.Pointer(plaintext.aad), C.int(plaintext.aad_len)),
 	}, bool(out)
 }
 
@@ -211,7 +231,6 @@ func Serialize(blob *CiphertextBlob) ([]byte, error) {
 
 func Deserialize(serialized []byte) (*CiphertextBlob, error) {
 	cBlobBytes := C.CBytes(serialized)
-	defer C.free(cBlobBytes)
 	cBlobLen := C.size_t(len(serialized))
 	deserialized := C.deserialize_blob((*C.uchar)(cBlobBytes), cBlobLen)
 	if deserialized == nil {
