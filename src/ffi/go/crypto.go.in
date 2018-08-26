@@ -13,8 +13,8 @@
 
 package crypto
 
-// #cgo LDFLAGS: -lpeacemakr-core-crypto -L/Users/aman/peacemakr/peacemakr-core-crypto/cmake-build-debug/src/core -Wl,-rpath /Users/aman/peacemakr/peacemakr-core-crypto/cmake-build-debug/src/core
-// #cgo CFLAGS: -I/Users/aman/peacemakr/peacemakr-core-crypto/src/core/include -I/usr/local/opt/openssl@1.1/include
+// #cgo LDFLAGS: -lpeacemakr-core-crypto -L@CORE_LIB_DIR@ -Wl,-rpath @CORE_LIB_DIR@
+// #cgo CFLAGS: -I@CORE_LIB_INCLUDE@ -I@OPENSSL_INCLUDE_DIR@
 // #include <peacemakr/crypto.h>
 // #include <peacemakr/random.h>
 // #include <stdlib.h>

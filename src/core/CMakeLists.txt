@@ -18,11 +18,6 @@ if (NOT HAS_MEMSET_S)
     add_definitions(-DPEACEMAKR_NO_MEMSET_S)
 endif (NOT HAS_MEMSET_S)
 
-set(CMAKE_FIND_LIBRARY_SUFFIXES .a)
-find_package(OpenSSL 1.1 REQUIRED)
-
-find_package(Threads)
-
 file(GLOB INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/include/peacemakr/*.h)
 file(GLOB SOURCES_C ${CMAKE_CURRENT_SOURCE_DIR}/src/*.c)
 file(GLOB SOURCES_H ${CMAKE_CURRENT_SOURCE_DIR}/src/*.h)
