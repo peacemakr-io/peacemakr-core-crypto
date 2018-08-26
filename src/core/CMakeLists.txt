@@ -18,6 +18,11 @@ if (NOT HAS_MEMSET_S)
     add_definitions(-DPEACEMAKR_NO_MEMSET_S)
 endif (NOT HAS_MEMSET_S)
 
+set(CMAKE_FIND_LIBRARY_SUFFIXES .a)
+find_package(OpenSSL 1.1 REQUIRED)
+
+find_package(Threads)
+
 file(GLOB INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/include/peacemakr/*.h)
 file(GLOB SOURCES_C ${CMAKE_CURRENT_SOURCE_DIR}/src/*.c)
 file(GLOB SOURCES_H ${CMAKE_CURRENT_SOURCE_DIR}/src/*.h)
@@ -30,8 +35,14 @@ target_include_directories(peacemakr-core-crypto
         PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include/peacemakr
         PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
-target_link_libraries(peacemakr-core-crypto
-        PUBLIC OpenSSL::SSL OpenSSL::Crypto)
+if (APPLE)
+    target_link_libraries(peacemakr-core-crypto
+            PUBLIC -Wl,-all_load OpenSSL::SSL OpenSSL::Crypto -Wl,-noall_load ${CMAKE_THREAD_LIBS_INIT} dl)
+else()
+    target_link_libraries(peacemakr-core-crypto
+            PUBLIC -Wl,--whole-archive OpenSSL::SSL OpenSSL::Crypto -Wl,--no-whole-archive ${CMAKE_THREAD_LIBS_INIT} dl)
+endif()
+
 set_target_properties(peacemakr-core-crypto PROPERTIES
         PUBLIC_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/include/peacemakr/crypto.h;${CMAKE_CURRENT_SOURCE_DIR}/include/peacemakr/random.h"
 )

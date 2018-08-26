@@ -8,7 +8,7 @@
 
 package crypto
 
-// #cgo LDFLAGS: -lpeacemakr-core-crypto -lssl -lcrypto -L/usr/local/lib
+// #cgo LDFLAGS: -lpeacemakr-core-crypto -L/usr/local/lib
 // #cgo CFLAGS: -I${SRCDIR}/../../../../core/include
 // #include <peacemakr/crypto.h>
 // #include <peacemakr/random.h>
