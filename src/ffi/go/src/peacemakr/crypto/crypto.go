@@ -211,7 +211,6 @@ func Serialize(blob *CiphertextBlob) ([]byte, error) {
 
 func Deserialize(serialized []byte) (*CiphertextBlob, error) {
 	cBlobBytes := C.CBytes(serialized)
-	defer C.free(cBlobBytes)
 	cBlobLen := C.size_t(len(serialized))
 	deserialized := C.deserialize_blob((*C.uchar)(cBlobBytes), cBlobLen)
 	if deserialized == nil {
