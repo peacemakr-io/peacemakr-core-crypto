@@ -147,31 +147,6 @@ peacemakr_key_t *API(new_bytes)(crypto_config_t cfg, const uint8_t *buf) {
   return out;
 }
 
-peacemakr_key_t *API(new_pkey)(crypto_config_t cfg, const EVP_PKEY *buf) {
-  if (cfg.mode == SYMMETRIC) {
-    PEACEMAKR_ERROR("Can't set a new EVP_PKEY for symmetric crypto\n");
-    return NULL;
-  }
-
-  if (buf == NULL) {
-    PEACEMAKR_ERROR("pkey is NULL\n");
-    return NULL;
-  }
-
-  peacemakr_key_t *out = malloc(sizeof(peacemakr_key_t));
-  out->m_cfg_ = cfg;
-
-  out->m_contents_.asymm = EVP_PKEY_new();
-  int rc = EVP_PKEY_copy_parameters(out->m_contents_.asymm, buf);
-  if (rc != 1) {
-    PEACEMAKR_ERROR("EVP_PKEY parameter copy failed\n");
-    API(free)(out);
-    return NULL;
-  }
-
-  return out;
-}
-
 peacemakr_key_t *API(new_pem_pub)(crypto_config_t cfg, const char *buf,
                                   const size_t buflen) {
   if (buf == NULL || buflen == 0) {
@@ -179,15 +154,21 @@ peacemakr_key_t *API(new_pem_pub)(crypto_config_t cfg, const char *buf,
     return NULL;
   }
 
-  BIO *bo = BIO_new(BIO_s_mem());
-  BIO_write(bo, buf, (int)buflen);
+  if (cfg.mode == SYMMETRIC) {
+    PEACEMAKR_ERROR("Can't set a new EVP_PKEY for symmetric crypto\n");
+    return NULL;
+  }
 
-  EVP_PKEY *pkey = NULL;
-  PEM_read_bio_PUBKEY(bo, &pkey, 0, 0);
+  peacemakr_key_t *out = malloc(sizeof(peacemakr_key_t));
+  out->m_cfg_ = cfg;
+
+  BIO *bo = BIO_new_mem_buf(buf, (int)buflen);
+
+  out->m_contents_.asymm = PEM_read_bio_PUBKEY(bo, NULL, NULL, NULL);
 
   BIO_free(bo);
 
-  return API(new_pkey)(cfg, pkey);
+  return out;
 }
 
 peacemakr_key_t *API(new_pem_priv)(crypto_config_t cfg, const char *buf,
@@ -197,15 +178,21 @@ peacemakr_key_t *API(new_pem_priv)(crypto_config_t cfg, const char *buf,
     return NULL;
   }
 
-  BIO *bo = BIO_new(BIO_s_mem());
-  BIO_write(bo, buf, (int)buflen);
+  if (cfg.mode == SYMMETRIC) {
+    PEACEMAKR_ERROR("Can't set a new EVP_PKEY for symmetric crypto\n");
+    return NULL;
+  }
 
-  EVP_PKEY *pkey = NULL;
-  PEM_read_bio_PrivateKey(bo, &pkey, 0, 0);
+  peacemakr_key_t *out = malloc(sizeof(peacemakr_key_t));
+  out->m_cfg_ = cfg;
+
+  BIO *bo = BIO_new_mem_buf(buf, (int)buflen);
+
+  out->m_contents_.asymm = PEM_read_bio_PrivateKey(bo, NULL, NULL, NULL);
 
   BIO_free(bo);
 
-  return API(new_pkey)(cfg, pkey);
+  return out;
 }
 
 void API(free)(peacemakr_key_t *key) {
