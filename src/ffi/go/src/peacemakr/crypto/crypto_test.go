@@ -119,20 +119,11 @@ func TestSerialize(t *testing.T) {
 					t.Fatalf("%v", err)
 				}
 
-				serialized, err := Serialize(ciphertext)
-				if err != nil {
-					t.Fatalf("%v", err)
-				}
-				if serialized == nil {
-					t.Fatalf("serialize failed")
-				}
-
-				newCiphertext, err := Deserialize(serialized)
 				if err != nil {
 					t.Fatalf("%v", err)
 				}
 
-				plaintextOut, success := Decrypt(key, newCiphertext)
+				plaintextOut, success := Decrypt(key, ciphertext)
 				if !success {
 					t.Fatalf("Decrypt failed")
 				}

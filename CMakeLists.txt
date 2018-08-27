@@ -26,6 +26,9 @@ set(CMAKE_C_FLAGS "-Os -fPIC -fstack-protector-strong -Wall")
 
 set(ALL_C_SOURCE_FILES "")
 
+set(CMAKE_FIND_LIBRARY_SUFFIXES .a)
+find_package(OpenSSL 1.1 REQUIRED)
+
 add_subdirectory(src/core)
 add_subdirectory(src/ffi)
 

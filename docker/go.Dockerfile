@@ -23,6 +23,8 @@ ADD CMakeLists.txt /opt/CMakeLists.txt
 ADD src /opt/src
 ADD cmake /opt/cmake
 
+ENV GOPATH=/go
+
 RUN mkdir -p build && cd build && cmake .. && make check install
 
 FROM golang:alpine3.8
@@ -33,11 +35,10 @@ COPY --from=builder /usr/local/lib/cmake /usr/local/lib/cmake
 COPY --from=builder /usr/local/lib/libpeacemakr* /usr/local/lib/
 COPY --from=builder /usr/local/include/peacemakr /usr/local/include/peacemakr
 COPY --from=builder /usr/include/openssl /usr/include/openssl
+COPY --from=builder /opt/src/ffi/go/src /go/src
 
 ENV GOPATH=/go
 ENV LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
-
-ADD src/ffi/go/src /go/src
 
 WORKDIR /go/src
 
