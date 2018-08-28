@@ -136,7 +136,7 @@ peacemakr_key_t *PeacemakrKey_new_bytes(crypto_config_t cfg,
  * @return A newly created peacemakr key for use in other library calls
  */
 peacemakr_key_t *PeacemakrKey_new_pem_pub(crypto_config_t cfg, const char *buf,
-                                          const size_t buflen);
+                                          size_t buflen);
 
 /**
  * @brief Create a new peacemakr_key_t from an existing pem file for a private
@@ -148,7 +148,7 @@ peacemakr_key_t *PeacemakrKey_new_pem_pub(crypto_config_t cfg, const char *buf,
  * @return A newly created peacemakr key for use in other library calls
  */
 peacemakr_key_t *PeacemakrKey_new_pem_priv(crypto_config_t cfg, const char *buf,
-                                           const size_t buflen);
+                                           size_t buflen);
 
 /**
  * @brief Get the config used during key creation

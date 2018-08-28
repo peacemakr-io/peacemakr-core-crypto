@@ -149,8 +149,9 @@ peacemakr_key_t *API(new_bytes)(crypto_config_t cfg, const uint8_t *buf) {
 
 peacemakr_key_t *API(new_pem_pub)(crypto_config_t cfg, const char *buf,
                                   const size_t buflen) {
+
   if (buf == NULL || buflen == 0) {
-    PEACEMAKR_ERROR("buf was null or buflen was 0");
+    PEACEMAKR_ERROR("buf was null or buflen was 0\n");
     return NULL;
   }
 
@@ -165,6 +166,10 @@ peacemakr_key_t *API(new_pem_pub)(crypto_config_t cfg, const char *buf,
   BIO *bo = BIO_new_mem_buf(buf, (int)buflen);
 
   out->m_contents_.asymm = PEM_read_bio_PUBKEY(bo, NULL, NULL, NULL);
+  if (out->m_contents_.asymm == NULL) {
+    PEACEMAKR_ERROR("PEM_read_bio_PUBKEY failed\n");
+    return NULL;
+  }
 
   BIO_free(bo);
 
@@ -174,7 +179,7 @@ peacemakr_key_t *API(new_pem_pub)(crypto_config_t cfg, const char *buf,
 peacemakr_key_t *API(new_pem_priv)(crypto_config_t cfg, const char *buf,
                                    const size_t buflen) {
   if (buf == NULL || buflen == 0) {
-    PEACEMAKR_ERROR("buf was null or buflen was 0");
+    PEACEMAKR_ERROR("buf was null or buflen was 0\n");
     return NULL;
   }
 
@@ -189,6 +194,10 @@ peacemakr_key_t *API(new_pem_priv)(crypto_config_t cfg, const char *buf,
   BIO *bo = BIO_new_mem_buf(buf, (int)buflen);
 
   out->m_contents_.asymm = PEM_read_bio_PrivateKey(bo, NULL, NULL, NULL);
+  if (out->m_contents_.asymm == NULL) {
+    PEACEMAKR_ERROR("PEM_read_bio_PrivateKey failed\n");
+    return NULL;
+  }
 
   BIO_free(bo);
 
