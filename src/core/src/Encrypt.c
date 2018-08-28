@@ -583,8 +583,17 @@ ciphertext_blob_t *peacemakr_encrypt(crypto_config_t cfg,
   }
 
   const EVP_CIPHER *cipher = parse_cipher(cfg.symm_cipher);
+  if (cipher == NULL) {
+    PEACEMAKR_ERROR("Parsing cipher failed\n");
+    return NULL;
+  }
+
   const int cipher_block_size = EVP_CIPHER_block_size(cipher);
-  size_t iv_len = (size_t)EVP_CIPHER_iv_length(cipher);
+
+  // guard against the possibility of getting a weird value
+  const int ossl_iv_len = EVP_CIPHER_iv_length(cipher);
+  size_t iv_len = (ossl_iv_len > EVP_MAX_IV_LENGTH || ossl_iv_len <= 0) ? EVP_MAX_IV_LENGTH : (size_t)ossl_iv_len;
+
   size_t tag_len = get_taglen(cfg.symm_cipher);
   size_t aad_len = plain->aad_len;
 
@@ -601,13 +610,11 @@ ciphertext_blob_t *peacemakr_encrypt(crypto_config_t cfg,
   ciphertext_blob_t *out = CiphertextBlob_new(cfg, iv_len, tag_len, aad_len,
                                               ciphertext_len, digest_len);
 
+  CiphertextBlob_init_iv(out, rand); // always init the iv...worst case you seed the random state
+
   bool success = false;
   switch (cfg.mode) {
   case SYMMETRIC: {
-    if (iv_len != 0) {
-      CiphertextBlob_init_iv(out, rand);
-    }
-
     success = symmetric_encrypt(key, out, plain->data, plain->data_len,
                                 plain->aad, plain->aad_len);
     break;

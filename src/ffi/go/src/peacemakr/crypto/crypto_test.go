@@ -10,19 +10,52 @@ package crypto
 
 import (
 	"bytes"
-	"math/rand"
+	crand "crypto/rand"
+	crsa "crypto/rsa"
+	"crypto/x509"
+	"encoding/pem"
+	mrand "math/rand"
 	"testing"
 )
 
 func SetUpPlaintext() Plaintext {
-	pData := make([]byte, rand.Uint32()%10000) // mod for test time
-	pAAD := make([]byte, rand.Uint32()%10000)
-	rand.Read(pData)
-	rand.Read(pAAD)
+	pData := make([]byte, mrand.Uint32()%10000) // mod for test time
+	pAAD := make([]byte, mrand.Uint32()%10000)
+	mrand.Read(pData)
+	mrand.Read(pAAD)
 	return Plaintext{
 		Data: pData,
 		Aad:  pAAD,
 	}
+}
+
+func GetNewRSAKey(bits int) ([]byte, []byte) {
+	privKey, err := crsa.GenerateKey(crand.Reader, bits)
+	if err != nil {
+		panic(err)
+	}
+
+	privPem := pem.EncodeToMemory(
+		&pem.Block{
+			Type: "RSA PRIVATE KEY",
+			Bytes: x509.MarshalPKCS1PrivateKey(privKey),
+		},
+	)
+
+	pubKey := privKey.PublicKey
+	pub, err := x509.MarshalPKIXPublicKey(&pubKey)
+	if err != nil {
+		panic(err)
+	}
+
+	pubPem := pem.EncodeToMemory(
+		&pem.Block{
+			Type: "PUBLIC KEY",
+			Bytes: pub,
+		},
+	)
+
+	return privPem, pubPem
 }
 
 func GetPubKey() []byte {
@@ -166,6 +199,55 @@ func TestAsymmetricEncryptFromPem(t *testing.T) {
 
 		if !bytes.Equal(plaintextIn.Aad, plaintextOut.Aad) {
 			t.Fatalf("plaintext data did not match")
+		}
+	}
+}
+
+func TestAsymmetricEncryptFromRandomPem(t *testing.T) {
+	for i := RSA_2048; i <= RSA_4096; i++ {
+		for j := AES_128_GCM; j <= CHACHA20_POLY1305; j++ {
+			cfg := CryptoConfig{
+				Mode:             ASYMMETRIC,
+				AsymmetricCipher: i,
+				SymmetricCipher:  j,
+				DigestAlgorithm:  SHA_512,
+			}
+
+			plaintextIn := SetUpPlaintext()
+
+			randomDevice := NewRandomDevice()
+
+			var priv []byte
+			var pub []byte
+			if i == RSA_2048 {
+				priv, pub = GetNewRSAKey(2048)
+			} else if i == RSA_4096 {
+				priv, pub = GetNewRSAKey(4096)
+			}
+
+			//fmt.Println(string(priv))
+			//fmt.Println(string(pub))
+
+			privkey := NewPeacemakrKeyFromPrivPem(cfg, priv)
+			pubkey := NewPeacemakrKeyFromPubPem(cfg, pub)
+
+			ciphertext, err := Encrypt(cfg, pubkey, plaintextIn, randomDevice)
+			if err != nil {
+				t.Fatalf("%v", err)
+			}
+
+			plaintextOut, success := Decrypt(privkey, ciphertext)
+			if !success {
+				t.Fatalf("Decrypt failed")
+			}
+
+			if !bytes.Equal(plaintextIn.Data, plaintextOut.Data) {
+				t.Fatalf("plaintext data did not match")
+			}
+
+			if !bytes.Equal(plaintextIn.Aad, plaintextOut.Aad) {
+				t.Fatalf("plaintext data did not match")
+			}
 		}
 	}
 }
