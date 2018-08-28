@@ -29,6 +29,11 @@ static bool symmetric_encrypt(const peacemakr_key_t *peacemakrkey,
   const EVP_CIPHER *cipher = parse_cipher(CiphertextBlob_symm_cipher(out));
   const buffer_t *key = PeacemakrKey_symmetric(peacemakrkey);
 
+  if (key == NULL || Buffer_get_bytes(key, NULL) == NULL) {
+    PEACEMAKR_ERROR("Can't do symmetric crypto without a symmetric key");
+    return false;
+  }
+
   const buffer_t *iv = CiphertextBlob_iv(out);
   buffer_t *tag = CiphertextBlob_mutable_tag(out);
   buffer_t *aad_buf = CiphertextBlob_mutable_aad(out);
@@ -158,6 +163,11 @@ static bool symmetric_decrypt(const peacemakr_key_t *peacemakrkey,
 
   const EVP_CIPHER *cipher = parse_cipher(CiphertextBlob_symm_cipher(in));
   const buffer_t *key = PeacemakrKey_symmetric(peacemakrkey);
+
+  if (key == NULL || Buffer_get_bytes(key, NULL) == NULL) {
+    PEACEMAKR_ERROR("Can't do symmetric crypto without a symmetric key");
+    return false;
+  }
 
   const buffer_t *ciphertext = CiphertextBlob_ciphertext(in);
   const unsigned char *ciphertext_buf = Buffer_get_bytes(ciphertext, NULL);
@@ -295,6 +305,10 @@ static bool asymmetric_encrypt(const peacemakr_key_t *pub_key,
   const EVP_CIPHER *cipher = parse_cipher(CiphertextBlob_symm_cipher(out));
 
   EVP_PKEY *pkey = PeacemakrKey_asymmetric(pub_key);
+  if (pkey == NULL) {
+    PEACEMAKR_ERROR("can't do asymmetric crypto with a NULL asymmetric key\n");
+    return false;
+  }
 
   buffer_t *tag = CiphertextBlob_mutable_tag(out);
 
@@ -415,6 +429,11 @@ static bool asymmetric_decrypt(const peacemakr_key_t *peacemakrkey,
   size_t plaintext_len = 0;
 
   EVP_PKEY *priv_key = PeacemakrKey_asymmetric(peacemakrkey);
+
+  if (priv_key == NULL) {
+    PEACEMAKR_ERROR("can't do asymmetric crypto with a NULL asymmetric key\n");
+    return false;
+  }
 
   const EVP_CIPHER *cipher = parse_cipher(CiphertextBlob_symm_cipher(in));
 
@@ -548,9 +567,33 @@ ciphertext_blob_t *peacemakr_encrypt(crypto_config_t cfg,
                                      const plaintext_t *plain,
                                      random_device_t *rand) {
 
+  if (key == NULL) {
+    PEACEMAKR_ERROR("key was null");
+    return NULL;
+  }
+
+  if (plain == NULL) {
+    PEACEMAKR_ERROR("plain was null");
+    return NULL;
+  }
+
+  if (rand == NULL) {
+    PEACEMAKR_ERROR("rand was null");
+    return NULL;
+  }
+
   const EVP_CIPHER *cipher = parse_cipher(cfg.symm_cipher);
+  if (cipher == NULL) {
+    PEACEMAKR_ERROR("Parsing cipher failed\n");
+    return NULL;
+  }
+
   const int cipher_block_size = EVP_CIPHER_block_size(cipher);
-  size_t iv_len = (size_t)EVP_CIPHER_iv_length(cipher);
+
+  // guard against the possibility of getting a weird value
+  const int ossl_iv_len = EVP_CIPHER_iv_length(cipher);
+  size_t iv_len = (ossl_iv_len > EVP_MAX_IV_LENGTH || ossl_iv_len <= 0) ? EVP_MAX_IV_LENGTH : (size_t)ossl_iv_len;
+
   size_t tag_len = get_taglen(cfg.symm_cipher);
   size_t aad_len = plain->aad_len;
 
@@ -567,13 +610,11 @@ ciphertext_blob_t *peacemakr_encrypt(crypto_config_t cfg,
   ciphertext_blob_t *out = CiphertextBlob_new(cfg, iv_len, tag_len, aad_len,
                                               ciphertext_len, digest_len);
 
+  CiphertextBlob_init_iv(out, rand); // always init the iv...worst case you seed the random state
+
   bool success = false;
   switch (cfg.mode) {
   case SYMMETRIC: {
-    if (iv_len != 0) {
-      CiphertextBlob_init_iv(out, rand);
-    }
-
     success = symmetric_encrypt(key, out, plain->data, plain->data_len,
                                 plain->aad, plain->aad_len);
     break;
@@ -595,6 +636,22 @@ ciphertext_blob_t *peacemakr_encrypt(crypto_config_t cfg,
 
 bool peacemakr_decrypt(const peacemakr_key_t *key, ciphertext_blob_t *cipher,
                        plaintext_t *plain) {
+
+  if (key == NULL) {
+    PEACEMAKR_ERROR("key was null");
+    return NULL;
+  }
+
+  if (plain == NULL) {
+    PEACEMAKR_ERROR("plain was null");
+    return NULL;
+  }
+
+  if (cipher == NULL) {
+    PEACEMAKR_ERROR("cipher was null");
+    return NULL;
+  }
+
   bool success = false;
   buffer_t *plaintext = NULL, *aad = NULL;
   switch (CiphertextBlob_encryption_mode(cipher)) {
