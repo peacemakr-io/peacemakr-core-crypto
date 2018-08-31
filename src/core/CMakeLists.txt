@@ -39,7 +39,7 @@ else()
 endif()
 
 set_target_properties(peacemakr-core-crypto PROPERTIES
-        PUBLIC_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/include/peacemakr/crypto.h;${CMAKE_CURRENT_SOURCE_DIR}/include/peacemakr/random.h"
+        PUBLIC_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/include/peacemakr/crypto.h;${CMAKE_CURRENT_SOURCE_DIR}/include/peacemakr/crypto.hpp;${CMAKE_CURRENT_SOURCE_DIR}/include/peacemakr/random.h"
 )
 
 install(TARGETS peacemakr-core-crypto
