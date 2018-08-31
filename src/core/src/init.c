@@ -13,16 +13,13 @@
 #include <bsd/stdlib.h>
 #endif
 #include <stdlib.h>
-#include <errno.h>
 
 
 bool peacemakr_init() {
   size_t bufsize = 512; // larger than any key size in bytes
-  volatile uint32_t *random_buf = alloca(bufsize);
+  volatile void *random_buf = alloca(bufsize);
   // TODO: should this be the linux getrandom syscall?
-  for (int i = 0; i < bufsize / sizeof(uint32_t); i++) {
-    *(random_buf + i) = arc4random();
-  }
+  arc4random_buf(random_buf, bufsize);
   return true;
 }
 
