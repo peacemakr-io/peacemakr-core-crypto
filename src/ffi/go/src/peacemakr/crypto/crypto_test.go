@@ -37,7 +37,7 @@ func GetNewRSAKey(bits int) ([]byte, []byte) {
 
 	privPem := pem.EncodeToMemory(
 		&pem.Block{
-			Type: "RSA PRIVATE KEY",
+			Type:  "RSA PRIVATE KEY",
 			Bytes: x509.MarshalPKCS1PrivateKey(privKey),
 		},
 	)
@@ -50,7 +50,7 @@ func GetNewRSAKey(bits int) ([]byte, []byte) {
 
 	pubPem := pem.EncodeToMemory(
 		&pem.Block{
-			Type: "PUBLIC KEY",
+			Type:  "PUBLIC KEY",
 			Bytes: pub,
 		},
 	)

@@ -130,6 +130,15 @@ func configToInternal(config CryptoConfig) C.crypto_config_t {
 	}
 }
 
+func configFromInternal(config C.crypto_config_t) CryptoConfig {
+	return CryptoConfig{
+		Mode:             EncryptionMode(config.mode),
+		SymmetricCipher:  SymmetricCipher(config.symm_cipher),
+		AsymmetricCipher: AsymmetricCipher(config.asymm_cipher),
+		DigestAlgorithm:  MessageDigestAlgorithm(config.digest_algorithm),
+	}
+}
+
 type Plaintext struct {
 	Data []byte
 	Aad  []byte
@@ -214,6 +223,11 @@ func NewPeacemakrKeyFromPrivPem(config CryptoConfig, contents []byte) PeacemakrK
 	return PeacemakrKey{
 		key: C.PeacemakrKey_new_pem_priv(configToInternal(config), cBytes, C.size_t(len(contents))),
 	}
+}
+
+func GetKeyConfig(key *PeacemakrKey) CryptoConfig {
+	keyConfig := C.PeacemakrKey_get_config(key.key)
+	return configFromInternal(keyConfig)
 }
 
 func DestroyPeacemakrKey(key PeacemakrKey) {
