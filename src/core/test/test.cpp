@@ -10,6 +10,24 @@
 #include <cassert>
 #include <thread>
 #include <algorithm>
+#include <random>
+
+std::string get_random_string() {
+
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::uniform_int_distribution<> dis(0, (2<<7) - 1); // 0-127 (so it checks if we handle nulls as well)
+  auto call = [&]() -> char {
+    return (char)dis(gen);
+  };
+
+  size_t len = 10000;
+
+  std::string out(len, '0');
+  std::generate_n(out.begin(), len, call);
+
+  return out;
+}
 
 void test_asymmetric(symmetric_cipher symm_cipher, asymmetric_cipher cipher, message_digest_algorithm digest) {
   crypto_config_t cfg = {
@@ -20,8 +38,8 @@ void test_asymmetric(symmetric_cipher symm_cipher, asymmetric_cipher cipher, mes
   };
 
   peacemakr::Plaintext plaintext_in;
-  plaintext_in.data = "Hello, world! I'm testing cryptography from C++!";
-  plaintext_in.aad = "And I'm AAD from C++!";
+  plaintext_in.data = get_random_string();
+  plaintext_in.aad = get_random_string();
 
   peacemakr::RandomDevice rand = peacemakr::RandomDevice::getDefault();
 
@@ -44,8 +62,8 @@ void test_symmetric(symmetric_cipher symm_cipher, message_digest_algorithm diges
   };
 
   peacemakr::Plaintext plaintext_in;
-  plaintext_in.data = "Hello, world! I'm testing cryptography from C++!";
-  plaintext_in.aad = "And I'm AAD from C++!";
+  plaintext_in.data = get_random_string();
+  plaintext_in.aad = get_random_string();
 
   peacemakr::RandomDevice rand = peacemakr::RandomDevice::getDefault();
 
