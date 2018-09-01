@@ -130,95 +130,59 @@ UXUc21h6963I8reNygMtcJyJpVV1Dngbnc8X6Oi6xF9iNwMBESc7e1QY1NU=
 }
 
 func TestAsymmetricEncrypt(t *testing.T) {
+	t.Parallel()
 	if !PeacemakrInit() {
 		t.Fatalf("Unable to successfully start and seed the CSPRNG")
 	}
 	for i := RSA_2048; i <= RSA_4096; i++ {
 		for j := AES_128_GCM; j <= CHACHA20_POLY1305; j++ {
-			cfg := CryptoConfig{
-				Mode:             ASYMMETRIC,
-				AsymmetricCipher: i,
-				SymmetricCipher:  j,
-				DigestAlgorithm:  SHA_512,
-			}
+			go func(i, j int) {
+				cfg := CryptoConfig{
+					Mode:             ASYMMETRIC,
+					AsymmetricCipher: AsymmetricCipher(i),
+					SymmetricCipher:  SymmetricCipher(j),
+					DigestAlgorithm:  SHA_512,
+				}
 
-			plaintextIn := SetUpPlaintext()
+				plaintextIn := SetUpPlaintext()
 
-			randomDevice := NewRandomDevice()
+				randomDevice := NewRandomDevice()
 
-			key := NewPeacemakrKey(cfg, randomDevice)
+				key := NewPeacemakrKey(cfg, randomDevice)
 
-			ciphertext, err := Encrypt(cfg, key, plaintextIn, randomDevice)
-			if err != nil {
-				t.Fatalf("%v", err)
-			}
+				ciphertext, err := Encrypt(cfg, key, plaintextIn, randomDevice)
+				if err != nil {
+					t.Fatalf("%v", err)
+				}
 
-			plaintextOut, success := Decrypt(key, ciphertext)
-			if !success {
-				t.Fatalf("Decrypt failed")
-			}
+				plaintextOut, success := Decrypt(key, ciphertext)
+				if !success {
+					t.Fatalf("Decrypt failed")
+				}
 
-			if !bytes.Equal(plaintextIn.Data, plaintextOut.Data) {
-				t.Fatalf("plaintext data did not match")
-			}
+				if !bytes.Equal(plaintextIn.Data, plaintextOut.Data) {
+					t.Fatalf("plaintext data did not match")
+				}
 
-			if !bytes.Equal(plaintextIn.Aad, plaintextOut.Aad) {
-				t.Fatalf("plaintext data did not match")
-			}
+				if !bytes.Equal(plaintextIn.Aad, plaintextOut.Aad) {
+					t.Fatalf("plaintext data did not match")
+				}
+			}(int(i), int(j))
 		}
 	}
 }
 
 func TestAsymmetricEncryptFromPem(t *testing.T) {
+	t.Parallel()
 	if !PeacemakrInit() {
 		t.Fatalf("Unable to successfully start and seed the CSPRNG")
 	}
 	for j := AES_128_GCM; j <= CHACHA20_POLY1305; j++ {
-		cfg := CryptoConfig{
-			Mode:             ASYMMETRIC,
-			AsymmetricCipher: RSA_4096,
-			SymmetricCipher:  j,
-			DigestAlgorithm:  SHA_512,
-		}
-
-		plaintextIn := SetUpPlaintext()
-
-		randomDevice := NewRandomDevice()
-
-		pubkey := NewPeacemakrKeyFromPubPem(cfg, GetPubKey())
-
-		ciphertext, err := Encrypt(cfg, pubkey, plaintextIn, randomDevice)
-		if err != nil {
-			t.Fatalf("%v", err)
-		}
-
-		privkey := NewPeacemakrKeyFromPrivPem(cfg, GetPrivKey())
-
-		plaintextOut, success := Decrypt(privkey, ciphertext)
-		if !success {
-			t.Fatalf("Decrypt failed")
-		}
-
-		if !bytes.Equal(plaintextIn.Data, plaintextOut.Data) {
-			t.Fatalf("plaintext data did not match")
-		}
-
-		if !bytes.Equal(plaintextIn.Aad, plaintextOut.Aad) {
-			t.Fatalf("plaintext data did not match")
-		}
-	}
-}
-
-func TestAsymmetricEncryptFromRandomPem(t *testing.T) {
-	if !PeacemakrInit() {
-		t.Fatalf("Unable to successfully start and seed the CSPRNG")
-	}
-	for i := RSA_2048; i <= RSA_4096; i++ {
-		for j := AES_128_GCM; j <= CHACHA20_POLY1305; j++ {
+		go func(j int) {
 			cfg := CryptoConfig{
 				Mode:             ASYMMETRIC,
-				AsymmetricCipher: i,
-				SymmetricCipher:  j,
+				AsymmetricCipher: RSA_4096,
+				SymmetricCipher:  SymmetricCipher(j),
 				DigestAlgorithm:  SHA_512,
 			}
 
@@ -226,24 +190,14 @@ func TestAsymmetricEncryptFromRandomPem(t *testing.T) {
 
 			randomDevice := NewRandomDevice()
 
-			var priv []byte
-			var pub []byte
-			if i == RSA_2048 {
-				priv, pub = GetNewRSAKey(2048)
-			} else if i == RSA_4096 {
-				priv, pub = GetNewRSAKey(4096)
-			}
-
-			//fmt.Println(string(priv))
-			//fmt.Println(string(pub))
-
-			privkey := NewPeacemakrKeyFromPrivPem(cfg, priv)
-			pubkey := NewPeacemakrKeyFromPubPem(cfg, pub)
+			pubkey := NewPeacemakrKeyFromPubPem(cfg, GetPubKey())
 
 			ciphertext, err := Encrypt(cfg, pubkey, plaintextIn, randomDevice)
 			if err != nil {
 				t.Fatalf("%v", err)
 			}
+
+			privkey := NewPeacemakrKeyFromPrivPem(cfg, GetPrivKey())
 
 			plaintextOut, success := Decrypt(privkey, ciphertext)
 			if !success {
@@ -257,11 +211,67 @@ func TestAsymmetricEncryptFromRandomPem(t *testing.T) {
 			if !bytes.Equal(plaintextIn.Aad, plaintextOut.Aad) {
 				t.Fatalf("plaintext data did not match")
 			}
+		}(int(j))
+	}
+}
+
+func TestAsymmetricEncryptFromRandomPem(t *testing.T) {
+	t.Parallel()
+	if !PeacemakrInit() {
+		t.Fatalf("Unable to successfully start and seed the CSPRNG")
+	}
+	for i := RSA_2048; i <= RSA_4096; i++ {
+		for j := AES_128_GCM; j <= CHACHA20_POLY1305; j++ {
+			go func(i, j int) {
+				cfg := CryptoConfig{
+					Mode:             ASYMMETRIC,
+					AsymmetricCipher: AsymmetricCipher(i),
+					SymmetricCipher:  SymmetricCipher(j),
+					DigestAlgorithm:  SHA_512,
+				}
+
+				plaintextIn := SetUpPlaintext()
+
+				randomDevice := NewRandomDevice()
+
+				var priv []byte
+				var pub []byte
+				if AsymmetricCipher(i) == RSA_2048 {
+					priv, pub = GetNewRSAKey(2048)
+				} else if AsymmetricCipher(i) == RSA_4096 {
+					priv, pub = GetNewRSAKey(4096)
+				}
+
+				//fmt.Println(string(priv))
+				//fmt.Println(string(pub))
+
+				privkey := NewPeacemakrKeyFromPrivPem(cfg, priv)
+				pubkey := NewPeacemakrKeyFromPubPem(cfg, pub)
+
+				ciphertext, err := Encrypt(cfg, pubkey, plaintextIn, randomDevice)
+				if err != nil {
+					t.Fatalf("%v", err)
+				}
+
+				plaintextOut, success := Decrypt(privkey, ciphertext)
+				if !success {
+					t.Fatalf("Decrypt failed")
+				}
+
+				if !bytes.Equal(plaintextIn.Data, plaintextOut.Data) {
+					t.Fatalf("plaintext data did not match")
+				}
+
+				if !bytes.Equal(plaintextIn.Aad, plaintextOut.Aad) {
+					t.Fatalf("plaintext data did not match")
+				}
+			}(int(i), int(j))
 		}
 	}
 }
 
 func TestSymmetricEncrypt(t *testing.T) {
+	t.Parallel()
 	if !PeacemakrInit() {
 		t.Fatalf("Unable to successfully start and seed the CSPRNG")
 	}
@@ -300,46 +310,49 @@ func TestSymmetricEncrypt(t *testing.T) {
 }
 
 func TestSerialize(t *testing.T) {
+	t.Parallel()
 	if !PeacemakrInit() {
 		t.Fatalf("Unable to successfully start and seed the CSPRNG")
 	}
 	for i := RSA_2048; i <= RSA_4096; i++ {
 		for j := AES_128_GCM; j <= CHACHA20_POLY1305; j++ {
 			for k := SHA_224; k <= SHA_512; k++ {
-				cfg := CryptoConfig{
-					Mode:             ASYMMETRIC,
-					AsymmetricCipher: i,
-					SymmetricCipher:  j,
-					DigestAlgorithm:  k,
-				}
+				go func(i, j, k int) {
+					cfg := CryptoConfig{
+						Mode:             ASYMMETRIC,
+						AsymmetricCipher: AsymmetricCipher(i),
+						SymmetricCipher:  SymmetricCipher(j),
+						DigestAlgorithm:  MessageDigestAlgorithm(k),
+					}
 
-				plaintextIn := SetUpPlaintext()
+					plaintextIn := SetUpPlaintext()
 
-				randomDevice := NewRandomDevice()
+					randomDevice := NewRandomDevice()
 
-				key := NewPeacemakrKey(cfg, randomDevice)
+					key := NewPeacemakrKey(cfg, randomDevice)
 
-				ciphertext, err := Encrypt(cfg, key, plaintextIn, randomDevice)
-				if err != nil {
-					t.Fatalf("%v", err)
-				}
+					ciphertext, err := Encrypt(cfg, key, plaintextIn, randomDevice)
+					if err != nil {
+						t.Fatalf("%v", err)
+					}
 
-				if err != nil {
-					t.Fatalf("%v", err)
-				}
+					if err != nil {
+						t.Fatalf("%v", err)
+					}
 
-				plaintextOut, success := Decrypt(key, ciphertext)
-				if !success {
-					t.Fatalf("Decrypt failed")
-				}
+					plaintextOut, success := Decrypt(key, ciphertext)
+					if !success {
+						t.Fatalf("Decrypt failed")
+					}
 
-				if !bytes.Equal(plaintextIn.Data, plaintextOut.Data) {
-					t.Fatalf("plaintext data did not match")
-				}
+					if !bytes.Equal(plaintextIn.Data, plaintextOut.Data) {
+						t.Fatalf("plaintext data did not match")
+					}
 
-				if !bytes.Equal(plaintextIn.Aad, plaintextOut.Aad) {
-					t.Fatalf("plaintext data did not match")
-				}
+					if !bytes.Equal(plaintextIn.Aad, plaintextOut.Aad) {
+						t.Fatalf("plaintext data did not match")
+					}
+				}(int(i), int(j), int(k))
 			}
 		}
 	}
