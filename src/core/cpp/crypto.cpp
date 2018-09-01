@@ -8,6 +8,8 @@
 
 #include "crypto.hpp"
 
+#include <stdexcept>
+
 peacemakr::RandomDevice::RandomDevice(rng_buf generator, rng_err err_handler) : m_rand_{.generator = generator, .err = err_handler} {}
 
 peacemakr::RandomDevice peacemakr::RandomDevice::getDefault() {
