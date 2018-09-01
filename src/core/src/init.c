@@ -6,14 +6,13 @@
 // Full license at peacemakr_core_crypto/LICENSE.txt
 //
 
-#include <crypto.h>
 #include <Logging.h>
+#include <crypto.h>
 
 #ifdef linux
 #include <bsd/stdlib.h>
 #endif
 #include <stdlib.h>
-
 
 bool peacemakr_init() {
   size_t bufsize = 512; // larger than any key size in bytes
@@ -22,5 +21,3 @@ bool peacemakr_init() {
   arc4random_buf(random_buf, bufsize);
   return true;
 }
-
-

@@ -62,6 +62,12 @@ void peacemakr::Plaintext::setContents(const plaintext_t &cstyle) {
   this->aad = std::string(cstyle.aad, cstyle.aad + cstyle.aad_len);
 }
 
+peacemakr::CryptoContext::CryptoContext() {
+  if (!peacemakr_init()) {
+    throw std::runtime_error("Unable to properly start the random device");
+  }
+}
+
 std::string
 peacemakr::CryptoContext::Encrypt(crypto_config_t cfg, const peacemakr::Key &key, const peacemakr::Plaintext &plaintext,
                                   peacemakr::RandomDevice &rand) {
