@@ -224,7 +224,7 @@ uint8_t *serialize_blob(ciphertext_blob_t *cipher, size_t *out_size) {
   return (uint8_t *)b64_encode(buf, current_pos, out_size);
 }
 
-ciphertext_blob_t *deserialize_blob(uint8_t *b64_serialized_cipher,
+ciphertext_blob_t *deserialize_blob(const uint8_t *b64_serialized_cipher,
                                     size_t serialized_len) {
 
   if (b64_serialized_cipher == NULL || serialized_len == 0) {
@@ -235,7 +235,7 @@ ciphertext_blob_t *deserialize_blob(uint8_t *b64_serialized_cipher,
   uint8_t *serialized_cipher = alloca(serialized_len);
   int rc = b64_decode((const char *)b64_serialized_cipher, serialized_cipher,
                       serialized_len);
-  free(b64_serialized_cipher);
+
   if (serialized_cipher == NULL || rc != 1) {
     PEACEMAKR_ERROR("b64 decode failed\n");
     return NULL;

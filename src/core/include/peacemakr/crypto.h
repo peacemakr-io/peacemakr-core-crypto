@@ -103,6 +103,12 @@ static inline uint8_t get_max_version() {
 }
 
 /**
+ * Should be called once on startup. Ensures that the system's random number
+ * generator is well seeded and any numbers generated have sufficient entropy.
+ */
+bool peacemakr_init();
+
+/**
  * @brief Create a new peacemakr_key_t from scratch using a user-defined secure
  * random source.
  * @param cfg The configuration for the cryptography calls - ensures that the
@@ -196,7 +202,8 @@ bool peacemakr_decrypt(const peacemakr_key_t *key, ciphertext_blob_t *cipher,
  * @param cipher The ciphertext to serialize
  * @param out_size A non-null pointer to a size_t that will contain the size of
  * the buffer created by this function.
- * @return A byte buffer that is encoded in URL-safe base64.
+ * @return A byte buffer that is encoded in URL-safe base64. The callee is
+ * responsible for managing the memory of this buffer.
  */
 uint8_t *serialize_blob(ciphertext_blob_t *cipher, size_t *out_size);
 
@@ -209,7 +216,7 @@ uint8_t *serialize_blob(ciphertext_blob_t *cipher, size_t *out_size);
  * @return A well-formed ciphertext_blob_t object that can be decrypted with the
  * appropriate key.
  */
-ciphertext_blob_t *deserialize_blob(uint8_t *b64_serialized_cipher,
+ciphertext_blob_t *deserialize_blob(const uint8_t *b64_serialized_cipher,
                                     size_t serialized_len);
 
 #endif // PEACEMAKR_CORE_CRYPTO_CRYPTO_H

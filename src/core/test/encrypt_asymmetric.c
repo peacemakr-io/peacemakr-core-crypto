@@ -54,6 +54,9 @@ void test_asymmetric_algo(symmetric_cipher symm_cipher, asymmetric_cipher cipher
 }
 
 int main() {
+  if (!peacemakr_init()) {
+    return 1;
+  }
   for (int i = RSA_2048; i <= RSA_4096; ++i) {
     for (int j = AES_128_GCM; j <= CHACHA20_POLY1305; ++j) {
       test_asymmetric_algo(j, i);

@@ -29,7 +29,7 @@ RUN mkdir -p build && cd build && cmake .. && make check install
 
 FROM golang:alpine3.8
 
-RUN apk add --no-cache gcc musl-dev
+RUN apk add --no-cache gcc musl-dev libbsd-dev
 
 COPY --from=builder /usr/local/lib/cmake /usr/local/lib/cmake
 COPY --from=builder /usr/local/lib/libpeacemakr* /usr/local/lib/

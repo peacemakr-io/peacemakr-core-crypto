@@ -59,6 +59,10 @@ void test_symmetric_algo(symmetric_cipher symm_cipher,
 }
 
 int main() {
+  if (!peacemakr_init()) {
+    return 1;
+  }
+
   char *privkey;
   char *pubkey;
 

@@ -1,0 +1,17 @@
+enable_language(CXX)
+set(CMAKE_CXX_STANDARD 11)
+
+file(GLOB SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
+
+set(ALL_C_SOURCE_FILES ${SOURCES_C} ${CMAKE_CURRENT_SOURCE_DIR}/../include/peacemakr/crypto.hpp ${ALL_C_SOURCE_FILES} PARENT_SCOPE)
+
+add_library(peacemakr-core-crypto-cpp SHARED ${SOURCES})
+target_link_libraries(peacemakr-core-crypto-cpp PUBLIC peacemakr-core-crypto)
+set_target_properties(peacemakr-core-crypto-cpp PROPERTIES PUBLIC_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/../include/peacemakr/crypto.hpp")
+
+install(TARGETS peacemakr-core-crypto-cpp
+        EXPORT peacemakr-core-crypto-targets
+        LIBRARY DESTINATION lib
+        PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_PREFIX}/include/peacemakr"
+        COMPONENT dev
+)

@@ -53,6 +53,10 @@ void test_symmetric_algo(symmetric_cipher cipher) {
 }
 
 int main() {
+  if (!peacemakr_init()) {
+    return 1;
+  }
+
   for (int i = AES_128_GCM; i <= CHACHA20_POLY1305; ++i) {
     test_symmetric_algo(i);
   }

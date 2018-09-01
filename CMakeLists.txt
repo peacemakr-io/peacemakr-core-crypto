@@ -45,6 +45,7 @@ endif (DOXYGEN_FOUND)
 
 export(TARGETS peacemakr-core-crypto FILE ${CMAKE_BINARY_DIR}/peacemakr_core_crypto_targets.cmake)
 export(PACKAGE peacemakr-core-crypto)
+export(PACKAGE peacemakr-core-crypto-cpp)
 
 # Create the FooBarConfig.cmake and FooBarConfigVersion files
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/peacemakr-core-crypto-config.cmake.in
