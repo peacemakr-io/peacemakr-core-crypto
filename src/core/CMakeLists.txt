@@ -27,7 +27,8 @@ set(ALL_C_SOURCE_FILES ${SOURCES_C} ${SOURCES_H} ${INCLUDES} ${ALL_C_SOURCE_FILE
 add_library(peacemakr-core-crypto SHARED ${SOURCES_C} ${SOURCES_H} ${INCLUDES})
 add_definitions(-DOPENSSL_MIN_API=0x10100000L)
 target_include_directories(peacemakr-core-crypto
-        PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include/peacemakr
+        PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/peacemakr>
+               $<INSTALL_INTERFACE:include>
         PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 if (APPLE)
@@ -39,8 +40,10 @@ else()
 endif()
 
 set_target_properties(peacemakr-core-crypto PROPERTIES
-        PUBLIC_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/include/peacemakr/crypto.h;${CMAKE_CURRENT_SOURCE_DIR}/include/peacemakr/crypto.hpp;${CMAKE_CURRENT_SOURCE_DIR}/include/peacemakr/random.h"
+        PUBLIC_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/include/peacemakr/crypto.h;${CMAKE_CURRENT_SOURCE_DIR}/include/peacemakr/random.h"
 )
+
+add_subdirectory(cpp)
 
 install(TARGETS peacemakr-core-crypto
         EXPORT peacemakr-core-crypto-targets

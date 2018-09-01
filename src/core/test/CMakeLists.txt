@@ -32,7 +32,7 @@ enable_language(CXX)
 set(CMAKE_CXX_STANDARD 11)
 
 add_executable(test_cpp EXCLUDE_FROM_ALL ${CMAKE_CURRENT_SOURCE_DIR}/test.cpp)
-target_link_libraries(test_cpp PRIVATE peacemakr-core-crypto ${LIBBSD_LIBRARIES})
+target_link_libraries(test_cpp PRIVATE peacemakr-core-crypto-cpp ${LIBBSD_LIBRARIES})
 target_include_directories(test_cpp PRIVATE ${CMAKE_SOURCE_DIR}/src/core/include ${LIBBSD_INCLUDE_DIRS})
 add_test(NAME test_cpp COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_cpp)
 add_dependencies(check test_cpp)
