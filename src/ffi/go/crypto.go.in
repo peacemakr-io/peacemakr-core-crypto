@@ -253,6 +253,9 @@ func ExtractCiphertextBlob(ciphertext []byte) (*CiphertextBlob, error) {
 func Decrypt(key PeacemakrKey, ciphertext []byte) (*Plaintext, bool) {
 	var plaintext C.plaintext_t
 	defer freeInternalPlaintext(&plaintext)
+	if ciphertext[len(ciphertext)-1] != 0 {
+		ciphertext = append(ciphertext, byte(0)) // add NULL terminator
+	}
 
 	deserialized, err := deserialize(ciphertext)
 	if err != nil {

@@ -338,16 +338,17 @@ static bool asymmetric_decrypt(const peacemakr_key_t *peacemakrkey,
   const buffer_t *iv = CiphertextBlob_iv(in);
 
   const buffer_t *stored_aad = CiphertextBlob_aad(in);
-  const unsigned char *aad_buf = Buffer_get_bytes(stored_aad, NULL);
-  const size_t aad_len = Buffer_get_size(stored_aad);
+  size_t aad_len = 0;
+  unsigned char *aad_buf = NULL;
+  if (stored_aad != NULL) {
+    aad_buf = (unsigned char *)Buffer_get_bytes(stored_aad, &aad_len);
+  }
 
   const buffer_t *stored_tag = CiphertextBlob_tag(in);
-
-  unsigned char *tag_buf = NULL;
   size_t taglen = 0;
+  unsigned char *tag_buf = NULL;
   if (stored_tag != NULL) {
-    tag_buf = (unsigned char *)Buffer_get_bytes(stored_tag, NULL);
-    taglen = Buffer_get_size(stored_tag);
+    tag_buf = (unsigned char *)Buffer_get_bytes(stored_tag, &taglen);
   }
 
   unsigned char *plaintext_buf = alloca(ciphertext_len << 1);
@@ -412,7 +413,9 @@ static bool asymmetric_decrypt(const peacemakr_key_t *peacemakrkey,
   *plaintext = Buffer_new(plaintext_len);
   Buffer_set_bytes(*plaintext, plaintext_buf, plaintext_len);
   *aad = Buffer_new(aad_len);
-  Buffer_set_bytes(*aad, aad_buf, aad_len);
+  if (*aad != NULL) {
+    Buffer_set_bytes(*aad, aad_buf, aad_len);
+  }
 
   return true;
 }
@@ -496,18 +499,21 @@ bool peacemakr_decrypt(const peacemakr_key_t *key, ciphertext_blob_t *cipher,
   }
 
   if (success) {
-    const unsigned char *tmp_aad = Buffer_get_bytes(aad, &plain->aad_len);
-    plain->aad = calloc(plain->aad_len, sizeof(unsigned char));
-    memcpy((void *)plain->aad, tmp_aad, plain->aad_len);
-    Buffer_free(aad);
-
+    if (aad != NULL) {
+      const unsigned char *tmp_aad = Buffer_get_bytes(aad, &plain->aad_len);
+      plain->aad = calloc(plain->aad_len, sizeof(unsigned char));
+      memcpy((void *)plain->aad, tmp_aad, plain->aad_len);
+      Buffer_free(aad);
+    }
     const unsigned char *tmp_plain =
         Buffer_get_bytes(plaintext, &plain->data_len);
     plain->data = calloc(plain->data_len, sizeof(unsigned char));
     memcpy((void *)plain->data, tmp_plain, plain->data_len);
     Buffer_free(plaintext);
   } else { // fill with zeros
+    plain->aad_len = 1;
     plain->aad = calloc(plain->aad_len, sizeof(unsigned char));
+    plain->data_len = 1;
     plain->data = calloc(plain->data_len, sizeof(unsigned char));
   }
 
