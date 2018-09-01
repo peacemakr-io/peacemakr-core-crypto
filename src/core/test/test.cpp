@@ -28,7 +28,7 @@ void test_asymmetric(symmetric_cipher symm_cipher, asymmetric_cipher cipher, mes
   peacemakr::Key key(cfg, rand);
 
   peacemakr::CryptoContext ctx;
-  std::string encrypted = ctx.Encrypt(cfg, key, plaintext_in, rand);
+  std::string encrypted = ctx.Encrypt(key, plaintext_in, rand);
   peacemakr::Plaintext plaintext_out = ctx.Decrypt(key, encrypted);
 
   assert(plaintext_in.data == plaintext_out.data);
@@ -52,7 +52,7 @@ void test_symmetric(symmetric_cipher symm_cipher, message_digest_algorithm diges
   peacemakr::Key key(cfg, rand);
 
   peacemakr::CryptoContext ctx;
-  std::string encrypted = ctx.Encrypt(cfg, key, plaintext_in, rand);
+  std::string encrypted = ctx.Encrypt(key, plaintext_in, rand);
   peacemakr::Plaintext plaintext_out = ctx.Decrypt(key, encrypted);
 
   assert(plaintext_in.data == plaintext_out.data);
