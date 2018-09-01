@@ -145,23 +145,28 @@ func TestAsymmetricEncrypt(t *testing.T) {
 
 			key := NewPeacemakrKey(cfg, randomDevice)
 
-			ciphertext, err := Encrypt(cfg, key, plaintextIn, randomDevice)
+			ciphertext, err := Encrypt(key, plaintextIn, randomDevice)
 			if err != nil {
+				DestroyPeacemakrKey(key)
 				t.Fatalf("%v", err)
 			}
 
 			plaintextOut, success := Decrypt(key, ciphertext)
 			if !success {
+				DestroyPeacemakrKey(key)
 				t.Fatalf("Decrypt failed")
 			}
 
 			if !bytes.Equal(plaintextIn.Data, plaintextOut.Data) {
+				DestroyPeacemakrKey(key)
 				t.Fatalf("plaintext data did not match")
 			}
 
 			if !bytes.Equal(plaintextIn.Aad, plaintextOut.Aad) {
+				DestroyPeacemakrKey(key)
 				t.Fatalf("plaintext data did not match")
 			}
+			DestroyPeacemakrKey(key)
 		}
 	}
 }
@@ -181,8 +186,9 @@ func TestAsymmetricEncryptFromPem(t *testing.T) {
 
 		pubkey := NewPeacemakrKeyFromPubPem(cfg, GetPubKey())
 
-		ciphertext, err := Encrypt(cfg, pubkey, plaintextIn, randomDevice)
+		ciphertext, err := Encrypt(pubkey, plaintextIn, randomDevice)
 		if err != nil {
+			DestroyPeacemakrKey(pubkey)
 			t.Fatalf("%v", err)
 		}
 
@@ -190,16 +196,24 @@ func TestAsymmetricEncryptFromPem(t *testing.T) {
 
 		plaintextOut, success := Decrypt(privkey, ciphertext)
 		if !success {
+			DestroyPeacemakrKey(pubkey)
+			DestroyPeacemakrKey(privkey)
 			t.Fatalf("Decrypt failed")
 		}
 
 		if !bytes.Equal(plaintextIn.Data, plaintextOut.Data) {
+			DestroyPeacemakrKey(pubkey)
+			DestroyPeacemakrKey(privkey)
 			t.Fatalf("plaintext data did not match")
 		}
 
 		if !bytes.Equal(plaintextIn.Aad, plaintextOut.Aad) {
+			DestroyPeacemakrKey(pubkey)
+			DestroyPeacemakrKey(privkey)
 			t.Fatalf("plaintext data did not match")
 		}
+		DestroyPeacemakrKey(pubkey)
+		DestroyPeacemakrKey(privkey)
 	}
 }
 
@@ -231,23 +245,31 @@ func TestAsymmetricEncryptFromRandomPem(t *testing.T) {
 			privkey := NewPeacemakrKeyFromPrivPem(cfg, priv)
 			pubkey := NewPeacemakrKeyFromPubPem(cfg, pub)
 
-			ciphertext, err := Encrypt(cfg, pubkey, plaintextIn, randomDevice)
+			ciphertext, err := Encrypt(pubkey, plaintextIn, randomDevice)
 			if err != nil {
 				t.Fatalf("%v", err)
 			}
 
 			plaintextOut, success := Decrypt(privkey, ciphertext)
 			if !success {
+				DestroyPeacemakrKey(pubkey)
+				DestroyPeacemakrKey(privkey)
 				t.Fatalf("Decrypt failed")
 			}
 
 			if !bytes.Equal(plaintextIn.Data, plaintextOut.Data) {
+				DestroyPeacemakrKey(pubkey)
+				DestroyPeacemakrKey(privkey)
 				t.Fatalf("plaintext data did not match")
 			}
 
 			if !bytes.Equal(plaintextIn.Aad, plaintextOut.Aad) {
+				DestroyPeacemakrKey(pubkey)
+				DestroyPeacemakrKey(privkey)
 				t.Fatalf("plaintext data did not match")
 			}
+			DestroyPeacemakrKey(pubkey)
+			DestroyPeacemakrKey(privkey)
 		}
 	}
 }
@@ -267,23 +289,28 @@ func TestSymmetricEncrypt(t *testing.T) {
 
 		key := NewPeacemakrKey(cfg, randomDevice)
 
-		ciphertext, err := Encrypt(cfg, key, plaintextIn, randomDevice)
+		ciphertext, err := Encrypt(key, plaintextIn, randomDevice)
 		if err != nil {
+			DestroyPeacemakrKey(key)
 			t.Fatalf("%v", err)
 		}
 
 		plaintextOut, success := Decrypt(key, ciphertext)
 		if !success {
+			DestroyPeacemakrKey(key)
 			t.Fatalf("Decrypt failed")
 		}
 
 		if !bytes.Equal(plaintextIn.Data, plaintextOut.Data) {
+			DestroyPeacemakrKey(key)
 			t.Fatalf("plaintext data did not match")
 		}
 
 		if !bytes.Equal(plaintextIn.Aad, plaintextOut.Aad) {
+			DestroyPeacemakrKey(key)
 			t.Fatalf("plaintext data did not match")
 		}
+		DestroyPeacemakrKey(key)
 	}
 }
 
@@ -304,27 +331,28 @@ func TestSerialize(t *testing.T) {
 
 				key := NewPeacemakrKey(cfg, randomDevice)
 
-				ciphertext, err := Encrypt(cfg, key, plaintextIn, randomDevice)
+				ciphertext, err := Encrypt(key, plaintextIn, randomDevice)
 				if err != nil {
-					t.Fatalf("%v", err)
-				}
-
-				if err != nil {
+					DestroyPeacemakrKey(key)
 					t.Fatalf("%v", err)
 				}
 
 				plaintextOut, success := Decrypt(key, ciphertext)
 				if !success {
+					DestroyPeacemakrKey(key)
 					t.Fatalf("Decrypt failed")
 				}
 
 				if !bytes.Equal(plaintextIn.Data, plaintextOut.Data) {
+					DestroyPeacemakrKey(key)
 					t.Fatalf("plaintext data did not match")
 				}
 
 				if !bytes.Equal(plaintextIn.Aad, plaintextOut.Aad) {
+					DestroyPeacemakrKey(key)
 					t.Fatalf("plaintext data did not match")
 				}
+				DestroyPeacemakrKey(key)
 			}
 		}
 	}

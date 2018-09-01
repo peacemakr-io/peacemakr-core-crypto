@@ -566,7 +566,7 @@ ciphertext_blob_t *peacemakr_encrypt(const peacemakr_key_t *key,
                                      const plaintext_t *plain,
                                      random_device_t *rand) {
 
-  crypto_config_t cfg = PeacemakrKey_get_config(key);
+  const crypto_config_t cfg = PeacemakrKey_get_config(key);
 
   if (key == NULL) {
     PEACEMAKR_ERROR("key was null");
