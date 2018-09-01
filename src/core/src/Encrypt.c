@@ -447,13 +447,15 @@ static bool asymmetric_decrypt(const peacemakr_key_t *peacemakrkey,
   const buffer_t *iv = CiphertextBlob_iv(in);
 
   const buffer_t *stored_aad = CiphertextBlob_aad(in);
-  size_t aad_len = 0; unsigned char *aad_buf = NULL;
+  size_t aad_len = 0;
+  unsigned char *aad_buf = NULL;
   if (stored_aad != NULL) {
     aad_buf = (unsigned char *)Buffer_get_bytes(stored_aad, &aad_len);
   }
 
   const buffer_t *stored_tag = CiphertextBlob_tag(in);
-  size_t taglen = 0; unsigned char *tag_buf = NULL;
+  size_t taglen = 0;
+  unsigned char *tag_buf = NULL;
   if (stored_tag != NULL) {
     tag_buf = (unsigned char *)Buffer_get_bytes(stored_tag, NULL);
     taglen = Buffer_get_size(stored_tag);
