@@ -102,6 +102,13 @@ static inline uint8_t get_max_version() {
   return PEACEMAKR_CORE_CRYPTO_VERSION_MAX;
 }
 
+
+/**
+ * Should be called once on startup. Ensures that the system's random number generator is well seeded
+ * and any numbers generated have sufficient entropy.
+ */
+bool peacemakr_init();
+
 /**
  * @brief Create a new peacemakr_key_t from scratch using a user-defined secure
  * random source.

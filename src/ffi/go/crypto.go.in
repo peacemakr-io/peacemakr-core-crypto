@@ -178,6 +178,10 @@ func GetMaxSupportedVersion() uint8 {
 	return uint8(C.get_max_version())
 }
 
+func PeacemakrInit() bool {
+    return bool(C.peacemakr_init())
+}
+
 type CiphertextBlob struct {
 	blob *C.ciphertext_blob_t
 }
