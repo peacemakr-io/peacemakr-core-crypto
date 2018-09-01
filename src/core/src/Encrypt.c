@@ -457,8 +457,7 @@ static bool asymmetric_decrypt(const peacemakr_key_t *peacemakrkey,
   size_t taglen = 0;
   unsigned char *tag_buf = NULL;
   if (stored_tag != NULL) {
-    tag_buf = (unsigned char *)Buffer_get_bytes(stored_tag, NULL);
-    taglen = Buffer_get_size(stored_tag);
+    tag_buf = (unsigned char *)Buffer_get_bytes(stored_tag, &taglen);
   }
 
   unsigned char *plaintext_buf = alloca(ciphertext_len << 1);
