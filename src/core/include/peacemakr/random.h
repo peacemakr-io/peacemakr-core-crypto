@@ -36,7 +36,7 @@ typedef struct {
   rng_err err;
 } random_device_t;
 
-//random_device_t peacemakr_default_random_device() {
+// random_device_t peacemakr_default_random_device() {
 //  random_device_t rand = {
 //    .generator =
 //  };

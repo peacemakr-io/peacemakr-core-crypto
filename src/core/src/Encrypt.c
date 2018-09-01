@@ -592,7 +592,9 @@ ciphertext_blob_t *peacemakr_encrypt(crypto_config_t cfg,
 
   // guard against the possibility of getting a weird value
   const int ossl_iv_len = EVP_CIPHER_iv_length(cipher);
-  size_t iv_len = (ossl_iv_len > EVP_MAX_IV_LENGTH || ossl_iv_len <= 0) ? EVP_MAX_IV_LENGTH : (size_t)ossl_iv_len;
+  size_t iv_len = (ossl_iv_len > EVP_MAX_IV_LENGTH || ossl_iv_len <= 0)
+                      ? EVP_MAX_IV_LENGTH
+                      : (size_t)ossl_iv_len;
 
   size_t tag_len = get_taglen(cfg.symm_cipher);
   size_t aad_len = plain->aad_len;
@@ -610,7 +612,8 @@ ciphertext_blob_t *peacemakr_encrypt(crypto_config_t cfg,
   ciphertext_blob_t *out = CiphertextBlob_new(cfg, iv_len, tag_len, aad_len,
                                               ciphertext_len, digest_len);
 
-  CiphertextBlob_init_iv(out, rand); // always init the iv...worst case you seed the random state
+  CiphertextBlob_init_iv(
+      out, rand); // always init the iv...worst case you seed the random state
 
   bool success = false;
   switch (cfg.mode) {
