@@ -59,6 +59,10 @@ void test_serialize(symmetric_cipher symm_cipher, asymmetric_cipher cipher, mess
 }
 
 int main() {
+  if (!peacemakr_init()) {
+    return 1;
+  }
+
   for (int i = RSA_2048; i <= RSA_4096; ++i) {
     for (int j = AES_128_GCM; j <= CHACHA20_POLY1305; ++j) {
       for (int k = SHA_224; k <= SHA_512; k++) {

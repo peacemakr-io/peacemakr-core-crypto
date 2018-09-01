@@ -130,6 +130,9 @@ UXUc21h6963I8reNygMtcJyJpVV1Dngbnc8X6Oi6xF9iNwMBESc7e1QY1NU=
 }
 
 func TestAsymmetricEncrypt(t *testing.T) {
+	if !PeacemakrInit() {
+		t.Fatalf("Unable to successfully start and seed the CSPRNG")
+	}
 	for i := RSA_2048; i <= RSA_4096; i++ {
 		for j := AES_128_GCM; j <= CHACHA20_POLY1305; j++ {
 			cfg := CryptoConfig{
@@ -167,6 +170,9 @@ func TestAsymmetricEncrypt(t *testing.T) {
 }
 
 func TestAsymmetricEncryptFromPem(t *testing.T) {
+	if !PeacemakrInit() {
+		t.Fatalf("Unable to successfully start and seed the CSPRNG")
+	}
 	for j := AES_128_GCM; j <= CHACHA20_POLY1305; j++ {
 		cfg := CryptoConfig{
 			Mode:             ASYMMETRIC,
@@ -204,6 +210,9 @@ func TestAsymmetricEncryptFromPem(t *testing.T) {
 }
 
 func TestAsymmetricEncryptFromRandomPem(t *testing.T) {
+	if !PeacemakrInit() {
+		t.Fatalf("Unable to successfully start and seed the CSPRNG")
+	}
 	for i := RSA_2048; i <= RSA_4096; i++ {
 		for j := AES_128_GCM; j <= CHACHA20_POLY1305; j++ {
 			cfg := CryptoConfig{
@@ -253,6 +262,9 @@ func TestAsymmetricEncryptFromRandomPem(t *testing.T) {
 }
 
 func TestSymmetricEncrypt(t *testing.T) {
+	if !PeacemakrInit() {
+		t.Fatalf("Unable to successfully start and seed the CSPRNG")
+	}
 	for j := AES_128_GCM; j <= CHACHA20_POLY1305; j++ {
 		cfg := CryptoConfig{
 			Mode:             SYMMETRIC,
@@ -288,6 +300,9 @@ func TestSymmetricEncrypt(t *testing.T) {
 }
 
 func TestSerialize(t *testing.T) {
+	if !PeacemakrInit() {
+		t.Fatalf("Unable to successfully start and seed the CSPRNG")
+	}
 	for i := RSA_2048; i <= RSA_4096; i++ {
 		for j := AES_128_GCM; j <= CHACHA20_POLY1305; j++ {
 			for k := SHA_224; k <= SHA_512; k++ {
