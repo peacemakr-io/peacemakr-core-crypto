@@ -174,8 +174,7 @@ void PeacemakrKey_free(peacemakr_key_t *key);
  * @return An opaque pointer to a blob that contains the encrypted message. This
  * can be passed to other peacemakr library calls, such as peacemakr_decrypt.
  */
-ciphertext_blob_t *peacemakr_encrypt(crypto_config_t cfg,
-                                     const peacemakr_key_t *key,
+ciphertext_blob_t *peacemakr_encrypt(const peacemakr_key_t *key,
                                      const plaintext_t *plain,
                                      random_device_t *rand);
 

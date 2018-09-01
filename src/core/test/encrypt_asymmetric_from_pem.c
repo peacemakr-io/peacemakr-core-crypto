@@ -43,7 +43,7 @@ void test_symmetric_algo(symmetric_cipher symm_cipher,
 
   peacemakr_key_t *pubkey = PeacemakrKey_new_pem_pub(cfg, pubkey_buf, pubkey_len);
 
-  ciphertext_blob_t *ciphertext = peacemakr_encrypt(cfg, pubkey, &plaintext_in, &rand);
+  ciphertext_blob_t *ciphertext = peacemakr_encrypt(pubkey, &plaintext_in, &rand);
   assert(ciphertext != NULL);
   PeacemakrKey_free(pubkey);
 
