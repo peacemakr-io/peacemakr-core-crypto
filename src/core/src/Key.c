@@ -26,7 +26,7 @@ static bool keygen_inner(int key_type, EVP_PKEY **pkey, int rsa_bits) {
 
   int rc = EVP_PKEY_keygen_init(ctx);
   if (rc <= 0) {
-    PEACEMAKR_ERROR("EVP_PKEY_keygen_init failed with rc %d\n", rc);
+    PEACEMAKR_LOG("EVP_PKEY_keygen_init failed with rc %d\n", rc);
     return false;
   }
 
@@ -34,14 +34,14 @@ static bool keygen_inner(int key_type, EVP_PKEY **pkey, int rsa_bits) {
       (rsa_bits == 2048 || rsa_bits == 4096)) {
     rc = EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, rsa_bits);
     if (rc <= 0) {
-      PEACEMAKR_ERROR("set_rsa_keygen_bits failed\n");
+      PEACEMAKR_LOG("set_rsa_keygen_bits failed\n");
       return false;
     }
   }
 
   rc = EVP_PKEY_keygen(ctx, pkey);
   if (rc <= 0) {
-    PEACEMAKR_ERROR("EVP_PKEY_keygen failed\n");
+    PEACEMAKR_LOG("EVP_PKEY_keygen failed\n");
     return false;
   }
 
@@ -80,20 +80,20 @@ peacemakr_key_t *API(new)(crypto_config_t cfg, random_device_t *rand) {
     out->m_contents_.asymm = NULL;
     switch (cfg.asymm_cipher) {
     case NONE: {
-      PEACEMAKR_ERROR("asymmetric cipher not specified for asymmetric mode\n");
+      PEACEMAKR_LOG("asymmetric cipher not specified for asymmetric mode\n");
       API(free)(out);
       return NULL;
     }
       //    case EC25519: {
       //      if (keygen_inner(NID_X25519, &out->m_evp_pkey_, 0) == false) {
-      //        PEACEMAKR_ERROR("keygen failed\n");
+      //        PEACEMAKR_LOG("keygen failed\n");
       //        return NULL;
       //      }
       //      break;
       //    }
     case RSA_2048: {
       if (keygen_inner(EVP_PKEY_RSA, &out->m_contents_.asymm, 2048) == false) {
-        PEACEMAKR_ERROR("keygen failed\n");
+        PEACEMAKR_LOG("keygen failed\n");
         API(free)(out);
         return NULL;
       }
@@ -101,7 +101,7 @@ peacemakr_key_t *API(new)(crypto_config_t cfg, random_device_t *rand) {
     }
     case RSA_4096: {
       if (keygen_inner(EVP_PKEY_RSA, &out->m_contents_.asymm, 4096) == false) {
-        PEACEMAKR_ERROR("keygen failed\n");
+        PEACEMAKR_LOG("keygen failed\n");
         API(free)(out);
         return NULL;
       }
@@ -112,7 +112,7 @@ peacemakr_key_t *API(new)(crypto_config_t cfg, random_device_t *rand) {
   }
   }
 
-  PEACEMAKR_ERROR("unknown failure\n");
+  PEACEMAKR_LOG("unknown failure\n");
   API(free)(out);
   return NULL;
 }
@@ -146,7 +146,7 @@ peacemakr_key_t *API(new_pem_pub)(crypto_config_t cfg, const char *buf,
 
   out->m_contents_.asymm = PEM_read_bio_PUBKEY(bo, NULL, NULL, NULL);
   if (out->m_contents_.asymm == NULL) {
-    PEACEMAKR_ERROR("PEM_read_bio_PUBKEY failed\n");
+    PEACEMAKR_LOG("PEM_read_bio_PUBKEY failed\n");
     return NULL;
   }
 

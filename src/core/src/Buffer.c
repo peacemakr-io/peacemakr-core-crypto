@@ -16,18 +16,6 @@
 
 #include <openssl/crypto.h>
 
-#define RETURN_VOID_IF_ARG_IS_NULL(arg)                                        \
-  if ((arg) == NULL) {                                                         \
-    PEACEMAKR_ERROR("arg %s is null\n", #arg);                                 \
-    return;                                                                    \
-  }
-
-#define RETURN_VALUE_IF_ARG_IS_NULL(arg, retval)                               \
-  if ((arg) == NULL) {                                                         \
-    PEACEMAKR_ERROR("arg %s is null, %s %s\n", #arg);                          \
-    return (retval);                                                           \
-  }
-
 #ifdef PEACEMAKR_NO_MEMSET_S
 
 #include <errno.h>
@@ -97,16 +85,16 @@ void API(free)(buffer_t *buf) {
 }
 
 void API(init_rand)(buffer_t *buf, random_device_t *rng) {
-  RETURN_VOID_IF_ARG_IS_NULL(buf);
-  RETURN_VOID_IF_ARG_IS_NULL(rng);
+  EXPECT_NOT_NULL_RET_NONE(buf, "buf was null\n");
+  EXPECT_NOT_NULL_RET_NONE(rng, "rng was null\n");
 
   int rc = rng->generator(buf->m_mem_, buf->m_size_bytes_);
   EXPECT_TRUE_RET_NONE((rc == 0), "rng encountered error, %s\n", rng->err(rc));
 }
 
 void API(set_bytes)(buffer_t *buf, const void *mem, size_t size_bytes) {
-  RETURN_VOID_IF_ARG_IS_NULL(buf);
-  RETURN_VOID_IF_ARG_IS_NULL(mem);
+  EXPECT_NOT_NULL_RET_NONE(buf, "buf was null\n");
+  EXPECT_NOT_NULL_RET_NONE(mem, "mem was null\n");
 
   EXPECT_TRUE_RET_NONE((buf->m_size_bytes_ >= size_bytes), "buffer size less than input size\n");
 
@@ -115,7 +103,7 @@ void API(set_bytes)(buffer_t *buf, const void *mem, size_t size_bytes) {
 }
 
 const uint8_t *API(get_bytes)(const buffer_t *buf, size_t *out_size) {
-  RETURN_VALUE_IF_ARG_IS_NULL(buf, NULL);
+  EXPECT_NOT_NULL_RET(buf, "buf was null\n");
 
   if (out_size != NULL) {
     *out_size = buf->m_size_bytes_;
@@ -125,13 +113,13 @@ const uint8_t *API(get_bytes)(const buffer_t *buf, size_t *out_size) {
 }
 
 const size_t API(get_size)(const buffer_t *buf) {
-  RETURN_VALUE_IF_ARG_IS_NULL(buf, 0);
+  EXPECT_NOT_NULL_RET_VALUE(buf, 0, "buf was null\n");
 
   return buf->m_size_bytes_;
 }
 
 void API(set_size)(buffer_t *buf, size_t size) {
-  RETURN_VOID_IF_ARG_IS_NULL(buf);
+  EXPECT_NOT_NULL_RET_NONE(buf, "buf was null\n");
 
   buf->m_size_bytes_ = size;
 }

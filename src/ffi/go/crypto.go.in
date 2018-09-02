@@ -189,7 +189,7 @@ func GetMaxSupportedVersion() uint8 {
 }
 
 func PeacemakrInit() bool {
-    return bool(C.peacemakr_init())
+	return bool(C.peacemakr_init())
 }
 
 type CiphertextBlob struct {

@@ -25,7 +25,8 @@ ADD cmake /opt/cmake
 
 ENV GOPATH=/go
 
-RUN mkdir -p build && cd build && cmake .. && make check install
+ARG CMAKE_BUILD_TYPE=DEBUG
+RUN mkdir -p build && cd build && cmake .. -DCMAKE_BUILD_TYPE=${DEBUG}&& make check install
 
 FROM golang:alpine3.8
 
