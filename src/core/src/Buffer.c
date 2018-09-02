@@ -73,33 +73,22 @@ typedef struct Buffer buffer_t;
 buffer_t *API(new)(size_t size) {
   buffer_t *ret = malloc(sizeof(buffer_t));
 
-  if (size <= 0) {
-    PEACEMAKR_INFO("size passed was zero\n");
-    return NULL;
-  }
+  EXPECT_TRUE_RET((size > 0), "size passed was <= 0\n")
 
   ret->m_size_bytes_ = size;
 
   ret->m_mem_ = calloc(size, sizeof(uint8_t));
-  if (ret->m_mem_ == NULL) {
-    PEACEMAKR_ERROR("malloc returned nullptr\n");
-    free(ret);
-    return NULL;
-  }
+  EXPECT_NOT_NULL_CLEANUP_RET(ret->m_mem_, free(ret), "malloc returned nullptr\n");
 
   return ret;
 }
 
 void API(free)(buffer_t *buf) {
-  if (buf == NULL) {
-    PEACEMAKR_INFO("buf was null, no-op\n");
-    return;
-  }
+  EXPECT_NOT_NULL_RET_NONE(buf, "buf was null, no-op\n");
 
   int err = memset_s(buf->m_mem_, buf->m_size_bytes_, 0, buf->m_size_bytes_);
-  if (err != 0) {
-    PEACEMAKR_ERROR("memset failed, aborting (memory NOT freed)\n");
-  }
+  EXPECT_TRUE_RET_NONE((err == 0), "memset failed, aborting (memory NOT freed)\n");
+
   free(buf->m_mem_);
   buf->m_mem_ = NULL;
 
@@ -112,19 +101,14 @@ void API(init_rand)(buffer_t *buf, random_device_t *rng) {
   RETURN_VOID_IF_ARG_IS_NULL(rng);
 
   int rc = rng->generator(buf->m_mem_, buf->m_size_bytes_);
-  if (rc != 0) {
-    PEACEMAKR_ERROR("rng encountered error, %s\n", rng->err(rc));
-  }
+  EXPECT_TRUE_RET_NONE((rc == 0), "rng encountered error, %s\n", rng->err(rc));
 }
 
 void API(set_bytes)(buffer_t *buf, const void *mem, size_t size_bytes) {
   RETURN_VOID_IF_ARG_IS_NULL(buf);
   RETURN_VOID_IF_ARG_IS_NULL(mem);
 
-  if (buf->m_size_bytes_ < size_bytes) {
-    PEACEMAKR_ERROR("buffer size less than input size\n");
-    return;
-  }
+  EXPECT_TRUE_RET_NONE((buf->m_size_bytes_ >= size_bytes), "buffer size less than input size\n");
 
   // Don't use the passed in size just in case
   memcpy((void *)buf->m_mem_, mem, buf->m_size_bytes_);
