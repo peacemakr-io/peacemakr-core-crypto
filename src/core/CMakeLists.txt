@@ -8,7 +8,7 @@
 
 IF(CMAKE_BUILD_TYPE MATCHES RELEASE)
     message("Disabling all logging")
-    add_definitions(-DPEACEMAKR_LOG_LEVEL=5)
+    add_definitions(-DPEACEMAKR_LOG_LEVEL=2)
 ENDIF(CMAKE_BUILD_TYPE MATCHES RELEASE)
 
 include(CheckFunctionExists)

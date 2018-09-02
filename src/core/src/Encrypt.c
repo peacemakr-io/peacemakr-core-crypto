@@ -68,7 +68,7 @@ static bool symmetric_encrypt(const peacemakr_key_t *peacemakrkey,
   unsigned char *ciphertext = alloca(Buffer_get_size(ciphertext_buf));
 
   if (plaintext == NULL || plaintext_len == 0) {
-    PEACEMAKR_ERROR("cannot encrypt an empty string\n");
+    PEACEMAKR_LOG("cannot encrypt an empty string\n");
     EVP_CIPHER_CTX_free(ctx);
     return false;
   }
@@ -252,7 +252,7 @@ static bool asymmetric_encrypt(const peacemakr_key_t *pub_key,
    * a key for the provided cipher, and then encrypts that key. */
   if (1 != EVP_SealInit(ctx, cipher, &encrypted_key_buf, &encrypted_key_len,
                         iv_buf, &pkey, 1)) {
-    PEACEMAKR_ERROR("sealinit failed\n");
+    PEACEMAKR_LOG("sealinit failed\n");
     EVP_CIPHER_CTX_free(ctx);
     return false;
   }

@@ -14,7 +14,7 @@
 #include <stdlib.h>
 
 #ifndef PEACEMAKR_LOG_LEVEL
-#define PEACEMAKR_LOG_LEVEL 0 // Info by default
+#define PEACEMAKR_LOG_LEVEL 0
 #endif
 
 void fwd_stdout(const char *fmt, va_list argp) { vfprintf(stdout, fmt, argp); }
@@ -24,7 +24,7 @@ void fwd_stderr(const char *fmt, va_list argp) { vfprintf(stderr, fmt, argp); }
 void log_printf(const char *filename, int line, level_t level, const char *fmt,
                 ...) {
 
-  if (level < PEACEMAKR_LOG_LEVEL || PEACEMAKR_LOG_LEVEL > 4 ||
+  if (level < PEACEMAKR_LOG_LEVEL || PEACEMAKR_LOG_LEVEL > 1 ||
       PEACEMAKR_LOG_LEVEL < 0)
     return;
 
@@ -43,10 +43,6 @@ void log_printf(const char *filename, int line, level_t level, const char *fmt,
 
   va_list argp;
   va_start(argp, fmt);
-  if (level >= WARN) {
-    fwd_stderr(fmt_str, argp);
-  } else {
-    fwd_stdout(fmt_str, argp);
-  }
+  fwd_stderr(fmt_str, argp);
   va_end(argp);
 }

@@ -41,7 +41,7 @@ static void digest_message(const unsigned char *message, size_t message_len,
   OPENSSL_CHECK_RET_NONE(EVP_DigestFinal_ex(mdctx, digest_buf, &size), EVP_MD_CTX_destroy(mdctx))
 
   if (size != digest_len) {
-    PEACEMAKR_ERROR("sizes different than expected for message digest\n");
+    PEACEMAKR_LOG("sizes different than expected for message digest\n");
     return;
   }
 
@@ -249,7 +249,7 @@ ciphertext_blob_t *deserialize_blob(const uint8_t *b64_serialized_cipher,
   rc = memcmp(Buffer_get_bytes(digest_buf, NULL), serialized_digest_ptr,
               digestlen);
   if (rc != 0) {
-    PEACEMAKR_ERROR("digests don't compare equal, aborting\n");
+    PEACEMAKR_LOG("digests don't compare equal, aborting\n");
     Buffer_free(digest_buf);
     return NULL;
   }
@@ -259,7 +259,7 @@ ciphertext_blob_t *deserialize_blob(const uint8_t *b64_serialized_cipher,
       ntohl(*((uint32_t *)(serialized_cipher + current_position)));
   current_position += sizeof(uint32_t);
   if (version > PEACEMAKR_CORE_CRYPTO_VERSION_MAX) {
-    PEACEMAKR_ERROR("version greater than max supported");
+    PEACEMAKR_LOG("version greater than max supported");
     Buffer_free(digest_buf);
     return NULL;
   }

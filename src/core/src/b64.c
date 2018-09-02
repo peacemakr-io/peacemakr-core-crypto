@@ -112,20 +112,20 @@ bool b64_decode(const char *in, unsigned char *out, size_t outlen) {
   int v;
 
   if (in == NULL || out == NULL) {
-    PEACEMAKR_ERROR("parameter was null\n");
+    PEACEMAKR_LOG("parameter was null\n");
     return 0;
   }
 
   len = strlen(in);
   if (outlen < b64_decoded_size(in) || len % 4 != 0) {
-    PEACEMAKR_ERROR("outlen was either too small or not divisible by 4 "
+    PEACEMAKR_LOG("outlen was either too small or not divisible by 4 "
                     "(corrupted message)\n");
     return 0;
   }
 
   for (i = 0; i < len; i++) {
     if (!b64_isvalidchar(in[i])) {
-      PEACEMAKR_ERROR("invalid char encountered\n");
+      PEACEMAKR_LOG("invalid char encountered\n");
       return 0;
     }
   }
