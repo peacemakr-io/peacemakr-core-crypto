@@ -183,57 +183,6 @@ func TestAsymmetricEncryptFromPem(t *testing.T) {
 		t.Fatalf("Unable to successfully start and seed the CSPRNG")
 	}
 	for j := AES_128_GCM; j <= CHACHA20_POLY1305; j++ {
-
-		cfg := CryptoConfig{
-			Mode:             ASYMMETRIC,
-			AsymmetricCipher: RSA_4096,
-			SymmetricCipher:  j,
-			DigestAlgorithm:  SHA_512,
-		}
-
-		plaintextIn := SetUpPlaintext()
-
-		randomDevice := NewRandomDevice()
-
-		pubkey := NewPeacemakrKeyFromPubPem(cfg, GetPubKey())
-
-		ciphertext, err := Encrypt(pubkey, plaintextIn, randomDevice)
-		if err != nil {
-			DestroyPeacemakrKey(pubkey)
-			t.Fatalf("%v", err)
-		}
-
-		privkey := NewPeacemakrKeyFromPrivPem(cfg, GetPrivKey())
-
-		plaintextOut, success := Decrypt(privkey, ciphertext)
-		if !success {
-			DestroyPeacemakrKey(pubkey)
-			DestroyPeacemakrKey(privkey)
-			t.Fatalf("Decrypt failed")
-		}
-
-		if !bytes.Equal(plaintextIn.Data, plaintextOut.Data) {
-			DestroyPeacemakrKey(pubkey)
-			DestroyPeacemakrKey(privkey)
-			t.Fatalf("plaintext data did not match")
-		}
-
-		if !bytes.Equal(plaintextIn.Aad, plaintextOut.Aad) {
-			DestroyPeacemakrKey(pubkey)
-			DestroyPeacemakrKey(privkey)
-			t.Fatalf("plaintext data did not match")
-		}
-		DestroyPeacemakrKey(pubkey)
-		DestroyPeacemakrKey(privkey)
-	}
-}
-
-func TestAsymmetricEncryptFromRandomPem(t *testing.T) {
-	if !PeacemakrInit() {
-		t.Fatalf("Unable to successfully start and seed the CSPRNG")
-	}
-	for i := RSA_2048; i <= RSA_4096; i++ {
-		for j := AES_128_GCM; j <= CHACHA20_POLY1305; j++ {
 		go func(j int) {
 			cfg := CryptoConfig{
 				Mode:             ASYMMETRIC,
@@ -314,27 +263,27 @@ func TestAsymmetricEncryptFromRandomPem(t *testing.T) {
 
 				ciphertext, err := Encrypt(pubkey, plaintextIn, randomDevice)
 				if err != nil {
-          DestroyPeacemakrKey(pubkey)
-			    DestroyPeacemakrKey(privkey)
+          			DestroyPeacemakrKey(pubkey)
+			    	DestroyPeacemakrKey(privkey)
 					t.Fatalf("%v", err)
 				}
 
 				plaintextOut, success := Decrypt(privkey, ciphertext)
 				if !success {
-          DestroyPeacemakrKey(pubkey)
-			    DestroyPeacemakrKey(privkey)
+          			DestroyPeacemakrKey(pubkey)
+			    	DestroyPeacemakrKey(privkey)
 					t.Fatalf("Decrypt failed")
 				}
 
 				if !bytes.Equal(plaintextIn.Data, plaintextOut.Data) {
-          DestroyPeacemakrKey(pubkey)
-			    DestroyPeacemakrKey(privkey)
+          			DestroyPeacemakrKey(pubkey)
+			    	DestroyPeacemakrKey(privkey)
 					t.Fatalf("plaintext data did not match")
 				}
 
 				if !bytes.Equal(plaintextIn.Aad, plaintextOut.Aad) {
-          DestroyPeacemakrKey(pubkey)
-			    DestroyPeacemakrKey(privkey)
+          			DestroyPeacemakrKey(pubkey)
+			    	DestroyPeacemakrKey(privkey)
 					t.Fatalf("plaintext data did not match")
 				}
 			}(int(i), int(j))
