@@ -130,6 +130,15 @@ func configToInternal(config CryptoConfig) C.crypto_config_t {
 	}
 }
 
+func configFromInternal(config C.crypto_config_t) CryptoConfig {
+	return CryptoConfig{
+		Mode:             EncryptionMode(config.mode),
+		SymmetricCipher:  SymmetricCipher(config.symm_cipher),
+		AsymmetricCipher: AsymmetricCipher(config.asymm_cipher),
+		DigestAlgorithm:  MessageDigestAlgorithm(config.digest_algorithm),
+	}
+}
+
 type Plaintext struct {
 	Data []byte
 	Aad  []byte
@@ -221,15 +230,20 @@ func NewPeacemakrKeyFromPrivPem(config CryptoConfig, contents []byte) PeacemakrK
 	}
 }
 
+func GetKeyConfig(key *PeacemakrKey) CryptoConfig {
+	keyConfig := C.PeacemakrKey_get_config(key.key)
+	return configFromInternal(keyConfig)
+}
+
 func DestroyPeacemakrKey(key PeacemakrKey) {
 	C.PeacemakrKey_free((*C.peacemakr_key_t)(key.key))
 }
 
-func Encrypt(cfg CryptoConfig, key PeacemakrKey, plaintext Plaintext, rand RandomDevice) ([]byte, error) {
+func Encrypt(key PeacemakrKey, plaintext Plaintext, rand RandomDevice) ([]byte, error) {
 	cPlaintext := plaintextToInternal(plaintext)
 	defer freeInternalPlaintext(&cPlaintext)
 
-	blob := C.peacemakr_encrypt(configToInternal(cfg), key.key, (*C.plaintext_t)(unsafe.Pointer(&cPlaintext)), (*C.random_device_t)(unsafe.Pointer(&rand.randomDevice)))
+	blob := C.peacemakr_encrypt(key.key, (*C.plaintext_t)(unsafe.Pointer(&cPlaintext)), (*C.random_device_t)(unsafe.Pointer(&rand.randomDevice)))
 
 	if blob == nil {
 		return nil, errors.New("encryption failed")

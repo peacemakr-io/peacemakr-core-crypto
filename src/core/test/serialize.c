@@ -40,7 +40,7 @@ void test_serialize(symmetric_cipher symm_cipher, asymmetric_cipher cipher, mess
 
   peacemakr_key_t *key = PeacemakrKey_new(cfg, &rand);
 
-  ciphertext_blob_t *ciphertext = peacemakr_encrypt(cfg, key, &plaintext_in, &rand);
+  ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, &plaintext_in, &rand);
   assert(ciphertext != NULL);
 
   size_t out_size = 0;

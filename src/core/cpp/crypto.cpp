@@ -71,7 +71,7 @@ peacemakr::CryptoContext::CryptoContext() {
 }
 
 std::string
-peacemakr::CryptoContext::Encrypt(crypto_config_t cfg, const peacemakr::Key &key, const peacemakr::Plaintext &plaintext,
+peacemakr::CryptoContext::Encrypt(const peacemakr::Key &key, const peacemakr::Plaintext &plaintext,
                                   peacemakr::RandomDevice &rand) {
   plaintext_t plain = {
           .data = (const unsigned char *)plaintext.data.c_str(),
@@ -80,7 +80,7 @@ peacemakr::CryptoContext::Encrypt(crypto_config_t cfg, const peacemakr::Key &key
           .aad_len = (size_t)plaintext.aad.size()
   };
 
-  ciphertext_blob_t *blob = peacemakr_encrypt(cfg, key.getKey(), &plain, &rand.getContents());
+  ciphertext_blob_t *blob = peacemakr_encrypt(key.getKey(), &plain, &rand.getContents());
 
   size_t out_size = 0;
   uint8_t *serialized = serialize_blob(blob, &out_size);

@@ -37,7 +37,7 @@ func GetNewRSAKey(bits int) ([]byte, []byte) {
 
 	privPem := pem.EncodeToMemory(
 		&pem.Block{
-			Type: "RSA PRIVATE KEY",
+			Type:  "RSA PRIVATE KEY",
 			Bytes: x509.MarshalPKCS1PrivateKey(privKey),
 		},
 	)
@@ -50,7 +50,7 @@ func GetNewRSAKey(bits int) ([]byte, []byte) {
 
 	pubPem := pem.EncodeToMemory(
 		&pem.Block{
-			Type: "PUBLIC KEY",
+			Type:  "PUBLIC KEY",
 			Bytes: pub,
 		},
 	)
@@ -150,23 +150,28 @@ func TestAsymmetricEncrypt(t *testing.T) {
 
 				key := NewPeacemakrKey(cfg, randomDevice)
 
-				ciphertext, err := Encrypt(cfg, key, plaintextIn, randomDevice)
-				if err != nil {
-					t.Fatalf("%v", err)
-				}
+        ciphertext, err := Encrypt(key, plaintextIn, randomDevice)
+        if err != nil {
+          DestroyPeacemakrKey(key)
+          t.Fatalf("%v", err)
+        }
 
-				plaintextOut, success := Decrypt(key, ciphertext)
-				if !success {
-					t.Fatalf("Decrypt failed")
-				}
+        plaintextOut, success := Decrypt(key, ciphertext)
+        if !success {
+          DestroyPeacemakrKey(key)
+          t.Fatalf("Decrypt failed")
+        }
 
-				if !bytes.Equal(plaintextIn.Data, plaintextOut.Data) {
-					t.Fatalf("plaintext data did not match")
-				}
+        if !bytes.Equal(plaintextIn.Data, plaintextOut.Data) {
+          DestroyPeacemakrKey(key)
+          t.Fatalf("plaintext data did not match")
+        }
 
-				if !bytes.Equal(plaintextIn.Aad, plaintextOut.Aad) {
-					t.Fatalf("plaintext data did not match")
-				}
+        if !bytes.Equal(plaintextIn.Aad, plaintextOut.Aad) {
+          DestroyPeacemakrKey(key)
+          t.Fatalf("plaintext data did not match")
+        }
+        DestroyPeacemakrKey(key)
 			}(int(i), int(j))
 		}
 	}
@@ -192,7 +197,7 @@ func TestAsymmetricEncryptFromPem(t *testing.T) {
 
 			pubkey := NewPeacemakrKeyFromPubPem(cfg, GetPubKey())
 
-			ciphertext, err := Encrypt(cfg, pubkey, plaintextIn, randomDevice)
+			ciphertext, err := Encrypt(pubkey, plaintextIn, randomDevice)
 			if err != nil {
 				t.Fatalf("%v", err)
 			}
@@ -201,16 +206,24 @@ func TestAsymmetricEncryptFromPem(t *testing.T) {
 
 			plaintextOut, success := Decrypt(privkey, ciphertext)
 			if !success {
+				DestroyPeacemakrKey(pubkey)
+				DestroyPeacemakrKey(privkey)
 				t.Fatalf("Decrypt failed")
 			}
 
 			if !bytes.Equal(plaintextIn.Data, plaintextOut.Data) {
+				DestroyPeacemakrKey(pubkey)
+				DestroyPeacemakrKey(privkey)
 				t.Fatalf("plaintext data did not match")
 			}
 
 			if !bytes.Equal(plaintextIn.Aad, plaintextOut.Aad) {
+				DestroyPeacemakrKey(pubkey)
+				DestroyPeacemakrKey(privkey)
 				t.Fatalf("plaintext data did not match")
 			}
+			DestroyPeacemakrKey(pubkey)
+			DestroyPeacemakrKey(privkey)
 		}(int(j))
 	}
 }
@@ -248,21 +261,29 @@ func TestAsymmetricEncryptFromRandomPem(t *testing.T) {
 				privkey := NewPeacemakrKeyFromPrivPem(cfg, priv)
 				pubkey := NewPeacemakrKeyFromPubPem(cfg, pub)
 
-				ciphertext, err := Encrypt(cfg, pubkey, plaintextIn, randomDevice)
+				ciphertext, err := Encrypt(pubkey, plaintextIn, randomDevice)
 				if err != nil {
+          			DestroyPeacemakrKey(pubkey)
+			    	DestroyPeacemakrKey(privkey)
 					t.Fatalf("%v", err)
 				}
 
 				plaintextOut, success := Decrypt(privkey, ciphertext)
 				if !success {
+          			DestroyPeacemakrKey(pubkey)
+			    	DestroyPeacemakrKey(privkey)
 					t.Fatalf("Decrypt failed")
 				}
 
 				if !bytes.Equal(plaintextIn.Data, plaintextOut.Data) {
+          			DestroyPeacemakrKey(pubkey)
+			    	DestroyPeacemakrKey(privkey)
 					t.Fatalf("plaintext data did not match")
 				}
 
 				if !bytes.Equal(plaintextIn.Aad, plaintextOut.Aad) {
+          			DestroyPeacemakrKey(pubkey)
+			    	DestroyPeacemakrKey(privkey)
 					t.Fatalf("plaintext data did not match")
 				}
 			}(int(i), int(j))
@@ -289,23 +310,28 @@ func TestSymmetricEncrypt(t *testing.T) {
 
 		key := NewPeacemakrKey(cfg, randomDevice)
 
-		ciphertext, err := Encrypt(cfg, key, plaintextIn, randomDevice)
+		ciphertext, err := Encrypt(key, plaintextIn, randomDevice)
 		if err != nil {
+			DestroyPeacemakrKey(key)
 			t.Fatalf("%v", err)
 		}
 
 		plaintextOut, success := Decrypt(key, ciphertext)
 		if !success {
+			DestroyPeacemakrKey(key)
 			t.Fatalf("Decrypt failed")
 		}
 
 		if !bytes.Equal(plaintextIn.Data, plaintextOut.Data) {
+			DestroyPeacemakrKey(key)
 			t.Fatalf("plaintext data did not match")
 		}
 
 		if !bytes.Equal(plaintextIn.Aad, plaintextOut.Aad) {
+			DestroyPeacemakrKey(key)
 			t.Fatalf("plaintext data did not match")
 		}
+		DestroyPeacemakrKey(key)
 	}
 }
 
@@ -331,27 +357,33 @@ func TestSerialize(t *testing.T) {
 
 					key := NewPeacemakrKey(cfg, randomDevice)
 
-					ciphertext, err := Encrypt(cfg, key, plaintextIn, randomDevice)
+					ciphertext, err := Encrypt(key, plaintextIn, randomDevice)
 					if err != nil {
+            DestroyPeacemakrKey(key)
 						t.Fatalf("%v", err)
 					}
 
 					if err != nil {
+            DestroyPeacemakrKey(key)
 						t.Fatalf("%v", err)
 					}
 
 					plaintextOut, success := Decrypt(key, ciphertext)
 					if !success {
+            DestroyPeacemakrKey(key)
 						t.Fatalf("Decrypt failed")
 					}
 
 					if !bytes.Equal(plaintextIn.Data, plaintextOut.Data) {
+            DestroyPeacemakrKey(key)
 						t.Fatalf("plaintext data did not match")
 					}
 
 					if !bytes.Equal(plaintextIn.Aad, plaintextOut.Aad) {
+            DestroyPeacemakrKey(key)
 						t.Fatalf("plaintext data did not match")
 					}
+          DestroyPeacemakrKey(key)
 				}(int(i), int(j), int(k))
 			}
 		}
@@ -359,6 +391,10 @@ func TestSerialize(t *testing.T) {
 }
 
 func TestDecryptionCrash(t *testing.T) {
+	t.Parallel()
+	if !PeacemakrInit() {
+		t.Fatalf("Unable to successfully start and seed the CSPRNG")
+	}
 	blob := "AAAEHgAAAuQAAAAAAAAAAwAAAAEAAAABAAAAAgAAAAIAAAIAAAAAAMdwS6T4rvx1vtsTft3B2z0/awxStuLWJXE5dJxTHRUbyUc1YLBnQO62k7jTacK3gKIqNyg5g/5RcDsdObwwZgWiyPBlTUoy2UPO6Tg9m7iSslqIPKqWTld7JGI0YXgtoRqSsXBvwqENk07UZ1v5BCnvFCBjrJGaZTiHASixDUn4mV7gKXQ2RjKGgZweAtM+m7XgTZvJfx00Ie8Tti99bpDmfDXo3TXG88dN547NWnjjX4bwS+mWrD3Qhyn32dbpoPaCN4tF2X5uSIDkZoe3FHb38FrWBwSn319BxLSvznERv87yNqZnBeorF/RADRW1WIBieee2rQj6lp8SN8pTTX3qqXQyMuAtOKFLidvile05Zk+PNcoJ5ojCkuXVFlzUcG1BV3ZGuHsTYbNb0JiEceSG6nDAdLEJQcnnL4IuIbdlrrf/oGH0r37Fkuta4DBW54cz+f/kjxgFbGBuLzsjwUyAhu3en944zKEEYt6/mr/TkQOpKnBK09F4c7cjAIXZ2x2z9X3M6yb1OGX4Xq/6VtokGRwOgMZUAE1ur3HbD5EFrexFQSdtD7uh24uL8Sy4//ahsbcmSqgzYKB/xRAQ6ysCNZi1CT7FDi7AIduHetq4f+v9kLUgaRZ6P1ax32uzf51Ss3JmTam7aRAMZmQV4BNboXlTd4fgmdftqwoaJ+RaAAAADAAAAAB/NwVQWfnYlzQHu1YAAAAQAAAAAHJtL9bLlQaCn7u5vldaaagAAAAAAAAAAAAAAIAAAAAA2C8rbNhpYEwdSSlzgLRnXjXzDMWCl025yW6lRABlGHn2YQ28MS3WZxA3H+i7+POJ/ozyHfe86dgtQISuKV/AlBS6A8vEXsIdjzvIvOharFzhNkdn7fbInbBwmGQJSGBZmViwTkRvf0QpA/UIhr6NgxfJ41aos6vT3rb00KbOAsEAAABAAAAAAF4kgzirZJPB0JXjPIx/qMqWI4bdFypNrOEaNY4VALUrUt4U8AhPKeLSEUVNDQzcOCcJY6PlhqOZbOiiPCtZ2TA="
 	privKey := `-----BEGIN RSA PRIVATE KEY-----
 MIIJKAIBAAKCAgEAyLhK5mBQOGXocXz1iBc9tgZrC+CLgFLo5GWv1EvfGhB22KsG
@@ -423,7 +459,8 @@ duE5ygP4cy36OleLa5rq85wwlDZ5hBnqCzp7CIrwoSAYWd6WkfMLnqpuRDE=
 
 	_, success := Decrypt(pmkey, []byte(blob))
 	if !success {
+    DestroyPeacemakrKey(pmkey)
 		t.Fatalf("Decrypt failed")
 	}
-
+  DestroyPeacemakrKey(pmkey)
 }

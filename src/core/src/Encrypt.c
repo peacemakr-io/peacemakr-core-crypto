@@ -420,11 +420,12 @@ static bool asymmetric_decrypt(const peacemakr_key_t *peacemakrkey,
   return true;
 }
 
-ciphertext_blob_t *peacemakr_encrypt(crypto_config_t cfg,
-                                     const peacemakr_key_t *key,
+ciphertext_blob_t *peacemakr_encrypt(const peacemakr_key_t *key,
                                      const plaintext_t *plain,
                                      random_device_t *rand) {
 
+  const crypto_config_t cfg = PeacemakrKey_get_config(key);
+  
   EXPECT_NOT_NULL_RET(key, "key was null\n");
   EXPECT_NOT_NULL_RET(plain, "plain was null\n");
   EXPECT_NOT_NULL_RET(rand, "rand was null\n");

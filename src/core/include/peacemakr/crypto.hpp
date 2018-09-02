@@ -71,7 +71,7 @@ namespace peacemakr {
     CryptoContext(); // when the initialization pr gets merged we will do the init here
     ~CryptoContext() = default;
 
-    std::string Encrypt(crypto_config_t cfg, const Key &key, const Plaintext &plaintext, RandomDevice &rand);
+    std::string Encrypt(const Key &key, const Plaintext &plaintext, RandomDevice &rand);
 
     Plaintext Decrypt(const Key &key, std::string &serialized);
   };
