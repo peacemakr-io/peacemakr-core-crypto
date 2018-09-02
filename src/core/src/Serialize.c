@@ -27,28 +27,18 @@ static void digest_message(const unsigned char *message, size_t message_len,
                            const EVP_MD *digest_algo, buffer_t *digest) {
   EVP_MD_CTX *mdctx;
 
-  if ((mdctx = EVP_MD_CTX_create()) == NULL) {
-    PEACEMAKR_ERROR("mdctx_create failed\n");
-    return;
-  }
+  mdctx = EVP_MD_CTX_create();
+  EXPECT_NOT_NULL_RET_NONE(mdctx, "mdctx_create failed\n");
 
-  if (1 != EVP_DigestInit_ex(mdctx, digest_algo, NULL)) {
-    PEACEMAKR_ERROR("digestinit_ex failed\n");
-    return;
-  }
 
-  if (1 != EVP_DigestUpdate(mdctx, message, message_len)) {
-    PEACEMAKR_ERROR("digestupdate failed\n");
-    return;
-  }
+  OPENSSL_CHECK_RET_NONE(EVP_DigestInit_ex(mdctx, digest_algo, NULL), EVP_MD_CTX_destroy(mdctx));
+  OPENSSL_CHECK_RET_NONE(EVP_DigestUpdate(mdctx, message, message_len), EVP_MD_CTX_destroy(mdctx));
 
   size_t digest_len = Buffer_get_size(digest);
   unsigned char digest_buf[digest_len];
   unsigned int size;
-  if (1 != EVP_DigestFinal_ex(mdctx, digest_buf, &size)) {
-    PEACEMAKR_ERROR("digestfinal_ex failed\n");
-    return;
-  }
+
+  OPENSSL_CHECK_RET_NONE(EVP_DigestFinal_ex(mdctx, digest_buf, &size), EVP_MD_CTX_destroy(mdctx))
 
   if (size != digest_len) {
     PEACEMAKR_ERROR("sizes different than expected for message digest\n");
@@ -56,15 +46,10 @@ static void digest_message(const unsigned char *message, size_t message_len,
   }
 
   Buffer_set_bytes(digest, digest_buf, digest_len);
-
-  EVP_MD_CTX_destroy(mdctx);
 }
 
 uint8_t *serialize_blob(ciphertext_blob_t *cipher, size_t *out_size) {
-  if (cipher == NULL || out_size == NULL) {
-    PEACEMAKR_ERROR("cipher or out_size was null in call to serialize");
-    return NULL;
-  }
+  EXPECT_TRUE_RET((cipher != NULL && out_size != NULL), "cipher or out_size was null in call to serialize\n");
 
   size_t buffer_len = sizeof(uint32_t); // magic number
   buffer_len += sizeof(uint64_t);       // size of message up until digest
@@ -227,26 +212,17 @@ uint8_t *serialize_blob(ciphertext_blob_t *cipher, size_t *out_size) {
 ciphertext_blob_t *deserialize_blob(const uint8_t *b64_serialized_cipher,
                                     size_t serialized_len) {
 
-  if (b64_serialized_cipher == NULL || serialized_len == 0) {
-    PEACEMAKR_ERROR("b64 serialized cipher was NULL or serialized len was 0");
-    return NULL;
-  }
+  EXPECT_TRUE_RET((b64_serialized_cipher != NULL && serialized_len != 0), "b64 serialized cipher was NULL or serialized len was 0\n");
 
   uint8_t *serialized_cipher = alloca(serialized_len);
   int rc = b64_decode((const char *)b64_serialized_cipher, serialized_cipher,
                       serialized_len);
 
-  if (serialized_cipher == NULL || rc != 1) {
-    PEACEMAKR_ERROR("b64 decode failed\n");
-    return NULL;
-  }
+  EXPECT_TRUE_RET((serialized_cipher != NULL && rc == 1), "b64 decode failed\n");
 
   size_t current_position = 0;
   uint32_t magic = ntohl(*(uint32_t *)serialized_cipher);
-  if (magic != _PEACEMAKR_MAGIC_) {
-    PEACEMAKR_ERROR("magic number corrupted/missing, aborting\n");
-    return NULL;
-  }
+  EXPECT_TRUE_RET((magic == _PEACEMAKR_MAGIC_), "magic number corrupted/missing, aborting\n");
   current_position += sizeof(uint32_t);
 
   uint64_t len_before_digest =
@@ -261,11 +237,7 @@ ciphertext_blob_t *deserialize_blob(const uint8_t *b64_serialized_cipher,
   uint64_t serialized_digest_size =
       ntohl(*(uint64_t *)(serialized_cipher + len_before_digest));
 
-  if (serialized_digest_size != digestlen) {
-    PEACEMAKR_ERROR(
-        "serialized digest is not of the correct length, aborting\n");
-    return NULL;
-  }
+  EXPECT_TRUE_RET((serialized_digest_size == digestlen), "serialized digest is not of the correct length, aborting\n");
 
   buffer_t *digest_buf = Buffer_new(digestlen);
   digest_message(serialized_cipher, len_before_digest,

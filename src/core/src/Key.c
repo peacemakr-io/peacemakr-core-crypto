@@ -22,10 +22,7 @@
 
 static bool keygen_inner(int key_type, EVP_PKEY **pkey, int rsa_bits) {
   EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_id(key_type, NULL);
-  if (!ctx) {
-    PEACEMAKR_ERROR("EVP_PKEY_CTX_new_id failed\n");
-    return false;
-  }
+  EXPECT_NOT_NULL_RET_VALUE(ctx, false, "EVP_PKEY_CTX_new_id failed\n");
 
   int rc = EVP_PKEY_keygen_init(ctx);
   if (rc <= 0) {
@@ -65,10 +62,7 @@ typedef struct PeacemakrKey peacemakr_key_t;
 #define API(name) GLUE(PeacemakrKey_, name)
 
 peacemakr_key_t *API(new)(crypto_config_t cfg, random_device_t *rand) {
-  if (rand == NULL) {
-    PEACEMAKR_ERROR("Cannot create a new key without a source of randomness\n");
-    return NULL;
-  }
+  EXPECT_NOT_NULL_RET(rand, "Cannot create a new key without a source of randomness\n");
 
   peacemakr_key_t *out = malloc(sizeof(peacemakr_key_t));
   out->m_cfg_ = cfg;
@@ -124,16 +118,8 @@ peacemakr_key_t *API(new)(crypto_config_t cfg, random_device_t *rand) {
 }
 
 peacemakr_key_t *API(new_bytes)(crypto_config_t cfg, const uint8_t *buf) {
-  if (cfg.mode == ASYMMETRIC) {
-    PEACEMAKR_ERROR("Can't set raw bytes of asymmetric key, this call only "
-                    "works in symmetric mode\n");
-    return NULL;
-  }
-
-  if (buf == NULL) {
-    PEACEMAKR_ERROR("buffer is null\n");
-    return NULL;
-  }
+  EXPECT_TRUE_RET((cfg.mode == SYMMETRIC), "Can't set a raw bytes for asymmetric crypto\n");
+  EXPECT_NOT_NULL_RET(buf, "buffer is null\n");
 
   peacemakr_key_t *out = malloc(sizeof(peacemakr_key_t));
   out->m_cfg_ = cfg;
@@ -150,15 +136,8 @@ peacemakr_key_t *API(new_bytes)(crypto_config_t cfg, const uint8_t *buf) {
 peacemakr_key_t *API(new_pem_pub)(crypto_config_t cfg, const char *buf,
                                   const size_t buflen) {
 
-  if (buf == NULL || buflen == 0) {
-    PEACEMAKR_ERROR("buf was null or buflen was 0\n");
-    return NULL;
-  }
-
-  if (cfg.mode == SYMMETRIC) {
-    PEACEMAKR_ERROR("Can't set a new EVP_PKEY for symmetric crypto\n");
-    return NULL;
-  }
+  EXPECT_TRUE_RET((buf != NULL && buflen != 0), "buf was null or buflen was 0\n");
+  EXPECT_TRUE_RET((cfg.mode == ASYMMETRIC), "Can't set a new EVP_PKEY for symmetric crypto\n");
 
   peacemakr_key_t *out = malloc(sizeof(peacemakr_key_t));
   out->m_cfg_ = cfg;
@@ -178,15 +157,9 @@ peacemakr_key_t *API(new_pem_pub)(crypto_config_t cfg, const char *buf,
 
 peacemakr_key_t *API(new_pem_priv)(crypto_config_t cfg, const char *buf,
                                    const size_t buflen) {
-  if (buf == NULL || buflen == 0) {
-    PEACEMAKR_ERROR("buf was null or buflen was 0\n");
-    return NULL;
-  }
 
-  if (cfg.mode == SYMMETRIC) {
-    PEACEMAKR_ERROR("Can't set a new EVP_PKEY for symmetric crypto\n");
-    return NULL;
-  }
+  EXPECT_TRUE_RET((buf != NULL && buflen != 0), "buf was null or buflen was 0\n");
+  EXPECT_TRUE_RET((cfg.mode == ASYMMETRIC), "Can't set a new EVP_PKEY for symmetric crypto\n");
 
   peacemakr_key_t *out = malloc(sizeof(peacemakr_key_t));
   out->m_cfg_ = cfg;
@@ -194,10 +167,7 @@ peacemakr_key_t *API(new_pem_priv)(crypto_config_t cfg, const char *buf,
   BIO *bo = BIO_new_mem_buf(buf, (int)buflen);
 
   out->m_contents_.asymm = PEM_read_bio_PrivateKey(bo, NULL, NULL, NULL);
-  if (out->m_contents_.asymm == NULL) {
-    PEACEMAKR_ERROR("PEM_read_bio_PrivateKey failed\n");
-    return NULL;
-  }
+  EXPECT_NOT_NULL_RET(out->m_contents_.asymm, "PEM_read_bio_PrivateKey failed\n")
 
   BIO_free(bo);
 
@@ -205,10 +175,7 @@ peacemakr_key_t *API(new_pem_priv)(crypto_config_t cfg, const char *buf,
 }
 
 void API(free)(peacemakr_key_t *key) {
-  if (key == NULL) {
-    PEACEMAKR_INFO("key was null, no-op\n");
-    return;
-  }
+  EXPECT_NOT_NULL_RET_NONE(key, "key was null\n");
 
   switch (key->m_cfg_.mode) {
   case SYMMETRIC: {
@@ -229,21 +196,13 @@ crypto_config_t API(get_config)(const peacemakr_key_t *key) {
 }
 
 const buffer_t *API(symmetric)(const peacemakr_key_t *key) {
-  if (key->m_cfg_.mode != SYMMETRIC) {
-    PEACEMAKR_ERROR(
-        "Attempting to access the symmetric part of an asymmetric key\n");
-    return NULL;
-  }
+  EXPECT_TRUE_RET((key->m_cfg_.mode == SYMMETRIC), "Attempting to access the symmetric part of an asymmetric key\n");
 
   return key->m_contents_.symm;
 }
 
 EVP_PKEY *API(asymmetric)(const peacemakr_key_t *key) {
-  if (key->m_cfg_.mode != ASYMMETRIC) {
-    PEACEMAKR_ERROR(
-        "Attempting to access the asymmetric part of a symmetric key\n");
-    return NULL;
-  }
+  EXPECT_TRUE_RET((key->m_cfg_.mode == ASYMMETRIC), "Attempting to access the symmetric part of an asymmetric key\n");
 
   return key->m_contents_.asymm;
 }
