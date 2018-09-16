@@ -27,6 +27,7 @@ static bool keygen_inner(int key_type, EVP_PKEY **pkey, int rsa_bits) {
   int rc = EVP_PKEY_keygen_init(ctx);
   if (rc <= 0) {
     PEACEMAKR_LOG("EVP_PKEY_keygen_init failed with rc %d\n", rc);
+    EVP_PKEY_CTX_free(ctx);
     return false;
   }
 
@@ -35,6 +36,7 @@ static bool keygen_inner(int key_type, EVP_PKEY **pkey, int rsa_bits) {
     rc = EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, rsa_bits);
     if (rc <= 0) {
       PEACEMAKR_LOG("set_rsa_keygen_bits failed\n");
+      EVP_PKEY_CTX_free(ctx);
       return false;
     }
   }
@@ -42,9 +44,11 @@ static bool keygen_inner(int key_type, EVP_PKEY **pkey, int rsa_bits) {
   rc = EVP_PKEY_keygen(ctx, pkey);
   if (rc <= 0) {
     PEACEMAKR_LOG("EVP_PKEY_keygen failed\n");
+    EVP_PKEY_CTX_free(ctx);
     return false;
   }
 
+  EVP_PKEY_CTX_free(ctx);
   return true;
 }
 

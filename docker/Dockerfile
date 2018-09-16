@@ -11,7 +11,7 @@ FROM alpine:3.8 as builder
 RUN apk add --no-cache libbsd-dev git alpine-sdk perl cmake linux-headers
 
 WORKDIR /opt
-RUN git clone -b OpenSSL_1_1_0-stable --single-branch https://github.com/openssl/openssl.git
+RUN git clone -b OpenSSL_1_1_1-stable --single-branch https://github.com/openssl/openssl.git
 
 RUN cd openssl \
     && ./config --prefix=/usr --openssldir=/etc/ssl --libdir=lib no-async \
