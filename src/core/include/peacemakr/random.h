@@ -12,6 +12,11 @@
 #include <stddef.h>
 
 /**
+ * @file peacemakr/random.h
+ * Peacemakr core crypto csprng utilities
+ */
+
+/**
  * @brief User provided function for filling a random buffer with data.
  *
  * REQUIRES:
@@ -28,18 +33,12 @@ typedef int (*rng_buf)(unsigned char *, size_t);
 typedef const char *(*rng_err)(int);
 
 /**
- * @brief Simple wrapper for user-provided functions to provide a uniform
- *        interface to the rest of the crypto lib
+ * Simple wrapper for user-provided functions to provide a uniform interface to
+ * the rest of the crypto lib.
  */
 typedef struct {
   rng_buf generator;
   rng_err err;
 } random_device_t;
-
-// random_device_t peacemakr_default_random_device() {
-//  random_device_t rand = {
-//    .generator =
-//  };
-//}
 
 #endif // PEACEMAKR_CORE_CRYPTO_RANDOM_H
