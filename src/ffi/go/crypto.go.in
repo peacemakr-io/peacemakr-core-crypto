@@ -264,6 +264,25 @@ func ExtractCiphertextBlob(ciphertext []byte) (*CiphertextBlob, error) {
 	return deserialize(ciphertext)
 }
 
+func ExtractUnconfirmedAAD(ciphertext []byte) (*Plaintext, bool) {
+    var plaintext C.plaintext_t
+    defer freeInternalPlaintext(&plaintext)
+    if ciphertext[len(ciphertext)-1] != 0 {
+        ciphertext = append(ciphertext, byte(0)) // add NULL terminator
+    }
+
+    deserialized, err := deserialize(ciphertext)
+    if err != nil {
+        return nil, false
+    }
+
+    out := C.peacemakr_decrypt(nil, deserialized.blob, (*C.plaintext_t)(unsafe.Pointer(&plaintext)))
+    return &Plaintext{
+    		Data: nil,
+    		Aad:  C.GoBytes(unsafe.Pointer(plaintext.aad), C.int(plaintext.aad_len)),
+    	}, bool(out)
+}
+
 func Decrypt(key PeacemakrKey, ciphertext []byte) (*Plaintext, bool) {
 	var plaintext C.plaintext_t
 	defer freeInternalPlaintext(&plaintext)
