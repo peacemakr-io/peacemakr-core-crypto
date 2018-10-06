@@ -175,7 +175,7 @@ func deserialize(serialized []byte) (*CiphertextBlob, error) {
 	cBlobBytes := C.CBytes(serialized)
 	defer C.free(cBlobBytes)
 	cBlobLen := C.size_t(len(serialized))
-	deserialized := C.deserialize_blob((*C.uchar)(cBlobBytes), cBlobLen)
+	deserialized := C.deserialize_blob((*C.uint8_t)(cBlobBytes), cBlobLen)
 	if deserialized == nil {
 		return nil, errors.New("deserialization failed")
 	}
@@ -207,7 +207,7 @@ func NewPeacemakrKey(config CryptoConfig, rand RandomDevice) PeacemakrKey {
 }
 
 func NewPeacemakrKeyFromBytes(config CryptoConfig, contents []byte) PeacemakrKey {
-	cBytes := (*C.uchar)(C.CBytes(contents))
+	cBytes := (*C.uint8_t)(C.CBytes(contents))
 	defer C.free(unsafe.Pointer(cBytes))
 	return PeacemakrKey{
 		key: C.PeacemakrKey_new_bytes(configToInternal(config), cBytes),
