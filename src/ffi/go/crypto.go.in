@@ -207,7 +207,7 @@ func NewPeacemakrKey(config CryptoConfig, rand RandomDevice) PeacemakrKey {
 }
 
 func NewPeacemakrKeyFromBytes(config CryptoConfig, contents []byte) PeacemakrKey {
-	cBytes := (*C.uchar)(C.CBytes(contents))
+	cBytes := (*C.uint8_t)(C.CBytes(contents))
 	defer C.free(unsafe.Pointer(cBytes))
 	return PeacemakrKey{
 		key: C.PeacemakrKey_new_bytes(configToInternal(config), cBytes),
