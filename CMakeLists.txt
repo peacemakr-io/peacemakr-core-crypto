@@ -36,9 +36,15 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/AddClangFormat.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/AddClangAnalyzer.cmake)
 
 # DOCS
-find_package(doxygen)
+find_package(Doxygen)
 if (DOXYGEN_FOUND)
-    doxygen_add_docs(doxygen ${CMAKE_CURRENT_SOURCE_DIR}/src COMMENT "Generate documentation pages")
+    set(DOXYGEN_EXTRACT_STATIC YES)
+    set(DOXYGEN_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/docs)
+    set(DOXYGEN_USE_MDFILE_AS_MAINPAGE ${CMAKE_CURRENT_SOURCE_DIR}/README.md)
+    doxygen_add_docs(doxygen
+            ${CMAKE_CURRENT_SOURCE_DIR}/README.md
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/core/include/peacemakr
+            COMMENT "Generate documentation pages")
 endif (DOXYGEN_FOUND)
 
 # INSTALL

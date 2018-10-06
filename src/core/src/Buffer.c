@@ -66,7 +66,8 @@ buffer_t *API(new)(size_t size) {
   ret->m_size_bytes_ = size;
 
   ret->m_mem_ = calloc(size, sizeof(uint8_t));
-  EXPECT_NOT_NULL_CLEANUP_RET(ret->m_mem_, free(ret), "malloc returned nullptr\n");
+  EXPECT_NOT_NULL_CLEANUP_RET(ret->m_mem_, free(ret),
+                              "malloc returned nullptr\n");
 
   return ret;
 }
@@ -75,7 +76,8 @@ void API(free)(buffer_t *buf) {
   EXPECT_NOT_NULL_RET_NONE(buf, "buf was null, no-op\n");
 
   int err = memset_s(buf->m_mem_, buf->m_size_bytes_, 0, buf->m_size_bytes_);
-  EXPECT_TRUE_RET_NONE((err == 0), "memset failed, aborting (memory NOT freed)\n");
+  EXPECT_TRUE_RET_NONE((err == 0),
+                       "memset failed, aborting (memory NOT freed)\n");
 
   free(buf->m_mem_);
   buf->m_mem_ = NULL;
@@ -96,7 +98,8 @@ void API(set_bytes)(buffer_t *buf, const void *mem, size_t size_bytes) {
   EXPECT_NOT_NULL_RET_NONE(buf, "buf was null\n");
   EXPECT_NOT_NULL_RET_NONE(mem, "mem was null\n");
 
-  EXPECT_TRUE_RET_NONE((buf->m_size_bytes_ >= size_bytes), "buffer size less than input size\n");
+  EXPECT_TRUE_RET_NONE((buf->m_size_bytes_ >= size_bytes),
+                       "buffer size less than input size\n");
 
   // Don't use the passed in size just in case
   memcpy((void *)buf->m_mem_, mem, buf->m_size_bytes_);

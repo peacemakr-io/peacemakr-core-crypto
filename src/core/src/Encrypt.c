@@ -29,8 +29,11 @@ static bool symmetric_encrypt(const peacemakr_key_t *peacemakrkey,
   const EVP_CIPHER *cipher = parse_cipher(CiphertextBlob_symm_cipher(out));
   const buffer_t *key = PeacemakrKey_symmetric(peacemakrkey);
 
-  EXPECT_NOT_NULL_RET_VALUE(key, false, "can't do symmetric crypto with a NULL symmetric key\n");
-  EXPECT_NOT_NULL_RET_VALUE(Buffer_get_bytes(key, NULL), false, "can't do symmetric crypto with a NULL symmetric key\n");
+  EXPECT_NOT_NULL_RET_VALUE(
+      key, false, "can't do symmetric crypto with a NULL symmetric key\n");
+  EXPECT_NOT_NULL_RET_VALUE(
+      Buffer_get_bytes(key, NULL), false,
+      "can't do symmetric crypto with a NULL symmetric key\n");
 
   const buffer_t *iv = CiphertextBlob_iv(out);
   buffer_t *tag = CiphertextBlob_mutable_tag(out);
@@ -43,21 +46,28 @@ static bool symmetric_encrypt(const peacemakr_key_t *peacemakrkey,
 
   /* Initialize the encryption */
   if (iv != NULL) {
-    OPENSSL_CHECK_RET_VALUE(EVP_EncryptInit_ex(ctx, cipher, NULL, Buffer_get_bytes(key, NULL),
-                                               Buffer_get_bytes(iv, NULL)), ctx, false)
+    OPENSSL_CHECK_RET_VALUE(EVP_EncryptInit_ex(ctx, cipher, NULL,
+                                               Buffer_get_bytes(key, NULL),
+                                               Buffer_get_bytes(iv, NULL)),
+                            ctx, false)
   } else {
-    OPENSSL_CHECK_RET_VALUE(EVP_EncryptInit_ex(ctx, cipher, NULL, Buffer_get_bytes(key, NULL),
-                                               NULL), ctx, false)
+    OPENSSL_CHECK_RET_VALUE(EVP_EncryptInit_ex(ctx, cipher, NULL,
+                                               Buffer_get_bytes(key, NULL),
+                                               NULL),
+                            ctx, false)
   }
 
   /* Handle any AAD */
   if (aad != NULL && aad_len > 0) {
     if (aad_len > INT_MAX) {
       for (int i = 0; i < aad_len; i += (INT_MAX >> 1)) {
-        OPENSSL_CHECK_RET_VALUE(EVP_EncryptUpdate(ctx, NULL, &len, aad + i, (INT_MAX >> 1)), ctx, false)
+        OPENSSL_CHECK_RET_VALUE(
+            EVP_EncryptUpdate(ctx, NULL, &len, aad + i, (INT_MAX >> 1)), ctx,
+            false)
       }
     } else {
-      OPENSSL_CHECK_RET_VALUE(EVP_EncryptUpdate(ctx, NULL, &len, aad, (int)aad_len), ctx, false);
+      OPENSSL_CHECK_RET_VALUE(
+          EVP_EncryptUpdate(ctx, NULL, &len, aad, (int)aad_len), ctx, false);
     }
 
     // Set the AAD in the CiphertextBlob
@@ -79,21 +89,24 @@ static bool symmetric_encrypt(const peacemakr_key_t *peacemakrkey,
   if (plaintext_len > INT_MAX) {
     unsigned char *ciphertext_ptr = &ciphertext[0];
     for (int i = 0; i < plaintext_len; i += (INT_MAX >> 1)) {
-      OPENSSL_CHECK_RET_VALUE(EVP_EncryptUpdate(ctx, ciphertext_ptr, &len, plaintext + i,
-                                                (INT_MAX >> 1)), ctx, false);
+      OPENSSL_CHECK_RET_VALUE(EVP_EncryptUpdate(ctx, ciphertext_ptr, &len,
+                                                plaintext + i, (INT_MAX >> 1)),
+                              ctx, false);
       ciphertext_len += len;
       ciphertext_ptr += len;
     }
   } else {
-    OPENSSL_CHECK_RET_VALUE(EVP_EncryptUpdate(ctx, ciphertext, &len, plaintext,
-                                              (int)plaintext_len), ctx, false);
+    OPENSSL_CHECK_RET_VALUE(
+        EVP_EncryptUpdate(ctx, ciphertext, &len, plaintext, (int)plaintext_len),
+        ctx, false);
     ciphertext_len = (size_t)len;
   }
 
   /* Finalise the encryption. Further ciphertext bytes may be written at
    * this stage.
    */
-  OPENSSL_CHECK_RET_VALUE(EVP_EncryptFinal_ex(ctx, ciphertext + len, &len), ctx, false);
+  OPENSSL_CHECK_RET_VALUE(EVP_EncryptFinal_ex(ctx, ciphertext + len, &len), ctx,
+                          false);
   ciphertext_len += len;
   Buffer_set_bytes(ciphertext_buf, ciphertext, ciphertext_len);
 
@@ -103,8 +116,9 @@ static bool symmetric_encrypt(const peacemakr_key_t *peacemakrkey,
     if (taglen > 0) {
       unsigned char tag_buf[taglen];
 
-      OPENSSL_CHECK_RET_VALUE(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, (int)taglen,
-                                                  tag_buf), ctx, false);
+      OPENSSL_CHECK_RET_VALUE(
+          EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, (int)taglen, tag_buf),
+          ctx, false);
       Buffer_set_bytes(tag, tag_buf, taglen); // store the tag in the buffer
     }
   }
@@ -125,8 +139,11 @@ static bool symmetric_decrypt(const peacemakr_key_t *peacemakrkey,
   const EVP_CIPHER *cipher = parse_cipher(CiphertextBlob_symm_cipher(in));
   const buffer_t *key = PeacemakrKey_symmetric(peacemakrkey);
 
-  EXPECT_NOT_NULL_RET_VALUE(key, false, "can't do symmetric crypto with a NULL symmetric key\n");
-  EXPECT_NOT_NULL_RET_VALUE(Buffer_get_bytes(key, NULL), false, "can't do symmetric crypto with a NULL symmetric key\n");
+  EXPECT_NOT_NULL_RET_VALUE(
+      key, false, "can't do symmetric crypto with a NULL symmetric key\n");
+  EXPECT_NOT_NULL_RET_VALUE(
+      Buffer_get_bytes(key, NULL), false,
+      "can't do symmetric crypto with a NULL symmetric key\n");
 
   const buffer_t *ciphertext = CiphertextBlob_ciphertext(in);
   const unsigned char *ciphertext_buf = Buffer_get_bytes(ciphertext, NULL);
@@ -152,21 +169,29 @@ static bool symmetric_decrypt(const peacemakr_key_t *peacemakrkey,
 
   /* Initialize the decryption */
   if (iv != NULL) {
-    OPENSSL_CHECK_RET_VALUE(EVP_DecryptInit_ex(ctx, cipher, NULL, Buffer_get_bytes(key, NULL),
-                                               Buffer_get_bytes(iv, NULL)), ctx, false);
+    OPENSSL_CHECK_RET_VALUE(EVP_DecryptInit_ex(ctx, cipher, NULL,
+                                               Buffer_get_bytes(key, NULL),
+                                               Buffer_get_bytes(iv, NULL)),
+                            ctx, false);
   } else {
-    OPENSSL_CHECK_RET_VALUE(EVP_DecryptInit_ex(ctx, cipher, NULL, Buffer_get_bytes(key, NULL),
-                                               NULL), ctx, false);
+    OPENSSL_CHECK_RET_VALUE(EVP_DecryptInit_ex(ctx, cipher, NULL,
+                                               Buffer_get_bytes(key, NULL),
+                                               NULL),
+                            ctx, false);
   }
 
   /* Handle any AAD */
   if (aad_buf != NULL && aad_len > 0) {
     if (aad_len > INT_MAX) {
       for (int i = 0; i < aad_len; i += (INT_MAX >> 1)) {
-        OPENSSL_CHECK_RET_VALUE(EVP_DecryptUpdate(ctx, NULL, &len, aad_buf + i, (INT_MAX >> 1)), ctx, false);
+        OPENSSL_CHECK_RET_VALUE(
+            EVP_DecryptUpdate(ctx, NULL, &len, aad_buf + i, (INT_MAX >> 1)),
+            ctx, false);
       }
     } else {
-      OPENSSL_CHECK_RET_VALUE(EVP_DecryptUpdate(ctx, NULL, &len, aad_buf, (int)aad_len), ctx, false);
+      OPENSSL_CHECK_RET_VALUE(
+          EVP_DecryptUpdate(ctx, NULL, &len, aad_buf, (int)aad_len), ctx,
+          false);
     }
   }
 
@@ -179,20 +204,25 @@ static bool symmetric_decrypt(const peacemakr_key_t *peacemakrkey,
   if (ciphertext_len > INT_MAX) {
     unsigned char *plaintext_ptr = &plaintext_buf[0];
     for (int i = 0; i < ciphertext_len; i += (INT_MAX >> 1)) {
-      OPENSSL_CHECK_RET_VALUE(EVP_DecryptUpdate(ctx, plaintext_ptr, &len, ciphertext_buf + i,
-                                                (INT_MAX >> 1)), ctx, false);
+      OPENSSL_CHECK_RET_VALUE(EVP_DecryptUpdate(ctx, plaintext_ptr, &len,
+                                                ciphertext_buf + i,
+                                                (INT_MAX >> 1)),
+                              ctx, false);
       plaintext_len += len;
       plaintext_ptr += len;
     }
   } else {
-    OPENSSL_CHECK_RET_VALUE(EVP_DecryptUpdate(ctx, plaintext_buf, &len, ciphertext_buf,
-                                              (int)ciphertext_len), ctx, false);
+    OPENSSL_CHECK_RET_VALUE(EVP_DecryptUpdate(ctx, plaintext_buf, &len,
+                                              ciphertext_buf,
+                                              (int)ciphertext_len),
+                            ctx, false);
     plaintext_len = (size_t)len;
   }
 
   if (taglen > 0 && tag_buf != NULL) {
-    OPENSSL_CHECK_RET_VALUE(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, (int)taglen,
-                                                (void *)tag_buf), ctx, false);
+    OPENSSL_CHECK_RET_VALUE(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
+                                                (int)taglen, (void *)tag_buf),
+                            ctx, false);
   }
 
   /* Finalise the decryption. */
@@ -230,7 +260,8 @@ static bool asymmetric_encrypt(const peacemakr_key_t *pub_key,
   const EVP_CIPHER *cipher = parse_cipher(CiphertextBlob_symm_cipher(out));
 
   EVP_PKEY *pkey = PeacemakrKey_asymmetric(pub_key);
-  EXPECT_NOT_NULL_RET_VALUE(pkey, false, "can't do asymmetric crypto with a NULL asymmetric key\n");
+  EXPECT_NOT_NULL_RET_VALUE(
+      pkey, false, "can't do asymmetric crypto with a NULL asymmetric key\n");
 
   buffer_t *tag = CiphertextBlob_mutable_tag(out);
 
@@ -264,10 +295,13 @@ static bool asymmetric_encrypt(const peacemakr_key_t *pub_key,
   if (aad != NULL && aad_len > 0) {
     if (aad_len > INT_MAX) {
       for (int i = 0; i < aad_len; i += (INT_MAX >> 1)) {
-        OPENSSL_CHECK_RET_VALUE(EVP_SealUpdate(ctx, NULL, &len, aad + i, (INT_MAX >> 1)), ctx, false);
+        OPENSSL_CHECK_RET_VALUE(
+            EVP_SealUpdate(ctx, NULL, &len, aad + i, (INT_MAX >> 1)), ctx,
+            false);
       }
     } else {
-      OPENSSL_CHECK_RET_VALUE(EVP_SealUpdate(ctx, NULL, &len, aad, (int)aad_len), ctx, false);
+      OPENSSL_CHECK_RET_VALUE(
+          EVP_SealUpdate(ctx, NULL, &len, aad, (int)aad_len), ctx, false);
     }
 
     // Set the AAD in the CiphertextBlob
@@ -279,20 +313,23 @@ static bool asymmetric_encrypt(const peacemakr_key_t *pub_key,
    */
   if (plaintext_len > INT_MAX) {
     for (int i = 0; i < plaintext_len; i += (INT_MAX >> 1)) {
-      OPENSSL_CHECK_RET_VALUE(EVP_SealUpdate(ctx, ciphertext_buf, &len, plaintext + i,
-                                             (INT_MAX >> 1)), ctx, false);
+      OPENSSL_CHECK_RET_VALUE(EVP_SealUpdate(ctx, ciphertext_buf, &len,
+                                             plaintext + i, (INT_MAX >> 1)),
+                              ctx, false);
       ciphertext_len += len;
     }
   } else {
     OPENSSL_CHECK_RET_VALUE(EVP_SealUpdate(ctx, ciphertext_buf, &len, plaintext,
-                                           (int)plaintext_len), ctx, false);
+                                           (int)plaintext_len),
+                            ctx, false);
     ciphertext_len += len;
   }
 
   /* Finalise the encryption. Further ciphertext bytes may be written at
    * this stage.
    */
-  OPENSSL_CHECK_RET_VALUE(EVP_SealFinal(ctx, ciphertext_buf + len, &len), ctx, false);
+  OPENSSL_CHECK_RET_VALUE(EVP_SealFinal(ctx, ciphertext_buf + len, &len), ctx,
+                          false);
   ciphertext_len += len;
   Buffer_set_bytes(mutable_ciphertext, ciphertext_buf, ciphertext_len);
 
@@ -302,8 +339,9 @@ static bool asymmetric_encrypt(const peacemakr_key_t *pub_key,
     if (taglen > 0) {
       unsigned char tag_buf[taglen];
 
-      OPENSSL_CHECK_RET_VALUE(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, (int)taglen,
-                                                  tag_buf), ctx, false);
+      OPENSSL_CHECK_RET_VALUE(
+          EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, (int)taglen, tag_buf),
+          ctx, false);
       Buffer_set_bytes(tag, tag_buf, taglen); // store the tag in the buffer
     }
   }
@@ -324,7 +362,9 @@ static bool asymmetric_decrypt(const peacemakr_key_t *peacemakrkey,
 
   EVP_PKEY *priv_key = PeacemakrKey_asymmetric(peacemakrkey);
 
-  EXPECT_NOT_NULL_RET_VALUE(priv_key, false, "can't do asymmetric crypto with a NULL asymmetric key\n");
+  EXPECT_NOT_NULL_RET_VALUE(
+      priv_key, false,
+      "can't do asymmetric crypto with a NULL asymmetric key\n");
 
   const EVP_CIPHER *cipher = parse_cipher(CiphertextBlob_symm_cipher(in));
 
@@ -361,22 +401,29 @@ static bool asymmetric_decrypt(const peacemakr_key_t *peacemakrkey,
    * provided and priv_key, whilst the encrypted session key is held in
    * encrypted_key */
   if (iv != NULL) {
-    OPENSSL_CHECK_RET_VALUE(EVP_OpenInit(ctx, cipher, Buffer_get_bytes(encrypted_key, NULL),
-                                         (int)encrypted_key_len, Buffer_get_bytes(iv, NULL),
-                                         priv_key), ctx, false);
+    OPENSSL_CHECK_RET_VALUE(EVP_OpenInit(ctx, cipher,
+                                         Buffer_get_bytes(encrypted_key, NULL),
+                                         (int)encrypted_key_len,
+                                         Buffer_get_bytes(iv, NULL), priv_key),
+                            ctx, false);
   } else {
-    OPENSSL_CHECK_RET_VALUE(EVP_OpenInit(ctx, cipher, Buffer_get_bytes(encrypted_key, NULL),
-                                         (int)encrypted_key_len, NULL, priv_key), ctx, false);
+    OPENSSL_CHECK_RET_VALUE(
+        EVP_OpenInit(ctx, cipher, Buffer_get_bytes(encrypted_key, NULL),
+                     (int)encrypted_key_len, NULL, priv_key),
+        ctx, false);
   }
 
   /* Handle any AAD */
   if (aad != NULL && aad_len > 0) {
     if (aad_len > INT_MAX) {
       for (int i = 0; i < aad_len; i += (INT_MAX >> 1)) {
-        OPENSSL_CHECK_RET_VALUE(EVP_OpenUpdate(ctx, NULL, &len, aad_buf + i, (INT_MAX >> 1)), ctx, false);
+        OPENSSL_CHECK_RET_VALUE(
+            EVP_OpenUpdate(ctx, NULL, &len, aad_buf + i, (INT_MAX >> 1)), ctx,
+            false);
       }
     } else {
-      OPENSSL_CHECK_RET_VALUE(EVP_OpenUpdate(ctx, NULL, &len, aad_buf, (int)aad_len), ctx, false);
+      OPENSSL_CHECK_RET_VALUE(
+          EVP_OpenUpdate(ctx, NULL, &len, aad_buf, (int)aad_len), ctx, false);
     }
   }
 
@@ -385,26 +432,31 @@ static bool asymmetric_decrypt(const peacemakr_key_t *peacemakrkey,
    */
   if (ciphertext_len > INT_MAX) {
     for (int i = 0; i < ciphertext_len; i += (INT_MAX >> 1)) {
-      OPENSSL_CHECK_RET_VALUE(EVP_OpenUpdate(ctx, plaintext_buf, &len, ciphertext_buf + i,
-                                             (INT_MAX >> 1)), ctx, false);
+      OPENSSL_CHECK_RET_VALUE(EVP_OpenUpdate(ctx, plaintext_buf, &len,
+                                             ciphertext_buf + i,
+                                             (INT_MAX >> 1)),
+                              ctx, false);
       plaintext_len += len;
     }
   } else {
-    OPENSSL_CHECK_RET_VALUE(EVP_OpenUpdate(ctx, plaintext_buf, &len, ciphertext_buf,
-                                           (int)ciphertext_len), ctx, false);
+    OPENSSL_CHECK_RET_VALUE(EVP_OpenUpdate(ctx, plaintext_buf, &len,
+                                           ciphertext_buf, (int)ciphertext_len),
+                            ctx, false);
     plaintext_len = (size_t)len;
   }
 
   /* Get the tag at this point, if the algorithm provides one */
   if (taglen > 0 && tag_buf != NULL) {
-    OPENSSL_CHECK_RET_VALUE(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, (int)taglen,
-                                                (void *)tag_buf), ctx, false);
+    OPENSSL_CHECK_RET_VALUE(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
+                                                (int)taglen, (void *)tag_buf),
+                            ctx, false);
   }
 
   /* Finalise the decryption. Further plaintext bytes may be written at
    * this stage.
    */
-  OPENSSL_CHECK_RET_VALUE(EVP_OpenFinal(ctx, plaintext_buf + len, &len), ctx, false);
+  OPENSSL_CHECK_RET_VALUE(EVP_OpenFinal(ctx, plaintext_buf + len, &len), ctx,
+                          false);
   plaintext_len += len;
 
   /* Clean up */
@@ -425,7 +477,7 @@ ciphertext_blob_t *peacemakr_encrypt(const peacemakr_key_t *key,
                                      random_device_t *rand) {
 
   const crypto_config_t cfg = PeacemakrKey_get_config(key);
-  
+
   EXPECT_NOT_NULL_RET(key, "key was null\n");
   EXPECT_NOT_NULL_RET(plain, "plain was null\n");
   EXPECT_NOT_NULL_RET(rand, "rand was null\n");

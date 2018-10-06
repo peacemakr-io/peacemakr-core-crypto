@@ -20,6 +20,11 @@
 #define PEACEMAKR_CORE_CRYPTO_VERSION_MAX (uint8_t)1
 
 /**
+ * @file peacemakr/crypto.h
+ * Peacemakr core crypto
+ */
+
+/**
  * @brief Peacemakr supported symmetric cipher algorithms
  *
  * We currently support these algorithms because they follow the same EVP_*
@@ -97,7 +102,9 @@ typedef struct CiphertextBlob ciphertext_blob_t;
 //! Opaque type holding the key itself (EVP_PKEY or just a symmetric key)
 typedef struct PeacemakrKey peacemakr_key_t;
 
-//! Get max supported version
+/**
+ * Get max supported version by this library. Compile time constant.
+ */
 static inline uint8_t get_max_version() {
   return PEACEMAKR_CORE_CRYPTO_VERSION_MAX;
 }
@@ -109,112 +116,91 @@ static inline uint8_t get_max_version() {
 bool peacemakr_init();
 
 /**
- * @brief Create a new peacemakr_key_t from scratch using a user-defined secure
- * random source.
- * @param cfg The configuration for the cryptography calls - ensures that the
- * key is created correctly
- * @param rand User-defined random device. It is recommended that these come
- * from /dev/urandom or similar.
- * @return A newly created peacemakr key for use in other library calls
+ * Create a new peacemakr_key_t from scratch with user-defined \p cfg and \p
+ * rand to configure the key creation. It is recommended that \p rand come from
+ * /dev/urandom or similar. \returns A newly created peacemakr key for use in
+ * other library calls.
  */
 peacemakr_key_t *PeacemakrKey_new(crypto_config_t cfg, random_device_t *rand);
 
 /**
- * @brief Create a new peacemakr_key_t from bytes generated externally. This
- * does not apply for asymmetric encryption because OpenSSL generates its own
- * keypairs.
- * @param cfg The configuration for the cryptography calls - ensures that the
- * key is created correctly
- * @param buf The buffer of bytes allocated for encryption. It is recommended
- * that these come from /dev/urandom or similar.
- * @return A newly created peacemakr key for use in other library calls
+ * Create a new peacemakr_key_t from bytes generated externally. This
+ * function applies only to symmetric encryption provided by this library.
+ * Uses \p cfg to configure the key being created. Stores \p buf for use as
+ * a symmetric key - it is recommended that these come from /dev/urandom or
+ * similar. \returns A newly created peacemakr key for use in other library
+ * calls.
  */
 peacemakr_key_t *PeacemakrKey_new_bytes(crypto_config_t cfg,
                                         const uint8_t *buf);
 
 /**
- * @brief Create a new peacemakr_key_t from an existing pem file for a public
- * key.
- * @param cfg The configuration for the cryptography calls - ensures that the
- * key is created correctly
- * @param buf The string with the contents of the pem file containing the key
- * @param buflen The length of the string with the pem file contents
- * @return A newly created peacemakr key for use in other library calls
+ * Create a new peacemakr_key_t from a pem file generated externally. This
+ * function applies only to asymmetric encryption provided by this library,
+ * and the pem file must be of a public key. Use PeacemakrKey_new_pem_priv
+ * to generate a private key from a pre-created pem file. Uses \p cfg to
+ * configure the key being created. \returns A newly created peacemakr key
+ * for use in other library calls.
  */
 peacemakr_key_t *PeacemakrKey_new_pem_pub(crypto_config_t cfg, const char *buf,
                                           size_t buflen);
 
 /**
- * @brief Create a new peacemakr_key_t from an existing pem file for a private
- * key.
- * @param cfg The configuration for the cryptography calls - ensures that the
- * key is created correctly
- * @param buf The string with the contents of the pem file containing the key
- * @param buflen The length of the string with the pem file contents
- * @return A newly created peacemakr key for use in other library calls
+ * Create a new peacemakr_key_t from a pem file generated externally. This
+ * function applies only to asymmetric encryption provided by this library,
+ * and the pem file must be of a private key. Use PeacemakrKey_new_pem_pub
+ * to generate a public key from a pre-created pem file. Uses \p cfg to
+ * configure the key being created. \returns A newly created peacemakr key
+ * for use in other library calls.
  */
 peacemakr_key_t *PeacemakrKey_new_pem_priv(crypto_config_t cfg, const char *buf,
                                            size_t buflen);
 
 /**
- * @brief Get the config used during key creation
- * @param key The key to query
- * @return An object that describes the config used in key creation
+ * Gets the crypto_config_t used to create \p key from \p key.
  */
 crypto_config_t PeacemakrKey_get_config(const peacemakr_key_t *key);
 
 /**
- * @brief Free a peacemakr key. Clears all memory associated with the key.
- * @param key The key to free
+ * Free \p key. Attempts to securely clear all memory associated with \p key.
  */
 void PeacemakrKey_free(peacemakr_key_t *key);
 
 /**
- * @brief Performs the encryption operation as configured by cfg, with key key
- * on plaintext plain, using random generator rand for iv generation. It is
- * recommended that the random generator hook up to /dev/urandom or similar.
- * @param cfg The configuration for the cryptography calls
- * @param key The key to use in the encryption process
- * @param plain The plaintext to encrypt
- * @param rand The random number generation unit to use
- * @return An opaque pointer to a blob that contains the encrypted message. This
- * can be passed to other peacemakr library calls, such as peacemakr_decrypt.
+ * Performs the encryption operation using the configuration and
+ * the (symmetric or asymmetric) key in \p key. The operation is performed
+ * over \p plain and uses \p rand to generate the IV/nonce. Returns a
+ * ciphertext_blob_t that can be used in calls to uint8_t
+ * *serialize_blob(ciphertext_blob_t *, size_t *) and bool
+ * peacemakr_decrypt(const peacemakr_key_t *, ciphertext_blob_t *, plaintext_t
+ * *)
  */
 ciphertext_blob_t *peacemakr_encrypt(const peacemakr_key_t *key,
                                      const plaintext_t *plain,
                                      random_device_t *rand);
 
 /**
- * @brief Performs the decryption operation of ciphertext cipher using key key
- * and stores its result in plaintext plain.
- * @param key The key that can decrypt the packet.
- * @param cipher
- * @param plain
- * @return
+ * Performs the decryption operation using the configuration and
+ * the (symmetric or asymmetric) key in \p key. The operation is performed
+ * over \p cipher and the result is stored in \p plain. Returns a
+ * boolean to indicate if decryption was successful.
  */
 bool peacemakr_decrypt(const peacemakr_key_t *key, ciphertext_blob_t *cipher,
                        plaintext_t *plain);
 
 /**
- * @brief Serializes a ciphertext_blob_t cipher into a base64 encoded buffer of
- * uint8_t and stores the size of that buffer in out_size. Frees the
- * ciphertext_blob_t
- * @param cipher The ciphertext to serialize
- * @param out_size A non-null pointer to a size_t that will contain the size of
- * the buffer created by this function.
- * @return A byte buffer that is encoded in URL-safe base64. The callee is
- * responsible for managing the memory of this buffer.
+ * Serializes \p cipher into a \return Base64 encoded buffer. Stores the size of
+ * said buffer into \p out_size. The caller is responsible for managing
+ * memory returned from this function.
  */
 uint8_t *serialize_blob(ciphertext_blob_t *cipher, size_t *out_size);
 
 /**
- * @brief Deserializes a previously serialized blob b64_serialized_cipher into a
- * ciphertext_blob_t for use in a decryption operation (for example).
- * @param b64_serialized_cipher The byte buffer created by a call to
- * serialize_blob
- * @param serialized_len The length of that buffer
- * @return A well-formed ciphertext_blob_t object that can be decrypted with the
- * appropriate key.
+ * Deserializes a ciphertext_blob_t from \p b64_encoded_cipher. \p
+ * serialized_len must be the same as out_size from uint8_t
+ * *serialize_blob(ciphertext_blob_t *, size_t *). \returns A ciphertext_blob_t
+ * that may be passed to bool peacemakr_decrypt(const peacemakr_key_t *,
+ * ciphertext_blob_t *, plaintext_t *)
  */
 ciphertext_blob_t *deserialize_blob(const uint8_t *b64_serialized_cipher,
                                     size_t serialized_len);
