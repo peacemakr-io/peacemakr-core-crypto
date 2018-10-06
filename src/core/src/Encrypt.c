@@ -541,9 +541,9 @@ bool peacemakr_decrypt(const peacemakr_key_t *key, ciphertext_blob_t *cipher,
   buffer_t *plaintext = NULL, *aad = NULL;
 
   if (key == NULL) {
-    PEACEMAKR_LOG("NULL key, populating plain with AAD");
+    PEACEMAKR_LOG("NULL key, populating plain with AAD\n");
     const buffer_t *aad_buf = CiphertextBlob_aad(cipher);
-    EXPECT_NOT_NULL_RET_VALUE(aad_buf, false, "No AAD in ciphertext");
+    EXPECT_NOT_NULL_RET_VALUE(aad_buf, false, "No AAD in ciphertext\n");
     const unsigned char *tmp_aad = Buffer_get_bytes(aad_buf, &plain->aad_len);
     plain->aad = calloc(plain->aad_len, sizeof(unsigned char));
     memcpy((void *)plain->aad, tmp_aad, plain->aad_len);
@@ -574,9 +574,9 @@ bool peacemakr_decrypt(const peacemakr_key_t *key, ciphertext_blob_t *cipher,
     memcpy((void *)plain->data, tmp_plain, plain->data_len);
     Buffer_free(plaintext);
   } else { // fill with zeros
-    plain->aad_len = 1;
+    plain->aad_len = (size_t)rand() % 2<<8;
     plain->aad = calloc(plain->aad_len, sizeof(unsigned char));
-    plain->data_len = 1;
+    plain->data_len = (size_t)rand() % 2<<8;
     plain->data = calloc(plain->data_len, sizeof(unsigned char));
   }
 

@@ -171,17 +171,17 @@ func serialize(blob *CiphertextBlob) ([]byte, error) {
 	return C.GoBytes(unsafe.Pointer(serialized), C.int(cSize)), nil
 }
 
-func deserialize(serialized []byte) (*CiphertextBlob, error) {
+func deserialize(serialized []byte) (*CiphertextBlob, bool) {
 	cBlobBytes := C.CBytes(serialized)
 	defer C.free(cBlobBytes)
 	cBlobLen := C.size_t(len(serialized))
 	deserialized := C.deserialize_blob((*C.uchar)(cBlobBytes), cBlobLen)
 	if deserialized == nil {
-		return nil, errors.New("deserialization failed")
+		return nil, false
 	}
 	return &CiphertextBlob{
 		blob: deserialized,
-	}, nil
+	}, true
 }
 
 func GetMaxSupportedVersion() uint8 {
@@ -260,27 +260,28 @@ func Encrypt(key PeacemakrKey, plaintext Plaintext, rand RandomDevice) ([]byte, 
 	return serialized, nil
 }
 
-func ExtractCiphertextBlob(ciphertext []byte) (*CiphertextBlob, error) {
+func ExtractCiphertextBlob(ciphertext []byte) (*CiphertextBlob, bool) {
 	return deserialize(ciphertext)
 }
 
-func ExtractUnconfirmedAAD(ciphertext []byte) (*Plaintext, bool) {
+func ExtractUnverifiedAAD(ciphertext []byte) ([]byte, bool) {
     var plaintext C.plaintext_t
     defer freeInternalPlaintext(&plaintext)
     if ciphertext[len(ciphertext)-1] != 0 {
         ciphertext = append(ciphertext, byte(0)) // add NULL terminator
     }
 
-    deserialized, err := deserialize(ciphertext)
-    if err != nil {
+    deserialized, deserializeSuccess := deserialize(ciphertext)
+    if !deserializeSuccess {
         return nil, false
     }
 
-    out := C.peacemakr_decrypt(nil, deserialized.blob, (*C.plaintext_t)(unsafe.Pointer(&plaintext)))
-    return &Plaintext{
-    		Data: nil,
-    		Aad:  C.GoBytes(unsafe.Pointer(plaintext.aad), C.int(plaintext.aad_len)),
-    	}, bool(out)
+    extractSuccess := bool(C.peacemakr_decrypt(nil, deserialized.blob, (*C.plaintext_t)(unsafe.Pointer(&plaintext))))
+    if !extractSuccess {
+        return nil, false
+    }
+
+    return C.GoBytes(unsafe.Pointer(plaintext.aad), C.int(plaintext.aad_len)), extractSuccess
 }
 
 func Decrypt(key PeacemakrKey, ciphertext []byte) (*Plaintext, bool) {
@@ -290,8 +291,8 @@ func Decrypt(key PeacemakrKey, ciphertext []byte) (*Plaintext, bool) {
 		ciphertext = append(ciphertext, byte(0)) // add NULL terminator
 	}
 
-	deserialized, err := deserialize(ciphertext)
-	if err != nil {
+	deserialized, success := deserialize(ciphertext)
+	if !success {
 		return nil, false
 	}
 

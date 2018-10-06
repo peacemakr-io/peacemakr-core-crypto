@@ -156,14 +156,14 @@ func TestAsymmetricEncrypt(t *testing.T) {
 					t.Fatalf("%v", err)
 				}
 
-				onlyAAD, success := ExtractUnconfirmedAAD(ciphertext)
+				AAD, success := ExtractUnverifiedAAD(ciphertext)
 				if !success {
 				    DestroyPeacemakrKey(key)
                     t.Fatalf("Extract failed")
 				}
-				if !bytes.Equal(plaintextIn.Aad, onlyAAD.Aad) {
+				if !bytes.Equal(plaintextIn.Aad, AAD) {
                     DestroyPeacemakrKey(key)
-                    t.Fatalf("plaintext data did not match")
+                    t.Fatalf("extracted aad did not match")
                 }
 
 
@@ -213,14 +213,14 @@ func TestAsymmetricEncryptFromPem(t *testing.T) {
 				t.Fatalf("%v", err)
 			}
 
-			onlyAAD, success := ExtractUnconfirmedAAD(ciphertext)
+			AAD, success := ExtractUnverifiedAAD(ciphertext)
             if !success {
                 DestroyPeacemakrKey(pubkey)
                 t.Fatalf("Extract failed")
             }
-            if !bytes.Equal(plaintextIn.Aad, onlyAAD.Aad) {
+            if !bytes.Equal(plaintextIn.Aad, AAD) {
                 DestroyPeacemakrKey(pubkey)
-                t.Fatalf("plaintext data did not match")
+                t.Fatalf("extracted aad did not match")
             }
 
 			privkey := NewPeacemakrKeyFromPrivPem(cfg, GetPrivKey())
@@ -289,13 +289,13 @@ func TestAsymmetricEncryptFromRandomPem(t *testing.T) {
 					t.Fatalf("%v", err)
 				}
 
-				onlyAAD, success := ExtractUnconfirmedAAD(ciphertext)
+				AAD, success := ExtractUnverifiedAAD(ciphertext)
                 if !success {
                     DestroyPeacemakrKey(pubkey)
                     DestroyPeacemakrKey(privkey)
                     t.Fatalf("Extract failed")
                 }
-                if !bytes.Equal(plaintextIn.Aad, onlyAAD.Aad) {
+                if !bytes.Equal(plaintextIn.Aad, AAD) {
                     DestroyPeacemakrKey(pubkey)
                     DestroyPeacemakrKey(privkey)
                     t.Fatalf("plaintext data did not match")
@@ -349,14 +349,14 @@ func TestSymmetricEncrypt(t *testing.T) {
 			t.Fatalf("%v", err)
 		}
 
-		onlyAAD, success := ExtractUnconfirmedAAD(ciphertext)
+		AAD, success := ExtractUnverifiedAAD(ciphertext)
         if !success {
             DestroyPeacemakrKey(key)
             t.Fatalf("Extract failed")
         }
-        if !bytes.Equal(plaintextIn.Aad, onlyAAD.Aad) {
+        if !bytes.Equal(plaintextIn.Aad, AAD) {
             DestroyPeacemakrKey(key)
-            t.Fatalf("plaintext data did not match")
+            t.Fatalf("extracted aad did not match")
         }
 
 		plaintextOut, success := Decrypt(key, ciphertext)
@@ -411,14 +411,14 @@ func TestSerialize(t *testing.T) {
 						t.Fatalf("%v", err)
 					}
 
-					onlyAAD, success := ExtractUnconfirmedAAD(ciphertext)
+					AAD, success := ExtractUnverifiedAAD(ciphertext)
                     if !success {
                         DestroyPeacemakrKey(key)
                         t.Fatalf("Extract failed")
                     }
-                    if !bytes.Equal(plaintextIn.Aad, onlyAAD.Aad) {
+                    if !bytes.Equal(plaintextIn.Aad, AAD) {
                         DestroyPeacemakrKey(key)
-                        t.Fatalf("plaintext data did not match")
+                        t.Fatalf("extracted aad did not match")
                     }
 
 					plaintextOut, success := Decrypt(key, ciphertext)
