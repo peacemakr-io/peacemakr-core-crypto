@@ -48,6 +48,8 @@ static void digest_message(const unsigned char *message, size_t message_len,
   }
 
   Buffer_set_bytes(digest, digest_buf, digest_len);
+
+  EVP_MD_CTX_free(mdctx);
 }
 
 uint8_t *serialize_blob(ciphertext_blob_t *cipher, size_t *out_size) {
@@ -369,6 +371,8 @@ ciphertext_blob_t *deserialize_blob(const uint8_t *b64_serialized_cipher,
 
   Buffer_set_bytes(CiphertextBlob_mutable_digest(out),
                    Buffer_get_bytes(digest_buf, NULL), digestlen);
+
+  Buffer_free(digest_buf);
 
   return out;
 }

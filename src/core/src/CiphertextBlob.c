@@ -98,6 +98,7 @@ ciphertext_blob_t *API(new)(crypto_config_t cfg, size_t iv_len, size_t tag_len,
 void API(free)(ciphertext_blob_t *ciphertext) {
   EXPECT_NOT_NULL_RET_NONE(ciphertext, "ciphertext was NULL\n");
 
+  Buffer_free(ciphertext->m_encrypted_key_);
   Buffer_free(ciphertext->m_iv_);
   Buffer_free(ciphertext->m_tag_);
   Buffer_free(ciphertext->m_aad_);
