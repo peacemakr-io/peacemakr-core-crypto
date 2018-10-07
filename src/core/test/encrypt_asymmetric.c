@@ -48,7 +48,9 @@ void test_asymmetric_algo(symmetric_cipher symm_cipher, asymmetric_cipher cipher
   assert(success);
 
   assert(strncmp((const char *)plaintext_out.data, (const char *)plaintext_in.data, plaintext_in.data_len) == 0);
-  assert(strncmp((const char *)plaintext_out.aad, (const char *)plaintext_in.aad, plaintext_in.data_len) == 0);
+  free((void *)plaintext_out.data);
+  assert(strncmp((const char *)plaintext_out.aad, (const char *)plaintext_in.aad, plaintext_in.aad_len) == 0);
+  free((void *)plaintext_out.aad);
 
   PeacemakrKey_free(key);
 }
