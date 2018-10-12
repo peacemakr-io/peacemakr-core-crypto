@@ -13,8 +13,8 @@ if (NOT __CLANG_ANALYZER_INCLUDED)
     if(CLANG_ANALYZER)
         add_custom_target(
                 clang-analyzer
-                COMMAND ${CLANG_ANALYZER}
-                ${CMAKE_MAKE_PROGRAM}
+                COMMAND ${CMAKE_SOURCE_DIR}/bin/static-analysis.sh
+                WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/bin
         )
     endif(CLANG_ANALYZER)
 endif (NOT __CLANG_ANALYZER_INCLUDED)

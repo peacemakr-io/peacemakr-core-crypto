@@ -504,13 +504,16 @@ ciphertext_blob_t *peacemakr_encrypt(const peacemakr_key_t *key,
            1); // number of blocks (rounded up)
   }
 
+  EXPECT_TRUE_RET((ciphertext_len != 0), "data had length: %d\n",
+                  plain->data_len);
+
   size_t digest_len = get_digest_len(cfg.digest_algorithm);
 
   ciphertext_blob_t *out = CiphertextBlob_new(cfg, iv_len, tag_len, aad_len,
                                               ciphertext_len, digest_len);
 
-  CiphertextBlob_init_iv(
-      out, rand); // always init the iv...worst case you seed the random state
+  // always init the iv...worst case you seed the random state
+  CiphertextBlob_init_iv(out, rand);
 
   bool success = false;
   switch (cfg.mode) {

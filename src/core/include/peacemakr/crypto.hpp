@@ -111,9 +111,6 @@ namespace peacemakr {
   struct Plaintext {
     std::string data;
     std::string aad;
-
-    //! Set the contents of this with \p cstyle (for convenience in implementation).
-    void setContents(const plaintext_t &cstyle);
   };
 
   /**

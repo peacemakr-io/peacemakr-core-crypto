@@ -59,9 +59,11 @@ const peacemakr_key_t *peacemakr::Key::getKey() const {
   return m_key_;
 }
 
-void peacemakr::Plaintext::setContents(const plaintext_t &cstyle) {
-  this->data = std::string(cstyle.data, cstyle.data + cstyle.data_len);
-  this->aad = std::string(cstyle.aad, cstyle.aad + cstyle.aad_len);
+namespace {
+  void setContents(peacemakr::Plaintext &plain, const plaintext_t &cstyle) {
+    plain.data = std::string(cstyle.data, cstyle.data + cstyle.data_len);
+    plain.aad = std::string(cstyle.aad, cstyle.aad + cstyle.aad_len);
+  }
 }
 
 peacemakr::CryptoContext::CryptoContext() {
@@ -73,6 +75,9 @@ peacemakr::CryptoContext::CryptoContext() {
 std::string
 peacemakr::CryptoContext::Encrypt(const peacemakr::Key &key, const peacemakr::Plaintext &plaintext,
                                   peacemakr::RandomDevice &rand) {
+  // Early exit if there's nothing in there
+  if (plaintext.data.empty() && plaintext.aad.empty()) return "";
+
   plaintext_t plain = {
           .data = (const unsigned char *)plaintext.data.c_str(),
           .data_len = (size_t)plaintext.data.size(),
@@ -89,13 +94,18 @@ peacemakr::CryptoContext::Encrypt(const peacemakr::Key &key, const peacemakr::Pl
 }
 
 peacemakr::Plaintext peacemakr::CryptoContext::Decrypt(const peacemakr::Key &key, std::string &serialized) {
+  if (serialized.empty()) return Plaintext{};
+
   ciphertext_blob_t *blob = deserialize_blob((unsigned char *)serialized.c_str(), serialized.size());
 
   plaintext_t out;
   bool success = peacemakr_decrypt(key.getKey(), blob, &out);
+  if (!success) {
+    return Plaintext{};
+  }
 
   Plaintext plain;
-  plain.setContents(out);
+  setContents(plain, out);
 
   return plain;
 }

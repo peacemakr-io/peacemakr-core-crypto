@@ -340,7 +340,7 @@ ciphertext_blob_t *deserialize_blob(const uint8_t *b64_serialized_cipher,
   if (cipherlen != 0) {
     ciphertext = alloca(cipherlen);
     memcpy(ciphertext, serialized_cipher + current_position, cipherlen);
-    current_position += cipherlen;
+    //    current_position += cipherlen;
   }
 
   ciphertext_blob_t *out =

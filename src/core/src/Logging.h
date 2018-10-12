@@ -42,6 +42,12 @@ void log_printf(const char *filename, int line, level_t level, const char *fmt,
     PEACEMAKR_LOG(__VA_ARGS__);                                                \
     return NULL;                                                               \
   }
+#define EXPECT_TRUE_CLEANUP_RET(condition, free_call, ...)                     \
+  if (!(condition)) {                                                          \
+    PEACEMAKR_LOG(__VA_ARGS__);                                                \
+    free_call;                                                                 \
+    return NULL;                                                               \
+  }
 #define EXPECT_TRUE_RET_NONE(condition, ...)                                   \
   if (!(condition)) {                                                          \
     PEACEMAKR_LOG(__VA_ARGS__);                                                \

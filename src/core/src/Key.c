@@ -153,10 +153,8 @@ peacemakr_key_t *API(new_pem_pub)(crypto_config_t cfg, const char *buf,
   BIO *bo = BIO_new_mem_buf(buf, (int)buflen);
 
   out->m_contents_.asymm = PEM_read_bio_PUBKEY(bo, NULL, NULL, NULL);
-  if (out->m_contents_.asymm == NULL) {
-    PEACEMAKR_LOG("PEM_read_bio_PUBKEY failed\n");
-    return NULL;
-  }
+  EXPECT_NOT_NULL_CLEANUP_RET(out->m_contents_.asymm, BIO_free(bo);
+                              API(free)(out);, "PEM_read_bio_PUBKEY failed\n");
 
   BIO_free(bo);
 
@@ -177,8 +175,9 @@ peacemakr_key_t *API(new_pem_priv)(crypto_config_t cfg, const char *buf,
   BIO *bo = BIO_new_mem_buf(buf, (int)buflen);
 
   out->m_contents_.asymm = PEM_read_bio_PrivateKey(bo, NULL, NULL, NULL);
-  EXPECT_NOT_NULL_RET(out->m_contents_.asymm,
-                      "PEM_read_bio_PrivateKey failed\n")
+  EXPECT_NOT_NULL_CLEANUP_RET(out->m_contents_.asymm, BIO_free(bo);
+                              API(free)(out);
+                              , "PEM_read_bio_PrivateKey failed\n");
 
   BIO_free(bo);
 

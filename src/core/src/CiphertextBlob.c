@@ -45,6 +45,14 @@ ciphertext_blob_t *API(new)(crypto_config_t cfg, size_t iv_len, size_t tag_len,
                             size_t aad_len, size_t ciphertext_len,
                             size_t digest_len) {
   ciphertext_blob_t *out = malloc(sizeof(ciphertext_blob_t));
+
+  out->m_encrypted_key_ = NULL;
+  out->m_iv_ = NULL;
+  out->m_tag_ = NULL;
+  out->m_aad_ = NULL;
+  out->m_ciphertext_ = NULL;
+  out->m_digest_ = NULL;
+
   EXPECT_NOT_NULL_RET(out, "malloc returned nullptr\n");
   // set constants
   out->m_version_ = PEACEMAKR_CORE_CRYPTO_VERSION;
@@ -61,13 +69,13 @@ ciphertext_blob_t *API(new)(crypto_config_t cfg, size_t iv_len, size_t tag_len,
       //      case EC25519: out->m_encrypted_key_ = Buffer_new(1024); break;
     case RSA_2048:
       out->m_encrypted_key_ = Buffer_new(256);
-      EXPECT_NOT_NULL_RET(out->m_encrypted_key_,
-                          "creation of encrypted key buffer failed\n");
+      EXPECT_NOT_NULL_CLEANUP_RET(out->m_encrypted_key_, API(free)(out),
+                                  "creation of encrypted key buffer failed\n");
       break;
     case RSA_4096:
       out->m_encrypted_key_ = Buffer_new(512);
-      EXPECT_NOT_NULL_RET(out->m_encrypted_key_,
-                          "creation of encrypted key buffer failed\n");
+      EXPECT_NOT_NULL_CLEANUP_RET(out->m_encrypted_key_, API(free)(out),
+                                  "creation of encrypted key buffer failed\n");
       break;
     }
     out->m_asymm_cipher_ = cfg.asymm_cipher;
@@ -78,19 +86,20 @@ ciphertext_blob_t *API(new)(crypto_config_t cfg, size_t iv_len, size_t tag_len,
 
   // now alloc space for buffers if we know how big they should be
   out->m_iv_ = Buffer_new(iv_len);
-  EXPECT_TRUE_RET((out->m_iv_ != NULL || iv_len == 0),
-                  "creation of iv buffer failed\n");
+  EXPECT_TRUE_CLEANUP_RET((out->m_iv_ != NULL || iv_len == 0), API(free)(out),
+                          "creation of iv buffer failed\n");
   out->m_tag_ = Buffer_new(tag_len);
-  EXPECT_TRUE_RET((out->m_tag_ != NULL || tag_len == 0),
-                  "creation of tag buffer failed\n");
+  EXPECT_TRUE_CLEANUP_RET((out->m_tag_ != NULL || tag_len == 0), API(free)(out),
+                          "creation of tag buffer failed\n");
   out->m_aad_ = Buffer_new(aad_len);
-  EXPECT_TRUE_RET((out->m_aad_ != NULL || aad_len == 0),
-                  "creation of aad buffer failed\n");
+  EXPECT_TRUE_CLEANUP_RET((out->m_aad_ != NULL || aad_len == 0), API(free)(out),
+                          "creation of aad buffer failed\n");
   out->m_ciphertext_ = Buffer_new(ciphertext_len);
-  EXPECT_NOT_NULL_RET(out->m_ciphertext_,
-                      "creation of ciphertext buffer failed\n");
+  EXPECT_NOT_NULL_CLEANUP_RET(out->m_ciphertext_, API(free)(out),
+                              "creation of ciphertext buffer failed\n");
   out->m_digest_ = Buffer_new(digest_len);
-  EXPECT_NOT_NULL_RET(out->m_digest_, "creation of digest buffer failed\n");
+  EXPECT_NOT_NULL_CLEANUP_RET(out->m_digest_, API(free)(out),
+                              "creation of digest buffer failed\n");
 
   return out;
 }

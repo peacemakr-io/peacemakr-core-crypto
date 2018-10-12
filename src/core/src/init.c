@@ -17,6 +17,6 @@
 bool peacemakr_init() {
   size_t bufsize = 512; // larger than any key size in bytes
   volatile void *random_buf = alloca(bufsize);
-  arc4random_buf(random_buf, bufsize);
+  arc4random_buf((void *)random_buf, bufsize);
   return true;
 }
