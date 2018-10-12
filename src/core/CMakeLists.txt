@@ -36,7 +36,7 @@ if (APPLE)
             PUBLIC -Wl,-all_load OpenSSL::SSL OpenSSL::Crypto -Wl,-noall_load)
 else()
     target_link_libraries(peacemakr-core-crypto
-            PUBLIC -Wl,--whole-archive OpenSSL::SSL OpenSSL::Crypto bsd -Wl,--no-whole-archive)
+            PUBLIC -Wl,--whole-archive OpenSSL::SSL OpenSSL::Crypto bsd -Wl,--no-whole-archive -ldl)
 endif()
 set_target_properties(peacemakr-core-crypto PROPERTIES
         PUBLIC_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/include/peacemakr/crypto.h;${CMAKE_CURRENT_SOURCE_DIR}/include/peacemakr/random.h"
