@@ -61,22 +61,19 @@ void test_symmetric(const std::string &msg, symmetric_cipher symm_cipher, messag
 }
 
 int run(const uint8_t *data, size_t size) {
-  std::vector<std::thread> runners;
   for (int i = RSA_2048; i <= RSA_4096; ++i) {
     for (int j = AES_128_GCM; j <= CHACHA20_POLY1305; ++j) {
       for (int k = SHA_224; k <= SHA_512; k++) {
-        runners.emplace_back(test_asymmetric, std::string(data, data+size), (symmetric_cipher)j, (asymmetric_cipher)i, (message_digest_algorithm)k);
+        test_asymmetric(std::string(data, data+size), (symmetric_cipher)j, (asymmetric_cipher)i, (message_digest_algorithm)k);
       }
     }
   }
 
   for (int j = AES_128_GCM; j <= CHACHA20_POLY1305; ++j) {
     for (int k = SHA_224; k <= SHA_512; k++) {
-      runners.emplace_back(test_symmetric, std::string(data, data+size), (symmetric_cipher)j, (message_digest_algorithm)k);
+      test_symmetric(std::string(data, data+size), (symmetric_cipher)j, (message_digest_algorithm)k);
     }
   }
-
-  std::for_each(runners.begin(), runners.end(), [](std::thread &t){t.join();});
 
   return 0;
 }
