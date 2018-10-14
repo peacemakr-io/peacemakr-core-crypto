@@ -227,7 +227,8 @@ static bool symmetric_decrypt(const peacemakr_key_t *peacemakrkey,
   }
 
   /* Finalise the decryption. */
-  OPENSSL_CHECK_RET_VALUE(EVP_DecryptFinal_ex(ctx, plaintext_buf + len, &len), ctx, false)
+  OPENSSL_CHECK_RET_VALUE(EVP_DecryptFinal_ex(ctx, plaintext_buf + len, &len),
+                          ctx, false)
 
   /* Clean up */
   EVP_CIPHER_CTX_free(ctx);
@@ -242,7 +243,6 @@ static bool symmetric_decrypt(const peacemakr_key_t *peacemakrkey,
     Buffer_set_bytes(*aad, aad_buf, aad_len);
   }
   return true;
-
 }
 
 static bool asymmetric_encrypt(const peacemakr_key_t *pub_key,

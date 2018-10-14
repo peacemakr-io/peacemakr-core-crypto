@@ -5,7 +5,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-rtti -fno-exceptions")
 
 file(GLOB SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
 
-set(ALL_C_SOURCE_FILES ${SOURCES_C} ${CMAKE_CURRENT_SOURCE_DIR}/../include/peacemakr/crypto.hpp ${ALL_C_SOURCE_FILES} PARENT_SCOPE)
+set(ALL_C_SOURCE_FILES ${SOURCES} ${CMAKE_CURRENT_SOURCE_DIR}/../include/peacemakr/crypto.hpp ${ALL_C_SOURCE_FILES} PARENT_SCOPE)
 
 add_library(peacemakr-core-crypto-cpp SHARED ${SOURCES})
 target_link_libraries(peacemakr-core-crypto-cpp PUBLIC peacemakr-core-crypto)

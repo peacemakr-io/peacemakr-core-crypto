@@ -15,6 +15,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
 
 #define PEACEMAKR_CORE_CRYPTO_VERSION (uint8_t)1
 #define PEACEMAKR_CORE_CRYPTO_VERSION_MAX (uint8_t)1
@@ -114,6 +115,12 @@ static inline uint8_t get_max_version() {
  * generator is well seeded and any numbers generated have sufficient entropy.
  */
 bool peacemakr_init();
+
+/**
+ * Sets the output of peacemakr logging to \p new_stream. The core crypto
+ * library defaults to stdout.
+ */
+void peacemakr_set_log_out_stream(FILE *new_stream);
 
 /**
  * Create a new peacemakr_key_t from scratch with user-defined \p cfg and \p

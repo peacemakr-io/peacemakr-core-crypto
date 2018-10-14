@@ -11,6 +11,11 @@
 #include <thread>
 #include <algorithm>
 #include <random>
+#include <iostream>
+
+void log_fn(const std::string &str) {
+  std::cerr << str << std::endl;
+}
 
 std::string get_random_string() {
 
@@ -45,7 +50,7 @@ void test_asymmetric(symmetric_cipher symm_cipher, asymmetric_cipher cipher, mes
 
   peacemakr::Key key(cfg, rand);
 
-  peacemakr::CryptoContext ctx;
+  peacemakr::CryptoContext ctx(log_fn);
   std::string encrypted = ctx.Encrypt(key, plaintext_in, rand);
   peacemakr::Plaintext plaintext_out = ctx.Decrypt(key, encrypted);
 
@@ -69,7 +74,7 @@ void test_symmetric(symmetric_cipher symm_cipher, message_digest_algorithm diges
 
   peacemakr::Key key(cfg, rand);
 
-  peacemakr::CryptoContext ctx;
+  peacemakr::CryptoContext ctx(log_fn);
   std::string encrypted = ctx.Encrypt(key, plaintext_in, rand);
   peacemakr::Plaintext plaintext_out = ctx.Decrypt(key, encrypted);
 
@@ -94,7 +99,7 @@ void test_uninit_crash() {
   peacemakr::Key key(cfg, rand);
   assert(key.isValid());
 
-  peacemakr::CryptoContext ctx;
+  peacemakr::CryptoContext ctx(log_fn);
   std::string encrypted = ctx.Encrypt(key, plaintext_in, rand);
   if (encrypted.empty()) { // couldn't encrypt
     return;
@@ -111,22 +116,22 @@ void test_uninit_crash() {
 }
 
 int main() {
-  std::vector<std::thread> runners;
-  for (int i = RSA_2048; i <= RSA_4096; ++i) {
-    for (int j = AES_128_GCM; j <= CHACHA20_POLY1305; ++j) {
-      for (int k = SHA_224; k <= SHA_512; k++) {
-        runners.emplace_back(test_asymmetric, (symmetric_cipher)j, (asymmetric_cipher)i, (message_digest_algorithm)k);
-      }
-    }
-  }
-
-  for (int j = AES_128_GCM; j <= CHACHA20_POLY1305; ++j) {
-    for (int k = SHA_224; k <= SHA_512; k++) {
-      runners.emplace_back(test_symmetric, (symmetric_cipher)j, (message_digest_algorithm)k);
-    }
-  }
-
-  std::for_each(runners.begin(), runners.end(), [](std::thread &t){t.join();});
+//  std::vector<std::thread> runners;
+//  for (int i = RSA_2048; i <= RSA_4096; ++i) {
+//    for (int j = AES_128_GCM; j <= CHACHA20_POLY1305; ++j) {
+//      for (int k = SHA_224; k <= SHA_512; k++) {
+//        runners.emplace_back(test_asymmetric, (symmetric_cipher)j, (asymmetric_cipher)i, (message_digest_algorithm)k);
+//      }
+//    }
+//  }
+//
+//  for (int j = AES_128_GCM; j <= CHACHA20_POLY1305; ++j) {
+//    for (int k = SHA_224; k <= SHA_512; k++) {
+//      runners.emplace_back(test_symmetric, (symmetric_cipher)j, (message_digest_algorithm)k);
+//    }
+//  }
+//
+//  std::for_each(runners.begin(), runners.end(), [](std::thread &t){t.join();});
 
   test_uninit_crash();
 }
