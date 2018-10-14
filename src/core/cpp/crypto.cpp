@@ -9,7 +9,9 @@
 #include "crypto.hpp"
 
 #include <stdexcept>
+#include <cassert>
 
+// TODO: C++ error logging
 peacemakr::RandomDevice::RandomDevice(rng_buf generator, rng_err err_handler) : m_rand_{.generator = generator, .err = err_handler} {}
 
 peacemakr::RandomDevice peacemakr::RandomDevice::getDefault() {
@@ -30,12 +32,12 @@ peacemakr::Key::Key(crypto_config_t cfg, peacemakr::RandomDevice &rand) {
   m_key_ = PeacemakrKey_new(cfg, &rand.getContents());
 }
 
-peacemakr::Key::Key(crypto_config_t cfg, const uint8_t *bytes) {
-  m_key_ = PeacemakrKey_new_bytes(cfg, bytes);
+peacemakr::Key::Key(crypto_config_t cfg, const uint8_t *bytes, const size_t num) {
+  m_key_ = PeacemakrKey_new_bytes(cfg, bytes, num);
 }
 
 peacemakr::Key::Key(crypto_config_t cfg, const std::vector<uint8_t> &bytes) {
-  m_key_ = PeacemakrKey_new_bytes(cfg, bytes.data());
+  m_key_ = PeacemakrKey_new_bytes(cfg, bytes.data(), bytes.size());
 }
 
 peacemakr::Key::Key(crypto_config_t cfg, const std::string &pem, bool priv) {
@@ -59,33 +61,44 @@ const peacemakr_key_t *peacemakr::Key::getKey() const {
   return m_key_;
 }
 
+bool peacemakr::Key::isValid() const {
+  return m_key_ != nullptr;
+}
+
 namespace {
   void setContents(peacemakr::Plaintext &plain, const plaintext_t &cstyle) {
     plain.data = std::string(cstyle.data, cstyle.data + cstyle.data_len);
-    plain.aad = std::string(cstyle.aad, cstyle.aad + cstyle.aad_len);
+    if (cstyle.aad != nullptr) {
+      plain.aad = std::string(cstyle.aad, cstyle.aad + cstyle.aad_len);
+    }
   }
 }
 
 peacemakr::CryptoContext::CryptoContext() {
   if (!peacemakr_init()) {
-    throw std::runtime_error("Unable to properly start the random device");
+    assert(false && "Unable to properly start the random device");
   }
 }
 
 std::string
 peacemakr::CryptoContext::Encrypt(const peacemakr::Key &key, const peacemakr::Plaintext &plaintext,
                                   peacemakr::RandomDevice &rand) {
+  // Early exit if the key is invalid
+  if (!key.isValid()) return "";
+
   // Early exit if there's nothing in there
-  if (plaintext.data.empty() && plaintext.aad.empty()) return "";
+  if (plaintext.data.empty()) return "";
 
   plaintext_t plain = {
           .data = (const unsigned char *)plaintext.data.c_str(),
           .data_len = (size_t)plaintext.data.size(),
-          .aad = (const unsigned char *)plaintext.aad.c_str(),
-          .aad_len = (size_t)plaintext.aad.size()
+          .aad = plaintext.aad.empty() ? nullptr : (const unsigned char *)plaintext.aad.c_str(),
+          .aad_len = plaintext.aad.empty() ? 0 :(size_t)plaintext.aad.size()
   };
 
-  ciphertext_blob_t *blob = peacemakr_encrypt(key.getKey(), &plain, &rand.getContents());
+  const peacemakr_key_t *pmKey = key.getKey();
+
+  ciphertext_blob_t *blob = peacemakr_encrypt(pmKey, &plain, &rand.getContents());
 
   size_t out_size = 0;
   uint8_t *serialized = serialize_blob(blob, &out_size);
@@ -94,6 +107,10 @@ peacemakr::CryptoContext::Encrypt(const peacemakr::Key &key, const peacemakr::Pl
 }
 
 peacemakr::Plaintext peacemakr::CryptoContext::Decrypt(const peacemakr::Key &key, std::string &serialized) {
+  // Early exit if the key is invalid
+  if (!key.isValid()) return Plaintext{};
+
+  // Early exit if there is nothing to decrypt
   if (serialized.empty()) return Plaintext{};
 
   ciphertext_blob_t *blob = deserialize_blob((unsigned char *)serialized.c_str(), serialized.size());
@@ -103,6 +120,7 @@ peacemakr::Plaintext peacemakr::CryptoContext::Decrypt(const peacemakr::Key &key
   if (!success) {
     return Plaintext{};
   }
+  // LOL sometimes out has aad_len as some huge number
 
   Plaintext plain;
   setContents(plain, out);

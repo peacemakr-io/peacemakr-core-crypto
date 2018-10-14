@@ -1,5 +1,5 @@
-cmake-build-debug/
-build/
+cmake-build-*/
+*build*/
 .idea/
 archive/
 *.def
@@ -11,8 +11,6 @@ CMakeFiles/
 **/CMakeFiles/**
 **/CMakeCache.txt
 **/Makefile
-**/*.make
-**/*.cmake
 **/*.make
 **/*.so
 **/compile_commands.json

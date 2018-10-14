@@ -73,7 +73,7 @@ namespace peacemakr {
      */
     //!\{
     Key(crypto_config_t cfg, RandomDevice &rand);
-    Key(crypto_config_t cfg, const uint8_t *bytes);
+    Key(crypto_config_t cfg, const uint8_t *bytes, const size_t num);
     Key(crypto_config_t cfg, const std::vector<uint8_t> &bytes);
     Key(crypto_config_t cfg, const std::string &pem, bool priv);
     //!\}
@@ -93,6 +93,11 @@ namespace peacemakr {
      * Get the crypto_config_t used to construct this key.
      */
     crypto_config_t getConfig();
+
+    /**
+     * Check if this key is valid. Any number of errors can produce an invalid key.
+     */
+    bool isValid() const;
 
     /**
      * Get the peacemakr_key_t internal representation for use with other crypto lib calls.

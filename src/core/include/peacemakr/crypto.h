@@ -131,8 +131,8 @@ peacemakr_key_t *PeacemakrKey_new(crypto_config_t cfg, random_device_t *rand);
  * similar. \returns A newly created peacemakr key for use in other library
  * calls.
  */
-peacemakr_key_t *PeacemakrKey_new_bytes(crypto_config_t cfg,
-                                        const uint8_t *buf);
+peacemakr_key_t *PeacemakrKey_new_bytes(crypto_config_t cfg, const uint8_t *buf,
+                                        const size_t bufsize);
 
 /**
  * Create a new peacemakr_key_t from a pem file generated externally. This

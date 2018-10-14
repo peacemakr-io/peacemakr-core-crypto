@@ -23,8 +23,7 @@
 #ifndef PEACEMAKR_CORE_CRYPTO_EVPHELPER_H
 #define PEACEMAKR_CORE_CRYPTO_EVPHELPER_H
 
-#include <Logging.h>
-#include <crypto.h>
+#include "crypto.h"
 
 #include <openssl/evp.h>
 

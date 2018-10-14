@@ -1,6 +1,8 @@
 enable_language(CXX)
 set(CMAKE_CXX_STANDARD 11)
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-rtti -fno-exceptions")
+
 file(GLOB SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
 
 set(ALL_C_SOURCE_FILES ${SOURCES_C} ${CMAKE_CURRENT_SOURCE_DIR}/../include/peacemakr/crypto.hpp ${ALL_C_SOURCE_FILES} PARENT_SCOPE)
