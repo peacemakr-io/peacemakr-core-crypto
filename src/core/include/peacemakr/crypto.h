@@ -190,7 +190,9 @@ ciphertext_blob_t *peacemakr_encrypt(const peacemakr_key_t *key,
  * Performs the decryption operation using the configuration and
  * the (symmetric or asymmetric) key in \p key. The operation is performed
  * over \p cipher and the result is stored in \p plain. Returns a
- * boolean to indicate if decryption was successful.
+ * boolean to indicate if decryption was successful. If the \p key is NULL
+ * then the decryption will attempt to extract any AAD from the message.
+ * Note that this AAD is unconfirmed and may have been tampered with.
  */
 bool peacemakr_decrypt(const peacemakr_key_t *key, ciphertext_blob_t *cipher,
                        plaintext_t *plain);
