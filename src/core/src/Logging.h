@@ -27,6 +27,12 @@ void log_printf(const char *filename, int line, level_t level, const char *fmt,
     free_call;                                                                 \
     return NULL;                                                               \
   }
+#define EXPECT_NOT_NULL_CLEANUP_RET_VALUE(ptr, free_call, value, ...)          \
+  if (ptr == NULL) {                                                           \
+    PEACEMAKR_LOG(__VA_ARGS__);                                                \
+    free_call;                                                                 \
+    return value;                                                              \
+  }
 #define EXPECT_NOT_NULL_RET_VALUE(ptr, value, ...)                             \
   if (ptr == NULL) {                                                           \
     PEACEMAKR_LOG(__VA_ARGS__);                                                \

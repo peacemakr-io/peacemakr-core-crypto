@@ -576,9 +576,9 @@ bool peacemakr_decrypt(const peacemakr_key_t *key, ciphertext_blob_t *cipher,
     memcpy((void *)plain->data, tmp_plain, plain->data_len);
     Buffer_free(plaintext);
   } else { // fill with zeros
-    plain->aad_len = (size_t)rand() % 2<<8;
+    plain->aad_len = (size_t)rand() % (2 << 8);
     plain->aad = calloc(plain->aad_len, sizeof(unsigned char));
-    plain->data_len = (size_t)rand() % 2<<8;
+    plain->data_len = (size_t)rand() % (2 << 8);
     plain->data = calloc(plain->data_len, sizeof(unsigned char));
   }
 
