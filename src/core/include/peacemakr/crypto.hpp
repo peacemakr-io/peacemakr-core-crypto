@@ -150,11 +150,13 @@ public:
   std::string Encrypt(const Key &key, const Plaintext &plaintext,
                       RandomDevice &rand);
 
+  Plaintext ExtractUnverifiedAAD(const std::string &serialized);
+
   /**
    * Deserializes \p serialized and decrypts it using \p key. \returns a
    * Plaintext object that holds the decrypted data and the AAD (if any exists).
    */
-  Plaintext Decrypt(const Key &key, std::string &serialized);
+  Plaintext Decrypt(const Key &key, const std::string &serialized);
 
 private:
   LogFunctionType m_log_;

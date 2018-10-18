@@ -52,6 +52,10 @@ void test_asymmetric(symmetric_cipher symm_cipher, asymmetric_cipher cipher, mes
 
   peacemakr::CryptoContext ctx(log_fn);
   std::string encrypted = ctx.Encrypt(key, plaintext_in, rand);
+
+  peacemakr::Plaintext unverified_aad = ctx.ExtractUnverifiedAAD(encrypted);
+  assert(plaintext_in.aad == unverified_aad.aad);
+
   peacemakr::Plaintext plaintext_out = ctx.Decrypt(key, encrypted);
 
   assert(plaintext_in.data == plaintext_out.data);
@@ -76,6 +80,10 @@ void test_symmetric(symmetric_cipher symm_cipher, message_digest_algorithm diges
 
   peacemakr::CryptoContext ctx(log_fn);
   std::string encrypted = ctx.Encrypt(key, plaintext_in, rand);
+
+  peacemakr::Plaintext unverified_aad = ctx.ExtractUnverifiedAAD(encrypted);
+  assert(plaintext_in.aad == unverified_aad.aad);
+
   peacemakr::Plaintext plaintext_out = ctx.Decrypt(key, encrypted);
 
   assert(plaintext_in.data == plaintext_out.data);
@@ -102,13 +110,12 @@ void test_uninit_crash() {
   peacemakr::CryptoContext ctx(log_fn);
   std::string encrypted = ctx.Encrypt(key, plaintext_in, rand);
   if (encrypted.empty()) { // couldn't encrypt
-    return;
+    assert(false);
   }
 
-  // somehow there's a certain key that causes a crash in Decrypt?
   peacemakr::Plaintext plaintext_out = ctx.Decrypt(key, encrypted);
-  if (plaintext_out.data.empty()) {
-    return;
+  if (plaintext_out.data.empty()) { // couldn't decrypt
+    assert(false);
   }
 
   assert(plaintext_in.data == plaintext_out.data && "symmetric encrypt-decrypt failed");

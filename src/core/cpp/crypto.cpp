@@ -58,7 +58,9 @@ bool peacemakr::Key::isValid() const { return m_key_ != nullptr; }
 
 namespace {
 void setContents(peacemakr::Plaintext &plain, const plaintext_t &cstyle) {
-  plain.data = std::string(cstyle.data, cstyle.data + cstyle.data_len);
+  if (cstyle.data != nullptr) {
+    plain.data = std::string(cstyle.data, cstyle.data + cstyle.data_len);
+  }
   if (cstyle.aad != nullptr) {
     plain.aad = std::string(cstyle.aad, cstyle.aad + cstyle.aad_len);
   }
@@ -121,14 +123,33 @@ peacemakr::CryptoContext::Encrypt(const peacemakr::Key &key,
   return std::string(serialized, serialized + out_size);
 }
 
-peacemakr::Plaintext
-peacemakr::CryptoContext::Decrypt(const peacemakr::Key &key,
-                                  std::string &serialized) {
-  // Early exit if the key is invalid
-  if (!key.isValid()) {
-    m_log_("invalid key in Decrypt");
+peacemakr::Plaintext peacemakr::CryptoContext::ExtractUnverifiedAAD(const std::string &serialized) {
+  // Early exit if there is nothing to decrypt
+  if (serialized.empty()) {
+    m_log_("noting to decrypt");
     return Plaintext{};
   }
+
+  ciphertext_blob_t *blob =
+          deserialize_blob((unsigned char *)serialized.c_str(), serialized.size());
+
+  plaintext_t out;
+  bool success = peacemakr_decrypt(nullptr, blob, &out);
+  if (!success) {
+    m_log_("extract failed");
+    return Plaintext{};
+  }
+  // LOL sometimes out has aad_len as some huge number
+
+  Plaintext plain;
+  setContents(plain, out);
+
+  return plain;
+}
+
+peacemakr::Plaintext
+peacemakr::CryptoContext::Decrypt(const peacemakr::Key &key,
+                                  const std::string &serialized) {
 
   // Early exit if there is nothing to decrypt
   if (serialized.empty()) {
@@ -145,7 +166,6 @@ peacemakr::CryptoContext::Decrypt(const peacemakr::Key &key,
     m_log_("decryption failed");
     return Plaintext{};
   }
-  // LOL sometimes out has aad_len as some huge number
 
   Plaintext plain;
   setContents(plain, out);
