@@ -6,11 +6,12 @@
 // Full license at peacemakr-core-crypto/LICENSE.txt
 //
 
-#include <crypto.h>
+#include "crypto.h"
 
-#include <CiphertextBlob.h>
-#include <EVPHelper.h>
-#include <Key.h>
+#include "CiphertextBlob.h"
+#include "EVPHelper.h"
+#include "Key.h"
+#include "Logging.h"
 
 #include <memory.h>
 #include <openssl/evp.h>
@@ -226,26 +227,22 @@ static bool symmetric_decrypt(const peacemakr_key_t *peacemakrkey,
   }
 
   /* Finalise the decryption. */
-  int ret = EVP_DecryptFinal_ex(ctx, plaintext_buf + len, &len);
+  OPENSSL_CHECK_RET_VALUE(EVP_DecryptFinal_ex(ctx, plaintext_buf + len, &len),
+                          ctx, false)
 
   /* Clean up */
   EVP_CIPHER_CTX_free(ctx);
 
-  if (ret > 0) {
-    /* Success */
-    plaintext_len += len;
+  /* Success */
+  plaintext_len += len;
 
-    *plaintext = Buffer_new(plaintext_len);
-    Buffer_set_bytes(*plaintext, plaintext_buf, plaintext_len);
+  *plaintext = Buffer_new(plaintext_len);
+  Buffer_set_bytes(*plaintext, plaintext_buf, plaintext_len);
+  if (aad_buf != NULL && aad_len > 0) {
     *aad = Buffer_new(aad_len);
     Buffer_set_bytes(*aad, aad_buf, aad_len);
-    return true;
-  } else {
-    /* Verify failed */
-    *plaintext = NULL;
-    *aad = NULL;
-    return false;
   }
+  return true;
 }
 
 static bool asymmetric_encrypt(const peacemakr_key_t *pub_key,
@@ -464,11 +461,10 @@ static bool asymmetric_decrypt(const peacemakr_key_t *peacemakrkey,
 
   *plaintext = Buffer_new(plaintext_len);
   Buffer_set_bytes(*plaintext, plaintext_buf, plaintext_len);
-  *aad = Buffer_new(aad_len);
-  if (*aad != NULL) {
+  if (aad_buf != NULL && aad_len > 0) {
+    *aad = Buffer_new(aad_len);
     Buffer_set_bytes(*aad, aad_buf, aad_len);
   }
-
   return true;
 }
 
@@ -504,13 +500,16 @@ ciphertext_blob_t *peacemakr_encrypt(const peacemakr_key_t *key,
            1); // number of blocks (rounded up)
   }
 
+  EXPECT_TRUE_RET((ciphertext_len != 0), "data had length: %d\n",
+                  plain->data_len);
+
   size_t digest_len = get_digest_len(cfg.digest_algorithm);
 
   ciphertext_blob_t *out = CiphertextBlob_new(cfg, iv_len, tag_len, aad_len,
                                               ciphertext_len, digest_len);
 
-  CiphertextBlob_init_iv(
-      out, rand); // always init the iv...worst case you seed the random state
+  // always init the iv...worst case you seed the random state
+  CiphertextBlob_init_iv(out, rand);
 
   bool success = false;
   switch (cfg.mode) {
@@ -567,6 +566,9 @@ bool peacemakr_decrypt(const peacemakr_key_t *key, ciphertext_blob_t *cipher,
       plain->aad = calloc(plain->aad_len, sizeof(unsigned char));
       memcpy((void *)plain->aad, tmp_aad, plain->aad_len);
       Buffer_free(aad);
+    } else {
+      plain->aad = NULL;
+      plain->aad_len = 0;
     }
     const unsigned char *tmp_plain =
         Buffer_get_bytes(plaintext, &plain->data_len);
@@ -574,9 +576,9 @@ bool peacemakr_decrypt(const peacemakr_key_t *key, ciphertext_blob_t *cipher,
     memcpy((void *)plain->data, tmp_plain, plain->data_len);
     Buffer_free(plaintext);
   } else { // fill with zeros
-    plain->aad_len = (size_t)rand() % 2<<8;
+    plain->aad_len = (size_t)rand() % (2 << 8);
     plain->aad = calloc(plain->aad_len, sizeof(unsigned char));
-    plain->data_len = (size_t)rand() % 2<<8;
+    plain->data_len = (size_t)rand() % (2 << 8);
     plain->data = calloc(plain->data_len, sizeof(unsigned char));
   }
 

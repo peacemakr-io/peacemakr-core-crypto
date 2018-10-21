@@ -27,6 +27,12 @@ void log_printf(const char *filename, int line, level_t level, const char *fmt,
     free_call;                                                                 \
     return NULL;                                                               \
   }
+#define EXPECT_NOT_NULL_CLEANUP_RET_VALUE(ptr, free_call, value, ...)          \
+  if (ptr == NULL) {                                                           \
+    PEACEMAKR_LOG(__VA_ARGS__);                                                \
+    free_call;                                                                 \
+    return value;                                                              \
+  }
 #define EXPECT_NOT_NULL_RET_VALUE(ptr, value, ...)                             \
   if (ptr == NULL) {                                                           \
     PEACEMAKR_LOG(__VA_ARGS__);                                                \
@@ -42,9 +48,21 @@ void log_printf(const char *filename, int line, level_t level, const char *fmt,
     PEACEMAKR_LOG(__VA_ARGS__);                                                \
     return NULL;                                                               \
   }
+#define EXPECT_TRUE_CLEANUP_RET(condition, free_call, ...)                     \
+  if (!(condition)) {                                                          \
+    PEACEMAKR_LOG(__VA_ARGS__);                                                \
+    free_call;                                                                 \
+    return NULL;                                                               \
+  }
 #define EXPECT_TRUE_RET_NONE(condition, ...)                                   \
   if (!(condition)) {                                                          \
     PEACEMAKR_LOG(__VA_ARGS__);                                                \
+    return;                                                                    \
+  }
+#define EXPECT_TRUE_CLEANUP_RET_NONE(condition, free_call, ...)                \
+  if (!(condition)) {                                                          \
+    PEACEMAKR_LOG(__VA_ARGS__);                                                \
+    free_call;                                                                 \
     return;                                                                    \
   }
 #define OPENSSL_CHECK_RET_VALUE(call, ctx, value)                              \

@@ -15,6 +15,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
 
 #define PEACEMAKR_CORE_CRYPTO_VERSION (uint8_t)1
 #define PEACEMAKR_CORE_CRYPTO_VERSION_MAX (uint8_t)1
@@ -116,6 +117,12 @@ static inline uint8_t get_max_version() {
 bool peacemakr_init();
 
 /**
+ * Sets the output of peacemakr logging to \p new_stream. The core crypto
+ * library defaults to stdout.
+ */
+void peacemakr_set_log_out_stream(FILE *new_stream);
+
+/**
  * Create a new peacemakr_key_t from scratch with user-defined \p cfg and \p
  * rand to configure the key creation. It is recommended that \p rand come from
  * /dev/urandom or similar. \returns A newly created peacemakr key for use in
@@ -131,8 +138,8 @@ peacemakr_key_t *PeacemakrKey_new(crypto_config_t cfg, random_device_t *rand);
  * similar. \returns A newly created peacemakr key for use in other library
  * calls.
  */
-peacemakr_key_t *PeacemakrKey_new_bytes(crypto_config_t cfg,
-                                        const uint8_t *buf);
+peacemakr_key_t *PeacemakrKey_new_bytes(crypto_config_t cfg, const uint8_t *buf,
+                                        const size_t bufsize);
 
 /**
  * Create a new peacemakr_key_t from a pem file generated externally. This

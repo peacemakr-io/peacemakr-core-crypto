@@ -6,7 +6,7 @@
 // Full license at peacemakr-core-crypto/LICENSE.txt
 //
 
-#include <Logging.h>
+#include "Logging.h"
 
 #include <memory.h>
 #include <stdarg.h>
@@ -17,9 +17,9 @@
 #define PEACEMAKR_LOG_LEVEL 0
 #endif
 
-void fwd_stdout(const char *fmt, va_list argp) { vfprintf(stdout, fmt, argp); }
+static FILE *out_stream = NULL;
 
-void fwd_stderr(const char *fmt, va_list argp) { vfprintf(stderr, fmt, argp); }
+void peacemakr_set_log_out_stream(FILE *new_stream) { out_stream = new_stream; }
 
 void log_printf(const char *filename, int line, level_t level, const char *fmt,
                 ...) {
@@ -43,6 +43,9 @@ void log_printf(const char *filename, int line, level_t level, const char *fmt,
 
   va_list argp;
   va_start(argp, fmt);
-  fwd_stderr(fmt_str, argp);
+  int rc = vfprintf(out_stream, fmt_str, argp);
+  if (rc < 0) {
+    fprintf(stderr, "error on vfprintf");
+  }
   va_end(argp);
 }

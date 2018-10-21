@@ -8,7 +8,7 @@
 
 FROM alpine:3.8 as builder
 
-RUN apk add --no-cache libbsd-dev git alpine-sdk perl cmake linux-headers
+RUN apk add --no-cache libbsd-dev git alpine-sdk perl cmake linux-headers clang-analyzer clang-dev llvm5-dev compiler-rt
 
 WORKDIR /opt
 RUN git clone -b OpenSSL_1_1_1-stable --single-branch https://github.com/openssl/openssl.git
@@ -23,15 +23,11 @@ ADD CMakeLists.txt /opt/CMakeLists.txt
 ADD src /opt/src
 ADD cmake /opt/cmake
 
-RUN mkdir -p build && cd build && cmake .. && make check install
+RUN mkdir -p analysis_build && cd analysis_build && /usr/bin/scan-build cmake .. && /usr/bin/scan-build make && cd ..
 
-FROM alpine:3.8
+# If you want to mount a corpus for fuzzing, mount it into /opt/CORPUS
+RUN mkdir -p /opt/CORPUS
 
-RUN apk add --no-cache gcc musl-dev
+RUN mkdir -p build && cd build && CC=clang CXX=clang++ cmake .. && make check && make test_fuzz
 
-COPY --from=builder /usr/local/lib/cmake /usr/local/lib/cmake
-COPY --from=builder /usr/local/lib/libpeacemakr* /usr/local/lib/
-COPY --from=builder /usr/local/include/peacemakr /usr/local/include/peacemakr
-COPY --from=builder /usr/include/openssl /usr/include/openssl
-
-CMD ["sh"]
+CMD /opt/build/test_fuzz /opt/CORPUS -max_len=16384 -jobs=4

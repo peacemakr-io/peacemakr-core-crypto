@@ -35,6 +35,7 @@ import "C"
 import (
 	"crypto/rand"
 	"errors"
+	"log"
 	"unsafe"
 )
 
@@ -200,6 +201,10 @@ type PeacemakrKey struct {
 	key *C.peacemakr_key_t
 }
 
+func (k *PeacemakrKey) IsValid() bool {
+	return k.key != nil
+}
+
 func NewPeacemakrKey(config CryptoConfig, rand RandomDevice) PeacemakrKey {
 	return PeacemakrKey{
 		key: C.PeacemakrKey_new(configToInternal(config), (*C.random_device_t)(unsafe.Pointer(&rand.randomDevice))),
@@ -209,8 +214,9 @@ func NewPeacemakrKey(config CryptoConfig, rand RandomDevice) PeacemakrKey {
 func NewPeacemakrKeyFromBytes(config CryptoConfig, contents []byte) PeacemakrKey {
 	cBytes := (*C.uint8_t)(C.CBytes(contents))
 	defer C.free(unsafe.Pointer(cBytes))
+	cNumBytes := (C.size_t)(len(contents))
 	return PeacemakrKey{
-		key: C.PeacemakrKey_new_bytes(configToInternal(config), cBytes),
+		key: C.PeacemakrKey_new_bytes(configToInternal(config), cBytes, cNumBytes),
 	}
 }
 
@@ -230,16 +236,27 @@ func NewPeacemakrKeyFromPrivPem(config CryptoConfig, contents []byte) PeacemakrK
 	}
 }
 
-func GetKeyConfig(key *PeacemakrKey) CryptoConfig {
+func GetKeyConfig(key *PeacemakrKey) (CryptoConfig, error) {
+	if !key.IsValid() {
+		return CryptoConfig{}, errors.New("invalid key passed to GetKeyConfig")
+	}
 	keyConfig := C.PeacemakrKey_get_config(key.key)
-	return configFromInternal(keyConfig)
+	return configFromInternal(keyConfig), nil
 }
 
-func DestroyPeacemakrKey(key PeacemakrKey) {
+func DestroyPeacemakrKey(key PeacemakrKey) error {
+	if !key.IsValid() {
+		return errors.New("invalid key passed to DestroyPeacemakrKey")
+	}
 	C.PeacemakrKey_free((*C.peacemakr_key_t)(key.key))
+	return nil
 }
 
 func Encrypt(key PeacemakrKey, plaintext Plaintext, rand RandomDevice) ([]byte, error) {
+	if !key.IsValid() {
+		return nil, errors.New("invalid key passed to Encrypt")
+	}
+
 	cPlaintext := plaintextToInternal(plaintext)
 	defer freeInternalPlaintext(&cPlaintext)
 
@@ -285,6 +302,11 @@ func ExtractUnverifiedAAD(ciphertext []byte) ([]byte, bool) {
 }
 
 func Decrypt(key PeacemakrKey, ciphertext []byte) (*Plaintext, bool) {
+	if !key.IsValid() {
+		log.Printf("invalid key passed to Decrypt")
+		return nil, false
+	}
+
 	var plaintext C.plaintext_t
 	defer freeInternalPlaintext(&plaintext)
 	if ciphertext[len(ciphertext)-1] != 0 {

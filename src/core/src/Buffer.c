@@ -59,9 +59,9 @@ struct Buffer {
 typedef struct Buffer buffer_t;
 
 buffer_t *API(new)(size_t size) {
-  buffer_t *ret = malloc(sizeof(buffer_t));
+  EXPECT_TRUE_RET((size > 0), "size passed was <= 0\n");
 
-  EXPECT_TRUE_RET((size > 0), "size passed was <= 0\n")
+  buffer_t *ret = malloc(sizeof(buffer_t));
 
   ret->m_size_bytes_ = size;
 
@@ -73,7 +73,9 @@ buffer_t *API(new)(size_t size) {
 }
 
 void API(free)(buffer_t *buf) {
-  EXPECT_NOT_NULL_RET_NONE(buf, "buf was null, no-op\n");
+  if (buf == NULL) {
+    return;
+  }
 
   int err = memset_s(buf->m_mem_, buf->m_size_bytes_, 0, buf->m_size_bytes_);
   EXPECT_TRUE_RET_NONE((err == 0),

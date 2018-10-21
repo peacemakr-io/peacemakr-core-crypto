@@ -40,14 +40,15 @@ static void digest_message(const unsigned char *message, size_t message_len,
   unsigned int size;
 
   OPENSSL_CHECK_RET_NONE(EVP_DigestFinal_ex(mdctx, digest_buf, &size),
-                         EVP_MD_CTX_destroy(mdctx))
+                         EVP_MD_CTX_destroy(mdctx));
 
-  if (size != digest_len) {
-    PEACEMAKR_LOG("sizes different than expected for message digest\n");
-    return;
-  }
+  EXPECT_TRUE_CLEANUP_RET_NONE(
+      (size == digest_len), EVP_MD_CTX_free(mdctx),
+      "sizes different than expected for message digest\n");
 
   Buffer_set_bytes(digest, digest_buf, digest_len);
+
+  EVP_MD_CTX_free(mdctx);
 }
 
 uint8_t *serialize_blob(ciphertext_blob_t *cipher, size_t *out_size) {
@@ -208,6 +209,7 @@ uint8_t *serialize_blob(ciphertext_blob_t *cipher, size_t *out_size) {
   }
 
   CiphertextBlob_free(cipher);
+  cipher = NULL;
 
   return (uint8_t *)b64_encode(buf, current_pos, out_size);
 }
@@ -338,7 +340,7 @@ ciphertext_blob_t *deserialize_blob(const uint8_t *b64_serialized_cipher,
   if (cipherlen != 0) {
     ciphertext = alloca(cipherlen);
     memcpy(ciphertext, serialized_cipher + current_position, cipherlen);
-    current_position += cipherlen;
+    //    current_position += cipherlen;
   }
 
   ciphertext_blob_t *out =
@@ -369,6 +371,8 @@ ciphertext_blob_t *deserialize_blob(const uint8_t *b64_serialized_cipher,
 
   Buffer_set_bytes(CiphertextBlob_mutable_digest(out),
                    Buffer_get_bytes(digest_buf, NULL), digestlen);
+
+  Buffer_free(digest_buf);
 
   return out;
 }
