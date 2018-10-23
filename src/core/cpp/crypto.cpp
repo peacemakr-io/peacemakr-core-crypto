@@ -57,12 +57,18 @@ const peacemakr_key_t *peacemakr::Key::getKey() const { return m_key_; }
 bool peacemakr::Key::isValid() const { return m_key_ != nullptr; }
 
 namespace {
-void setContents(peacemakr::Plaintext &plain, const plaintext_t &cstyle) {
+void setContents(peacemakr::Plaintext &plain, plaintext_t &cstyle) {
   if (cstyle.data != nullptr) {
     plain.data = std::string(cstyle.data, cstyle.data + cstyle.data_len);
+    free((void *)cstyle.data);
+    cstyle.data = nullptr;
+    cstyle.data_len = 0;
   }
   if (cstyle.aad != nullptr) {
     plain.aad = std::string(cstyle.aad, cstyle.aad + cstyle.aad_len);
+    free((void *)cstyle.aad);
+    cstyle.aad = nullptr;
+    cstyle.aad_len = 0;
   }
 }
 } // namespace

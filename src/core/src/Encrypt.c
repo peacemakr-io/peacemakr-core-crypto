@@ -546,6 +546,9 @@ bool peacemakr_decrypt(const peacemakr_key_t *key, ciphertext_blob_t *cipher,
     const unsigned char *tmp_aad = Buffer_get_bytes(aad_buf, &plain->aad_len);
     plain->aad = calloc(plain->aad_len, sizeof(unsigned char));
     memcpy((void *)plain->aad, tmp_aad, plain->aad_len);
+    // Initialize the data to NULL
+    plain->data = NULL;
+    plain->data_len = 0;
     return true;
   }
 
