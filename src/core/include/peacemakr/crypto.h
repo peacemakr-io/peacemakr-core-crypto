@@ -208,6 +208,15 @@ ciphertext_blob_t *peacemakr_encrypt(const peacemakr_key_t *key,
 bool peacemakr_decrypt(const peacemakr_key_t *key, ciphertext_blob_t *cipher,
                        plaintext_t *plain);
 
+
+/**
+ * Computes the HMAC SHA256 of \p buf with \p master_key. Allocates memory and returns it to the caller
+ * with the HMAC stored inside. The length of the output is guaranteed to be 256 bits.
+ */
+uint8_t *peacemakr_hmac_256(const peacemakr_key_t *master_key,
+                            const uint8_t *buf,
+                            const size_t buf_len);
+
 /**
  * Serializes \p cipher into a \return Base64 encoded buffer. Stores the size of
  * said buffer into \p out_size. The caller is responsible for managing

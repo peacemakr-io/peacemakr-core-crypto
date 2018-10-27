@@ -152,34 +152,15 @@ peacemakr_key_t *API(new_from_master)(crypto_config_t cfg,
                   "Can't set a raw bytes for asymmetric crypto\n");
   EXPECT_TRUE_RET(
       (cfg.symm_cipher == AES_256_GCM || cfg.symm_cipher == CHACHA20_POLY1305),
-      "Only support generating keys for AES-256\n");
-  EXPECT_NOT_NULL_RET(master_key, "Master key was NULL\n");
-  EXPECT_TRUE_RET(
-      (master_key->m_cfg_.mode == SYMMETRIC),
-      "We use a symmetric master key to generate symmetric child keys\n");
-  const buffer_t *master_key_buf = master_key->m_contents_.symm;
-  size_t master_keylen = Buffer_get_size(master_key_buf);
-  EXPECT_TRUE_RET((master_keylen <= INT_MAX),
-                  "Length of passed master key is greater than INT_MAX\n");
-  EXPECT_TRUE_RET((key_id != NULL && key_id_len > 0),
-                  "key_id is null or its length was 0\n");
+      "Only support generating keys from master for AES-256 and ChaCha20 ciphers\n");
 
   const EVP_CIPHER *cipher = parse_cipher(cfg.symm_cipher);
   size_t keylen = (size_t)EVP_CIPHER_key_length(cipher);
 
-  peacemakr_key_t *out = malloc(sizeof(peacemakr_key_t));
-  out->m_cfg_ = cfg;
-  out->m_contents_.symm = NULL;
-
-  out->m_contents_.symm = Buffer_new(keylen);
-  // Generate the key
-  uint8_t *tmp_result = alloca(keylen);
-  // Use HMAC SHA256 to generate the key using the master key and the key id
-  const uint8_t *master_key_bytes = Buffer_get_bytes(master_key_buf, NULL);
-  HMAC(EVP_sha256(), master_key_bytes, (int)master_keylen, key_id, key_id_len,
-       tmp_result, NULL);
-
-  Buffer_set_bytes(out->m_contents_.symm, tmp_result, keylen);
+  // Compute HMAC
+  uint8_t *keybytes = peacemakr_hmac_256(master_key, key_id, key_id_len);
+  peacemakr_key_t *out = API(new_bytes)(cfg, keybytes, keylen);
+  free(keybytes);
 
   return out;
 }
