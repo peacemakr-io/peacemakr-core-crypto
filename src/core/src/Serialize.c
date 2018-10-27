@@ -58,8 +58,8 @@ uint8_t *serialize_blob(ciphertext_blob_t *cipher, size_t *out_size) {
   size_t buffer_len = sizeof(uint32_t); // magic number
   buffer_len += sizeof(uint64_t);       // size of message up until digest
   buffer_len += sizeof(uint32_t);       // digest algo
-  buffer_len += sizeof(uint32_t) *
-                4; // version, encryption mode, symm_cipher, asymm_cipher
+  // version, encryption mode, symm_cipher, asymm_cipher
+  buffer_len += sizeof(uint32_t) * 4;
 
   const buffer_t *encrypted_key = CiphertextBlob_encrypted_key(cipher);
   buffer_len += sizeof(size_t);
