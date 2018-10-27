@@ -17,6 +17,7 @@
 
 #include <openssl/ec.h>
 #include <openssl/evp.h>
+#include <openssl/hmac.h>
 #include <openssl/pem.h>
 #include <openssl/rsa.h>
 
@@ -143,11 +144,52 @@ peacemakr_key_t *API(new_bytes)(crypto_config_t cfg, const uint8_t *buf,
   return out;
 }
 
+peacemakr_key_t *API(new_from_master)(crypto_config_t cfg,
+                                      const peacemakr_key_t *master_key,
+                                      const uint8_t *key_id,
+                                      const size_t key_id_len) {
+  EXPECT_TRUE_RET((cfg.mode == SYMMETRIC),
+                  "Can't set a raw bytes for asymmetric crypto\n");
+  EXPECT_TRUE_RET((cfg.symm_cipher == AES_256_GCM || cfg.symm_cipher == CHACHA20_POLY1305),
+                  "Only support generating keys for AES-256\n");
+  EXPECT_NOT_NULL_RET(master_key, "Master key was NULL\n");
+  EXPECT_TRUE_RET(
+      (master_key->m_cfg_.mode == SYMMETRIC),
+      "We use a symmetric master key to generate symmetric child keys\n");
+  const buffer_t *master_key_buf = master_key->m_contents_.symm;
+  size_t master_keylen = Buffer_get_size(master_key_buf);
+  EXPECT_TRUE_RET((master_keylen <= INT_MAX),
+                  "Length of passed master key is greater than INT_MAX\n");
+  EXPECT_TRUE_RET((key_id != NULL && key_id_len > 0),
+                  "key_id is null or its length was 0\n");
+
+  const EVP_CIPHER *cipher = parse_cipher(cfg.symm_cipher);
+  size_t keylen = (size_t)EVP_CIPHER_key_length(cipher);
+
+  peacemakr_key_t *out = malloc(sizeof(peacemakr_key_t));
+  out->m_cfg_ = cfg;
+  out->m_contents_.symm = NULL;
+
+  out->m_contents_.symm = Buffer_new(keylen);
+  // Generate the key
+  uint8_t *tmp_result = alloca(keylen);
+  // Use HMAC SHA256 to generate the key using the master key and the key id
+  const uint8_t *master_key_bytes = Buffer_get_bytes(master_key_buf, NULL);
+  HMAC(EVP_sha256(), master_key_bytes, (int)master_keylen, key_id, key_id_len,
+       tmp_result, NULL);
+
+  Buffer_set_bytes(out->m_contents_.symm, tmp_result, keylen);
+
+  return out;
+}
+
 peacemakr_key_t *API(new_pem_pub)(crypto_config_t cfg, const char *buf,
                                   const size_t buflen) {
 
-  EXPECT_TRUE_RET((buf != NULL && buflen != 0),
+  EXPECT_TRUE_RET((buf != NULL && buflen > 0),
                   "buf was null or buflen was 0\n");
+  EXPECT_TRUE_RET((buflen <= INT_MAX),
+                  "Length of passed master key is greater than INT_MAX\n");
   EXPECT_TRUE_RET((cfg.mode == ASYMMETRIC),
                   "Can't set a new EVP_PKEY for symmetric crypto\n");
 
@@ -175,6 +217,8 @@ peacemakr_key_t *API(new_pem_priv)(crypto_config_t cfg, const char *buf,
 
   EXPECT_TRUE_RET((buf != NULL && buflen != 0),
                   "buf was null or buflen was 0\n");
+  EXPECT_TRUE_RET((buflen <= INT_MAX),
+                  "Length of passed master key is greater than INT_MAX\n");
   EXPECT_TRUE_RET((cfg.mode == ASYMMETRIC),
                   "Can't set a new EVP_PKEY for symmetric crypto\n");
 
