@@ -150,8 +150,9 @@ peacemakr_key_t *API(new_from_master)(crypto_config_t cfg,
                                       const size_t key_id_len) {
   EXPECT_TRUE_RET((cfg.mode == SYMMETRIC),
                   "Can't set a raw bytes for asymmetric crypto\n");
-  EXPECT_TRUE_RET((cfg.symm_cipher == AES_256_GCM || cfg.symm_cipher == CHACHA20_POLY1305),
-                  "Only support generating keys for AES-256\n");
+  EXPECT_TRUE_RET(
+      (cfg.symm_cipher == AES_256_GCM || cfg.symm_cipher == CHACHA20_POLY1305),
+      "Only support generating keys for AES-256\n");
   EXPECT_NOT_NULL_RET(master_key, "Master key was NULL\n");
   EXPECT_TRUE_RET(
       (master_key->m_cfg_.mode == SYMMETRIC),
