@@ -39,11 +39,7 @@ peacemakr::Key::Key(crypto_config_t cfg, const std::vector<uint8_t> &bytes) {
 }
 
 peacemakr::Key::Key(crypto_config_t cfg, const std::string &pem, bool priv) {
-  if (priv) {
-    m_key_ = PeacemakrKey_new_pem_priv(cfg, pem.c_str(), pem.size());
-  } else {
-    m_key_ = PeacemakrKey_new_pem_pub(cfg, pem.c_str(), pem.size());
-  }
+  m_key_ = PeacemakrKey_new_pem(cfg, pem.c_str(), pem.size(), priv);
 }
 
 peacemakr::Key::~Key() { PeacemakrKey_free(m_key_); }

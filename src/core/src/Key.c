@@ -152,7 +152,8 @@ peacemakr_key_t *API(new_from_master)(crypto_config_t cfg,
                   "Can't set a raw bytes for asymmetric crypto\n");
   EXPECT_TRUE_RET(
       (cfg.symm_cipher == AES_256_GCM || cfg.symm_cipher == CHACHA20_POLY1305),
-      "Only support generating keys from master for AES-256 and ChaCha20 ciphers\n");
+      "Only support generating keys from master for AES-256 and ChaCha20 "
+      "ciphers\n");
 
   const EVP_CIPHER *cipher = parse_cipher(cfg.symm_cipher);
   size_t keylen = (size_t)EVP_CIPHER_key_length(cipher);
@@ -165,8 +166,8 @@ peacemakr_key_t *API(new_from_master)(crypto_config_t cfg,
   return out;
 }
 
-peacemakr_key_t *API(new_pem_pub)(crypto_config_t cfg, const char *buf,
-                                  const size_t buflen) {
+peacemakr_key_t *API(new_pem)(crypto_config_t cfg, const char *buf,
+                              const size_t buflen, bool is_priv) {
 
   EXPECT_TRUE_RET((buf != NULL && buflen > 0),
                   "buf was null or buflen was 0\n");
@@ -181,13 +182,23 @@ peacemakr_key_t *API(new_pem_pub)(crypto_config_t cfg, const char *buf,
 
   BIO *bo = BIO_new_mem_buf(buf, (int)buflen);
 
-  out->m_contents_.asymm = PEM_read_bio_PUBKEY(bo, NULL, NULL, NULL);
-  EXPECT_NOT_NULL_CLEANUP_RET(out->m_contents_.asymm,
-                              {
-                                BIO_free(bo);
-                                API(free)(out);
-                              },
-                              "PEM_read_bio_PUBKEY failed\n");
+  if (is_priv) {
+    out->m_contents_.asymm = PEM_read_bio_PrivateKey(bo, NULL, NULL, NULL);
+    EXPECT_NOT_NULL_CLEANUP_RET(out->m_contents_.asymm,
+                                {
+                                  BIO_free(bo);
+                                  API(free)(out);
+                                },
+                                "PEM_read_bio_PrivateKey failed\n");
+  } else {
+    out->m_contents_.asymm = PEM_read_bio_PUBKEY(bo, NULL, NULL, NULL);
+    EXPECT_NOT_NULL_CLEANUP_RET(out->m_contents_.asymm,
+                                {
+                                  BIO_free(bo);
+                                  API(free)(out);
+                                },
+                                "PEM_read_bio_PUBKEY failed\n");
+  }
 
   BIO_free(bo);
 

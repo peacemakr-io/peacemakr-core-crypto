@@ -155,24 +155,12 @@ peacemakr_key_t *PeacemakrKey_new_from_master(crypto_config_t cfg,
 /**
  * Create a new peacemakr_key_t from a pem file generated externally. This
  * function applies only to asymmetric encryption provided by this library,
- * and the pem file must be of a public key. Use PeacemakrKey_new_pem_priv
- * to generate a private key from a pre-created pem file. Uses \p cfg to
- * configure the key being created. \returns A newly created peacemakr key
- * for use in other library calls.
+ * and the pem file must be of a private key if \p is_priv is true.
+ * Uses \p cfg to configure the key being created. \returns A newly
+ * created peacemakr key for use in other library calls.
  */
-peacemakr_key_t *PeacemakrKey_new_pem_pub(crypto_config_t cfg, const char *buf,
-                                          size_t buflen);
-
-/**
- * Create a new peacemakr_key_t from a pem file generated externally. This
- * function applies only to asymmetric encryption provided by this library,
- * and the pem file must be of a private key. Use PeacemakrKey_new_pem_pub
- * to generate a public key from a pre-created pem file. Uses \p cfg to
- * configure the key being created. \returns A newly created peacemakr key
- * for use in other library calls.
- */
-peacemakr_key_t *PeacemakrKey_new_pem_priv(crypto_config_t cfg, const char *buf,
-                                           size_t buflen);
+peacemakr_key_t *PeacemakrKey_new_pem(crypto_config_t cfg, const char *buf,
+                                      size_t buflen, bool is_priv);
 
 /**
  * Gets the crypto_config_t used to create \p key from \p key.
@@ -208,14 +196,13 @@ ciphertext_blob_t *peacemakr_encrypt(const peacemakr_key_t *key,
 bool peacemakr_decrypt(const peacemakr_key_t *key, ciphertext_blob_t *cipher,
                        plaintext_t *plain);
 
-
 /**
- * Computes the HMAC SHA256 of \p buf with \p master_key. Allocates memory and returns it to the caller
- * with the HMAC stored inside. The length of the output is guaranteed to be 256 bits.
+ * Computes the HMAC SHA256 of \p buf with \p master_key. Allocates memory and
+ * returns it to the caller with the HMAC stored inside. The length of the
+ * output is guaranteed to be 256 bits.
  */
 uint8_t *peacemakr_hmac_256(const peacemakr_key_t *master_key,
-                            const uint8_t *buf,
-                            const size_t buf_len);
+                            const uint8_t *buf, const size_t buf_len);
 
 /**
  * Serializes \p cipher into a \return Base64 encoded buffer. Stores the size of

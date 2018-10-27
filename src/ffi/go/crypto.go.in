@@ -220,19 +220,11 @@ func NewPeacemakrKeyFromBytes(config CryptoConfig, contents []byte) PeacemakrKey
 	}
 }
 
-func NewPeacemakrKeyFromPubPem(config CryptoConfig, contents []byte) PeacemakrKey {
+func NewPeacemakrKeyFromPem(config CryptoConfig, contents []byte, isPriv bool) PeacemakrKey {
 	cBytes := (*C.char)(C.CBytes(contents))
 	defer C.free(unsafe.Pointer(cBytes))
 	return PeacemakrKey{
-		key: C.PeacemakrKey_new_pem_pub(configToInternal(config), cBytes, C.size_t(len(contents))),
-	}
-}
-
-func NewPeacemakrKeyFromPrivPem(config CryptoConfig, contents []byte) PeacemakrKey {
-	cBytes := (*C.char)(C.CBytes(contents))
-	defer C.free(unsafe.Pointer(cBytes))
-	return PeacemakrKey{
-		key: C.PeacemakrKey_new_pem_priv(configToInternal(config), cBytes, C.size_t(len(contents))),
+		key: C.PeacemakrKey_new_pem(configToInternal(config), cBytes, C.size_t(len(contents)), C.bool(isPriv)),
 	}
 }
 

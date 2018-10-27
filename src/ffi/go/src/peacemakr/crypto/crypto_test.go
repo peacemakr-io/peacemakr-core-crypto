@@ -206,7 +206,7 @@ func TestAsymmetricEncryptFromPem(t *testing.T) {
 
 			randomDevice := NewRandomDevice()
 
-			pubkey := NewPeacemakrKeyFromPubPem(cfg, GetPubKey())
+			pubkey := NewPeacemakrKeyFromPem(cfg, GetPubKey(), false)
 
 			ciphertext, err := Encrypt(pubkey, plaintextIn, randomDevice)
 			if err != nil {
@@ -223,7 +223,7 @@ func TestAsymmetricEncryptFromPem(t *testing.T) {
                 t.Fatalf("extracted aad did not match")
             }
 
-			privkey := NewPeacemakrKeyFromPrivPem(cfg, GetPrivKey())
+			privkey := NewPeacemakrKeyFromPem(cfg, GetPrivKey(), true)
 
 			plaintextOut, success := Decrypt(privkey, ciphertext)
 			if !success {
@@ -279,8 +279,8 @@ func TestAsymmetricEncryptFromRandomPem(t *testing.T) {
 				//fmt.Println(string(priv))
 				//fmt.Println(string(pub))
 
-				privkey := NewPeacemakrKeyFromPrivPem(cfg, priv)
-				pubkey := NewPeacemakrKeyFromPubPem(cfg, pub)
+				privkey := NewPeacemakrKeyFromPem(cfg, priv, true)
+				pubkey := NewPeacemakrKeyFromPem(cfg, pub, false)
 
 				ciphertext, err := Encrypt(pubkey, plaintextIn, randomDevice)
 				if err != nil {
@@ -508,7 +508,7 @@ duE5ygP4cy36OleLa5rq85wwlDZ5hBnqCzp7CIrwoSAYWd6WkfMLnqpuRDE=
 		DigestAlgorithm:  SHA_512,
 	}
 
-	pmkey := NewPeacemakrKeyFromPrivPem(cfg, []byte(privKey))
+	pmkey := NewPeacemakrKeyFromPem(cfg, []byte(privKey), true)
 
 	_, success := Decrypt(pmkey, []byte(blob))
 	if !success {
