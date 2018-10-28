@@ -31,8 +31,8 @@ uint8_t *peacemakr_hmac_256(const peacemakr_key_t *master_key,
   uint32_t result_len = 0;
   // Use HMAC SHA256 to generate the key using the master key and the key id
   const uint8_t *master_key_bytes = Buffer_get_bytes(master_key_buf, NULL);
-  HMAC(EVP_sha256(), master_key_bytes, (int)master_keylen, buf, buf_len, result,
-       &result_len);
+  HMAC(EVP_sha3_256(), master_key_bytes, (int)master_keylen, buf, buf_len,
+       result, &result_len);
 
   return result;
 }

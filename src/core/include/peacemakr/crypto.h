@@ -58,7 +58,16 @@ typedef enum {
  * However, many of them are insecure or have collisions, so we have selected
  * the ones that are considered to be secure.
  */
-typedef enum { SHA_224, SHA_256, SHA_384, SHA_512 } message_digest_algorithm;
+typedef enum {
+  SHA_224,
+  SHA_256,
+  SHA_384,
+  SHA_512,
+  SHA3_224,
+  SHA3_256,
+  SHA3_384,
+  SHA3_512
+} message_digest_algorithm;
 
 /**
  * @brief Peacemakr supported encryption modes
@@ -197,7 +206,7 @@ bool peacemakr_decrypt(const peacemakr_key_t *key, ciphertext_blob_t *cipher,
                        plaintext_t *plain);
 
 /**
- * Computes the HMAC SHA256 of \p buf with \p master_key. Allocates memory and
+ * Computes the HMAC SHA3-256 of \p buf with \p master_key. Allocates memory and
  * returns it to the caller with the HMAC stored inside. The length of the
  * output is guaranteed to be 256 bits.
  */

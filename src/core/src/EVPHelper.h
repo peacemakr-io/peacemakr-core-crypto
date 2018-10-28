@@ -67,6 +67,14 @@ static inline const EVP_MD *parse_digest(message_digest_algorithm cfg) {
     return EVP_sha384();
   case SHA_512:
     return EVP_sha512();
+  case SHA3_224:
+    return EVP_sha3_224();
+  case SHA3_256:
+    return EVP_sha3_256();
+  case SHA3_384:
+    return EVP_sha3_384();
+  case SHA3_512:
+    return EVP_sha3_512();
   }
   return 0;
 }
@@ -74,13 +82,21 @@ static inline const EVP_MD *parse_digest(message_digest_algorithm cfg) {
 static inline size_t get_digest_len(message_digest_algorithm cfg) {
   switch (cfg) {
   case SHA_224:
-    return (224 / 8);
+    return (size_t)EVP_MD_size(EVP_sha224());
   case SHA_256:
-    return (256 / 8);
+    return (size_t)EVP_MD_size(EVP_sha256());
   case SHA_384:
-    return (384 / 8);
+    return (size_t)EVP_MD_size(EVP_sha384());
   case SHA_512:
-    return (512 / 8);
+    return (size_t)EVP_MD_size(EVP_sha512());
+  case SHA3_224:
+    return (size_t)EVP_MD_size(EVP_sha3_224());
+  case SHA3_256:
+    return (size_t)EVP_MD_size(EVP_sha3_256());
+  case SHA3_384:
+    return (size_t)EVP_MD_size(EVP_sha3_384());
+  case SHA3_512:
+    return (size_t)EVP_MD_size(EVP_sha3_512());
   }
   return 0;
 }
