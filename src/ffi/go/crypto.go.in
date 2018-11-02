@@ -102,10 +102,14 @@ const (
 type MessageDigestAlgorithm int
 
 const (
-	SHA_224 MessageDigestAlgorithm = 0
-	SHA_256 MessageDigestAlgorithm = 1
-	SHA_384 MessageDigestAlgorithm = 2
-	SHA_512 MessageDigestAlgorithm = 3
+	SHA_224  MessageDigestAlgorithm = 0
+	SHA_256  MessageDigestAlgorithm = 1
+	SHA_384  MessageDigestAlgorithm = 2
+	SHA_512  MessageDigestAlgorithm = 3
+	SHA3_224 MessageDigestAlgorithm = 4
+	SHA3_256 MessageDigestAlgorithm = 5
+	SHA3_384 MessageDigestAlgorithm = 6
+	SHA3_512 MessageDigestAlgorithm = 7
 )
 
 type EncryptionMode int
@@ -220,6 +224,15 @@ func NewPeacemakrKeyFromBytes(config CryptoConfig, contents []byte) PeacemakrKey
 	}
 }
 
+func NewPeacemakrKeyFromMasterKey(config CryptoConfig, masterKey PeacemakrKey, keyID []byte) PeacemakrKey {
+	cBytes := (*C.uint8_t)(C.CBytes(keyID))
+	defer C.free(unsafe.Pointer(cBytes))
+	cNumBytes := (C.size_t)(len(keyID))
+	return PeacemakrKey{
+		key: C.PeacemakrKey_new_from_master(configToInternal(config), masterKey.key, cBytes, cNumBytes),
+	}
+}
+
 func NewPeacemakrKeyFromPem(config CryptoConfig, contents []byte, isPriv bool) PeacemakrKey {
 	cBytes := (*C.char)(C.CBytes(contents))
 	defer C.free(unsafe.Pointer(cBytes))
@@ -274,23 +287,23 @@ func ExtractCiphertextBlob(ciphertext []byte) (*CiphertextBlob, bool) {
 }
 
 func ExtractUnverifiedAAD(ciphertext []byte) ([]byte, bool) {
-    var plaintext C.plaintext_t
-    defer freeInternalPlaintext(&plaintext)
-    if ciphertext[len(ciphertext)-1] != 0 {
-        ciphertext = append(ciphertext, byte(0)) // add NULL terminator
-    }
+	var plaintext C.plaintext_t
+	defer freeInternalPlaintext(&plaintext)
+	if ciphertext[len(ciphertext)-1] != 0 {
+		ciphertext = append(ciphertext, byte(0)) // add NULL terminator
+	}
 
-    deserialized, deserializeSuccess := deserialize(ciphertext)
-    if !deserializeSuccess {
-        return nil, false
-    }
+	deserialized, deserializeSuccess := deserialize(ciphertext)
+	if !deserializeSuccess {
+		return nil, false
+	}
 
-    extractSuccess := bool(C.peacemakr_decrypt(nil, deserialized.blob, (*C.plaintext_t)(unsafe.Pointer(&plaintext))))
-    if !extractSuccess {
-        return nil, false
-    }
+	extractSuccess := bool(C.peacemakr_decrypt(nil, deserialized.blob, (*C.plaintext_t)(unsafe.Pointer(&plaintext))))
+	if !extractSuccess {
+		return nil, false
+	}
 
-    return C.GoBytes(unsafe.Pointer(plaintext.aad), C.int(plaintext.aad_len)), extractSuccess
+	return C.GoBytes(unsafe.Pointer(plaintext.aad), C.int(plaintext.aad_len)), extractSuccess
 }
 
 func Decrypt(key PeacemakrKey, ciphertext []byte) (*Plaintext, bool) {
