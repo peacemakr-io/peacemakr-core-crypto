@@ -1,7 +1,9 @@
 #!/bin/bash
 
-curl -O https://www.openssl.org/source/openssl-1.1.1.tar.gz
-tar -xzf openssl-1.1.1.tar.gz
+if [ ! -d "openssl-1.1.1" ]; then
+    curl -O https://www.openssl.org/source/openssl-1.1.1.tar.gz
+    tar -xzf openssl-1.1.1.tar.gz
+fi
 
 pushd openssl-1.1.1
 
@@ -44,7 +46,6 @@ function pack_for ()
 }
 
 curl -O https://raw.githubusercontent.com/sinofool/build-openssl-ios/master/patch-conf.patch
-#cp ../patch-conf.patch .
 patch Configurations/10-main.conf < patch-conf.patch
 
 build_for ios64sim-cross x86_64 SIM || exit 2
