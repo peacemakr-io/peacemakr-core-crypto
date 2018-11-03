@@ -104,9 +104,8 @@ IF(NOT CMAKE_RANLIB)
 ENDIF()
 
 # set the architecture for iOS
-# TODO: should build for armv7s too?
 if ("${IOS_PLATFORM}" STREQUAL "OS")
-    set (IOS_ARCH arm64)
+    set (IOS_ARCH armv7 armv7s arm64)
 elseif ("${IOS_PLATFORM}" STREQUAL "SIMULATOR")
     set (IOS_ARCH x86_64)
     set (VALID_ARCHS x86_64)
