@@ -18,7 +18,7 @@ if (PEACEMAKR_BUILD_GO)
 endif (PEACEMAKR_BUILD_GO)
 
 # Swift-specific stuff #####
-option(PEACEMAKR_BUILD_IOS "Whether to build the iOS bindings" OFF)
+option(PEACEMAKR_BUILD_IOS "Whether to build the iOS bindings" ON)
 
 if (PEACEMAKR_BUILD_IOS)
     set(SOURCE_CMAKE_DIR ${CMAKE_SOURCE_DIR})
@@ -26,10 +26,10 @@ if (PEACEMAKR_BUILD_IOS)
     set(OPENSSL_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/swift/openssl/openssl-build/lib)
     set(CMAKE_IOS_TOOLCHAIN_FILE ${CMAKE_SOURCE_DIR}/cmake/iOS.cmake)
     set(FAT_CORE_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/swift/libCoreCrypto/lib)
+    set(CORE_LIB_INCLUDE ${CMAKE_CURRENT_SOURCE_DIR}/swift/libCoreCrypto/include)
 
     configure_file(${CMAKE_SOURCE_DIR}/src/ffi/swift/module.map.in ${CMAKE_SOURCE_DIR}/src/ffi/swift/CoreCrypto/CoreCrypto/module.map @ONLY)
     configure_file(${CMAKE_SOURCE_DIR}/src/ffi/swift/build-core-crypto.sh.in ${CMAKE_SOURCE_DIR}/src/ffi/swift/libCoreCrypto/build-core-crypto.sh @ONLY)
-    execute_process(COMMAND sh ${CMAKE_SOURCE_DIR}/src/ffi/swift/libCoreCrypto/build-core-crypto.sh)
 
     install(CODE
             "
@@ -37,8 +37,11 @@ if (PEACEMAKR_BUILD_IOS)
 
     set(CORE_LIB_INCLUDE ${CMAKE_INSTALL_PREFIX}/include)
     set(CORE_LIB_DIR ${CMAKE_INSTALL_PREFIX}/lib)
+    set(FAT_CORE_LIB_DIR ${CMAKE_INSTALL_PREFIX}/lib)
     set(OPENSSL_INCLUDE_DIR /usr/include)
 
     configure_file(${CMAKE_SOURCE_DIR}/src/ffi/swift/module.map.in ${CMAKE_SOURCE_DIR}/src/ffi/swift/CoreCrypto/CoreCrypto/module.map @ONLY)
+    configure_file(${CMAKE_SOURCE_DIR}/src/ffi/swift/build-core-crypto.sh.in ${CMAKE_SOURCE_DIR}/src/ffi/swift/libCoreCrypto/build-core-crypto.sh @ONLY)
+    execute_process(COMMAND sh ${CMAKE_SOURCE_DIR}/src/ffi/swift/libCoreCrypto/build-core-crypto.sh)
     ")
 endif(PEACEMAKR_BUILD_IOS)

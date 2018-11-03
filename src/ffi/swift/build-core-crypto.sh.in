@@ -27,3 +27,6 @@ function pack_for ()
 }
 
 pack_for peacemakr-core-crypto Debug || exit 1
+
+cp -r @CMAKE_SOURCE_DIR@/src/core/include/peacemakr @CORE_LIB_INCLUDE@
+rm @CORE_LIB_INCLUDE@/peacemakr/crypto.hpp
