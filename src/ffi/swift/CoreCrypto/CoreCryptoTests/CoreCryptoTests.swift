@@ -15,7 +15,6 @@ class CoreCryptoTests: XCTestCase {
   }
 
   override func tearDown() {
-    // Put teardown code here. This method is called after the invocation of each test method in the class.
   }
 
   func innerTest(mode: EncryptionMode, symm_cipher: SymmetricCipher, asymm_cipher: AsymmetricCipher, digest: MessageDigestAlgorithm) {
@@ -29,6 +28,8 @@ class CoreCryptoTests: XCTestCase {
     
     let encrypted = try? context!.Encrypt(key: key!, plaintext: plaintextIn, rand: device)
     XCTAssert(encrypted != nil, "Something failed in Encryption")
+    let unverfiedAAD = try? context!.ExtractUnverifiedAAD(serialized: encrypted!)
+    XCTAssert(unverfiedAAD!.aad == plaintextIn.aad, "Something failed in ExtractUnverfiedAAD")
     let decrypted = try? context!.Decrypt(key: key!, serialized: encrypted!)
     XCTAssert(decrypted != nil, "Something failed in Decryption")
     XCTAssert(decrypted!.data == plaintextIn.data)

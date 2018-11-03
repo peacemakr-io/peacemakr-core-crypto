@@ -2,7 +2,7 @@
 
 set -ex
 
-rm -rf build-sim build-ios
+rm -rf build-sim build-ios include lib
 
 mkdir -p build-sim && pushd build-sim
 cmake -G Xcode @SOURCE_CMAKE_DIR@ -DOPENSSL_ROOT_DIR=@OPENSSL_ROOT_DIR@ -DOPENSSL_LIBRARIES=@OPENSSL_LIB_DIR@ -DPEACEMAKR_BUILD_IOS=ON -DPEACEMAKR_BUILD_CPP=OFF -DCMAKE_TOOLCHAIN_FILE=@CMAKE_IOS_TOOLCHAIN_FILE@ -DIOS_PLATFORM="SIMULATOR"
@@ -27,5 +27,6 @@ function pack_for ()
 
 pack_for peacemakr-core-crypto Debug || exit 1
 
+mkdir -p @CORE_LIB_INCLUDE@
 cp -r @CMAKE_SOURCE_DIR@/src/core/include/peacemakr @CORE_LIB_INCLUDE@
 rm @CORE_LIB_INCLUDE@/peacemakr/crypto.hpp
