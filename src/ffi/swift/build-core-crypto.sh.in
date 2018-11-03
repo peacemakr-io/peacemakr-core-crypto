@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+#rm -rf build-sim build-ios
+
+export OPENSSL_ROOT_DIR=@OPENSSL_ROOT_DIR@
+export OPENSSL_LIBRARIES=@OPENSSL_LIB_DIR@
+
+mkdir -p build-sim && pushd build-sim
+cmake -G Xcode @SOURCE_CMAKE_DIR@ -DPEACEMAKR_BUILD_CPP=OFF -DCMAKE_TOOLCHAIN_FILE=@CMAKE_IOS_TOOLCHAIN_FILE@ -DIOS_PLATFORM="SIMULATOR"
+xcodebuild
+popd
+
+mkdir -p build-ios && pushd build-ios
+cmake -G Xcode @SOURCE_CMAKE_DIR@ -DPEACEMAKR_BUILD_CPP=OFF -DCMAKE_TOOLCHAIN_FILE=@CMAKE_IOS_TOOLCHAIN_FILE@ -DIOS_PLATFORM="OS"
+xcodebuild
+popd
+
+function pack_for ()
+{
+  LIBNAME=$1
+  FOLDER_PREFIX=$2
+  mkdir -p @FAT_CORE_LIB_DIR@
+  ${DEVROOT}/usr/bin/lipo \
+	$(pwd)/build-sim/src/core/${FOLDER_PREFIX}-iphonesimulator/lib${LIBNAME}.dylib \
+	$(pwd)/build-ios/src/core/${FOLDER_PREFIX}-iphoneos/lib${LIBNAME}.dylib \
+	-output @FAT_CORE_LIB_DIR@/lib${LIBNAME}.dylib -create
+}
+
+pack_for peacemakr-core-crypto Debug || exit 1

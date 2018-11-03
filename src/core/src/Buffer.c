@@ -17,6 +17,7 @@
 #include <openssl/crypto.h>
 
 #ifdef PEACEMAKR_NO_MEMSET_S
+#ifndef __APPLE__
 
 #include <errno.h>
 #include <limits.h>
@@ -45,8 +46,8 @@ int memset_s(void *restrict v, size_t smax, uint8_t c, size_t n) {
 
   return 0;
 }
-
-#endif
+#endif // __APPLE__
+#endif // PEACEMAKR_NO_MEMSET_S
 
 #define GLUE(prefix, name) prefix##name
 #define API(name) GLUE(Buffer_, name)
