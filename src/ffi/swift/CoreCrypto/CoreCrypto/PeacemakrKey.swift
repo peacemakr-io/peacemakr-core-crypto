@@ -10,35 +10,40 @@ import Foundation
 
 import libCoreCrypto
 
-enum PeacemakrKeyError: Error {
+public enum PeacemakrKeyError: Error {
   case allocationFailed
 }
 
-class PeacemakrKey {
+public class PeacemakrKey {
   var internalRepr: OpaquePointer
     
-  init(config: crypto_config_t, rand: inout random_device_t) throws {
-    internalRepr = PeacemakrKey_new(config, &rand)!
+  public init(config: CryptoConfig, rand: RandomDevice) throws {
+    var randInternal = rand.getInternal()
+    internalRepr = PeacemakrKey_new(config.getInternal(), &randInternal)!
   }
 
-  init(config: crypto_config_t, bytes: [UInt8]) throws {
-    internalRepr = PeacemakrKey_new_bytes(config, UnsafePointer(bytes), bytes.count)!
+  public init(config: CryptoConfig, bytes: [UInt8]) throws {
+    internalRepr = PeacemakrKey_new_bytes(config.getInternal(), UnsafePointer(bytes), bytes.count)!
   }
 
-  init(config: crypto_config_t, master: PeacemakrKey, bytes: [UInt8]) throws {
-    internalRepr = PeacemakrKey_new_from_master(config, master.internalRepr, UnsafePointer(bytes), bytes.count)!
+  public init(config: CryptoConfig, master: PeacemakrKey, bytes: [UInt8]) throws {
+    internalRepr = PeacemakrKey_new_from_master(config.getInternal(), master.internalRepr, UnsafePointer(bytes), bytes.count)!
   }
 
     // TODO: WTF why does this segfault xcode
-//  init(config: crypto_config_t, fileContents: String, is_priv: Bool) throws {
-//    internalRepr = PeacemakrKey_new_pem(config, UnsafePointer(fileContents), fileContents.count, is_priv)!
+//  public init(config: CryptoConfig, fileContents: String, is_priv: Bool) throws {
+//    internalRepr = PeacemakrKey_new_pem(config.getInternal(), UnsafePointer(fileContents), fileContents.count, is_priv)!
 //  }
 
   deinit {
     PeacemakrKey_free(internalRepr)
   }
 
-  func getConfig() -> crypto_config_t {
-    return PeacemakrKey_get_config(internalRepr)
+  func getConfig() -> CryptoConfig {
+    return CryptoConfig(cfg: PeacemakrKey_get_config(internalRepr))
+  }
+
+  func getInternal() -> OpaquePointer {
+    return internalRepr
   }
 }

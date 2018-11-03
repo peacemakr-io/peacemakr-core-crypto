@@ -9,7 +9,7 @@ import Foundation
 
 import libCoreCrypto
 
-enum PeacemakrError: Error {
+public enum PeacemakrError: Error {
   case initializationFailed
   case encryptionFailed
   case serializationFailed
@@ -17,15 +17,17 @@ enum PeacemakrError: Error {
   case decryptionFailed
 }
 
-class CryptoContext {
-  init() throws {
+public class CryptoContext {
+  public init() throws {
     if !peacemakr_init() {
       throw PeacemakrError.initializationFailed
     }
   }
 
-  func Encrypt(key: PeacemakrKey, plaintext: inout plaintext_t, rand: inout random_device_t) throws -> [UInt8] {
-    let ciphertext_blob = peacemakr_encrypt(key.internalRepr, &plaintext, &rand)
+  public func Encrypt(key: PeacemakrKey, plaintext: Plaintext, rand: RandomDevice) throws -> [UInt8] {
+    var innerRand = rand.getInternal()
+    var innerPlaintext = plaintext.getInternal()
+    let ciphertext_blob = peacemakr_encrypt(key.getInternal(), &innerPlaintext, &innerRand)
     if ciphertext_blob == nil {
       throw PeacemakrError.encryptionFailed
     }
@@ -39,7 +41,7 @@ class CryptoContext {
     return Array(UnsafeBufferPointer(start: bytes, count: out_size))
   }
 
-  func ExtractUnverifiedAAD(serialized: [UInt8]) throws -> plaintext_t {
+  public func ExtractUnverifiedAAD(serialized: [UInt8]) throws -> Plaintext {
     let ciphertext_blob = deserialize_blob(UnsafePointer(serialized), serialized.count)
     if ciphertext_blob == nil {
       throw PeacemakrError.deserializationFailed
@@ -49,19 +51,19 @@ class CryptoContext {
     if !peacemakr_decrypt(nil, ciphertext_blob, &out) {
       throw PeacemakrError.decryptionFailed
     }
-    return out
+    return Plaintext(cstyle: out)
   }
 
-  func Decrypt(key: PeacemakrKey, serialized: [UInt8]) throws -> plaintext_t {
+  public func Decrypt(key: PeacemakrKey, serialized: [UInt8]) throws -> Plaintext {
     let ciphertext_blob = deserialize_blob(UnsafePointer(serialized), serialized.count)
     if ciphertext_blob == nil {
       throw PeacemakrError.deserializationFailed
     }
 
     var out = plaintext_t(data: nil, data_len: 0, aad: nil, aad_len: 0)
-    if !peacemakr_decrypt(key.internalRepr, ciphertext_blob, &out) {
+    if !peacemakr_decrypt(key.getInternal(), ciphertext_blob, &out) {
       throw PeacemakrError.decryptionFailed
     }
-    return out
+    return Plaintext(cstyle: out)
   }
 }
