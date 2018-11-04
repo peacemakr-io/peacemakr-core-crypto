@@ -19,4 +19,17 @@ pushd src/ffi/swift/libCoreCrypto
 sh build-core-crypto.sh
 popd
 
+pushd src/ffi/swift/CoreCrypto
+xcodebuild -project CoreCrypto.xcodeproj -scheme CoreCrypto -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 6,OS=12.1' test
+xcodebuild -project CoreCrypto.xcodeproj -miphoneos-version-min=8.1 -sdk iphoneos
+xcodebuild -project CoreCrypto.xcodeproj -miphoneos-version-min=8.1 -arch x86_64 ONLY_ACTIVE_ARCH=NO -sdk iphonesimulator
+popd
+
+mkdir -p src/ffi/swift/CoreCrypto/universal
+pushd src/ffi/swift/CoreCrypto/universal
+cp -R ../build/Release-iphoneos/CoreCrypto.framework .
+lipo -create -output "CoreCrypto.framework/CoreCrypto" "../build/Release-iphoneos/CoreCrypto.framework/CoreCrypto" "../build/Release-iphonesimulator/CoreCrypto.framework/CoreCrypto"
+rm -rf ../build
+popd
+
 popd

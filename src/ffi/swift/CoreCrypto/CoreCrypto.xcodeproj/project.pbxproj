@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		0738936C218E36D60005EFC1 /* openssl in Headers */ = {isa = PBXBuildFile; fileRef = 0738936B218E36D60005EFC1 /* openssl */; settings = {ATTRIBUTES = (Public, ); }; };
+		0738936C218E36D60005EFC1 /* openssl in Headers */ = {isa = PBXBuildFile; fileRef = 0738936B218E36D60005EFC1 /* openssl */; settings = {ATTRIBUTES = (Private, ); }; };
 		075623FF218CECAA0066BF29 /* CoreCrypto.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 075623F5218CECAA0066BF29 /* CoreCrypto.framework */; };
 		07562404218CECAA0066BF29 /* CoreCryptoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07562403218CECAA0066BF29 /* CoreCryptoTests.swift */; };
 		07562410218CED310066BF29 /* PeacemakrKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0756240F218CED310066BF29 /* PeacemakrKey.swift */; };
@@ -131,9 +131,9 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				0738936C218E36D60005EFC1 /* openssl in Headers */,
 				077EEDB4218E1FD200A0899D /* crypto.h in Headers */,
 				077EEDB5218E1FD200A0899D /* random.h in Headers */,
+				0738936C218E36D60005EFC1 /* openssl in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -476,7 +476,7 @@
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = TVN85SMC24;
-				HEADER_SEARCH_PATHS = "$(BUILT_PRODUCTS_DIR)/CoreCrypto.framework/Headers";
+				HEADER_SEARCH_PATHS = "";
 				INFOPLIST_FILE = CoreCryptoTests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -496,7 +496,7 @@
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = TVN85SMC24;
-				HEADER_SEARCH_PATHS = "$(BUILT_PRODUCTS_DIR)/CoreCrypto.framework/Headers";
+				HEADER_SEARCH_PATHS = "";
 				INFOPLIST_FILE = CoreCryptoTests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
