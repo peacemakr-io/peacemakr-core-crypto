@@ -30,10 +30,9 @@ public class PeacemakrKey {
     internalRepr = PeacemakrKey_new_from_master(config.getInternal(), master.internalRepr, UnsafePointer(bytes), bytes.count)!
   }
 
-    // TODO: WTF why does this segfault xcode
-//  public init(config: CryptoConfig, fileContents: String, is_priv: Bool) throws {
-//    internalRepr = PeacemakrKey_new_pem(config.getInternal(), UnsafePointer(fileContents), fileContents.count, is_priv)!
-//  }
+  public init(config: CryptoConfig, fileContents: [CChar], is_priv: Bool) throws {
+    internalRepr = PeacemakrKey_new_pem(config.getInternal(), UnsafePointer(fileContents), fileContents.count, is_priv)!
+  }
 
   deinit {
     PeacemakrKey_free(internalRepr)
