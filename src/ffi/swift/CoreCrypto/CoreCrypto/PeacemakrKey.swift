@@ -15,7 +15,7 @@ public enum PeacemakrKeyError: Error {
 }
 
 public class PeacemakrKey {
-  var internalRepr: OpaquePointer
+  let internalRepr: OpaquePointer
     
   public init(config: CryptoConfig, rand: RandomDevice) throws {
     var randInternal = rand.getInternal()

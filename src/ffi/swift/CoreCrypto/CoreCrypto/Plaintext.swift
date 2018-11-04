@@ -3,12 +3,11 @@
 //
 
 import Foundation
-
 import libCoreCrypto
 
 public class Plaintext {
-  let data: [UInt8]
-  let aad: [UInt8]
+  private let data: [UInt8]
+  private let aad: [UInt8]
 
   public init(data: [UInt8], aad: [UInt8]) {
     self.data = data
@@ -18,6 +17,14 @@ public class Plaintext {
   public init(data: String, aad: String) {
     self.data = Array(data.utf8)
     self.aad = Array(aad.utf8)
+  }
+  
+  public var Data: [UInt8] {
+    return self.data
+  }
+  
+  public var AAD: [UInt8] {
+    return self.aad
   }
 
   init(cstyle: plaintext_t) {

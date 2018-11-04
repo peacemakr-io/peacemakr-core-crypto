@@ -20,14 +20,14 @@ public class RandomDevice {
   }
 }
 
-class DefaultRandomDevice: RandomDevice {
-  override func getGenerator() -> rng_buf {
+public class DefaultRandomDevice: RandomDevice {
+  public override func getGenerator() -> rng_buf {
     return { bytes, count in
       return SecRandomCopyBytes(kSecRandomDefault, count, bytes!)
     }
   }
 
-  override func getErrGenerator() -> rng_err {
+  public override func getErrGenerator() -> rng_err {
     return { code in
         switch code {
         case 0:

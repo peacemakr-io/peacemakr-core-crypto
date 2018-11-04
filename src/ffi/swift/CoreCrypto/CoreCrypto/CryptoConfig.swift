@@ -53,6 +53,22 @@ public class CryptoConfig {
     )
   }
 
+  public var Mode: EncryptionMode {
+    return EncryptionMode(rawValue: internalRepr.mode.rawValue)!
+  }
+
+  public var SymmCipher: SymmetricCipher {
+    return SymmetricCipher(rawValue: internalRepr.symm_cipher.rawValue)!
+  }
+
+  public var AsymmCipher: AsymmetricCipher {
+    return AsymmetricCipher(rawValue: internalRepr.asymm_cipher.rawValue)!
+  }
+
+  public var DigestAlgorithm: MessageDigestAlgorithm {
+    return MessageDigestAlgorithm(rawValue: internalRepr.digest_algorithm.rawValue)!
+  }
+
   func getInternal() -> crypto_config_t {
     return internalRepr
   }
