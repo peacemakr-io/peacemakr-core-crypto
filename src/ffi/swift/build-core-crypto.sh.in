@@ -6,12 +6,12 @@ rm -rf build-sim build-ios include lib
 
 mkdir -p build-sim && pushd build-sim
 cmake -G Xcode @SOURCE_CMAKE_DIR@ -DCMAKE_BUILD_TYPE=RELEASE -DOPENSSL_ROOT_DIR=@OPENSSL_ROOT_DIR@ -DOPENSSL_LIBRARIES=@OPENSSL_LIB_DIR@ -DPEACEMAKR_BUILD_IOS=ON -DPEACEMAKR_BUILD_CPP=OFF -DCMAKE_TOOLCHAIN_FILE=@CMAKE_IOS_TOOLCHAIN_FILE@ -DIOS_PLATFORM="SIMULATOR"
-xcodebuild OTHER_CFLAGS="-miphoneos-version-min=8.1" OTHER_LDFLAGS="-miphoneos-version-min=8.1 -L@OPENSSL_LIB_DIR@ -lssl -lcrypto"
+xcodebuild ONLY_ACTIVE_ARCH=NO -configuration Release OTHER_CFLAGS="-miphoneos-version-min=8.1" OTHER_LDFLAGS="-miphoneos-version-min=8.1 -L@OPENSSL_LIB_DIR@ -lssl -lcrypto"
 popd
 
 mkdir -p build-ios && pushd build-ios
 cmake -G Xcode @SOURCE_CMAKE_DIR@ -DCMAKE_BUILD_TYPE=RELEASE -DOPENSSL_ROOT_DIR=@OPENSSL_ROOT_DIR@ -DOPENSSL_LIBRARIES=@OPENSSL_LIB_DIR@ -DPEACEMAKR_BUILD_IOS=ON -DPEACEMAKR_BUILD_CPP=OFF -DCMAKE_TOOLCHAIN_FILE=@CMAKE_IOS_TOOLCHAIN_FILE@ -DIOS_PLATFORM="OS"
-xcodebuild OTHER_CFLAGS="-miphoneos-version-min=8.1" OTHER_LDFLAGS="-miphoneos-version-min=8.1 -L@OPENSSL_LIB_DIR@ -lssl -lcrypto"
+xcodebuild ONLY_ACTIVE_ARCH=NO -configuration Release OTHER_CFLAGS="-miphoneos-version-min=8.1" OTHER_LDFLAGS="-miphoneos-version-min=8.1 -L@OPENSSL_LIB_DIR@ -lssl -lcrypto"
 popd
 
 function pack_for ()
@@ -25,7 +25,7 @@ function pack_for ()
 	-output @FAT_CORE_LIB_DIR@/lib${LIBNAME}.dylib -create
 }
 
-pack_for peacemakr-core-crypto Debug || exit 1
+pack_for peacemakr-core-crypto Release || exit 1
 
 mkdir -p @CORE_LIB_INCLUDE@
 cp -r @CMAKE_SOURCE_DIR@/src/core/include/peacemakr @CORE_LIB_INCLUDE@

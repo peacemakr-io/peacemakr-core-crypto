@@ -20,21 +20,23 @@ sh build-core-crypto.sh
 popd
 
 pushd src/ffi/swift/CoreCrypto
-xcodebuild -project CoreCrypto.xcodeproj -scheme CoreCrypto -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 6,OS=12.1' test
-xcodebuild -project CoreCrypto.xcodeproj -miphoneos-version-min=8.1 -sdk iphoneos
-xcodebuild -project CoreCrypto.xcodeproj -miphoneos-version-min=8.1 -arch x86_64 ONLY_ACTIVE_ARCH=NO -sdk iphonesimulator
+#xcodebuild -project CoreCrypto.xcodeproj -scheme CoreCrypto -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 6,OS=12.1' test
+xcodebuild -project CoreCrypto.xcodeproj ONLY_ACTIVE_ARCH=NO -configuration Release -miphoneos-version-min=8.1 -sdk iphoneos build
+xcodebuild -project CoreCrypto.xcodeproj ONLY_ACTIVE_ARCH=NO -configuration Release -miphoneos-version-min=8.1 -sdk iphonesimulator build
 popd
 
 mkdir -p src/ffi/swift/CoreCrypto/universal
 pushd src/ffi/swift/CoreCrypto/universal
+rm -rf CoreCrypto.framework || true
 cp -R ../build/Release-iphoneos/CoreCrypto.framework .
-cp ../build/Release-iphonesimulator/CoreCrypto.framework/Modules/CoreCrypto.swiftmodule/x86_64* CoreCrypto.framework/Modules/CoreCrypto.swiftmodule
-defaults write $(pwd)/CoreCrypto.framework/Info.plist "CFBundleSupportedPlatforms" -array-add '<string>iPhoneSimulator</string>'
+cp ../build/Release-iphonesimulator/CoreCrypto.framework/Modules/CoreCrypto.swiftmodule/* CoreCrypto.framework/Modules/CoreCrypto.swiftmodule
+defaults write $(pwd)/CoreCrypto.framework/Info.plist CFBundleSupportedPlatforms -array-add "iPhoneSimulator"
 lipo -create -output "CoreCrypto.framework/CoreCrypto" "../build/Release-iphoneos/CoreCrypto.framework/CoreCrypto" "../build/Release-iphonesimulator/CoreCrypto.framework/CoreCrypto"
 
 # copy debug info
 cp -R ../build/Release-iphoneos/CoreCrypto.framework.dSYM .
 lipo -create -output "CoreCrypto.framework.dSYM/Contents/Resources/DWARF/CoreCrypto" "../build/Release-iphoneos/CoreCrypto.framework.dSYM/Contents/Resources/DWARF/CoreCrypto" "../build/Release-iphonesimulator/CoreCrypto.framework.dSYM/Contents/Resources/DWARF/CoreCrypto"
+
 rm -rf ../build
 popd
 
