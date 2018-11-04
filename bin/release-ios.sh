@@ -28,7 +28,13 @@ popd
 mkdir -p src/ffi/swift/CoreCrypto/universal
 pushd src/ffi/swift/CoreCrypto/universal
 cp -R ../build/Release-iphoneos/CoreCrypto.framework .
+cp ../build/Release-iphonesimulator/CoreCrypto.framework/Modules/CoreCrypto.swiftmodule/x86_64* CoreCrypto.framework/Modules/CoreCrypto.swiftmodule
+defaults write $(pwd)/CoreCrypto.framework/Info.plist "CFBundleSupportedPlatforms" -array-add '<string>iPhoneSimulator</string>'
 lipo -create -output "CoreCrypto.framework/CoreCrypto" "../build/Release-iphoneos/CoreCrypto.framework/CoreCrypto" "../build/Release-iphonesimulator/CoreCrypto.framework/CoreCrypto"
+
+# copy debug info
+cp -R ../build/Release-iphoneos/CoreCrypto.framework.dSYM .
+lipo -create -output "CoreCrypto.framework.dSYM/Contents/Resources/DWARF/CoreCrypto" "../build/Release-iphoneos/CoreCrypto.framework.dSYM/Contents/Resources/DWARF/CoreCrypto" "../build/Release-iphonesimulator/CoreCrypto.framework.dSYM/Contents/Resources/DWARF/CoreCrypto"
 rm -rf ../build
 popd
 

@@ -4,3 +4,4 @@ libCoreCrypto/*
 openssl*.tar.gz
 openssl-build/
 openssl-*/
+universal/
