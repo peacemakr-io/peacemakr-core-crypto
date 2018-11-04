@@ -6,28 +6,34 @@ import Foundation
 
 import libCoreCrypto
 
-public class RandomDevice {
-  public func getGenerator() -> rng_buf? {
+public typealias RNGBuf = rng_buf
+public typealias RNGErr = rng_err
+
+open class RandomDevice {
+  public init() {}
+
+  open var Generator: RNGBuf? {
     return nil
   }
 
-  public func getErrGenerator() -> rng_err? {
+  open var Err: RNGErr? {
     return nil
   }
 
   func getInternal() -> random_device_t {
-    return random_device_t(generator: self.getGenerator()!, err: self.getErrGenerator()!)
+    return random_device_t(generator: self.Generator!, err: self.Err!)
   }
 }
 
-public class DefaultRandomDevice: RandomDevice {
-  public override func getGenerator() -> rng_buf {
+final class DefaultRandomDevice: RandomDevice {
+
+  override var Generator: RNGBuf {
     return { bytes, count in
       return SecRandomCopyBytes(kSecRandomDefault, count, bytes!)
     }
   }
 
-  public override func getErrGenerator() -> rng_err {
+  override var Err: RNGErr {
     return { code in
         switch code {
         case 0:
@@ -37,4 +43,5 @@ public class DefaultRandomDevice: RandomDevice {
         }
     }
   }
+
 }

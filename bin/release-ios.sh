@@ -2,7 +2,15 @@
 
 set -ex
 
+if [ $# -eq 0 ]; then
+    OUTPUT_DIR=src/ffi/swift/CoreCrypto/universal
+else
+    OUTPUT_DIR=$1
+fi
+
 pushd ..
+
+PROJECT_SRC=$(pwd)
 
 pushd src/ffi/swift/openssl
 ./build-openssl.sh
@@ -15,29 +23,29 @@ cmake .. -DPEACEMAKR_BUILD_CPP=OFF -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl@1.1
 make install
 popd
 
-pushd src/ffi/swift/libCoreCrypto
+pushd ${PROJECT_SRC}/src/ffi/swift/libCoreCrypto
 sh build-core-crypto.sh
 popd
 
-pushd src/ffi/swift/CoreCrypto
+pushd ${PROJECT_SRC}/src/ffi/swift/CoreCrypto
 xcodebuild -project CoreCrypto.xcodeproj -scheme CoreCrypto -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 6,OS=12.1' test
 xcodebuild -project CoreCrypto.xcodeproj ONLY_ACTIVE_ARCH=NO -configuration Release -miphoneos-version-min=8.1 -sdk iphoneos build
 xcodebuild -project CoreCrypto.xcodeproj ONLY_ACTIVE_ARCH=NO -configuration Release -miphoneos-version-min=8.1 -sdk iphonesimulator build
 popd
 
-mkdir -p src/ffi/swift/CoreCrypto/universal
-pushd src/ffi/swift/CoreCrypto/universal
+mkdir -p ${OUTPUT_DIR}
+pushd ${OUTPUT_DIR}
 rm -rf CoreCrypto.framework || true
-cp -R ../build/Release-iphoneos/CoreCrypto.framework .
-cp ../build/Release-iphonesimulator/CoreCrypto.framework/Modules/CoreCrypto.swiftmodule/* CoreCrypto.framework/Modules/CoreCrypto.swiftmodule
-defaults write $(pwd)/CoreCrypto.framework/Info.plist CFBundleSupportedPlatforms -array-add "iPhoneSimulator"
-lipo -create -output "CoreCrypto.framework/CoreCrypto" "../build/Release-iphoneos/CoreCrypto.framework/CoreCrypto" "../build/Release-iphonesimulator/CoreCrypto.framework/CoreCrypto"
+cp -R ${PROJECT_SRC}/src/ffi/swift/CoreCrypto/build/Release-iphoneos/CoreCrypto.framework .
+cp ${PROJECT_SRC}/src/ffi/swift/CoreCrypto/build/Release-iphonesimulator/CoreCrypto.framework/Modules/CoreCrypto.swiftmodule/* ${OUTPUT_DIR}/CoreCrypto.framework/Modules/CoreCrypto.swiftmodule
+defaults write ${OUTPUT_DIR}/CoreCrypto.framework/Info.plist CFBundleSupportedPlatforms -array-add "iPhoneSimulator"
+lipo -create -output "CoreCrypto.framework/CoreCrypto" "${PROJECT_SRC}/src/ffi/swift/CoreCrypto/build/Release-iphoneos/CoreCrypto.framework/CoreCrypto" "${PROJECT_SRC}/src/ffi/swift/CoreCrypto/build/Release-iphonesimulator/CoreCrypto.framework/CoreCrypto"
 
 # copy debug info
-cp -R ../build/Release-iphoneos/CoreCrypto.framework.dSYM .
-lipo -create -output "CoreCrypto.framework.dSYM/Contents/Resources/DWARF/CoreCrypto" "../build/Release-iphoneos/CoreCrypto.framework.dSYM/Contents/Resources/DWARF/CoreCrypto" "../build/Release-iphonesimulator/CoreCrypto.framework.dSYM/Contents/Resources/DWARF/CoreCrypto"
+cp -R ${PROJECT_SRC}/src/ffi/swift/CoreCrypto/build/Release-iphoneos/CoreCrypto.framework.dSYM .
+lipo -create -output "CoreCrypto.framework.dSYM/Contents/Resources/DWARF/CoreCrypto" "${PROJECT_SRC}/src/ffi/swift/CoreCrypto/build/Release-iphoneos/CoreCrypto.framework.dSYM/Contents/Resources/DWARF/CoreCrypto" "${PROJECT_SRC}/src/ffi/swift/CoreCrypto/build/Release-iphonesimulator/CoreCrypto.framework.dSYM/Contents/Resources/DWARF/CoreCrypto"
 
-rm -rf ../build
+rm -rf ${PROJECT_SRC}/src/ffi/swift/CoreCrypto/build
 popd
 
 popd
