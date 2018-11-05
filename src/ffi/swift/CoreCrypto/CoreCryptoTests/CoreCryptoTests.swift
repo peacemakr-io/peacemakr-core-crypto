@@ -29,11 +29,11 @@ class CoreCryptoTests: XCTestCase {
     let encrypted = try? context!.Encrypt(key: key!, plaintext: plaintextIn, rand: device)
     XCTAssert(encrypted != nil, "Something failed in Encryption")
     let unverfiedAAD = try? context!.ExtractUnverifiedAAD(serialized: encrypted!)
-    XCTAssert(unverfiedAAD!.AAD == plaintextIn.AAD, "Something failed in ExtractUnverfiedAAD")
+    XCTAssert(unverfiedAAD!.AuthenticatableData == plaintextIn.AuthenticatableData, "Something failed in ExtractUnverfiedAAD")
     let decrypted = try? context!.Decrypt(key: key!, serialized: encrypted!)
     XCTAssert(decrypted != nil, "Something failed in Decryption")
-    XCTAssert(decrypted!.Data == plaintextIn.Data)
-    XCTAssert(decrypted!.AAD == plaintextIn.AAD)
+    XCTAssert(decrypted!.EncryptableData == plaintextIn.EncryptableData)
+    XCTAssert(decrypted!.AuthenticatableData == plaintextIn.AuthenticatableData)
     
   }
 

@@ -5,6 +5,11 @@
 import Foundation
 import libCoreCrypto
 
+/**
+ Thin Swift wrapper around the peacemakr C type plaintext_t. Uses
+ Arrays of UInt8 to match as closely as possible while still staying
+ in Swift-land.
+ */
 public class Plaintext {
   private let data: [UInt8]
   private let aad: [UInt8]
@@ -19,11 +24,11 @@ public class Plaintext {
     self.aad = Array(aad.utf8)
   }
   
-  public var Data: [UInt8] {
+  public var EncryptableData: [UInt8] {
     return self.data
   }
   
-  public var AAD: [UInt8] {
+  public var AuthenticatableData: [UInt8] {
     return self.aad
   }
 
