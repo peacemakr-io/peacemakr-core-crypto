@@ -10,11 +10,24 @@ import Foundation
 
 import libCoreCrypto
 
+/**
+ Configures the encryption mode for the Peacemakr CoreCrypto library. Selects
+ Symmetric key or Asymmetric key cryptography.
+ */
 public enum EncryptionMode: UInt32, CaseIterable {
   case SYMMETRIC = 0
   case ASYMMETRIC = 1
 }
 
+/**
+ The Peacemakr library encrypts messages in 2 modes:
+ (1) Symmetric cryptography, in which case this enum chooses
+     the cipher to use
+ (2) Asymmetric cryptography, in which case the public key will
+     be used to encrypt a symmetric key (this enum chooses the
+     algorithm) that will encrypt the message for performance
+     reasons.
+ */
 public enum SymmetricCipher: UInt32, CaseIterable {
   case AES_128_GCM = 0
   case AES_192_GCM = 1
@@ -22,10 +35,20 @@ public enum SymmetricCipher: UInt32, CaseIterable {
   case CHACHA20_POLY1305 = 3
 }
 
+/**
+ This enum selects the Asymmetric crypto algorithm to use
+ for a given cryptographic operation.
+ NONE is appropriate when the EncryptionMode is SYMMETRIC.
+ */
 public enum AsymmetricCipher: UInt32, CaseIterable {
   case NONE = 0, RSA_2048 = 1, RSA_4096 = 2
 }
 
+/**
+ The Peacemakr CoreCrypto library will digest a serialized
+ message to prevent tampering and errors due to corruption.
+ This enum selects the hash function that will be used.
+ */
 public enum MessageDigestAlgorithm: UInt32, CaseIterable {
   case SHA_224 = 0
   case SHA_256 = 1

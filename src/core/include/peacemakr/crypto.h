@@ -223,6 +223,8 @@ uint8_t *peacemakr_hmac(const message_digest_algorithm digest_algorithm,
                         const peacemakr_key_t *master_key, const uint8_t *buf,
                         const size_t buf_len, size_t *out_bytes);
 
+// TODO: should calculate HMAC instead of just hash? In which case, should move
+// serialize/deserialize into encrypt/decrypt respectively
 /**
  * Serializes \p cipher into a \return Base64 encoded buffer. Stores the size of
  * said buffer into \p out_size. The caller is responsible for managing
