@@ -150,17 +150,21 @@ peacemakr_key_t *API(new_from_master)(crypto_config_t cfg,
                                       const size_t key_id_len) {
   EXPECT_TRUE_RET((cfg.mode == SYMMETRIC),
                   "Can't set a raw bytes for asymmetric crypto\n");
-  EXPECT_TRUE_RET(
-      (cfg.symm_cipher == AES_256_GCM || cfg.symm_cipher == CHACHA20_POLY1305),
-      "Only support generating keys from master for AES-256-GCM and ChaCha20 "
-      "ciphers\n");
 
   const EVP_CIPHER *cipher = parse_cipher(cfg.symm_cipher);
   size_t keylen = (size_t)EVP_CIPHER_key_length(cipher);
-
+  uint8_t *keybytes = NULL;
   // Compute HMAC
-  uint8_t *keybytes =
-      peacemakr_hmac(SHA3_256, master_key, key_id, key_id_len, NULL);
+  switch (cfg.symm_cipher) {
+    case AES_256_GCM:
+    case CHACHA20_POLY1305:
+      keybytes = peacemakr_hmac(SHA3_256, master_key, key_id, key_id_len, NULL);
+      break;
+    default:
+      PEACEMAKR_LOG("Unsupported symmetric cipher for HMAC key generation\n");
+      return NULL;
+  }
+
   peacemakr_key_t *out = PeacemakrKey_new_bytes(cfg, keybytes, keylen);
   free(keybytes);
 
