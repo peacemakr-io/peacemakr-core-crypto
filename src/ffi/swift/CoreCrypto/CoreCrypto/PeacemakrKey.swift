@@ -31,7 +31,11 @@ public class PeacemakrKey {
   }
 
   public init(config: CryptoConfig, fileContents: [CChar], is_priv: Bool) throws {
-    internalRepr = PeacemakrKey_new_pem(config.getInternal(), UnsafePointer(fileContents), fileContents.count, is_priv)!
+    if is_priv {
+      internalRepr = PeacemakrKey_new_pem_priv(config.getInternal(), UnsafePointer(fileContents), fileContents.count)!
+    } else {
+      internalRepr = PeacemakrKey_new_pem_pub(config.getInternal(), UnsafePointer(fileContents), fileContents.count)!
+    }
   }
 
   deinit {
