@@ -177,7 +177,7 @@ peacemakr_key_t *API(new_pem)(crypto_config_t cfg, const char *buf,
   EXPECT_TRUE_RET((buf != NULL && buflen > 0),
                   "buf was null or buflen was 0\n");
   EXPECT_TRUE_RET((buflen <= INT_MAX),
-                  "Length of passed master key is greater than INT_MAX\n");
+                  "Length of passed pem file is greater than INT_MAX\n");
   EXPECT_TRUE_RET((cfg.mode == ASYMMETRIC),
                   "Can't set a new EVP_PKEY for symmetric crypto\n");
 
@@ -244,7 +244,7 @@ crypto_config_t API(get_config)(const peacemakr_key_t *key) {
 const buffer_t *API(symmetric)(const peacemakr_key_t *key) {
   EXPECT_TRUE_RET(
       (key->m_cfg_.mode == SYMMETRIC),
-      "Attempting to access the symmetric part of an asymmetric key\n");
+      "Attempting to access the asymmetric part of a symmetric key\n");
 
   return key->m_contents_.symm;
 }
