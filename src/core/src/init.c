@@ -12,6 +12,7 @@
 #ifdef linux
 #include <bsd/stdlib.h>
 #endif
+#include <stdio.h>
 #include <stdlib.h>
 
 bool peacemakr_init() {

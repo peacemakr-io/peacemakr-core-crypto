@@ -158,14 +158,13 @@ func TestAsymmetricEncrypt(t *testing.T) {
 
 				AAD, success := ExtractUnverifiedAAD(ciphertext)
 				if !success {
-				    DestroyPeacemakrKey(key)
-                    t.Fatalf("Extract failed")
+					DestroyPeacemakrKey(key)
+					t.Fatalf("Extract failed")
 				}
 				if !bytes.Equal(plaintextIn.Aad, AAD) {
-                    DestroyPeacemakrKey(key)
-                    t.Fatalf("extracted aad did not match")
-                }
-
+					DestroyPeacemakrKey(key)
+					t.Fatalf("extracted aad did not match")
+				}
 
 				plaintextOut, success := Decrypt(key, ciphertext)
 				if !success {
@@ -214,14 +213,14 @@ func TestAsymmetricEncryptFromPem(t *testing.T) {
 			}
 
 			AAD, success := ExtractUnverifiedAAD(ciphertext)
-            if !success {
-                DestroyPeacemakrKey(pubkey)
-                t.Fatalf("Extract failed")
-            }
-            if !bytes.Equal(plaintextIn.Aad, AAD) {
-                DestroyPeacemakrKey(pubkey)
-                t.Fatalf("extracted aad did not match")
-            }
+			if !success {
+				DestroyPeacemakrKey(pubkey)
+				t.Fatalf("Extract failed")
+			}
+			if !bytes.Equal(plaintextIn.Aad, AAD) {
+				DestroyPeacemakrKey(pubkey)
+				t.Fatalf("extracted aad did not match")
+			}
 
 			privkey := NewPeacemakrKeyFromPrivPem(cfg, GetPrivKey())
 
@@ -290,16 +289,16 @@ func TestAsymmetricEncryptFromRandomPem(t *testing.T) {
 				}
 
 				AAD, success := ExtractUnverifiedAAD(ciphertext)
-                if !success {
-                    DestroyPeacemakrKey(pubkey)
-                    DestroyPeacemakrKey(privkey)
-                    t.Fatalf("Extract failed")
-                }
-                if !bytes.Equal(plaintextIn.Aad, AAD) {
-                    DestroyPeacemakrKey(pubkey)
-                    DestroyPeacemakrKey(privkey)
-                    t.Fatalf("plaintext data did not match")
-                }
+				if !success {
+					DestroyPeacemakrKey(pubkey)
+					DestroyPeacemakrKey(privkey)
+					t.Fatalf("Extract failed")
+				}
+				if !bytes.Equal(plaintextIn.Aad, AAD) {
+					DestroyPeacemakrKey(pubkey)
+					DestroyPeacemakrKey(privkey)
+					t.Fatalf("plaintext data did not match")
+				}
 
 				plaintextOut, success := Decrypt(privkey, ciphertext)
 				if !success {
@@ -341,7 +340,13 @@ func TestSymmetricEncrypt(t *testing.T) {
 
 		randomDevice := NewRandomDevice()
 
-		key := NewPeacemakrKey(cfg, randomDevice)
+		var key PeacemakrKey
+		if j == AES_256_GCM || j == CHACHA20_POLY1305 {
+			masterKey := NewPeacemakrKey(cfg, randomDevice)
+			key = NewPeacemakrKeyFromMasterKey(cfg, masterKey, []byte("abcdefghijklmnop"))
+		} else {
+			key = NewPeacemakrKey(cfg, randomDevice)
+		}
 
 		ciphertext, err := Encrypt(key, plaintextIn, randomDevice)
 		if err != nil {
@@ -350,14 +355,14 @@ func TestSymmetricEncrypt(t *testing.T) {
 		}
 
 		AAD, success := ExtractUnverifiedAAD(ciphertext)
-        if !success {
-            DestroyPeacemakrKey(key)
-            t.Fatalf("Extract failed")
-        }
-        if !bytes.Equal(plaintextIn.Aad, AAD) {
-            DestroyPeacemakrKey(key)
-            t.Fatalf("extracted aad did not match")
-        }
+		if !success {
+			DestroyPeacemakrKey(key)
+			t.Fatalf("Extract failed")
+		}
+		if !bytes.Equal(plaintextIn.Aad, AAD) {
+			DestroyPeacemakrKey(key)
+			t.Fatalf("extracted aad did not match")
+		}
 
 		plaintextOut, success := Decrypt(key, ciphertext)
 		if !success {
@@ -412,14 +417,14 @@ func TestSerialize(t *testing.T) {
 					}
 
 					AAD, success := ExtractUnverifiedAAD(ciphertext)
-                    if !success {
-                        DestroyPeacemakrKey(key)
-                        t.Fatalf("Extract failed")
-                    }
-                    if !bytes.Equal(plaintextIn.Aad, AAD) {
-                        DestroyPeacemakrKey(key)
-                        t.Fatalf("extracted aad did not match")
-                    }
+					if !success {
+						DestroyPeacemakrKey(key)
+						t.Fatalf("Extract failed")
+					}
+					if !bytes.Equal(plaintextIn.Aad, AAD) {
+						DestroyPeacemakrKey(key)
+						t.Fatalf("extracted aad did not match")
+					}
 
 					plaintextOut, success := Decrypt(key, ciphertext)
 					if !success {

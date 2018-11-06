@@ -68,7 +68,7 @@ int main() {
 
   for (int i = RSA_2048; i <= RSA_4096; ++i) {
     for (int j = AES_128_GCM; j <= CHACHA20_POLY1305; ++j) {
-      for (int k = SHA_224; k <= SHA_512; k++) {
+      for (int k = SHA_224; k <= SHA3_512; k++) {
         test_serialize(j, i, k);
       }
     }

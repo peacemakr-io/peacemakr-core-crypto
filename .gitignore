@@ -5,6 +5,8 @@ archive/
 *.def
 docs/
 
+venv/
+
 **/.project
 
 CMakeFiles/

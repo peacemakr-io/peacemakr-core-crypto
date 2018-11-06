@@ -1,0 +1,6 @@
+module libCoreCrypto {
+  header "@CORE_LIB_INCLUDE@/peacemakr/crypto.h"
+  header "@CORE_LIB_INCLUDE@/peacemakr/random.h"
+  link "peacemakr-core-crypto"
+  export *
+}

@@ -62,7 +62,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/peacemakr-core-crypto-config.cm
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/peacemakr-core-crypto-config-version.cmake.in
         "${CMAKE_BINARY_DIR}/peacemakr-core-crypto-config-version.cmake" @ONLY)
 
-# Install the FooBarConfig.cmake and FooBarConfigVersion.cmake
+# Install the *-config.cmake and *-config-version.cmake
 install(FILES
         "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/peacemakr-core-crypto-config.cmake"
         "${CMAKE_BINARY_DIR}/peacemakr-core-crypto-config-version.cmake"
