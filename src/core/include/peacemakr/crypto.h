@@ -163,12 +163,22 @@ peacemakr_key_t *PeacemakrKey_new_from_master(crypto_config_t cfg,
 /**
  * Create a new peacemakr_key_t from a pem file generated externally. This
  * function applies only to asymmetric encryption provided by this library,
- * and the pem file must be of a private key if \p is_priv is true.
- * Uses \p cfg to configure the key being created. \returns A newly
- * created peacemakr key for use in other library calls.
+ * and the pem file must be of a public key. Uses \p cfg to configure
+ * the key being created. \returns A newly created peacemakr key for use
+ * in other library calls.
  */
-peacemakr_key_t *PeacemakrKey_new_pem(crypto_config_t cfg, const char *buf,
-                                      size_t buflen, bool is_priv);
+peacemakr_key_t *PeacemakrKey_new_pem_pub(crypto_config_t cfg, const char *buf,
+                                          size_t buflen);
+
+/**
+ * Create a new peacemakr_key_t from a pem file generated externally. This
+ * function applies only to asymmetric encryption provided by this library,
+ * and the pem file must be of a private key. Uses \p cfg to configure
+ * the key being created. \returns A newly created peacemakr key for use
+ * in other library calls.
+ */
+peacemakr_key_t *PeacemakrKey_new_pem_priv(crypto_config_t cfg, const char *buf,
+                                           size_t buflen);
 
 /**
  * Gets the crypto_config_t used to create \p key from \p key.

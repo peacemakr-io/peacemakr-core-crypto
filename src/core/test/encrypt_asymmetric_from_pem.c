@@ -41,13 +41,13 @@ void test_symmetric_algo(symmetric_cipher symm_cipher,
           .err = &rand_err
   };
 
-  peacemakr_key_t *pubkey = PeacemakrKey_new_pem(cfg, pubkey_buf, pubkey_len, false);
+  peacemakr_key_t *pubkey = PeacemakrKey_new_pem_pub(cfg, pubkey_buf, pubkey_len);
 
   ciphertext_blob_t *ciphertext = peacemakr_encrypt(pubkey, &plaintext_in, &rand);
   assert(ciphertext != NULL);
   PeacemakrKey_free(pubkey);
 
-  peacemakr_key_t *privkey = PeacemakrKey_new_pem(cfg, privkey_buf, privkey_len, true);
+  peacemakr_key_t *privkey = PeacemakrKey_new_pem_priv(cfg, privkey_buf, privkey_len);
   bool success = peacemakr_decrypt(privkey, ciphertext, &plaintext_out);
 
   assert(success);

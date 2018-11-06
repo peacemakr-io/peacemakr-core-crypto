@@ -159,7 +159,8 @@ peacemakr_key_t *API(new_from_master)(crypto_config_t cfg,
   size_t keylen = (size_t)EVP_CIPHER_key_length(cipher);
 
   // Compute HMAC
-  uint8_t *keybytes = peacemakr_hmac(SHA3_256, master_key, key_id, key_id_len, NULL);
+  uint8_t *keybytes =
+      peacemakr_hmac(SHA3_256, master_key, key_id, key_id_len, NULL);
   peacemakr_key_t *out = API(new_bytes)(cfg, keybytes, keylen);
   free(keybytes);
 
@@ -205,33 +206,14 @@ peacemakr_key_t *API(new_pem)(crypto_config_t cfg, const char *buf,
   return out;
 }
 
+peacemakr_key_t *API(new_pem_pub)(crypto_config_t cfg, const char *buf,
+                                  const size_t buflen) {
+  return API(new_pem)(cfg, buf, buflen, false);
+}
+
 peacemakr_key_t *API(new_pem_priv)(crypto_config_t cfg, const char *buf,
                                    const size_t buflen) {
-
-  EXPECT_TRUE_RET((buf != NULL && buflen != 0),
-                  "buf was null or buflen was 0\n");
-  EXPECT_TRUE_RET((buflen <= INT_MAX),
-                  "Length of passed master key is greater than INT_MAX\n");
-  EXPECT_TRUE_RET((cfg.mode == ASYMMETRIC),
-                  "Can't set a new EVP_PKEY for symmetric crypto\n");
-
-  peacemakr_key_t *out = malloc(sizeof(peacemakr_key_t));
-  out->m_cfg_ = cfg;
-  out->m_contents_.asymm = NULL;
-
-  BIO *bo = BIO_new_mem_buf(buf, (int)buflen);
-
-  out->m_contents_.asymm = PEM_read_bio_PrivateKey(bo, NULL, NULL, NULL);
-  EXPECT_NOT_NULL_CLEANUP_RET(out->m_contents_.asymm,
-                              {
-                                BIO_free(bo);
-                                API(free)(out);
-                              },
-                              "PEM_read_bio_PrivateKey failed\n");
-
-  BIO_free(bo);
-
-  return out;
+  return API(new_pem)(cfg, buf, buflen, true);
 }
 
 void API(free)(peacemakr_key_t *key) {
