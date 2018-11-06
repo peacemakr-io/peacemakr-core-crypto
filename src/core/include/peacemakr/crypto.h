@@ -209,8 +209,9 @@ bool peacemakr_decrypt(const peacemakr_key_t *key, ciphertext_blob_t *cipher,
  * returns it to the caller with the HMAC stored inside. The length of the
  * output is guaranteed to be 256 bits.
  */
-uint8_t *peacemakr_hmac_256(const peacemakr_key_t *master_key,
-                            const uint8_t *buf, const size_t buf_len);
+uint8_t *peacemakr_hmac(const message_digest_algorithm digest_algorithm,
+                        const peacemakr_key_t *master_key, const uint8_t *buf,
+                        const size_t buf_len, size_t *out_bytes);
 
 /**
  * Serializes \p cipher into a \return Base64 encoded buffer. Stores the size of

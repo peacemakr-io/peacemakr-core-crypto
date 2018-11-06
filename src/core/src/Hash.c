@@ -15,8 +15,9 @@
 
 #include <openssl/hmac.h>
 
-uint8_t *peacemakr_hmac_256(const peacemakr_key_t *master_key,
-                            const uint8_t *buf, const size_t buf_len) {
+uint8_t *peacemakr_hmac(const message_digest_algorithm digest_algorithm,
+                        const peacemakr_key_t *master_key, const uint8_t *buf,
+                        const size_t buf_len, size_t *out_bytes) {
 
   EXPECT_NOT_NULL_RET(master_key, "Master key was NULL\n");
   const buffer_t *master_key_buf = PeacemakrKey_symmetric(master_key);
@@ -29,10 +30,15 @@ uint8_t *peacemakr_hmac_256(const peacemakr_key_t *master_key,
   // Generate the key
   uint8_t *result = calloc(256 / sizeof(uint8_t), sizeof(uint8_t));
   uint32_t result_len = 0;
-  // Use HMAC SHA256 to generate the key using the master key and the key id
+
   const uint8_t *master_key_bytes = Buffer_get_bytes(master_key_buf, NULL);
-  HMAC(EVP_sha3_256(), master_key_bytes, (int)master_keylen, buf, buf_len,
-       result, &result_len);
+  HMAC(parse_digest(digest_algorithm), master_key_bytes, (int)master_keylen,
+       buf, buf_len, result, &result_len);
+
+  // Set the output length of the computed HMAC
+  if (out_bytes != NULL) {
+    *out_bytes = get_digest_len(digest_algorithm);
+  }
 
   return result;
 }
