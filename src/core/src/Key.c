@@ -161,7 +161,7 @@ peacemakr_key_t *API(new_from_master)(crypto_config_t cfg,
   // Compute HMAC
   uint8_t *keybytes =
       peacemakr_hmac(SHA3_256, master_key, key_id, key_id_len, NULL);
-  peacemakr_key_t *out = API(new_bytes)(cfg, keybytes, keylen);
+  peacemakr_key_t *out = PeacemakrKey_new_bytes(cfg, keybytes, keylen);
   free(keybytes);
 
   return out;
