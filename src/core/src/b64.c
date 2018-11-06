@@ -106,10 +106,10 @@ bool b64_isvalidchar(char c) {
 }
 
 bool b64_decode(const char *in, unsigned char *out, size_t outlen) {
-  size_t len;
-  size_t i;
-  size_t j;
-  int v;
+  size_t len = 0;
+  size_t i = 0;
+  size_t j = 0;
+  int v = 0;
 
   if (in == NULL || out == NULL) {
     PEACEMAKR_LOG("parameter was null\n");

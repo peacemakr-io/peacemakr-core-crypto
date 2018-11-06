@@ -11,8 +11,6 @@
 #include <cassert>
 #include <cstdio>
 #include <stdexcept>
-#include <crypto.hpp>
-
 
 peacemakr::RandomDevice::RandomDevice(rng_buf generator, rng_err err_handler)
     : m_rand_{.generator = generator, .err = err_handler} {}
@@ -40,12 +38,15 @@ peacemakr::Key::Key(crypto_config_t cfg, const std::vector<uint8_t> &bytes) {
   m_key_ = PeacemakrKey_new_bytes(cfg, bytes.data(), bytes.size());
 }
 
-peacemakr::Key::Key(crypto_config_t cfg, const peacemakr::Key &master, const uint8_t *bytes, const size_t num) {
+peacemakr::Key::Key(crypto_config_t cfg, const peacemakr::Key &master,
+                    const uint8_t *bytes, const size_t num) {
   m_key_ = PeacemakrKey_new_from_master(cfg, master.m_key_, bytes, num);
 }
 
-peacemakr::Key::Key(crypto_config_t cfg, const peacemakr::Key &master, const std::vector<uint8_t> &bytes) {
-  m_key_ = PeacemakrKey_new_from_master(cfg, master.m_key_, bytes.data(), bytes.size());
+peacemakr::Key::Key(crypto_config_t cfg, const peacemakr::Key &master,
+                    const std::vector<uint8_t> &bytes) {
+  m_key_ = PeacemakrKey_new_from_master(cfg, master.m_key_, bytes.data(),
+                                        bytes.size());
 }
 
 peacemakr::Key::Key(crypto_config_t cfg, const std::string &pem, bool priv) {

@@ -78,8 +78,10 @@ public:
   Key(crypto_config_t cfg, RandomDevice &rand);
   Key(crypto_config_t cfg, const uint8_t *bytes, const size_t num);
   Key(crypto_config_t cfg, const std::vector<uint8_t> &bytes);
-  Key(crypto_config_t cfg, const Key &master, const uint8_t *bytes, const size_t num);
-  Key(crypto_config_t cfg, const Key &master, const std::vector<uint8_t> &bytes);
+  Key(crypto_config_t cfg, const Key &master, const uint8_t *bytes,
+      const size_t num);
+  Key(crypto_config_t cfg, const Key &master,
+      const std::vector<uint8_t> &bytes);
   Key(crypto_config_t cfg, const std::string &pem, bool priv);
   //!\}
 
