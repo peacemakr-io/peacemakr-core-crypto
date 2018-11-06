@@ -28,16 +28,41 @@ uint8_t *peacemakr_hmac(const message_digest_algorithm digest_algorithm,
                   "buf is null or its length was 0\n");
 
   // Generate the key
-  uint8_t *result = calloc(256 / sizeof(uint8_t), sizeof(uint8_t));
+  uint8_t *result = calloc(get_digest_len(digest_algorithm) / sizeof(uint8_t),
+                           sizeof(uint8_t));
   uint32_t result_len = 0;
 
   const uint8_t *master_key_bytes = Buffer_get_bytes(master_key_buf, NULL);
-  HMAC(parse_digest(digest_algorithm), master_key_bytes, (int)master_keylen,
-       buf, buf_len, result, &result_len);
+  // Easy path if there's not much data
+  if (buf_len <= INT_MAX) {
+    HMAC(parse_digest(digest_algorithm), master_key_bytes, (int)master_keylen,
+         buf, buf_len, result, &result_len);
+  }
+  // Hard path if there's too much data to fit in one chunk
+  else {
+    HMAC_CTX *ctx = HMAC_CTX_new();
+    HMAC_Init_ex(ctx, master_key_bytes, (int)master_keylen,
+                 parse_digest(digest_algorithm), NULL);
 
-  // Set the output length of the computed HMAC
-  if (out_bytes != NULL) {
-    *out_bytes = get_digest_len(digest_algorithm);
+    int rc = 0;
+    uint8_t *buffer_ptr = (uint8_t *)&buf[0];
+    for (int i = 0; i < buf_len; i += (INT_MAX >> 1)) {
+      rc = HMAC_Update(ctx, buffer_ptr, (INT_MAX >> 1));
+      if (rc != 1) {
+        PEACEMAKR_LOG("HMAC_Update failed with code %d", rc);
+        HMAC_CTX_free(ctx);
+        return NULL;
+      }
+      buffer_ptr += (INT_MAX >> 1);
+    }
+
+    if (out_bytes != NULL) {
+      HMAC_Final(ctx, result, (unsigned int *)out_bytes);
+    } else {
+      HMAC_Final(ctx, result, NULL);
+    }
+
+    HMAC_CTX_free(ctx);
   }
 
   return result;
