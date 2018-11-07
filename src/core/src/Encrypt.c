@@ -14,9 +14,9 @@
 #include "Logging.h"
 
 #include <memory.h>
-#include <stdbool.h>
-#include <openssl/evp.h>
 #include <openssl/err.h>
+#include <openssl/evp.h>
+#include <stdbool.h>
 
 // None of the input lengths can be larger than INT_MAX
 static bool symmetric_encrypt(const peacemakr_key_t *peacemakrkey,
@@ -346,7 +346,8 @@ static bool asymmetric_encrypt(const peacemakr_key_t *pub_key,
     if (taglen > 0) {
       unsigned char *tag_buf = Buffer_mutable_bytes(tag);
 
-      if (1 != EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, (int)taglen, tag_buf)) {
+      if (1 != EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, (int)taglen,
+                                   tag_buf)) {
         PEACEMAKR_LOG("GET_TAG failed\n");
         EVP_MD_CTX_free(md_ctx);
         EVP_CIPHER_CTX_free(ctx);
@@ -447,9 +448,7 @@ static bool asymmetric_decrypt(const peacemakr_key_t *pkey,
     }
   }
 
-  int rc = EVP_DigestVerifyInit(md_ctx, NULL,
-                                digest_algo,
-                                NULL, verif_key);
+  int rc = EVP_DigestVerifyInit(md_ctx, NULL, digest_algo, NULL, verif_key);
   if (rc != 1) {
     ERR_print_errors_fp(stdout);
     PEACEMAKR_LOG("DigestVerifyInit failed with code %d\n", rc);

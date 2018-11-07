@@ -268,8 +268,9 @@ ciphertext_blob_t *deserialize_blob(const uint8_t *b64_serialized_cipher,
       ntohl(*((uint32_t *)(serialized_cipher + current_position)));
   current_position += sizeof(uint32_t);
 
-  EXPECT_TRUE_RET((serialized_digest_size == digestlen || encryption_mode == ASYMMETRIC),
-                  "serialized digest is not of the correct length, aborting\n");
+  EXPECT_TRUE_RET(
+      (serialized_digest_size == digestlen || encryption_mode == ASYMMETRIC),
+      "serialized digest is not of the correct length, aborting\n");
 
   rc = CRYPTO_memcmp(Buffer_get_bytes(digest_buf, NULL), serialized_digest_ptr,
                      digestlen);
@@ -279,7 +280,8 @@ ciphertext_blob_t *deserialize_blob(const uint8_t *b64_serialized_cipher,
     return NULL;
   }
 
-  // If it's asymmetric encryption, leave the veriification to the decrypt function.
+  // If it's asymmetric encryption, leave the veriification to the decrypt
+  // function.
   if (encryption_mode == ASYMMETRIC) {
     Buffer_set_size(digest_buf, serialized_digest_size);
     Buffer_set_bytes(digest_buf, serialized_digest_ptr, serialized_digest_size);

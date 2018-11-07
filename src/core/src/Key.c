@@ -16,11 +16,11 @@
 #include <stdlib.h>
 
 #include <openssl/ec.h>
+#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
 #include <openssl/pem.h>
 #include <openssl/rsa.h>
-#include <openssl/err.h>
 
 static bool keygen_inner(int key_type, EVP_PKEY **pkey, int rsa_bits) {
   EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_id(key_type, NULL);

@@ -151,8 +151,8 @@ public:
    * Uses \p key and \p rand to encrypt \p plaintext and base64 serialize it.
    * \returns A string holding the B64 encoded, encrypted contents.
    */
-  std::string Encrypt(const Key *recipient_key, const Key *sender_key, const Plaintext &plaintext,
-                      RandomDevice &rand);
+  std::string Encrypt(const Key *recipient_key, const Key *sender_key,
+                      const Plaintext &plaintext, RandomDevice &rand);
 
   Plaintext ExtractUnverifiedAAD(const std::string &serialized);
 
@@ -160,7 +160,8 @@ public:
    * Deserializes \p serialized and decrypts it using \p key. \returns a
    * Plaintext object that holds the decrypted data and the AAD (if any exists).
    */
-  Plaintext Decrypt(const Key *recipient_key, const Key *sender_key, const std::string &serialized);
+  Plaintext Decrypt(const Key *recipient_key, const Key *sender_key,
+                    const std::string &serialized);
 
 private:
   LogFunctionType m_log_;

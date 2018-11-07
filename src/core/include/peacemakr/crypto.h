@@ -191,13 +191,14 @@ crypto_config_t PeacemakrKey_get_config(const peacemakr_key_t *key);
 void PeacemakrKey_free(peacemakr_key_t *key);
 
 /**
- * Performs the encryption operation using the configuration and
- * the (symmetric or asymmetric) key in \p key. The operation is performed
- * over \p plain and uses \p rand to generate the IV/nonce. Returns a
+ * Performs the encryption operation using the configuration and he (symmetric
+ * or asymmetric) key in \p recipient_key. If asymmetric encryption is to be
+ * performed, also signs the message using sender_key. Otherwise, sender_key may
+ * be NULL if symmetric encryption is being performed. The operation is
+ * performed over \p plain and uses \p rand to generate the IV/nonce. Returns a
  * ciphertext_blob_t that can be used in calls to uint8_t
  * *serialize_blob(ciphertext_blob_t *, size_t *) and bool
  * peacemakr_decrypt(const peacemakr_key_t *, ciphertext_blob_t *, plaintext_t
- * *)
  */
 ciphertext_blob_t *peacemakr_encrypt(const peacemakr_key_t *recipient_key,
                                      const peacemakr_key_t *sender_key,
@@ -205,9 +206,11 @@ ciphertext_blob_t *peacemakr_encrypt(const peacemakr_key_t *recipient_key,
                                      random_device_t *rand);
 
 /**
- * Performs the decryption operation using the configuration and
- * the (symmetric or asymmetric) key in \p key. The operation is performed
- * over \p cipher and the result is stored in \p plain. Returns a
+ * Performs the encryption operation using the configuration and he (symmetric
+ * or asymmetric) key in \p recipient_key. If asymmetric decryption is to be
+ * performed, also verifies the message using sender_key. Otherwise, sender_key
+ * may be NULL if symmetric encryption is being performed. The operation is
+ * performed over \p cipher and the result is stored in \p plain. Returns a
  * boolean to indicate if decryption was successful. If the \p key is NULL
  * then the decryption will attempt to extract any AAD from the message.
  * Note that this AAD is unconfirmed and may have been tampered with.
