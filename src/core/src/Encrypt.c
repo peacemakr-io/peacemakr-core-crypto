@@ -450,7 +450,6 @@ static bool asymmetric_decrypt(const peacemakr_key_t *pkey,
 
   int rc = EVP_DigestVerifyInit(md_ctx, NULL, digest_algo, NULL, verif_key);
   if (rc != 1) {
-    ERR_print_errors_fp(stdout);
     PEACEMAKR_LOG("DigestVerifyInit failed with code %d\n", rc);
     EVP_MD_CTX_free(md_ctx);
     EVP_CIPHER_CTX_free(ctx);
@@ -515,7 +514,6 @@ static bool asymmetric_decrypt(const peacemakr_key_t *pkey,
   plaintext_len += len;
 
   if (1 != EVP_DigestVerifyFinal(md_ctx, digest_buf, digestlen)) {
-    ERR_print_errors_fp(stdout);
     PEACEMAKR_LOG("DigestVerifyFinal failed\n");
     EVP_MD_CTX_free(md_ctx);
     EVP_CIPHER_CTX_free(ctx);

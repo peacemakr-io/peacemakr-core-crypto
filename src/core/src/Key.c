@@ -207,7 +207,6 @@ peacemakr_key_t *API(new_pem)(crypto_config_t cfg, const char *buf,
     out->m_contents_.asymm = EVP_PKEY_new();
     if (1 != EVP_PKEY_assign_RSA(out->m_contents_.asymm, rsaKey)) {
       PEACEMAKR_LOG("EVP_PKEY_assign_RSA failed\n");
-      ERR_print_errors_fp(stderr);
       BIO_free(bo);
       RSA_free(rsaKey);
       API(free)(out);
