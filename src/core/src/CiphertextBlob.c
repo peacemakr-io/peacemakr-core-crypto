@@ -192,6 +192,11 @@ buffer_t *API(mutable_digest)(ciphertext_blob_t *ciphertext) {
   return ciphertext->m_digest_;
 }
 
+const buffer_t *API(digest)(const ciphertext_blob_t *ciphertext) {
+  EXPECT_NOT_NULL_RET(ciphertext, "ciphertext was NULL\n");
+  return ciphertext->m_digest_;
+}
+
 const symmetric_cipher API(symm_cipher)(const ciphertext_blob_t *ciphertext) {
   return ciphertext->m_symm_cipher_;
 }

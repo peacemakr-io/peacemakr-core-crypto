@@ -36,17 +36,15 @@ static void digest_message(const unsigned char *message, size_t message_len,
                          EVP_MD_CTX_destroy(mdctx));
 
   size_t digest_len = Buffer_get_size(digest);
-  unsigned char digest_buf[digest_len];
   unsigned int size;
 
-  OPENSSL_CHECK_RET_NONE(EVP_DigestFinal_ex(mdctx, digest_buf, &size),
-                         EVP_MD_CTX_destroy(mdctx));
+  OPENSSL_CHECK_RET_NONE(
+      EVP_DigestFinal_ex(mdctx, Buffer_mutable_bytes(digest), &size),
+      EVP_MD_CTX_destroy(mdctx));
 
   EXPECT_TRUE_CLEANUP_RET_NONE(
       (size == digest_len), EVP_MD_CTX_free(mdctx),
       "sizes different than expected for message digest\n");
-
-  Buffer_set_bytes(digest, digest_buf, digest_len);
 
   EVP_MD_CTX_free(mdctx);
 }
@@ -195,8 +193,11 @@ uint8_t *serialize_blob(ciphertext_blob_t *cipher, size_t *out_size) {
   memcpy(buf + sizeof(uint32_t), &curr_pos, sizeof(uint64_t));
 
   if (digest != NULL) {
-    digest_message(buf, current_pos,
-                   parse_digest(CiphertextBlob_digest_algo(cipher)), digest);
+    // If it's ASYMMETRIC we already filled in the digest buffer
+    if (CiphertextBlob_encryption_mode(cipher) == SYMMETRIC) {
+      digest_message(buf, current_pos,
+                     parse_digest(CiphertextBlob_digest_algo(cipher)), digest);
+    }
 
     size_t bufsize = htonl(Buffer_get_size(digest));
     memcpy(buf + current_pos, &bufsize, sizeof(size_t));
@@ -245,23 +246,12 @@ ciphertext_blob_t *deserialize_blob(const uint8_t *b64_serialized_cipher,
   uint64_t serialized_digest_size =
       ntohl(*(uint64_t *)(serialized_cipher + len_before_digest));
 
-  EXPECT_TRUE_RET((serialized_digest_size == digestlen),
-                  "serialized digest is not of the correct length, aborting\n");
-
   buffer_t *digest_buf = Buffer_new(digestlen);
   digest_message(serialized_cipher, len_before_digest,
                  parse_digest(digest_algo), digest_buf);
 
   const uint8_t *serialized_digest_ptr =
       serialized_cipher + len_before_digest + sizeof(size_t);
-
-  rc = memcmp(Buffer_get_bytes(digest_buf, NULL), serialized_digest_ptr,
-              digestlen);
-  if (rc != 0) {
-    PEACEMAKR_LOG("digests don't compare equal, aborting\n");
-    Buffer_free(digest_buf);
-    return NULL;
-  }
 
   // version
   uint32_t version =
@@ -277,6 +267,24 @@ ciphertext_blob_t *deserialize_blob(const uint8_t *b64_serialized_cipher,
   uint32_t encryption_mode =
       ntohl(*((uint32_t *)(serialized_cipher + current_position)));
   current_position += sizeof(uint32_t);
+
+  EXPECT_TRUE_RET((serialized_digest_size == digestlen || encryption_mode == ASYMMETRIC),
+                  "serialized digest is not of the correct length, aborting\n");
+
+  rc = CRYPTO_memcmp(Buffer_get_bytes(digest_buf, NULL), serialized_digest_ptr,
+                     digestlen);
+  if (rc != 0 && encryption_mode != ASYMMETRIC) {
+    PEACEMAKR_LOG("digests don't compare equal, aborting\n");
+    Buffer_free(digest_buf);
+    return NULL;
+  }
+
+  // If it's asymmetric encryption, leave the veriification to the decrypt function.
+  if (encryption_mode == ASYMMETRIC) {
+    Buffer_set_size(digest_buf, serialized_digest_size);
+    Buffer_set_bytes(digest_buf, serialized_digest_ptr, serialized_digest_size);
+    digestlen = serialized_digest_size;
+  }
 
   // symm_cipher
   uint32_t symm_cipher =

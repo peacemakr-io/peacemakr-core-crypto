@@ -50,6 +50,7 @@ uint8_t *peacemakr_hmac(const message_digest_algorithm digest_algorithm,
       rc = HMAC_Update(ctx, buffer_ptr, (INT_MAX >> 1));
       if (rc != 1) {
         PEACEMAKR_LOG("HMAC_Update failed with code %d", rc);
+        free(result);
         HMAC_CTX_free(ctx);
         return NULL;
       }

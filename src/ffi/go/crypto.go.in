@@ -265,15 +265,23 @@ func DestroyPeacemakrKey(key PeacemakrKey) error {
 	return nil
 }
 
-func Encrypt(key PeacemakrKey, plaintext Plaintext, rand RandomDevice) ([]byte, error) {
-	if !key.IsValid() {
-		return nil, errors.New("invalid key passed to Encrypt")
+func Encrypt(recipientKey, senderKey PeacemakrKey, plaintext Plaintext, rand RandomDevice) ([]byte, error) {
+	if !recipientKey.IsValid() {
+		return nil, errors.New("invalid recipient key passed to Encrypt")
+	}
+
+	cfg, err := GetKeyConfig(&recipientKey)
+	if err != nil {
+		return nil, err
+	}
+	if !senderKey.IsValid() && cfg.Mode == ASYMMETRIC {
+		return nil, errors.New("invalid sender key passed to Encrypt")
 	}
 
 	cPlaintext := plaintextToInternal(plaintext)
 	defer freeInternalPlaintext(&cPlaintext)
 
-	blob := C.peacemakr_encrypt(key.key, (*C.plaintext_t)(unsafe.Pointer(&cPlaintext)), (*C.random_device_t)(unsafe.Pointer(&rand.randomDevice)))
+	blob := C.peacemakr_encrypt(recipientKey.key, senderKey.key, (*C.plaintext_t)(unsafe.Pointer(&cPlaintext)), (*C.random_device_t)(unsafe.Pointer(&rand.randomDevice)))
 
 	if blob == nil {
 		return nil, errors.New("encryption failed")
@@ -306,7 +314,7 @@ func ExtractUnverifiedAAD(ciphertext []byte) ([]byte, bool) {
 		return nil, false
 	}
 
-	extractSuccess := bool(C.peacemakr_decrypt(nil, deserialized.blob, (*C.plaintext_t)(unsafe.Pointer(&plaintext))))
+	extractSuccess := bool(C.peacemakr_decrypt(nil, nil, deserialized.blob, (*C.plaintext_t)(unsafe.Pointer(&plaintext))))
 	if !extractSuccess {
 		return nil, false
 	}
@@ -314,9 +322,19 @@ func ExtractUnverifiedAAD(ciphertext []byte) ([]byte, bool) {
 	return C.GoBytes(unsafe.Pointer(plaintext.aad), C.int(plaintext.aad_len)), extractSuccess
 }
 
-func Decrypt(key PeacemakrKey, ciphertext []byte) (*Plaintext, bool) {
-	if !key.IsValid() {
-		log.Printf("invalid key passed to Decrypt")
+func Decrypt(recipientKey, senderKey PeacemakrKey, ciphertext []byte) (*Plaintext, bool) {
+	if !recipientKey.IsValid() {
+		log.Printf("invalid recipient key passed to Decrypt")
+		return nil, false
+	}
+
+	cfg, err := GetKeyConfig(&recipientKey)
+	if err != nil {
+		log.Printf("%v", err)
+		return nil, false
+	}
+	if !senderKey.IsValid() && cfg.Mode == ASYMMETRIC {
+		log.Printf("invalid sender key passed to Encrypt")
 		return nil, false
 	}
 
@@ -331,10 +349,26 @@ func Decrypt(key PeacemakrKey, ciphertext []byte) (*Plaintext, bool) {
 		return nil, false
 	}
 
-	out := C.peacemakr_decrypt(key.key, deserialized.blob, (*C.plaintext_t)(unsafe.Pointer(&plaintext)))
+	out := C.peacemakr_decrypt(recipientKey.key, senderKey.key, deserialized.blob, (*C.plaintext_t)(unsafe.Pointer(&plaintext)))
 
 	return &Plaintext{
 		Data: C.GoBytes(unsafe.Pointer(plaintext.data), C.int(plaintext.data_len)),
 		Aad:  C.GoBytes(unsafe.Pointer(plaintext.aad), C.int(plaintext.aad_len)),
 	}, bool(out)
+}
+
+func HMAC(algo MessageDigestAlgorithm, key PeacemakrKey, buf []byte) ([]byte, error) {
+    if !key.IsValid() {
+        log.Printf("invalid key passed to HMAC")
+        return nil, errors.New("invalid key")
+    }
+
+    var outSize C.size_t
+    hmac := C.peacemakr_hmac(C.message_digest_algorithm(algo), key.key, (*C.uint8_t)(C.CBytes(buf)), C.size_t(len(buf)), (*C.size_t)(unsafe.Pointer(&outSize)))
+    if hmac == nil {
+        return nil, errors.New("hmac failed")
+    }
+
+    return C.GoBytes(unsafe.Pointer(hmac), C.int(outSize)), nil
+
 }

@@ -42,13 +42,12 @@ void test_symmetric_algo(symmetric_cipher symm_cipher,
   };
 
   peacemakr_key_t *pubkey = PeacemakrKey_new_pem_pub(cfg, pubkey_buf, pubkey_len);
-
-  ciphertext_blob_t *ciphertext = peacemakr_encrypt(pubkey, &plaintext_in, &rand);
-  assert(ciphertext != NULL);
-  PeacemakrKey_free(pubkey);
-
   peacemakr_key_t *privkey = PeacemakrKey_new_pem_priv(cfg, privkey_buf, privkey_len);
-  bool success = peacemakr_decrypt(privkey, ciphertext, &plaintext_out);
+
+  ciphertext_blob_t *ciphertext = peacemakr_encrypt(pubkey, privkey, &plaintext_in, &rand);
+  assert(ciphertext != NULL);
+
+  bool success = peacemakr_decrypt(privkey, pubkey, ciphertext, &plaintext_out);
 
   assert(success);
 
@@ -57,6 +56,7 @@ void test_symmetric_algo(symmetric_cipher symm_cipher,
   assert(strncmp((const char *)plaintext_out.aad, (const char *)plaintext_in.aad, plaintext_in.aad_len) == 0);
   free((void *)plaintext_out.aad);
 
+  PeacemakrKey_free(pubkey);
   PeacemakrKey_free(privkey);
 }
 

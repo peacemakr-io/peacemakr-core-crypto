@@ -51,12 +51,12 @@ void test_asymmetric(symmetric_cipher symm_cipher, asymmetric_cipher cipher, mes
   peacemakr::Key key(cfg, rand);
 
   peacemakr::CryptoContext ctx(log_fn);
-  std::string encrypted = ctx.Encrypt(key, plaintext_in, rand);
+  std::string encrypted = ctx.Encrypt(&key, &key, plaintext_in, rand);
 
   peacemakr::Plaintext unverified_aad = ctx.ExtractUnverifiedAAD(encrypted);
   assert(plaintext_in.aad == unverified_aad.aad);
 
-  peacemakr::Plaintext plaintext_out = ctx.Decrypt(key, encrypted);
+  peacemakr::Plaintext plaintext_out = ctx.Decrypt(&key, &key, encrypted);
 
   assert(plaintext_in.data == plaintext_out.data);
   assert(plaintext_in.aad == plaintext_out.aad);
@@ -79,12 +79,12 @@ void test_symmetric(symmetric_cipher symm_cipher, message_digest_algorithm diges
   peacemakr::Key key(cfg, rand);
 
   peacemakr::CryptoContext ctx(log_fn);
-  std::string encrypted = ctx.Encrypt(key, plaintext_in, rand);
+  std::string encrypted = ctx.Encrypt(&key, nullptr, plaintext_in, rand);
 
   peacemakr::Plaintext unverified_aad = ctx.ExtractUnverifiedAAD(encrypted);
   assert(plaintext_in.aad == unverified_aad.aad);
 
-  peacemakr::Plaintext plaintext_out = ctx.Decrypt(key, encrypted);
+  peacemakr::Plaintext plaintext_out = ctx.Decrypt(&key, nullptr, encrypted);
 
   assert(plaintext_in.data == plaintext_out.data);
   assert(plaintext_in.aad == plaintext_out.aad);
@@ -108,12 +108,12 @@ void test_uninit_crash() {
   assert(key.isValid());
 
   peacemakr::CryptoContext ctx(log_fn);
-  std::string encrypted = ctx.Encrypt(key, plaintext_in, rand);
+  std::string encrypted = ctx.Encrypt(&key, nullptr, plaintext_in, rand);
   if (encrypted.empty()) { // couldn't encrypt
     assert(false);
   }
 
-  peacemakr::Plaintext plaintext_out = ctx.Decrypt(key, encrypted);
+  peacemakr::Plaintext plaintext_out = ctx.Decrypt(&key, nullptr, encrypted);
   if (plaintext_out.data.empty()) { // couldn't decrypt
     assert(false);
   }
@@ -131,6 +131,9 @@ int main() {
       }
     }
   }
+
+  std::for_each(runners.begin(), runners.end(), [](std::thread &t){t.join();});
+  runners.clear();
 
   for (int j = AES_128_GCM; j <= CHACHA20_POLY1305; ++j) {
     for (int k = SHA_224; k <= SHA_512; k++) {

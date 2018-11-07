@@ -39,10 +39,10 @@ void test_symmetric_algo(symmetric_cipher cipher) {
 
   peacemakr_key_t *key = PeacemakrKey_new(cfg, &rand);
 
-  ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, &plaintext_in, &rand);
+  ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, NULL, &plaintext_in, &rand);
   assert(ciphertext != NULL);
 
-  bool success = peacemakr_decrypt(key, ciphertext, &plaintext_out);
+  bool success = peacemakr_decrypt(key, NULL, ciphertext, &plaintext_out);
 
   assert(success);
 
@@ -77,10 +77,10 @@ void test_master_key_symmetric_algo(peacemakr_key_t *master_key, symmetric_ciphe
 
   peacemakr_key_t *key = PeacemakrKey_new_from_master(cfg, master_key, "abcdefghijk", 11);
 
-  ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, &plaintext_in, &rand);
+  ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, NULL, &plaintext_in, &rand);
   assert(ciphertext != NULL);
 
-  bool success = peacemakr_decrypt(key, ciphertext, &plaintext_out);
+  bool success = peacemakr_decrypt(key, NULL, ciphertext, &plaintext_out);
 
   assert(success);
 
@@ -116,7 +116,7 @@ void test_uninit_crash() {
 
   peacemakr_key_t *key = PeacemakrKey_new(cfg, &rand);
 
-  ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, &plaintext_in, &rand);
+  ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, NULL, &plaintext_in, &rand);
   assert(ciphertext != NULL);
 
   size_t out_size = 0;
@@ -125,7 +125,7 @@ void test_uninit_crash() {
 
   ciphertext_blob_t *deserialized = deserialize_blob(serialized, out_size);
 
-  bool success = peacemakr_decrypt(key, deserialized, &plaintext_out);
+  bool success = peacemakr_decrypt(key, NULL, deserialized, &plaintext_out);
 
   assert(success);
 

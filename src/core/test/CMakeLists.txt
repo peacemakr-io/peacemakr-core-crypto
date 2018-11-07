@@ -27,6 +27,7 @@ add_ctest(encrypt_symmetric)
 add_ctest(encrypt_asymmetric)
 add_ctest(encrypt_asymmetric_from_pem)
 add_ctest(serialize)
+add_ctest(big_message)
 
 enable_language(CXX)
 set(CMAKE_CXX_STANDARD 11)

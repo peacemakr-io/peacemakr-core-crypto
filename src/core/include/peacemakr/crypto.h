@@ -199,7 +199,8 @@ void PeacemakrKey_free(peacemakr_key_t *key);
  * peacemakr_decrypt(const peacemakr_key_t *, ciphertext_blob_t *, plaintext_t
  * *)
  */
-ciphertext_blob_t *peacemakr_encrypt(const peacemakr_key_t *key,
+ciphertext_blob_t *peacemakr_encrypt(const peacemakr_key_t *recipient_key,
+                                     const peacemakr_key_t *sender_key,
                                      const plaintext_t *plain,
                                      random_device_t *rand);
 
@@ -211,8 +212,9 @@ ciphertext_blob_t *peacemakr_encrypt(const peacemakr_key_t *key,
  * then the decryption will attempt to extract any AAD from the message.
  * Note that this AAD is unconfirmed and may have been tampered with.
  */
-bool peacemakr_decrypt(const peacemakr_key_t *key, ciphertext_blob_t *cipher,
-                       plaintext_t *plain);
+bool peacemakr_decrypt(const peacemakr_key_t *recipient_key,
+                       const peacemakr_key_t *sender_key,
+                       ciphertext_blob_t *cipher, plaintext_t *plain);
 
 /**
  * Computes the HMAC SHA3-256 of \p buf with \p master_key. Allocates memory and
@@ -223,8 +225,6 @@ uint8_t *peacemakr_hmac(const message_digest_algorithm digest_algorithm,
                         const peacemakr_key_t *master_key, const uint8_t *buf,
                         const size_t buf_len, size_t *out_bytes);
 
-// TODO: should calculate HMAC instead of just hash? In which case, should move
-// serialize/deserialize into encrypt/decrypt respectively
 /**
  * Serializes \p cipher into a \return Base64 encoded buffer. Stores the size of
  * said buffer into \p out_size. The caller is responsible for managing

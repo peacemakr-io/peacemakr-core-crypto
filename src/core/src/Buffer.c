@@ -14,6 +14,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 
+#include "Buffer.h"
 #include <openssl/crypto.h>
 
 #ifdef PEACEMAKR_NO_MEMSET_S
@@ -118,6 +119,8 @@ const uint8_t *API(get_bytes)(const buffer_t *buf, size_t *out_size) {
   return buf->m_mem_;
 }
 
+uint8_t *Buffer_mutable_bytes(buffer_t *buf) { return buf->m_mem_; }
+
 const size_t API(get_size)(const buffer_t *buf) {
   EXPECT_NOT_NULL_RET_VALUE(buf, 0, "buf was null\n");
 
@@ -126,6 +129,10 @@ const size_t API(get_size)(const buffer_t *buf) {
 
 void API(set_size)(buffer_t *buf, size_t size) {
   EXPECT_NOT_NULL_RET_NONE(buf, "buf was null\n");
-
+  if (buf->m_size_bytes_ == size) {
+    return;
+  }
+  buf->m_mem_ = realloc((void *)buf->m_mem_, size);
+  EXPECT_NOT_NULL_RET_NONE(buf->m_mem_, "realloc failed\n");
   buf->m_size_bytes_ = size;
 }

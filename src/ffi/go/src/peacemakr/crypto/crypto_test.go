@@ -150,7 +150,7 @@ func TestAsymmetricEncrypt(t *testing.T) {
 
 				key := NewPeacemakrKey(cfg, randomDevice)
 
-				ciphertext, err := Encrypt(key, plaintextIn, randomDevice)
+				ciphertext, err := Encrypt(key, key, plaintextIn, randomDevice)
 				if err != nil {
 					DestroyPeacemakrKey(key)
 					t.Fatalf("%v", err)
@@ -166,7 +166,7 @@ func TestAsymmetricEncrypt(t *testing.T) {
 					t.Fatalf("extracted aad did not match")
 				}
 
-				plaintextOut, success := Decrypt(key, ciphertext)
+				plaintextOut, success := Decrypt(key, key, ciphertext)
 				if !success {
 					DestroyPeacemakrKey(key)
 					t.Fatalf("Decrypt failed")
@@ -206,8 +206,9 @@ func TestAsymmetricEncryptFromPem(t *testing.T) {
 			randomDevice := NewRandomDevice()
 
 			pubkey := NewPeacemakrKeyFromPubPem(cfg, GetPubKey())
+			privkey := NewPeacemakrKeyFromPrivPem(cfg, GetPrivKey())
 
-			ciphertext, err := Encrypt(pubkey, plaintextIn, randomDevice)
+			ciphertext, err := Encrypt(pubkey, privkey, plaintextIn, randomDevice)
 			if err != nil {
 				t.Fatalf("%v", err)
 			}
@@ -222,9 +223,7 @@ func TestAsymmetricEncryptFromPem(t *testing.T) {
 				t.Fatalf("extracted aad did not match")
 			}
 
-			privkey := NewPeacemakrKeyFromPrivPem(cfg, GetPrivKey())
-
-			plaintextOut, success := Decrypt(privkey, ciphertext)
+			plaintextOut, success := Decrypt(privkey, pubkey, ciphertext)
 			if !success {
 				DestroyPeacemakrKey(pubkey)
 				DestroyPeacemakrKey(privkey)
@@ -281,7 +280,7 @@ func TestAsymmetricEncryptFromRandomPem(t *testing.T) {
 				privkey := NewPeacemakrKeyFromPrivPem(cfg, priv)
 				pubkey := NewPeacemakrKeyFromPubPem(cfg, pub)
 
-				ciphertext, err := Encrypt(pubkey, plaintextIn, randomDevice)
+				ciphertext, err := Encrypt(pubkey, privkey, plaintextIn, randomDevice)
 				if err != nil {
 					DestroyPeacemakrKey(pubkey)
 					DestroyPeacemakrKey(privkey)
@@ -300,7 +299,7 @@ func TestAsymmetricEncryptFromRandomPem(t *testing.T) {
 					t.Fatalf("plaintext data did not match")
 				}
 
-				plaintextOut, success := Decrypt(privkey, ciphertext)
+				plaintextOut, success := Decrypt(privkey, pubkey, ciphertext)
 				if !success {
 					DestroyPeacemakrKey(pubkey)
 					DestroyPeacemakrKey(privkey)
@@ -348,7 +347,7 @@ func TestSymmetricEncrypt(t *testing.T) {
 			key = NewPeacemakrKey(cfg, randomDevice)
 		}
 
-		ciphertext, err := Encrypt(key, plaintextIn, randomDevice)
+		ciphertext, err := Encrypt(key, PeacemakrKey{nil}, plaintextIn, randomDevice)
 		if err != nil {
 			DestroyPeacemakrKey(key)
 			t.Fatalf("%v", err)
@@ -364,7 +363,7 @@ func TestSymmetricEncrypt(t *testing.T) {
 			t.Fatalf("extracted aad did not match")
 		}
 
-		plaintextOut, success := Decrypt(key, ciphertext)
+		plaintextOut, success := Decrypt(key, PeacemakrKey{nil}, ciphertext)
 		if !success {
 			DestroyPeacemakrKey(key)
 			t.Fatalf("Decrypt failed")
@@ -405,7 +404,7 @@ func TestSerialize(t *testing.T) {
 
 					key := NewPeacemakrKey(cfg, randomDevice)
 
-					ciphertext, err := Encrypt(key, plaintextIn, randomDevice)
+					ciphertext, err := Encrypt(key, key, plaintextIn, randomDevice)
 					if err != nil {
 						DestroyPeacemakrKey(key)
 						t.Fatalf("%v", err)
@@ -426,7 +425,7 @@ func TestSerialize(t *testing.T) {
 						t.Fatalf("extracted aad did not match")
 					}
 
-					plaintextOut, success := Decrypt(key, ciphertext)
+					plaintextOut, success := Decrypt(key, key, ciphertext)
 					if !success {
 						DestroyPeacemakrKey(key)
 						t.Fatalf("Decrypt failed")
@@ -515,7 +514,7 @@ duE5ygP4cy36OleLa5rq85wwlDZ5hBnqCzp7CIrwoSAYWd6WkfMLnqpuRDE=
 
 	pmkey := NewPeacemakrKeyFromPrivPem(cfg, []byte(privKey))
 
-	_, success := Decrypt(pmkey, []byte(blob))
+	_, success := Decrypt(pmkey, pmkey, []byte(blob))
 	if !success {
 		DestroyPeacemakrKey(pmkey)
 		t.Fatalf("Decrypt failed")

@@ -132,9 +132,11 @@ bool b64_decode(const char *in, unsigned char *out, size_t outlen) {
 
   for (i = 0, j = 0; i < len; i += 4, j += 3) {
     v = b64invs[in[i] - 43];
-    v = (v << 6) | b64invs[in[i + 1] - 43];
-    v = in[i + 2] == '=' ? v << 6 : (v << 6) | b64invs[in[i + 2] - 43];
-    v = in[i + 3] == '=' ? v << 6 : (v << 6) | b64invs[in[i + 3] - 43];
+    v = (v * (1 << 6)) | b64invs[in[i + 1] - 43];
+    v = in[i + 2] == '=' ? (v * (1 << 6))
+                         : (v * (1 << 6)) | b64invs[in[i + 2] - 43];
+    v = in[i + 3] == '=' ? (v * (1 << 6))
+                         : (v * (1 << 6)) | b64invs[in[i + 3] - 43];
 
     out[j] = (unsigned char)((v >> 16) & 0xFF);
     if (in[i + 2] != '=')
