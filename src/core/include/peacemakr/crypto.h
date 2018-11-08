@@ -192,37 +192,38 @@ void PeacemakrKey_free(peacemakr_key_t *key);
 
 /**
  * Performs the encryption operation using the configuration and he (symmetric
- * or asymmetric) key in \p recipient_key. If asymmetric encryption is to be
- * performed, also signs the message using sender_key. Otherwise, sender_key may
- * be NULL if symmetric encryption is being performed. The operation is
+ * or asymmetric) key in \p recipient_key. The operation is
  * performed over \p plain and uses \p rand to generate the IV/nonce. Returns a
  * ciphertext_blob_t that can be used in calls to uint8_t
  * *serialize_blob(ciphertext_blob_t *, size_t *) and bool
  * peacemakr_decrypt(const peacemakr_key_t *, ciphertext_blob_t *, plaintext_t
  */
 ciphertext_blob_t *peacemakr_encrypt(const peacemakr_key_t *recipient_key,
-                                     const peacemakr_key_t *sender_key,
                                      const plaintext_t *plain,
                                      random_device_t *rand);
 
+// sign the plaintext and put it into the ciphertext
+void peacemakr_sign(const peacemakr_key_t *sender_key,
+                    const plaintext_t *plain, ciphertext_blob_t *cipher);
+
 /**
  * Performs the encryption operation using the configuration and he (symmetric
- * or asymmetric) key in \p recipient_key. If asymmetric decryption is to be
- * performed, also verifies the message using sender_key. Otherwise, sender_key
- * may be NULL if symmetric encryption is being performed. The operation is
+ * or asymmetric) key in \p recipient_key. The operation is
  * performed over \p cipher and the result is stored in \p plain. Returns a
  * boolean to indicate if decryption was successful. If the \p key is NULL
  * then the decryption will attempt to extract any AAD from the message.
  * Note that this AAD is unconfirmed and may have been tampered with.
  */
 bool peacemakr_decrypt(const peacemakr_key_t *recipient_key,
-                       const peacemakr_key_t *sender_key,
                        ciphertext_blob_t *cipher, plaintext_t *plain);
 
+// Verify the signature in the ciphertext - how to deal with this???
+bool peacemakr_verify(const peacemakr_key_t *sender_key,
+                      const plaintext_t *plain, const ciphertext_blob_t *cipher);
+
 /**
- * Computes the HMAC SHA3-256 of \p buf with \p master_key. Allocates memory and
- * returns it to the caller with the HMAC stored inside. The length of the
- * output is guaranteed to be 256 bits.
+ * Computes the HMAC of \p buf with \p master_key. Allocates memory and
+ * returns it to the caller with the HMAC stored inside.
  */
 uint8_t *peacemakr_hmac(const message_digest_algorithm digest_algorithm,
                         const peacemakr_key_t *master_key, const uint8_t *buf,

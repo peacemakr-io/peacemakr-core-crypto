@@ -44,10 +44,10 @@ void test_symmetric_algo(symmetric_cipher symm_cipher,
   peacemakr_key_t *pubkey = PeacemakrKey_new_pem_pub(cfg, pubkey_buf, pubkey_len);
   peacemakr_key_t *privkey = PeacemakrKey_new_pem_priv(cfg, privkey_buf, privkey_len);
 
-  ciphertext_blob_t *ciphertext = peacemakr_encrypt(pubkey, privkey, &plaintext_in, &rand);
+  ciphertext_blob_t *ciphertext = peacemakr_encrypt(pubkey, &plaintext_in, &rand);
   assert(ciphertext != NULL);
 
-  bool success = peacemakr_decrypt(privkey, pubkey, ciphertext, &plaintext_out);
+  bool success = peacemakr_decrypt(privkey, ciphertext, &plaintext_out);
 
   assert(success);
 

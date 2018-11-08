@@ -25,10 +25,10 @@ public class CryptoContext {
     }
   }
 
-  public func Encrypt(recipientKey: PeacemakrKey, senderKey: PeacemakrKey, plaintext: Plaintext, rand: RandomDevice) throws -> [UInt8] {
+  public func Encrypt(key: PeacemakrKey, plaintext: Plaintext, rand: RandomDevice) throws -> [UInt8] {
     var innerRand = rand.getInternal()
     var innerPlaintext = plaintext.getInternal()
-    let ciphertext_blob = peacemakr_encrypt(recipientKey.getInternal(), senderKey.getInternal(), &innerPlaintext, &innerRand)
+    let ciphertext_blob = peacemakr_encrypt(key.getInternal(), &innerPlaintext, &innerRand)
     if ciphertext_blob == nil {
       throw PeacemakrError.encryptionFailed
     }
@@ -49,20 +49,20 @@ public class CryptoContext {
     }
 
     var out = plaintext_t(data: nil, data_len: 0, aad: nil, aad_len: 0)
-    if !peacemakr_decrypt(nil, nil, ciphertext_blob, &out) {
+    if !peacemakr_decrypt(nil, ciphertext_blob, &out) {
       throw PeacemakrError.decryptionFailed
     }
     return Plaintext(cstyle: out)
   }
 
-  public func Decrypt(recipientKey: PeacemakrKey, senderKey: PeacemakrKey, serialized: [UInt8]) throws -> Plaintext {
+  public func Decrypt(key: PeacemakrKey, serialized: [UInt8]) throws -> Plaintext {
     let ciphertext_blob = deserialize_blob(UnsafePointer(serialized), serialized.count)
     if ciphertext_blob == nil {
       throw PeacemakrError.deserializationFailed
     }
 
     var out = plaintext_t(data: nil, data_len: 0, aad: nil, aad_len: 0)
-    if !peacemakr_decrypt(recipientKey.getInternal(), senderKey.getInternal(), ciphertext_blob, &out) {
+    if !peacemakr_decrypt(key.getInternal(), ciphertext_blob, &out) {
       throw PeacemakrError.decryptionFailed
     }
     return Plaintext(cstyle: out)

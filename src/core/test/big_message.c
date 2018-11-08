@@ -45,10 +45,10 @@ void test_algo(plaintext_t plaintext_in, const peacemakr_key_t *key) {
           .err = &rand_err
   };
 
-  ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, key, &plaintext_in, &rand);
+  ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, &plaintext_in, &rand);
   assert(ciphertext != NULL);
 
-  bool success = peacemakr_decrypt(key, key, ciphertext, &plaintext_out);
+  bool success = peacemakr_decrypt(key, ciphertext, &plaintext_out);
 
   assert(success);
 
