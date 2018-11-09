@@ -47,7 +47,7 @@ void test_symmetric_algo(symmetric_cipher symm_cipher,
   ciphertext_blob_t *ciphertext = peacemakr_encrypt(pubkey, &plaintext_in, &rand);
   assert(ciphertext != NULL);
 
-  bool success = peacemakr_decrypt(privkey, ciphertext, &plaintext_out);
+  bool success = peacemakr_decrypt(privkey, ciphertext, &plaintext_out, false);
 
   assert(success);
 

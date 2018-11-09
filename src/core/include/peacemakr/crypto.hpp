@@ -152,15 +152,18 @@ public:
    * \returns A string holding the B64 encoded, encrypted contents.
    */
   std::string Encrypt(const Key &key, const Plaintext &plaintext,
-                      RandomDevice &rand);
+                      RandomDevice &rand, bool sign,
+                      const Key *sender_key = nullptr);
 
   Plaintext ExtractUnverifiedAAD(const std::string &serialized);
 
+  // TODO: unclear why this fails...
   /**
    * Deserializes \p serialized and decrypts it using \p key. \returns a
    * Plaintext object that holds the decrypted data and the AAD (if any exists).
    */
-  Plaintext Decrypt(const Key &key, const std::string &serialized);
+  Plaintext Decrypt(const Key &key, const std::string &serialized, bool verify,
+                    const Key *sender_key = nullptr);
 
 private:
   LogFunctionType m_log_;

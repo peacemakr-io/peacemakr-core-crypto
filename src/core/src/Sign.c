@@ -8,27 +8,26 @@
 
 #include "crypto.h"
 
+#include "CiphertextBlob.h"
+#include "EVPHelper.h"
 #include "Key.h"
 #include "Logging.h"
-#include "EVPHelper.h"
-#include "CiphertextBlob.h"
 
 #include <openssl/evp.h>
+#include <string.h>
 
 static void asymmetric_sign(const peacemakr_key_t *sender_key,
-                            const uint8_t *plaintext, const size_t plaintext_len,
-                            const uint8_t *aad, const size_t aad_len,
-                            ciphertext_blob_t *cipher) {
-  EXPECT_TRUE_RET_NONE((plaintext_len <= INT_MAX), "plaintext was too long\n");
-  EXPECT_TRUE_RET_NONE((aad_len <= INT_MAX), "plaintext was too long\n");
+                            const uint8_t *plaintext,
+                            const size_t plaintext_len, const uint8_t *aad,
+                            const size_t aad_len, ciphertext_blob_t *cipher) {
 
   EVP_MD_CTX *md_ctx;
   EVP_PKEY *sign_key = PeacemakrKey_asymmetric(sender_key);
   EXPECT_NOT_NULL_RET_NONE(
-          sign_key, "can't sign the message with a NULL asymmetric key\n");
+      sign_key, "can't sign the message with a NULL asymmetric key\n");
 
   const EVP_MD *digest_algo =
-          parse_digest(PeacemakrKey_get_config(sender_key).digest_algorithm);
+      parse_digest(PeacemakrKey_get_config(sender_key).digest_algorithm);
 
   md_ctx = EVP_MD_CTX_new();
   EXPECT_NOT_NULL_RET_NONE(md_ctx, "md_ctx_new failed\n");
@@ -47,10 +46,12 @@ static void asymmetric_sign(const peacemakr_key_t *sender_key,
     }
   }
 
-  if (1 != EVP_DigestSignUpdate(md_ctx, plaintext, plaintext_len)) {
-    PEACEMAKR_LOG("DigestSignUpdate failed\n");
-    EVP_MD_CTX_free(md_ctx);
-    return;
+  if (plaintext != NULL && plaintext_len > 0) {
+    if (1 != EVP_DigestSignUpdate(md_ctx, plaintext, plaintext_len)) {
+      PEACEMAKR_LOG("DigestSignUpdate failed\n");
+      EVP_MD_CTX_free(md_ctx);
+      return;
+    }
   }
 
   // Set the digest in the message digest buffer (get the size first)
@@ -71,34 +72,64 @@ static void asymmetric_sign(const peacemakr_key_t *sender_key,
   }
   Buffer_set_size(digest_buf, signature_len);
 
-
   EVP_MD_CTX_free(md_ctx);
 }
 
-void symmetric_sign(const peacemakr_key_t *key,
-                    const uint8_t *plaintext, const size_t plaintext_len,
-                    const uint8_t *aad, const size_t aad_len,
-                    ciphertext_blob_t *cipher) {
-  ;
+void symmetric_sign(const peacemakr_key_t *key, const uint8_t *plaintext,
+                    const size_t plaintext_len, const uint8_t *aad,
+                    const size_t aad_len, ciphertext_blob_t *cipher) {
+
+  uint8_t *concat_buf = calloc(plaintext_len + aad_len, sizeof(uint8_t));
+
+  if (plaintext != NULL && plaintext_len > 0) {
+    memcpy(concat_buf, plaintext, plaintext_len);
+  }
+  if (aad != NULL && aad_len > 0) {
+    memcpy(concat_buf + plaintext_len, aad, aad_len);
+  }
+
+  size_t out_size = 0;
+  uint8_t *hmac =
+      peacemakr_hmac(PeacemakrKey_get_config(key).digest_algorithm, key,
+                     concat_buf, plaintext_len + aad_len, &out_size);
+
+  buffer_t *digest_buf = CiphertextBlob_mutable_digest(cipher);
+  Buffer_set_size(digest_buf, out_size);
+  Buffer_set_bytes(digest_buf, hmac, out_size);
+
+  free(concat_buf);
+  free(hmac);
 }
 
-void peacemakr_sign(const peacemakr_key_t *sender_key,
-                    const plaintext_t *plain, ciphertext_blob_t *cipher) {
+void peacemakr_sign(const peacemakr_key_t *sender_key, const plaintext_t *plain,
+                    ciphertext_blob_t *cipher) {
+
+  EXPECT_NOT_NULL_RET_NONE(sender_key, false,
+                           "Cannot verify with a NULL key\n");
+  EXPECT_NOT_NULL_RET_NONE(cipher, false,
+                           "Cannot verify with nothing to compare against\n");
+  EXPECT_NOT_NULL_RET_NONE(plain, false, "Cannot verify an empty plaintext\n");
+
   switch (PeacemakrKey_get_config(sender_key).mode) {
-    case SYMMETRIC:
-      return symmetric_sign(sender_key, plain->data, plain->data_len, plain->aad, plain->aad_len, cipher);
-    case ASYMMETRIC:
-      return asymmetric_sign(sender_key, plain->data, plain->data_len, plain->aad, plain->aad_len, cipher);
+  case SYMMETRIC:
+    return symmetric_sign(sender_key, plain->data, plain->data_len, plain->aad,
+                          plain->aad_len, cipher);
+  case ASYMMETRIC:
+    return asymmetric_sign(sender_key, plain->data, plain->data_len, plain->aad,
+                           plain->aad_len, cipher);
   }
 }
 
-static bool asymmetric_verify(const peacemakr_key_t *sender_key, const uint8_t *plaintext, const size_t plaintext_len,
-                              const uint8_t *aad, const size_t aad_len, const ciphertext_blob_t *cipher) {
+static bool asymmetric_verify(const peacemakr_key_t *sender_key,
+                              const uint8_t *plaintext,
+                              const size_t plaintext_len, const uint8_t *aad,
+                              const size_t aad_len,
+                              const ciphertext_blob_t *cipher) {
   EVP_MD_CTX *md_ctx;
   EVP_PKEY *verif_key = PeacemakrKey_asymmetric(sender_key);
   EXPECT_NOT_NULL_RET_VALUE(
-          verif_key, false,
-          "can't verify the message with a NULL asymmetric key\n");
+      verif_key, false,
+      "can't verify the message with a NULL asymmetric key\n");
 
   const EVP_MD *digest_algo = parse_digest(CiphertextBlob_digest_algo(cipher));
 
@@ -120,17 +151,19 @@ static bool asymmetric_verify(const peacemakr_key_t *sender_key, const uint8_t *
   }
 
   if (aad != NULL && aad_len > 0) {
-    if (1 != EVP_DigestVerifyUpdate(md_ctx, aad,  aad_len)) {
+    if (1 != EVP_DigestVerifyUpdate(md_ctx, aad, aad_len)) {
       PEACEMAKR_LOG("DigestVerifyInit failed\n");
       EVP_MD_CTX_free(md_ctx);
       return false;
     }
   }
 
-  if (1 != EVP_DigestVerifyUpdate(md_ctx, plaintext, plaintext_len)) {
-    PEACEMAKR_LOG("DigestVerifyInit failed\n");
-    EVP_MD_CTX_free(md_ctx);
-    return false;
+  if (plaintext != NULL && plaintext_len > 0) {
+    if (1 != EVP_DigestVerifyUpdate(md_ctx, plaintext, plaintext_len)) {
+      PEACEMAKR_LOG("DigestVerifyInit failed\n");
+      EVP_MD_CTX_free(md_ctx);
+      return false;
+    }
   }
 
   if (1 != EVP_DigestVerifyFinal(md_ctx, digest_buf, digestlen)) {
@@ -142,22 +175,69 @@ static bool asymmetric_verify(const peacemakr_key_t *sender_key, const uint8_t *
   EVP_MD_CTX_free(md_ctx);
 
   return true;
-
 }
 
-static bool symmetric_verify(const peacemakr_key_t *sender_key, const uint8_t *plaintext, const size_t plaintext_len,
-                             const uint8_t *aad, const size_t aad_len, const ciphertext_blob_t *cipher) {
-  return false;
+static bool symmetric_verify(const peacemakr_key_t *key,
+                             const uint8_t *plaintext,
+                             const size_t plaintext_len, const uint8_t *aad,
+                             const size_t aad_len,
+                             const ciphertext_blob_t *cipher) {
+
+  uint8_t *concat_buf = calloc(plaintext_len + aad_len, sizeof(uint8_t));
+  if (plaintext != NULL && plaintext_len > 0) {
+    memcpy(concat_buf, plaintext, plaintext_len);
+  }
+  if (aad != NULL && aad_len > 0) {
+    memcpy(concat_buf + plaintext_len, aad, aad_len);
+  }
+
+  size_t out_size = 0;
+  uint8_t *hmac =
+      peacemakr_hmac(PeacemakrKey_get_config(key).digest_algorithm, key,
+                     concat_buf, plaintext_len + aad_len, &out_size);
+
+  const buffer_t *digest_buf = CiphertextBlob_digest(cipher);
+  size_t stored_size = 1;
+  const uint8_t *stored_hmac = Buffer_get_bytes(digest_buf, &stored_size);
+
+  if (stored_size != out_size) {
+    free(concat_buf);
+    free(hmac);
+    return false;
+  }
+
+  if (CRYPTO_memcmp(hmac, stored_hmac, out_size)) {
+    // failed
+    free(concat_buf);
+    free(hmac);
+    return false;
+  }
+
+  free(concat_buf);
+  free(hmac);
+  return true;
 }
 
 bool peacemakr_verify(const peacemakr_key_t *sender_key,
-                      const plaintext_t *plain, const ciphertext_blob_t *cipher) {
+                      const plaintext_t *plain, ciphertext_blob_t *cipher) {
+
+  EXPECT_NOT_NULL_RET_VALUE(sender_key, false,
+                            "Cannot verify with a NULL key\n");
+  EXPECT_NOT_NULL_RET_VALUE(cipher, false,
+                            "Cannot verify with nothing to compare against\n");
+  EXPECT_NOT_NULL_RET_VALUE(plain, false, "Cannot verify an empty plaintext\n");
+
   switch (PeacemakrKey_get_config(sender_key).mode) {
-    case SYMMETRIC:
-      return symmetric_verify(sender_key, plain->data, plain->data_len, plain->aad, plain->aad_len, cipher);
-    case ASYMMETRIC:
-      return asymmetric_verify(sender_key, plain->data, plain->data_len, plain->aad, plain->aad_len, cipher);
+  case SYMMETRIC:
+    return symmetric_verify(sender_key, plain->data, plain->data_len,
+                            plain->aad, plain->aad_len, cipher);
+  case ASYMMETRIC:
+    return asymmetric_verify(sender_key, plain->data, plain->data_len,
+                             plain->aad, plain->aad_len, cipher);
   }
+
+  CiphertextBlob_free(cipher);
+  cipher = NULL;
+
   return false;
 }
-

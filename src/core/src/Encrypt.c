@@ -454,10 +454,9 @@ ciphertext_blob_t *peacemakr_encrypt(const peacemakr_key_t *recipient_key,
   EXPECT_TRUE_RET((ciphertext_len != 0), "data had length: %d\n",
                   plain->data_len);
 
-  size_t digest_len = get_digest_len(cfg.digest_algorithm);
-
-  ciphertext_blob_t *out = CiphertextBlob_new(cfg, iv_len, tag_len, aad_len,
-                                              ciphertext_len, digest_len);
+  // Just initialize the buffer, it'll get resized later during sign/verify
+  ciphertext_blob_t *out =
+      CiphertextBlob_new(cfg, iv_len, tag_len, aad_len, ciphertext_len, 1);
 
   // always init the iv...worst case you seed the random state
   CiphertextBlob_init_iv(out, rand);
@@ -482,7 +481,8 @@ ciphertext_blob_t *peacemakr_encrypt(const peacemakr_key_t *recipient_key,
 }
 
 bool peacemakr_decrypt(const peacemakr_key_t *recipient_key,
-                       ciphertext_blob_t *cipher, plaintext_t *plain) {
+                       ciphertext_blob_t *cipher, plaintext_t *plain,
+                       bool need_verify) {
 
   EXPECT_NOT_NULL_RET_VALUE(plain, false, "plain was null\n");
   EXPECT_NOT_NULL_RET_VALUE(cipher, false, "cipher was null\n");
@@ -509,8 +509,7 @@ bool peacemakr_decrypt(const peacemakr_key_t *recipient_key,
     break;
   }
   case ASYMMETRIC: {
-    success = asymmetric_decrypt(recipient_key, cipher,
-                                 &plaintext, &aad);
+    success = asymmetric_decrypt(recipient_key, cipher, &plaintext, &aad);
     break;
   }
   }
@@ -537,8 +536,10 @@ bool peacemakr_decrypt(const peacemakr_key_t *recipient_key,
     plain->data = calloc(plain->data_len, sizeof(unsigned char));
   }
 
-  CiphertextBlob_free(cipher);
-  cipher = NULL;
+  if (!need_verify) {
+    CiphertextBlob_free(cipher);
+    cipher = NULL;
+  }
 
   return success;
 }

@@ -23,6 +23,8 @@
 
 #define _PEACEMAKR_MAGIC_ (uint32_t)1054
 
+// TODO: handle signed messages better (the sha is not the signature)
+
 static void digest_message(const unsigned char *message, size_t message_len,
                            const EVP_MD *digest_algo, buffer_t *digest) {
   EVP_MD_CTX *mdctx;
@@ -89,11 +91,16 @@ uint8_t *serialize_blob(ciphertext_blob_t *cipher, size_t *out_size) {
     buffer_len += Buffer_get_size(ciphertext);
   }
 
-  buffer_t *digest = CiphertextBlob_mutable_digest(cipher);
+  const buffer_t *digest = CiphertextBlob_digest(cipher);
   buffer_len += sizeof(size_t);
   if (digest != NULL) {
     buffer_len += Buffer_get_size(digest);
   }
+
+  // We will digest the message and set it at the end
+  buffer_len += sizeof(size_t);
+  size_t digest_len = get_digest_len(CiphertextBlob_digest_algo(cipher));
+  buffer_len += digest_len;
 
   uint8_t *buf = alloca(buffer_len * sizeof(uint8_t));
 
@@ -188,17 +195,7 @@ uint8_t *serialize_blob(ciphertext_blob_t *cipher, size_t *out_size) {
     current_pos += sizeof(size_t);
   }
 
-  // set the size of the buffer until the digest
-  uint64_t curr_pos = htonl(current_pos);
-  memcpy(buf + sizeof(uint32_t), &curr_pos, sizeof(uint64_t));
-
   if (digest != NULL) {
-    // If it's ASYMMETRIC we already filled in the digest buffer
-    if (CiphertextBlob_encryption_mode(cipher) == SYMMETRIC) {
-      digest_message(buf, current_pos,
-                     parse_digest(CiphertextBlob_digest_algo(cipher)), digest);
-    }
-
     size_t bufsize = htonl(Buffer_get_size(digest));
     memcpy(buf + current_pos, &bufsize, sizeof(size_t));
     current_pos += sizeof(size_t);
@@ -208,6 +205,23 @@ uint8_t *serialize_blob(ciphertext_blob_t *cipher, size_t *out_size) {
     memset((buf + current_pos), 0, sizeof(size_t));
     current_pos += sizeof(size_t);
   }
+
+  // set the size of the buffer until the digest (at offset sizeof(uint32_t))
+  uint64_t curr_pos = htonl(current_pos);
+  memcpy(buf + sizeof(uint32_t), &curr_pos, sizeof(uint64_t));
+
+  // digest the message
+  buffer_t *message_digest = Buffer_new(digest_len);
+  digest_message(buf, current_pos,
+                 parse_digest(CiphertextBlob_digest_algo(cipher)),
+                 message_digest);
+
+  // Append the digest
+  size_t net_digest_len = htonl(digest_len);
+  memcpy(buf + current_pos, &net_digest_len, sizeof(size_t));
+  current_pos += sizeof(size_t);
+  memcpy(buf + current_pos, Buffer_get_bytes(message_digest, NULL), digest_len);
+  current_pos += digest_len;
 
   CiphertextBlob_free(cipher);
   cipher = NULL;
@@ -246,12 +260,23 @@ ciphertext_blob_t *deserialize_blob(const uint8_t *b64_serialized_cipher,
   uint64_t serialized_digest_size =
       ntohl(*(uint64_t *)(serialized_cipher + len_before_digest));
 
+  EXPECT_TRUE_RET((serialized_digest_size == digestlen),
+                  "serialized digest is not of the correct length, aborting\n");
+
   buffer_t *digest_buf = Buffer_new(digestlen);
   digest_message(serialized_cipher, len_before_digest,
                  parse_digest(digest_algo), digest_buf);
 
   const uint8_t *serialized_digest_ptr =
       serialized_cipher + len_before_digest + sizeof(size_t);
+
+  rc = CRYPTO_memcmp(Buffer_get_bytes(digest_buf, NULL), serialized_digest_ptr,
+                     digestlen);
+  if (rc != 0) {
+    PEACEMAKR_LOG("digests don't compare equal, aborting\n");
+    Buffer_free(digest_buf);
+    return NULL;
+  }
 
   // version
   uint32_t version =

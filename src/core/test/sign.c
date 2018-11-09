@@ -40,9 +40,11 @@ void test_symmetric_algo(symmetric_cipher cipher) {
   peacemakr_key_t *key = PeacemakrKey_new(cfg, &rand);
 
   ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, &plaintext_in, &rand);
+  peacemakr_sign(key, &plaintext_in, ciphertext);
   assert(ciphertext != NULL);
 
-  bool success = peacemakr_decrypt(key, ciphertext, &plaintext_out, false);
+  bool success = peacemakr_decrypt(key, ciphertext, &plaintext_out, true);
+  success &= peacemakr_verify(key, &plaintext_out, ciphertext);
 
   assert(success);
 
@@ -54,10 +56,11 @@ void test_symmetric_algo(symmetric_cipher cipher) {
   PeacemakrKey_free(key);
 }
 
-void test_master_key_symmetric_algo(peacemakr_key_t *master_key, symmetric_cipher cipher) {
+void test_asymmetric_algo(symmetric_cipher cipher, asymmetric_cipher asymmcipher) {
   crypto_config_t cfg = {
-          .mode = SYMMETRIC,
+          .mode = ASYMMETRIC,
           .symm_cipher = cipher,
+          .asymm_cipher = asymmcipher,
           .digest_algorithm = SHA_512
   };
 
@@ -75,12 +78,14 @@ void test_master_key_symmetric_algo(peacemakr_key_t *master_key, symmetric_ciphe
           .err = &rand_err
   };
 
-  peacemakr_key_t *key = PeacemakrKey_new_from_master(cfg, master_key, "abcdefghijk", 11);
+  peacemakr_key_t *key = PeacemakrKey_new(cfg, &rand);
 
   ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, &plaintext_in, &rand);
+  peacemakr_sign(key, &plaintext_in, ciphertext);
   assert(ciphertext != NULL);
 
-  bool success = peacemakr_decrypt(key, ciphertext, &plaintext_out, false);
+  bool success = peacemakr_decrypt(key, ciphertext, &plaintext_out, true);
+  success &= peacemakr_verify(key, &plaintext_out, ciphertext);
 
   assert(success);
 
@@ -92,53 +97,6 @@ void test_master_key_symmetric_algo(peacemakr_key_t *master_key, symmetric_ciphe
   PeacemakrKey_free(key);
 }
 
-void test_uninit_crash() {
-  crypto_config_t cfg = {
-          .mode = SYMMETRIC,
-          .symm_cipher = AES_128_GCM,
-          .asymm_cipher = NONE,
-          .digest_algorithm = SHA_256
-  };
-
-  plaintext_t plaintext_in = {
-          .data = (const unsigned char *)"Hello world!",
-          .data_len = 12 + 1,
-          .aad = NULL,
-          .aad_len = 0
-  };
-
-  plaintext_t plaintext_out;
-
-  random_device_t rand = {
-          .generator = &fill_rand,
-          .err = &rand_err
-  };
-
-  peacemakr_key_t *key = PeacemakrKey_new(cfg, &rand);
-
-  ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, &plaintext_in, &rand);
-  assert(ciphertext != NULL);
-
-  size_t out_size = 0;
-  uint8_t *serialized = serialize_blob(ciphertext, &out_size);
-  assert(serialized != NULL);
-
-  ciphertext_blob_t *deserialized = deserialize_blob(serialized, out_size);
-
-  bool success = peacemakr_decrypt(key, deserialized, &plaintext_out, false);
-
-  assert(success);
-
-  assert(strncmp((const char *)plaintext_out.data, (const char *)plaintext_in.data, plaintext_in.data_len) == 0);
-  free((void *)plaintext_out.data);
-  if (plaintext_in.aad != NULL) {
-    assert(strncmp((const char *)plaintext_out.aad, (const char *)plaintext_in.aad, plaintext_in.aad_len) == 0);
-    free((void *)plaintext_out.aad);
-  }
-
-  PeacemakrKey_free(key);
-}
-
 int main() {
   if (!peacemakr_init()) {
     return 1;
@@ -146,23 +104,11 @@ int main() {
 
   for (int i = AES_128_GCM; i <= CHACHA20_POLY1305; ++i) {
     test_symmetric_algo(i);
-    test_uninit_crash();
   }
-
-  crypto_config_t cfg = {
-          .mode = SYMMETRIC,
-          .symm_cipher = AES_256_GCM,
-          .digest_algorithm = SHA_512
-  };
-
-  random_device_t rand = {
-          .generator = &fill_rand,
-          .err = &rand_err
-  };
   
-  peacemakr_key_t *master_key = PeacemakrKey_new(cfg, &rand);
-  
-  for (int i = AES_256_GCM; i <= CHACHA20_POLY1305; ++i) {
-    test_master_key_symmetric_algo(master_key, i);
+  for (int i = RSA_2048; i <= RSA_4096; ++i) {
+    for (int j = AES_128_GCM; j <= CHACHA20_POLY1305; ++j) {
+      test_asymmetric_algo(j, i);
+    }
   }
 }

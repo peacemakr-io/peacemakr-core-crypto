@@ -51,12 +51,12 @@ void test_asymmetric(symmetric_cipher symm_cipher, asymmetric_cipher cipher, mes
   peacemakr::Key key(cfg, rand);
 
   peacemakr::CryptoContext ctx(log_fn);
-  std::string encrypted = ctx.Encrypt(key, plaintext_in, rand);
+  std::string encrypted = ctx.Encrypt(key, plaintext_in, rand, false);
 
   peacemakr::Plaintext unverified_aad = ctx.ExtractUnverifiedAAD(encrypted);
   assert(plaintext_in.aad == unverified_aad.aad);
 
-  peacemakr::Plaintext plaintext_out = ctx.Decrypt(key, encrypted);
+  peacemakr::Plaintext plaintext_out = ctx.Decrypt(key, encrypted, false);
 
   assert(plaintext_in.data == plaintext_out.data);
   assert(plaintext_in.aad == plaintext_out.aad);
@@ -79,12 +79,68 @@ void test_symmetric(symmetric_cipher symm_cipher, message_digest_algorithm diges
   peacemakr::Key key(cfg, rand);
 
   peacemakr::CryptoContext ctx(log_fn);
-  std::string encrypted = ctx.Encrypt(key, plaintext_in, rand);
+  std::string encrypted = ctx.Encrypt(key, plaintext_in, rand, false);
 
   peacemakr::Plaintext unverified_aad = ctx.ExtractUnverifiedAAD(encrypted);
   assert(plaintext_in.aad == unverified_aad.aad);
 
-  peacemakr::Plaintext plaintext_out = ctx.Decrypt(key, encrypted);
+  peacemakr::Plaintext plaintext_out = ctx.Decrypt(key, encrypted, false);
+
+  assert(plaintext_in.data == plaintext_out.data);
+  assert(plaintext_in.aad == plaintext_out.aad);
+}
+
+void test_sign_symmetric(symmetric_cipher symm_cipher, message_digest_algorithm digest) {
+  crypto_config_t cfg = {
+          .mode = SYMMETRIC,
+          .symm_cipher = symm_cipher,
+          .asymm_cipher = NONE,
+          .digest_algorithm = digest
+  };
+
+  peacemakr::Plaintext plaintext_in;
+  plaintext_in.data = get_random_string();
+  plaintext_in.aad = get_random_string();
+
+  peacemakr::RandomDevice rand = peacemakr::RandomDevice::getDefault();
+
+  peacemakr::Key key(cfg, rand);
+
+  peacemakr::CryptoContext ctx(log_fn);
+  std::string encrypted = ctx.Encrypt(key, plaintext_in, rand, true);
+
+  peacemakr::Plaintext unverified_aad = ctx.ExtractUnverifiedAAD(encrypted);
+  assert(plaintext_in.aad == unverified_aad.aad);
+
+  peacemakr::Plaintext plaintext_out = ctx.Decrypt(key, encrypted, true);
+
+  assert(plaintext_in.data == plaintext_out.data);
+  assert(plaintext_in.aad == plaintext_out.aad);
+}
+
+void test_sign_asymmetric(symmetric_cipher symm_cipher, asymmetric_cipher cipher, message_digest_algorithm digest) {
+  crypto_config_t cfg = {
+          .mode = ASYMMETRIC,
+          .symm_cipher = symm_cipher,
+          .asymm_cipher = cipher,
+          .digest_algorithm = digest
+  };
+
+  peacemakr::Plaintext plaintext_in;
+  plaintext_in.data = get_random_string();
+  plaintext_in.aad = get_random_string();
+
+  peacemakr::RandomDevice rand = peacemakr::RandomDevice::getDefault();
+
+  peacemakr::Key key(cfg, rand);
+
+  peacemakr::CryptoContext ctx(log_fn);
+  std::string encrypted = ctx.Encrypt(key, plaintext_in, rand, true, &key);
+
+  peacemakr::Plaintext unverified_aad = ctx.ExtractUnverifiedAAD(encrypted);
+  assert(plaintext_in.aad == unverified_aad.aad);
+
+  peacemakr::Plaintext plaintext_out = ctx.Decrypt(key, encrypted, true, &key);
 
   assert(plaintext_in.data == plaintext_out.data);
   assert(plaintext_in.aad == plaintext_out.aad);
@@ -108,12 +164,12 @@ void test_uninit_crash() {
   assert(key.isValid());
 
   peacemakr::CryptoContext ctx(log_fn);
-  std::string encrypted = ctx.Encrypt(key, plaintext_in, rand);
+  std::string encrypted = ctx.Encrypt(key, plaintext_in, rand, false);
   if (encrypted.empty()) { // couldn't encrypt
     assert(false);
   }
 
-  peacemakr::Plaintext plaintext_out = ctx.Decrypt(key, encrypted);
+  peacemakr::Plaintext plaintext_out = ctx.Decrypt(key, encrypted, false);
   if (plaintext_out.data.empty()) { // couldn't decrypt
     assert(false);
   }
@@ -128,6 +184,7 @@ int main() {
     for (int j = AES_128_GCM; j <= CHACHA20_POLY1305; ++j) {
       for (int k = SHA_224; k <= SHA_512; k++) {
         runners.emplace_back(test_asymmetric, (symmetric_cipher)j, (asymmetric_cipher)i, (message_digest_algorithm)k);
+//        runners.emplace_back(test_sign_asymmetric, (symmetric_cipher)j, (asymmetric_cipher)i, (message_digest_algorithm)k);
       }
     }
     std::for_each(runners.begin(), runners.end(), [](std::thread &t){t.join();});
@@ -137,6 +194,7 @@ int main() {
   for (int j = AES_128_GCM; j <= CHACHA20_POLY1305; ++j) {
     for (int k = SHA_224; k <= SHA_512; k++) {
       runners.emplace_back(test_symmetric, (symmetric_cipher)j, (message_digest_algorithm)k);
+      runners.emplace_back(test_sign_symmetric, (symmetric_cipher)j, (message_digest_algorithm)k);
     }
   }
 

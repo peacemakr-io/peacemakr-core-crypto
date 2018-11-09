@@ -48,7 +48,7 @@ void test_algo(plaintext_t plaintext_in, const peacemakr_key_t *key) {
   ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, &plaintext_in, &rand);
   assert(ciphertext != NULL);
 
-  bool success = peacemakr_decrypt(key, ciphertext, &plaintext_out);
+  bool success = peacemakr_decrypt(key, ciphertext, &plaintext_out, false);
 
   assert(success);
 

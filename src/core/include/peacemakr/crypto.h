@@ -202,9 +202,14 @@ ciphertext_blob_t *peacemakr_encrypt(const peacemakr_key_t *recipient_key,
                                      const plaintext_t *plain,
                                      random_device_t *rand);
 
-// sign the plaintext and put it into the ciphertext
-void peacemakr_sign(const peacemakr_key_t *sender_key,
-                    const plaintext_t *plain, ciphertext_blob_t *cipher);
+/**
+ * Signs the plaintext in \p plain with key \p sender_key. If the configuration
+ * in \p sender_key is SYMMETRIC then this method stores an HMAC in \p cipher.
+ * If the configuration is ASYMMETRIC then this method uses the EVP_DigestSign*
+ * functions to do asymmetric signing of \p plain and stores it in \p cipher.
+ */
+void peacemakr_sign(const peacemakr_key_t *sender_key, const plaintext_t *plain,
+                    ciphertext_blob_t *cipher);
 
 /**
  * Performs the encryption operation using the configuration and he (symmetric
@@ -213,13 +218,23 @@ void peacemakr_sign(const peacemakr_key_t *sender_key,
  * boolean to indicate if decryption was successful. If the \p key is NULL
  * then the decryption will attempt to extract any AAD from the message.
  * Note that this AAD is unconfirmed and may have been tampered with.
+ * If the message is signed and needs to be verified with peacemakr_verify
+ * then the last parameter should be set to true so that the ciphertext
+ * structure is not freed and it can be freed after message verification.
  */
 bool peacemakr_decrypt(const peacemakr_key_t *recipient_key,
-                       ciphertext_blob_t *cipher, plaintext_t *plain);
+                       ciphertext_blob_t *cipher, plaintext_t *plain,
+                       bool need_verify);
 
-// Verify the signature in the ciphertext - how to deal with this???
+/**
+ * Verifies the plaintext in \p plain with key \p sender_key. If the
+ * configuration in \p sender_key is SYMMETRIC then this method compares a
+ * computed HMAC against the one in \p cipher. If the configuration is
+ * ASYMMETRIC then this method uses the EVP_DigestVerify* functions to do
+ * asymmetric verification of \p plain against the signature in \p cipher.
+ */
 bool peacemakr_verify(const peacemakr_key_t *sender_key,
-                      const plaintext_t *plain, const ciphertext_blob_t *cipher);
+                      const plaintext_t *plain, ciphertext_blob_t *cipher);
 
 /**
  * Computes the HMAC of \p buf with \p master_key. Allocates memory and
