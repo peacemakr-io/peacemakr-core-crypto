@@ -25,13 +25,20 @@ class CoreCryptoTests: XCTestCase {
     let context = try? CryptoContext()
     let key = try? PeacemakrKey(config: cfg, rand: device)
     XCTAssert(context != nil && key != nil, "Setup failed")
-    
-    let encrypted = try? context!.Encrypt(key: key!, plaintext: plaintextIn, rand: device)
+
+    var encrypted = try? context!.Encrypt(key: key!, plaintext: plaintextIn, rand: device)
     XCTAssert(encrypted != nil, "Something failed in Encryption")
-    let unverfiedAAD = try? context!.ExtractUnverifiedAAD(serialized: encrypted!)
+    context!.Sign(senderKey: key!, plaintext: plaintextIn, ciphertext: &(encrypted!))
+    let serialized = try? context!.Serialize(encrypted!)
+
+    let unverfiedAAD = try? context!.ExtractUnverifiedAAD(serialized!)
     XCTAssert(unverfiedAAD!.AuthenticatableData == plaintextIn.AuthenticatableData, "Something failed in ExtractUnverfiedAAD")
-    let decrypted = try? context!.Decrypt(key: key!, serialized: encrypted!)
+
+    var deserialized = try? context!.Deserialize(serialized!)
+    let decrypted = try? context!.Decrypt(key: key!, ciphertext: deserialized!)
     XCTAssert(decrypted != nil, "Something failed in Decryption")
+    let success = context!.Verify(senderKey: key!, plaintext: decrypted!, ciphertext: &(deserialized!))
+    XCTAssert(success)
     XCTAssert(decrypted!.EncryptableData == plaintextIn.EncryptableData)
     XCTAssert(decrypted!.AuthenticatableData == plaintextIn.AuthenticatableData)
     
