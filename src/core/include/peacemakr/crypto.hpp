@@ -154,9 +154,8 @@ public:
    * Performs the encryption operation using the configuration and the
    * (symmetric or asymmetric) key in \p key. The operation is performed over \p
    * plain and uses \p rand to generate the IV/nonce. Returns a
-   * peacemakr::Ciphertext* that can be used in calls to Sign and Serialize.
-   * peacemakr_decrypt(const peacemakr_key_t *, ciphertext_blob_t *,
-   * plaintext_t)
+   * peacemakr::Ciphertext* that can be used in calls to CryptoContext::Sign and
+   * CryptoContext::Serialize.
    */
   Ciphertext *Encrypt(const Key &key, const Plaintext &plaintext,
                       RandomDevice &rand);
@@ -184,7 +183,8 @@ public:
 
   /**
    * Deserializes a peacemakr::Ciphertext* from \p serialized. \returns A
-   * peacemakr::Ciphertext* that may be passed to Decrypt and Verify.
+   * peacemakr::Ciphertext* that may be passed to CryptoContext::Decrypt and
+   * CryptoContext::Verify.
    */
   Ciphertext *Deserialize(const std::string &serialized);
 
@@ -192,9 +192,9 @@ public:
    * Performs the decryption operation using the configuration and the
    * (symmetric or asymmetric) key in \p key. The operation is performed over \p
    * blob and \returns the result. If the message is signed and needs to be
-   * verified with Verify, then the last parameter should be set to true so that
-   * the ciphertext structure is not freed. It will be freed after message
-   * verification.
+   * verified with CryptoContext::Verify, then the last parameter should be set
+   * to true so that the ciphertext structure is not freed. It will be freed
+   * after message verification.
    */
   Plaintext Decrypt(const Key &key, Ciphertext *blob,
                     bool should_free_ciphertext);
