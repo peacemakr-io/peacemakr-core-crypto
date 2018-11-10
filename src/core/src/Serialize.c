@@ -49,7 +49,7 @@ static void digest_message(const unsigned char *message, size_t message_len,
   EVP_MD_CTX_free(mdctx);
 }
 
-uint8_t *serialize_blob(ciphertext_blob_t *cipher, size_t *out_size) {
+uint8_t *peacemakr_serialize(ciphertext_blob_t *cipher, size_t *out_size) {
   EXPECT_TRUE_RET((cipher != NULL && out_size != NULL),
                   "cipher or out_size was null in call to serialize\n");
 
@@ -165,8 +165,8 @@ uint8_t *serialize_blob(ciphertext_blob_t *cipher, size_t *out_size) {
   return (uint8_t *)b64_encode(buf, current_pos, out_size);
 }
 
-ciphertext_blob_t *deserialize_blob(const uint8_t *b64_serialized_cipher,
-                                    size_t serialized_len) {
+ciphertext_blob_t *peacemakr_deserialize(const uint8_t *b64_serialized_cipher,
+                                         size_t serialized_len) {
 
   EXPECT_TRUE_RET((b64_serialized_cipher != NULL && serialized_len != 0),
                   "b64 serialized cipher was NULL or serialized len was 0\n");

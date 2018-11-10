@@ -44,10 +44,10 @@ void test_serialize(symmetric_cipher symm_cipher, asymmetric_cipher cipher, mess
   assert(ciphertext != NULL);
 
   size_t out_size = 0;
-  uint8_t *serialized = serialize_blob(ciphertext, &out_size);
+  uint8_t *serialized = peacemakr_serialize(ciphertext, &out_size);
   assert(serialized != NULL);
 
-  ciphertext_blob_t *deserialized = deserialize_blob(serialized, out_size);
+  ciphertext_blob_t *deserialized = peacemakr_deserialize(serialized, out_size);
   bool success = peacemakr_decrypt(key, deserialized, &plaintext_out, false);
 
   assert(success);

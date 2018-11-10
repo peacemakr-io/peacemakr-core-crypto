@@ -6,12 +6,11 @@
 // Full license at peacemakr-core-crypto/LICENSE.txt
 //
 
-
 #define __STDC_WANT_LIB_EXT1__ 1
+#include <arpa/inet.h>
 #include <memory.h>
 #include <stddef.h>
 #include <stdlib.h>
-#include <arpa/inet.h>
 
 #include "Buffer.h"
 #include "Logging.h"

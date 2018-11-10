@@ -45,10 +45,10 @@ void test_symmetric_algo(symmetric_cipher cipher) {
   assert(ciphertext != NULL);
 
   size_t out_size = 0;
-  uint8_t *serialized = serialize_blob(ciphertext, &out_size);
+  uint8_t *serialized = peacemakr_serialize(ciphertext, &out_size);
   assert(serialized != NULL);
 
-  ciphertext_blob_t *deserialized = deserialize_blob(serialized, out_size);
+  ciphertext_blob_t *deserialized = peacemakr_deserialize(serialized, out_size);
   bool success = peacemakr_decrypt(key, deserialized, &plaintext_out, true);
   success &= peacemakr_verify(key, &plaintext_out, deserialized);
 
@@ -92,11 +92,11 @@ void test_asymmetric_algo(symmetric_cipher cipher, asymmetric_cipher asymmcipher
 
   size_t out_size = 0;
   // this isn't serializing the signature properly...
-  uint8_t *serialized = serialize_blob(ciphertext, &out_size);
+  uint8_t *serialized = peacemakr_serialize(ciphertext, &out_size);
   assert(serialized != NULL);
 
   // or this isn't deserializing the signature properly...
-  ciphertext_blob_t *deserialized = deserialize_blob(serialized, out_size);
+  ciphertext_blob_t *deserialized = peacemakr_deserialize(serialized, out_size);
   bool success = peacemakr_decrypt(key, deserialized, &plaintext_out, true);
   success &= peacemakr_verify(key, &plaintext_out, deserialized);
 

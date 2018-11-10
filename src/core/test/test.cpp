@@ -56,17 +56,24 @@ void test_asymmetric(symmetric_cipher symm_cipher, asymmetric_cipher cipher, mes
   peacemakr::Key key(cfg, rand);
 
   peacemakr::CryptoContext ctx(log_fn);
-  std::string encrypted = ctx.Encrypt(key, plaintext_in, rand, false);
-  if (encrypted.empty() && plaintext_in.data.empty()) {
+  peacemakr::Ciphertext *encrypted = ctx.Encrypt(key, plaintext_in, rand);
+  if (encrypted == nullptr && plaintext_in.data.empty()) {
     return;
+  } else {
+    assert(encrypted != nullptr);
   }
 
+  std::string serialized = ctx.Serialize(encrypted);
+  assert(!serialized.empty());
+
   if (!plaintext_in.aad.empty()) {
-    peacemakr::Plaintext unverified_aad = ctx.ExtractUnverifiedAAD(encrypted);
+    peacemakr::Plaintext unverified_aad = ctx.ExtractUnverifiedAAD(serialized);
     assert(plaintext_in.aad == unverified_aad.aad);
   }
 
-  peacemakr::Plaintext plaintext_out = ctx.Decrypt(key, encrypted, false);
+  peacemakr::Ciphertext *deserialized = ctx.Deserialize(serialized);
+
+  peacemakr::Plaintext plaintext_out = ctx.Decrypt(key, deserialized, false);
 
   assert(plaintext_in.data == plaintext_out.data);
   assert(plaintext_in.aad == plaintext_out.aad);
@@ -89,17 +96,24 @@ void test_symmetric(symmetric_cipher symm_cipher, message_digest_algorithm diges
   peacemakr::Key key(cfg, rand);
 
   peacemakr::CryptoContext ctx(log_fn);
-  std::string encrypted = ctx.Encrypt(key, plaintext_in, rand, false);
-  if (encrypted.empty() && plaintext_in.data.empty()) {
+  peacemakr::Ciphertext *encrypted = ctx.Encrypt(key, plaintext_in, rand);
+  if (encrypted == nullptr && plaintext_in.data.empty()) {
     return;
+  } else {
+    assert(encrypted != nullptr);
   }
 
+  std::string serialized = ctx.Serialize(encrypted);
+  assert(!serialized.empty());
+
   if (!plaintext_in.aad.empty()) {
-    peacemakr::Plaintext unverified_aad = ctx.ExtractUnverifiedAAD(encrypted);
+    peacemakr::Plaintext unverified_aad = ctx.ExtractUnverifiedAAD(serialized);
     assert(plaintext_in.aad == unverified_aad.aad);
   }
 
-  peacemakr::Plaintext plaintext_out = ctx.Decrypt(key, encrypted, false);
+  peacemakr::Ciphertext *deserialized = ctx.Deserialize(serialized);
+
+  peacemakr::Plaintext plaintext_out = ctx.Decrypt(key, deserialized, false);
 
   assert(plaintext_in.data == plaintext_out.data);
   assert(plaintext_in.aad == plaintext_out.aad);
@@ -122,17 +136,26 @@ void test_sign_symmetric(symmetric_cipher symm_cipher, message_digest_algorithm 
   peacemakr::Key key(cfg, rand);
 
   peacemakr::CryptoContext ctx(log_fn);
-  std::string encrypted = ctx.Encrypt(key, plaintext_in, rand, true);
-  if (encrypted.empty() && plaintext_in.data.empty()) {
+  peacemakr::Ciphertext *encrypted = ctx.Encrypt(key, plaintext_in, rand);
+  if (encrypted == nullptr && plaintext_in.data.empty()) {
     return;
+  } else {
+    assert(encrypted != nullptr);
   }
+  ctx.Sign(key, plaintext_in, encrypted);
+
+  std::string serialized = ctx.Serialize(encrypted);
+  assert(!serialized.empty());
 
   if (!plaintext_in.aad.empty()) {
-    peacemakr::Plaintext unverified_aad = ctx.ExtractUnverifiedAAD(encrypted);
+    peacemakr::Plaintext unverified_aad = ctx.ExtractUnverifiedAAD(serialized);
     assert(plaintext_in.aad == unverified_aad.aad);
   }
 
-  peacemakr::Plaintext plaintext_out = ctx.Decrypt(key, encrypted, true);
+  peacemakr::Ciphertext *deserialized = ctx.Deserialize(serialized);
+  peacemakr::Plaintext plaintext_out = ctx.Decrypt(key, deserialized, true);
+  bool verified = ctx.Verify(key, plaintext_out, deserialized);
+  assert(verified);
 
   assert(plaintext_in.data == plaintext_out.data);
   assert(plaintext_in.aad == plaintext_out.aad);
@@ -155,17 +178,26 @@ void test_sign_asymmetric(symmetric_cipher symm_cipher, asymmetric_cipher cipher
   peacemakr::Key key(cfg, rand);
 
   peacemakr::CryptoContext ctx(log_fn);
-  std::string encrypted = ctx.Encrypt(key, plaintext_in, rand, true, &key);
-  if (encrypted.empty() && plaintext_in.data.empty()) {
+  peacemakr::Ciphertext *encrypted = ctx.Encrypt(key, plaintext_in, rand);
+  if (encrypted == nullptr && plaintext_in.data.empty()) {
     return;
+  } else {
+    assert(encrypted != nullptr);
   }
+  ctx.Sign(key, plaintext_in, encrypted);
+
+  std::string serialized = ctx.Serialize(encrypted);
+  assert(!serialized.empty());
 
   if (!plaintext_in.aad.empty()) {
-    peacemakr::Plaintext unverified_aad = ctx.ExtractUnverifiedAAD(encrypted);
+    peacemakr::Plaintext unverified_aad = ctx.ExtractUnverifiedAAD(serialized);
     assert(plaintext_in.aad == unverified_aad.aad);
   }
 
-  peacemakr::Plaintext plaintext_out = ctx.Decrypt(key, encrypted, true, &key);
+  peacemakr::Ciphertext *deserialized = ctx.Deserialize(serialized);
+  peacemakr::Plaintext plaintext_out = ctx.Decrypt(key, deserialized, true);
+  bool verified = ctx.Verify(key, plaintext_out, deserialized);
+  assert(verified);
 
   if (!plaintext_in.data.empty()) {
     assert(plaintext_in.data == plaintext_out.data);
@@ -193,16 +225,24 @@ void test_uninit_crash() {
   assert(key.isValid());
 
   peacemakr::CryptoContext ctx(log_fn);
-  std::string encrypted = ctx.Encrypt(key, plaintext_in, rand, false);
-  if (encrypted.empty() && plaintext_in.data.empty()) {
+  peacemakr::Ciphertext *encrypted = ctx.Encrypt(key, plaintext_in, rand);
+  if (encrypted == nullptr && plaintext_in.data.empty()) {
     return;
+  } else {
+    assert(encrypted != nullptr);
   }
 
-  if (encrypted.empty()) { // couldn't encrypt
-    assert(false);
+  std::string serialized = ctx.Serialize(encrypted);
+  assert(!serialized.empty());
+
+  if (!plaintext_in.aad.empty()) {
+    peacemakr::Plaintext unverified_aad = ctx.ExtractUnverifiedAAD(serialized);
+    assert(plaintext_in.aad == unverified_aad.aad);
   }
 
-  peacemakr::Plaintext plaintext_out = ctx.Decrypt(key, encrypted, false);
+  peacemakr::Ciphertext *deserialized = ctx.Deserialize(serialized);
+
+  peacemakr::Plaintext plaintext_out = ctx.Decrypt(key, deserialized, false);
   if (plaintext_out.data.empty()) { // couldn't decrypt
     assert(false);
   }

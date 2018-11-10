@@ -191,12 +191,11 @@ crypto_config_t PeacemakrKey_get_config(const peacemakr_key_t *key);
 void PeacemakrKey_free(peacemakr_key_t *key);
 
 /**
- * Performs the encryption operation using the configuration and he (symmetric
+ * Performs the encryption operation using the configuration and the (symmetric
  * or asymmetric) key in \p recipient_key. The operation is
  * performed over \p plain and uses \p rand to generate the IV/nonce. Returns a
- * ciphertext_blob_t that can be used in calls to uint8_t
- * *serialize_blob(ciphertext_blob_t *, size_t *) and bool
- * peacemakr_decrypt(const peacemakr_key_t *, ciphertext_blob_t *, plaintext_t
+ * ciphertext_blob_t that can be used in calls to peacemakr_sign,
+ * peacemakr_serialize, peacemakr_decrypt, and peacemakr_verify
  */
 ciphertext_blob_t *peacemakr_encrypt(const peacemakr_key_t *recipient_key,
                                      const plaintext_t *plain,
@@ -212,7 +211,7 @@ void peacemakr_sign(const peacemakr_key_t *sender_key, const plaintext_t *plain,
                     ciphertext_blob_t *cipher);
 
 /**
- * Performs the encryption operation using the configuration and he (symmetric
+ * Performs the decryption operation using the configuration and the (symmetric
  * or asymmetric) key in \p recipient_key. The operation is
  * performed over \p cipher and the result is stored in \p plain. Returns a
  * boolean to indicate if decryption was successful. If the \p key is NULL
@@ -232,6 +231,7 @@ bool peacemakr_decrypt(const peacemakr_key_t *recipient_key,
  * computed HMAC against the one in \p cipher. If the configuration is
  * ASYMMETRIC then this method uses the EVP_DigestVerify* functions to do
  * asymmetric verification of \p plain against the signature in \p cipher.
+ * \returns false if verification is unsuccessful.
  */
 bool peacemakr_verify(const peacemakr_key_t *sender_key,
                       const plaintext_t *plain, ciphertext_blob_t *cipher);
@@ -249,16 +249,16 @@ uint8_t *peacemakr_hmac(const message_digest_algorithm digest_algorithm,
  * said buffer into \p out_size. The caller is responsible for managing
  * memory returned from this function.
  */
-uint8_t *serialize_blob(ciphertext_blob_t *cipher, size_t *out_size);
+uint8_t *peacemakr_serialize(ciphertext_blob_t *cipher, size_t *out_size);
 
 /**
  * Deserializes a ciphertext_blob_t from \p b64_encoded_cipher. \p
  * serialized_len must be the same as out_size from uint8_t
- * *serialize_blob(ciphertext_blob_t *, size_t *). \returns A ciphertext_blob_t
- * that may be passed to bool peacemakr_decrypt(const peacemakr_key_t *,
- * ciphertext_blob_t *, plaintext_t *)
+ * *peacemakr_serialize(ciphertext_blob_t *, size_t *). \returns A
+ * ciphertext_blob_t that may be passed to bool peacemakr_decrypt(const
+ * peacemakr_key_t *, ciphertext_blob_t *, plaintext_t *)
  */
-ciphertext_blob_t *deserialize_blob(const uint8_t *b64_serialized_cipher,
-                                    size_t serialized_len);
+ciphertext_blob_t *peacemakr_deserialize(const uint8_t *b64_serialized_cipher,
+                                         size_t serialized_len);
 
 #endif // PEACEMAKR_CORE_CRYPTO_CRYPTO_H

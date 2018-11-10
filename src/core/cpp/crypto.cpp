@@ -9,6 +9,7 @@
 #include "crypto.hpp"
 
 #include <cassert>
+#include <crypto.hpp>
 #include <cstdio>
 #include <stdexcept>
 
@@ -100,19 +101,19 @@ peacemakr::CryptoContext::CryptoContext() : m_log_(log) {
   }
 }
 
-std::string peacemakr::CryptoContext::Encrypt(
-    const peacemakr::Key &key, const peacemakr::Plaintext &plaintext,
-    peacemakr::RandomDevice &rand, bool sign, const Key *sender_key) {
+ciphertext_blob_t *peacemakr::CryptoContext::Encrypt(const Key &key,
+                                                     const Plaintext &plaintext,
+                                                     RandomDevice &rand) {
   // Early exit if the key is invalid
   if (!key.isValid()) {
     m_log_("invalid key in Encrypt");
-    return "";
+    return nullptr;
   }
-  
+
   plaintext_t plain = {
       .data = plaintext.data.empty()
-              ? nullptr
-              : (const unsigned char *)plaintext.data.c_str(),
+                  ? nullptr
+                  : (const unsigned char *)plaintext.data.c_str(),
       .data_len = plaintext.data.empty() ? 0 : (size_t)plaintext.data.size(),
       .aad = plaintext.aad.empty()
                  ? nullptr
@@ -123,26 +124,29 @@ std::string peacemakr::CryptoContext::Encrypt(
 
   ciphertext_blob_t *blob =
       peacemakr_encrypt(pmKey, &plain, &rand.getContents());
-  if (blob == nullptr) {
-    m_log_("encryption failed");
-    return "";
-  }
+  return blob;
+}
 
-  if (sign) {
-    if (key.getConfig().mode == ASYMMETRIC) {
-      if (sender_key == nullptr || !sender_key->isValid()) {
-        m_log_("Invalid sender key for asymmetric signing of a message");
-        return "";
-      }
-      peacemakr_sign(sender_key->getKey(), &plain, blob);
-    } else if (key.getConfig().mode == SYMMETRIC) {
-      peacemakr_sign(key.getKey(), &plain, blob);
-    }
-  }
+void peacemakr::CryptoContext::Sign(const peacemakr::Key &senderKey,
+                                    const peacemakr::Plaintext &plaintext,
+                                    ciphertext_blob_t *blob) {
 
+  plaintext_t plain = {
+      .data = plaintext.data.empty()
+                  ? nullptr
+                  : (const unsigned char *)plaintext.data.c_str(),
+      .data_len = plaintext.data.empty() ? 0 : (size_t)plaintext.data.size(),
+      .aad = plaintext.aad.empty()
+                 ? nullptr
+                 : (const unsigned char *)plaintext.aad.c_str(),
+      .aad_len = plaintext.aad.empty() ? 0 : (size_t)plaintext.aad.size()};
+
+  return peacemakr_sign(senderKey.getKey(), &plain, blob);
+}
+
+std::string peacemakr::CryptoContext::Serialize(ciphertext_blob_t *blob) {
   size_t out_size = 0;
-  uint8_t *serialized = serialize_blob(blob, &out_size);
-
+  uint8_t *serialized = peacemakr_serialize(blob, &out_size);
   return std::string(serialized, serialized + out_size);
 }
 
@@ -150,12 +154,12 @@ peacemakr::Plaintext
 peacemakr::CryptoContext::ExtractUnverifiedAAD(const std::string &serialized) {
   // Early exit if there is nothing to decrypt
   if (serialized.empty()) {
-    m_log_("nothing to decrypt");
+    m_log_("nothing to extract from");
     return Plaintext{};
   }
 
-  ciphertext_blob_t *blob =
-      deserialize_blob((unsigned char *)serialized.c_str(), serialized.size());
+  ciphertext_blob_t *blob = peacemakr_deserialize(
+      (unsigned char *)serialized.c_str(), serialized.size());
 
   plaintext_t out;
   bool success = peacemakr_decrypt(nullptr, blob, &out, false);
@@ -170,43 +174,43 @@ peacemakr::CryptoContext::ExtractUnverifiedAAD(const std::string &serialized) {
   return plain;
 }
 
-peacemakr::Plaintext
-peacemakr::CryptoContext::Decrypt(const peacemakr::Key &key,
-                                  const std::string &serialized, bool verify,
-                                  const Key *sender_key) {
-
-  // Early exit if there is nothing to decrypt
+ciphertext_blob_t *
+peacemakr::CryptoContext::Deserialize(const std::string &serialized) {
   if (serialized.empty()) {
-    m_log_("noting to decrypt");
-    return Plaintext{};
+    m_log_("noting to deserialize");
+    return nullptr;
   }
+  return peacemakr_deserialize((uint8_t *)serialized.data(), serialized.size());
+}
 
-  ciphertext_blob_t *blob =
-      deserialize_blob((unsigned char *)serialized.c_str(), serialized.size());
+peacemakr::Plaintext
+peacemakr::CryptoContext::Decrypt(const Key &key, ciphertext_blob_t *blob,
+                                  bool should_free_ciphertext) {
 
   plaintext_t out;
-  bool success = peacemakr_decrypt(key.getKey(), blob, &out, verify);
+  bool success =
+      peacemakr_decrypt(key.getKey(), blob, &out, should_free_ciphertext);
   if (!success) {
     m_log_("decryption failed");
     return Plaintext{};
   }
 
-  if (verify) {
-    if (key.getConfig().mode == ASYMMETRIC) {
-      if (sender_key == nullptr || !sender_key->isValid()) {
-        m_log_("Invalid sender key for asymmetric signing of a message");
-        return {};
-      }
-      success &= peacemakr_verify(sender_key->getKey(), &out, blob);
-    } else if (key.getConfig().mode == SYMMETRIC) {
-      success &= peacemakr_verify(key.getKey(), &out, blob);
-    }
-  }
-
   Plaintext plain{};
-  if (success) {
-    setContents(plain, out);
-  }
+  setContents(plain, out);
 
   return plain;
+}
+
+bool peacemakr::CryptoContext::Verify(const peacemakr::Key &senderKey,
+                                      const peacemakr::Plaintext &plain,
+                                      ciphertext_blob_t *blob) {
+  plaintext_t cplain = {
+      .data = plain.data.empty() ? nullptr
+                                 : (const unsigned char *)plain.data.c_str(),
+      .data_len = plain.data.empty() ? 0 : (size_t)plain.data.size(),
+      .aad = plain.aad.empty() ? nullptr
+                               : (const unsigned char *)plain.aad.c_str(),
+      .aad_len = plain.aad.empty() ? 0 : (size_t)plain.aad.size()};
+
+  return peacemakr_verify(senderKey.getKey(), &cplain, blob);
 }
