@@ -270,9 +270,9 @@ bool CiphertextBlob_compare(const ciphertext_blob_t *lhs,
       equal = false;
     } else if (0 != memcmp(lhs_buf, rhs_buf, lhs_size)) {
       PEACEMAKR_LOG("iv buffers not equal\n");
-//      for (int i = 0; i < lhs_size; ++i) {
-//        printf("%d: %x - %x\n", i, lhs_buf[i], rhs_buf[i]);
-//      }
+      //      for (int i = 0; i < lhs_size; ++i) {
+      //        printf("%d: %x - %x\n", i, lhs_buf[i], rhs_buf[i]);
+      //      }
       equal = false;
     }
   }
@@ -286,9 +286,9 @@ bool CiphertextBlob_compare(const ciphertext_blob_t *lhs,
       equal = false;
     } else if (0 != memcmp(lhs_buf, rhs_buf, lhs_size)) {
       PEACEMAKR_LOG("tag buffers not equal\n");
-//      for (int i = 0; i < lhs_size; ++i) {
-//        printf("%d: %x - %x\n", i, lhs_buf[i], rhs_buf[i]);
-//      }
+      //      for (int i = 0; i < lhs_size; ++i) {
+      //        printf("%d: %x - %x\n", i, lhs_buf[i], rhs_buf[i]);
+      //      }
       equal = false;
     }
   }
@@ -302,9 +302,9 @@ bool CiphertextBlob_compare(const ciphertext_blob_t *lhs,
       equal = false;
     } else if (0 != memcmp(lhs_buf, rhs_buf, lhs_size)) {
       PEACEMAKR_LOG("aad buffers not equal\n");
-//      for (int i = 0; i < lhs_size; ++i) {
-//        printf("%d: %x - %x\n", i, lhs_buf[i], rhs_buf[i]);
-//      }
+      //      for (int i = 0; i < lhs_size; ++i) {
+      //        printf("%d: %x - %x\n", i, lhs_buf[i], rhs_buf[i]);
+      //      }
       equal = false;
     }
   }
@@ -318,9 +318,9 @@ bool CiphertextBlob_compare(const ciphertext_blob_t *lhs,
       equal = false;
     } else if (0 != memcmp(lhs_buf, rhs_buf, lhs_size)) {
       PEACEMAKR_LOG("ciphertext buffers not equal\n");
-//      for (int i = 0; i < lhs_size; ++i) {
-//        printf("%d: %x - %x\n", i, lhs_buf[i], rhs_buf[i]);
-//      }
+      //      for (int i = 0; i < lhs_size; ++i) {
+      //        printf("%d: %x - %x\n", i, lhs_buf[i], rhs_buf[i]);
+      //      }
       equal = false;
     }
   }
@@ -334,9 +334,9 @@ bool CiphertextBlob_compare(const ciphertext_blob_t *lhs,
       equal = false;
     } else if (0 != memcmp(lhs_buf, rhs_buf, lhs_size)) {
       PEACEMAKR_LOG("digest buffers not equal\n");
-//      for (int i = 0; i < lhs_size; ++i) {
-//        printf("%d: %x - %x\n", i, lhs_buf[i], rhs_buf[i]);
-//      }
+      //      for (int i = 0; i < lhs_size; ++i) {
+      //        printf("%d: %x - %x\n", i, lhs_buf[i], rhs_buf[i]);
+      //      }
       equal = false;
     }
   }

@@ -55,7 +55,7 @@ uint8_t *serialize_blob(ciphertext_blob_t *cipher, size_t *out_size) {
 
   size_t buffer_len = sizeof(uint32_t); // magic number
   buffer_len += sizeof(uint64_t);       // size of message up until digest
-  buffer_len += sizeof(uint8_t);       // digest algo
+  buffer_len += sizeof(uint8_t);        // digest algo
   // version
   buffer_len += sizeof(uint32_t);
   // encryption mode, symm_cipher, asymm_cipher
@@ -192,13 +192,13 @@ ciphertext_blob_t *deserialize_blob(const uint8_t *b64_serialized_cipher,
   current_position += sizeof(uint64_t);
 
   // digest algo
-  uint8_t digest_algo =
-      *(serialized_cipher + current_position);
+  uint8_t digest_algo = *(serialized_cipher + current_position);
   current_position += sizeof(uint8_t);
 
   { // Check that the message digests are equal
     uint64_t digestlen = (uint64_t)EVP_MD_size(parse_digest(digest_algo));
-    buffer_t *serialized_digest = Buffer_deserialize(serialized_cipher + len_before_digest);
+    buffer_t *serialized_digest =
+        Buffer_deserialize(serialized_cipher + len_before_digest);
 
     EXPECT_TRUE_RET(
         (Buffer_get_size(serialized_digest) == digestlen),
@@ -209,7 +209,8 @@ ciphertext_blob_t *deserialize_blob(const uint8_t *b64_serialized_cipher,
                    parse_digest(digest_algo), computed_digest);
 
     if (0 != CRYPTO_memcmp(Buffer_get_bytes(computed_digest, NULL),
-                           Buffer_get_bytes(serialized_digest, NULL), digestlen)) {
+                           Buffer_get_bytes(serialized_digest, NULL),
+                           digestlen)) {
       PEACEMAKR_LOG("digests don't compare equal, aborting\n");
       Buffer_free(computed_digest);
       return NULL;
@@ -228,18 +229,15 @@ ciphertext_blob_t *deserialize_blob(const uint8_t *b64_serialized_cipher,
   }
 
   // encryption mode
-  uint8_t encryption_mode =
-      *(serialized_cipher + current_position);
+  uint8_t encryption_mode = *(serialized_cipher + current_position);
   current_position += sizeof(uint8_t);
 
   // symm_cipher
-  uint8_t symm_cipher =
-      *(serialized_cipher + current_position);
+  uint8_t symm_cipher = *(serialized_cipher + current_position);
   current_position += sizeof(uint8_t);
 
   // asymm_cipher
-  uint8_t asymm_cipher =
-      *(serialized_cipher + current_position);
+  uint8_t asymm_cipher = *(serialized_cipher + current_position);
   current_position += sizeof(uint8_t);
 
   crypto_config_t cfg = {.mode = encryption_mode,
@@ -280,7 +278,8 @@ ciphertext_blob_t *deserialize_blob(const uint8_t *b64_serialized_cipher,
   CiphertextBlob_set_version(out, version);
 
   if (encrypted_key != NULL) {
-    Buffer_set_bytes(CiphertextBlob_mutable_encrypted_key(out), Buffer_get_bytes(encrypted_key, NULL),
+    Buffer_set_bytes(CiphertextBlob_mutable_encrypted_key(out),
+                     Buffer_get_bytes(encrypted_key, NULL),
                      Buffer_get_size(encrypted_key));
   }
 
