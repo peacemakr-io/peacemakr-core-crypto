@@ -19,10 +19,20 @@ import (
 )
 
 func SetUpPlaintext() Plaintext {
-	pData := make([]byte, mrand.Uint32()%10000) // mod for test time
-	pAAD := make([]byte, mrand.Uint32()%10000)
-	mrand.Read(pData)
-	mrand.Read(pAAD)
+	shouldUseData := bool(mrand.Uint32() % 2 == 1)
+	var pData []byte = nil
+	if shouldUseData {
+		pData = make([]byte, mrand.Uint32()%10000) // mod for test time
+		mrand.Read(pData)
+	}
+
+	shouldUseAAD := bool(mrand.Uint32() % 2 == 1)
+	var pAAD []byte = nil
+	if shouldUseAAD {
+		pAAD = make([]byte, mrand.Uint32()%10000)
+		mrand.Read(pAAD)
+	}
+
 	return Plaintext{
 		Data: pData,
 		Aad:  pAAD,
@@ -151,19 +161,25 @@ func TestAsymmetricEncrypt(t *testing.T) {
 				key := NewPeacemakrKey(cfg, randomDevice)
 
 				ciphertext, err := Encrypt(key, plaintextIn, randomDevice)
+				if err != nil && len(plaintextIn.Data) == 0 {
+					return
+				}
+
 				if err != nil {
 					DestroyPeacemakrKey(key)
 					t.Fatalf("%v", err)
 				}
 
-				AAD, success := ExtractUnverifiedAAD(ciphertext)
-				if !success {
-					DestroyPeacemakrKey(key)
-					t.Fatalf("Extract failed")
-				}
-				if !bytes.Equal(plaintextIn.Aad, AAD) {
-					DestroyPeacemakrKey(key)
-					t.Fatalf("extracted aad did not match")
+				if plaintextIn.Aad != nil {
+					AAD, success := ExtractUnverifiedAAD(ciphertext)
+					if !success {
+						DestroyPeacemakrKey(key)
+						t.Fatalf("Extract failed")
+					}
+					if !bytes.Equal(plaintextIn.Aad, AAD) {
+						DestroyPeacemakrKey(key)
+						t.Fatalf("extracted aad did not match")
+					}
 				}
 
 				plaintextOut, success := Decrypt(key, ciphertext)
@@ -208,18 +224,24 @@ func TestAsymmetricEncryptFromPem(t *testing.T) {
 			pubkey := NewPeacemakrKeyFromPubPem(cfg, GetPubKey())
 
 			ciphertext, err := Encrypt(pubkey, plaintextIn, randomDevice)
+			if err != nil && len(plaintextIn.Data) == 0 {
+				return
+			}
+
 			if err != nil {
 				t.Fatalf("%v", err)
 			}
 
-			AAD, success := ExtractUnverifiedAAD(ciphertext)
-			if !success {
-				DestroyPeacemakrKey(pubkey)
-				t.Fatalf("Extract failed")
-			}
-			if !bytes.Equal(plaintextIn.Aad, AAD) {
-				DestroyPeacemakrKey(pubkey)
-				t.Fatalf("extracted aad did not match")
+			if plaintextIn.Aad != nil {
+				AAD, success := ExtractUnverifiedAAD(ciphertext)
+				if !success {
+					DestroyPeacemakrKey(pubkey)
+					t.Fatalf("Extract failed")
+				}
+				if !bytes.Equal(plaintextIn.Aad, AAD) {
+					DestroyPeacemakrKey(pubkey)
+					t.Fatalf("extracted aad did not match")
+				}
 			}
 
 			privkey := NewPeacemakrKeyFromPrivPem(cfg, GetPrivKey())
@@ -275,29 +297,31 @@ func TestAsymmetricEncryptFromRandomPem(t *testing.T) {
 					priv, pub = GetNewRSAKey(4096)
 				}
 
-				//fmt.Println(string(priv))
-				//fmt.Println(string(pub))
-
 				privkey := NewPeacemakrKeyFromPrivPem(cfg, priv)
 				pubkey := NewPeacemakrKeyFromPubPem(cfg, pub)
 
 				ciphertext, err := Encrypt(pubkey, plaintextIn, randomDevice)
+				if err != nil && len(plaintextIn.Data) == 0 {
+					return
+				}
 				if err != nil {
 					DestroyPeacemakrKey(pubkey)
 					DestroyPeacemakrKey(privkey)
 					t.Fatalf("%v", err)
 				}
 
-				AAD, success := ExtractUnverifiedAAD(ciphertext)
-				if !success {
-					DestroyPeacemakrKey(pubkey)
-					DestroyPeacemakrKey(privkey)
-					t.Fatalf("Extract failed")
-				}
-				if !bytes.Equal(plaintextIn.Aad, AAD) {
-					DestroyPeacemakrKey(pubkey)
-					DestroyPeacemakrKey(privkey)
-					t.Fatalf("plaintext data did not match")
+				if plaintextIn.Aad != nil {
+					AAD, success := ExtractUnverifiedAAD(ciphertext)
+					if !success {
+						DestroyPeacemakrKey(pubkey)
+						DestroyPeacemakrKey(privkey)
+						t.Fatalf("Extract failed")
+					}
+					if !bytes.Equal(plaintextIn.Aad, AAD) {
+						DestroyPeacemakrKey(pubkey)
+						DestroyPeacemakrKey(privkey)
+						t.Fatalf("extracted aad did not match")
+					}
 				}
 
 				plaintextOut, success := Decrypt(privkey, ciphertext)
@@ -349,19 +373,24 @@ func TestSymmetricEncrypt(t *testing.T) {
 		}
 
 		ciphertext, err := Encrypt(key, plaintextIn, randomDevice)
+		if err != nil && len(plaintextIn.Data) == 0 {
+			return
+		}
 		if err != nil {
 			DestroyPeacemakrKey(key)
 			t.Fatalf("%v", err)
 		}
 
-		AAD, success := ExtractUnverifiedAAD(ciphertext)
-		if !success {
-			DestroyPeacemakrKey(key)
-			t.Fatalf("Extract failed")
-		}
-		if !bytes.Equal(plaintextIn.Aad, AAD) {
-			DestroyPeacemakrKey(key)
-			t.Fatalf("extracted aad did not match")
+		if plaintextIn.Aad != nil {
+			AAD, success := ExtractUnverifiedAAD(ciphertext)
+			if !success {
+				DestroyPeacemakrKey(key)
+				t.Fatalf("Extract failed")
+			}
+			if !bytes.Equal(plaintextIn.Aad, AAD) {
+				DestroyPeacemakrKey(key)
+				t.Fatalf("extracted aad did not match")
+			}
 		}
 
 		plaintextOut, success := Decrypt(key, ciphertext)
@@ -406,6 +435,9 @@ func TestSerialize(t *testing.T) {
 					key := NewPeacemakrKey(cfg, randomDevice)
 
 					ciphertext, err := Encrypt(key, plaintextIn, randomDevice)
+					if err != nil && len(plaintextIn.Data) == 0 {
+						return
+					}
 					if err != nil {
 						DestroyPeacemakrKey(key)
 						t.Fatalf("%v", err)
@@ -416,14 +448,16 @@ func TestSerialize(t *testing.T) {
 						t.Fatalf("%v", err)
 					}
 
-					AAD, success := ExtractUnverifiedAAD(ciphertext)
-					if !success {
-						DestroyPeacemakrKey(key)
-						t.Fatalf("Extract failed")
-					}
-					if !bytes.Equal(plaintextIn.Aad, AAD) {
-						DestroyPeacemakrKey(key)
-						t.Fatalf("extracted aad did not match")
+					if plaintextIn.Aad != nil {
+						AAD, success := ExtractUnverifiedAAD(ciphertext)
+						if !success {
+							DestroyPeacemakrKey(key)
+							t.Fatalf("Extract failed")
+						}
+						if !bytes.Equal(plaintextIn.Aad, AAD) {
+							DestroyPeacemakrKey(key)
+							t.Fatalf("extracted aad did not match")
+						}
 					}
 
 					plaintextOut, success := Decrypt(key, ciphertext)
@@ -448,77 +482,147 @@ func TestSerialize(t *testing.T) {
 	}
 }
 
-func TestDecryptionCrash(t *testing.T) {
+func TestSignatures(t *testing.T) {
 	t.Parallel()
 	if !PeacemakrInit() {
 		t.Fatalf("Unable to successfully start and seed the CSPRNG")
 	}
-	blob := "AAAEHgAAAuQAAAAAAAAAAwAAAAEAAAABAAAAAgAAAAIAAAIAAAAAAMdwS6T4rvx1vtsTft3B2z0/awxStuLWJXE5dJxTHRUbyUc1YLBnQO62k7jTacK3gKIqNyg5g/5RcDsdObwwZgWiyPBlTUoy2UPO6Tg9m7iSslqIPKqWTld7JGI0YXgtoRqSsXBvwqENk07UZ1v5BCnvFCBjrJGaZTiHASixDUn4mV7gKXQ2RjKGgZweAtM+m7XgTZvJfx00Ie8Tti99bpDmfDXo3TXG88dN547NWnjjX4bwS+mWrD3Qhyn32dbpoPaCN4tF2X5uSIDkZoe3FHb38FrWBwSn319BxLSvznERv87yNqZnBeorF/RADRW1WIBieee2rQj6lp8SN8pTTX3qqXQyMuAtOKFLidvile05Zk+PNcoJ5ojCkuXVFlzUcG1BV3ZGuHsTYbNb0JiEceSG6nDAdLEJQcnnL4IuIbdlrrf/oGH0r37Fkuta4DBW54cz+f/kjxgFbGBuLzsjwUyAhu3en944zKEEYt6/mr/TkQOpKnBK09F4c7cjAIXZ2x2z9X3M6yb1OGX4Xq/6VtokGRwOgMZUAE1ur3HbD5EFrexFQSdtD7uh24uL8Sy4//ahsbcmSqgzYKB/xRAQ6ysCNZi1CT7FDi7AIduHetq4f+v9kLUgaRZ6P1ax32uzf51Ss3JmTam7aRAMZmQV4BNboXlTd4fgmdftqwoaJ+RaAAAADAAAAAB/NwVQWfnYlzQHu1YAAAAQAAAAAHJtL9bLlQaCn7u5vldaaagAAAAAAAAAAAAAAIAAAAAA2C8rbNhpYEwdSSlzgLRnXjXzDMWCl025yW6lRABlGHn2YQ28MS3WZxA3H+i7+POJ/ozyHfe86dgtQISuKV/AlBS6A8vEXsIdjzvIvOharFzhNkdn7fbInbBwmGQJSGBZmViwTkRvf0QpA/UIhr6NgxfJ41aos6vT3rb00KbOAsEAAABAAAAAAF4kgzirZJPB0JXjPIx/qMqWI4bdFypNrOEaNY4VALUrUt4U8AhPKeLSEUVNDQzcOCcJY6PlhqOZbOiiPCtZ2TA="
-	privKey := `-----BEGIN RSA PRIVATE KEY-----
-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
------END RSA PRIVATE KEY-----`
+	for i := RSA_2048; i <= RSA_4096; i++ {
+		for j := AES_128_GCM; j <= CHACHA20_POLY1305; j++ {
+			for k := SHA_224; k <= SHA_512; k++ {
+				go func(i, j, k int) {
+					cfg := CryptoConfig{
+						Mode:             ASYMMETRIC,
+						AsymmetricCipher: AsymmetricCipher(i),
+						SymmetricCipher:  SymmetricCipher(j),
+						DigestAlgorithm:  MessageDigestAlgorithm(k),
+					}
 
-	cfg := CryptoConfig{
-		Mode:             ASYMMETRIC,
-		AsymmetricCipher: RSA_4096,
-		SymmetricCipher:  AES_256_GCM,
-		DigestAlgorithm:  SHA_512,
+					plaintextIn := SetUpPlaintext()
+
+					randomDevice := NewRandomDevice()
+
+					key := NewPeacemakrKey(cfg, randomDevice)
+
+					ciphertext, err := EncryptAndSign(key, key, plaintextIn, randomDevice)
+					if err != nil && len(plaintextIn.Data) == 0 {
+						return
+					}
+					if err != nil {
+						DestroyPeacemakrKey(key)
+						t.Fatalf("%v", err)
+					}
+
+					if err != nil {
+						DestroyPeacemakrKey(key)
+						t.Fatalf("%v", err)
+					}
+
+					if plaintextIn.Aad != nil {
+						AAD, success := ExtractUnverifiedAAD(ciphertext)
+						if !success {
+							DestroyPeacemakrKey(key)
+							t.Fatalf("Extract failed")
+						}
+						if !bytes.Equal(plaintextIn.Aad, AAD) {
+							DestroyPeacemakrKey(key)
+							t.Fatalf("extracted aad did not match")
+						}
+					}
+
+					plaintextOut, success := DecryptAndVerify(key, key, ciphertext)
+					if !success {
+						DestroyPeacemakrKey(key)
+						t.Fatalf("Decrypt failed")
+					}
+
+					if !bytes.Equal(plaintextIn.Data, plaintextOut.Data) {
+						DestroyPeacemakrKey(key)
+						t.Fatalf("plaintext data did not match")
+					}
+
+					if !bytes.Equal(plaintextIn.Aad, plaintextOut.Aad) {
+						DestroyPeacemakrKey(key)
+						t.Fatalf("plaintext data did not match")
+					}
+					DestroyPeacemakrKey(key)
+				}(int(i), int(j), int(k))
+			}
+		}
 	}
-
-	pmkey := NewPeacemakrKeyFromPrivPem(cfg, []byte(privKey))
-
-	_, success := Decrypt(pmkey, []byte(blob))
-	if !success {
-		DestroyPeacemakrKey(pmkey)
-		t.Fatalf("Decrypt failed")
-	}
-	DestroyPeacemakrKey(pmkey)
 }
+
+//func TestDecryptionCrash(t *testing.T) {
+//	t.Parallel()
+//	if !PeacemakrInit() {
+//		t.Fatalf("Unable to successfully start and seed the CSPRNG")
+//	}
+//	blob := "AAAEHgAAAuQAAAAAAAAAAwAAAAEAAAABAAAAAgAAAAIAAAIAAAAAAMdwS6T4rvx1vtsTft3B2z0/awxStuLWJXE5dJxTHRUbyUc1YLBnQO62k7jTacK3gKIqNyg5g/5RcDsdObwwZgWiyPBlTUoy2UPO6Tg9m7iSslqIPKqWTld7JGI0YXgtoRqSsXBvwqENk07UZ1v5BCnvFCBjrJGaZTiHASixDUn4mV7gKXQ2RjKGgZweAtM+m7XgTZvJfx00Ie8Tti99bpDmfDXo3TXG88dN547NWnjjX4bwS+mWrD3Qhyn32dbpoPaCN4tF2X5uSIDkZoe3FHb38FrWBwSn319BxLSvznERv87yNqZnBeorF/RADRW1WIBieee2rQj6lp8SN8pTTX3qqXQyMuAtOKFLidvile05Zk+PNcoJ5ojCkuXVFlzUcG1BV3ZGuHsTYbNb0JiEceSG6nDAdLEJQcnnL4IuIbdlrrf/oGH0r37Fkuta4DBW54cz+f/kjxgFbGBuLzsjwUyAhu3en944zKEEYt6/mr/TkQOpKnBK09F4c7cjAIXZ2x2z9X3M6yb1OGX4Xq/6VtokGRwOgMZUAE1ur3HbD5EFrexFQSdtD7uh24uL8Sy4//ahsbcmSqgzYKB/xRAQ6ysCNZi1CT7FDi7AIduHetq4f+v9kLUgaRZ6P1ax32uzf51Ss3JmTam7aRAMZmQV4BNboXlTd4fgmdftqwoaJ+RaAAAADAAAAAB/NwVQWfnYlzQHu1YAAAAQAAAAAHJtL9bLlQaCn7u5vldaaagAAAAAAAAAAAAAAIAAAAAA2C8rbNhpYEwdSSlzgLRnXjXzDMWCl025yW6lRABlGHn2YQ28MS3WZxA3H+i7+POJ/ozyHfe86dgtQISuKV/AlBS6A8vEXsIdjzvIvOharFzhNkdn7fbInbBwmGQJSGBZmViwTkRvf0QpA/UIhr6NgxfJ41aos6vT3rb00KbOAsEAAABAAAAAAF4kgzirZJPB0JXjPIx/qMqWI4bdFypNrOEaNY4VALUrUt4U8AhPKeLSEUVNDQzcOCcJY6PlhqOZbOiiPCtZ2TA="
+//	privKey := `-----BEGIN RSA PRIVATE KEY-----
+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
+//-----END RSA PRIVATE KEY-----`
+//
+//	cfg := CryptoConfig{
+//		Mode:             ASYMMETRIC,
+//		AsymmetricCipher: RSA_4096,
+//		SymmetricCipher:  AES_256_GCM,
+//		DigestAlgorithm:  SHA_512,
+//	}
+//
+//	pmkey := NewPeacemakrKeyFromPrivPem(cfg, []byte(privKey))
+//
+//	_, success := Decrypt(pmkey, []byte(blob))
+//	if !success {
+//		DestroyPeacemakrKey(pmkey)
+//		t.Fatalf("Decrypt failed")
+//	}
+//	DestroyPeacemakrKey(pmkey)
+//}

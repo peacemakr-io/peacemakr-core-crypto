@@ -235,6 +235,7 @@ static bool asymmetric_encrypt(const peacemakr_key_t *pub_key,
 
   size_t ivlen = Buffer_get_size(CiphertextBlob_iv(out));
   unsigned char *iv_buf = alloca(ivlen);
+
   buffer_t *mutable_ciphertext = CiphertextBlob_mutable_ciphertext(out);
   unsigned char *ciphertext_buf = Buffer_mutable_bytes(mutable_ciphertext);
 
@@ -435,6 +436,7 @@ ciphertext_blob_t *peacemakr_encrypt(const peacemakr_key_t *recipient_key,
                   "Data was too big, needs to be broken up\n");
   EXPECT_TRUE_RET(plain->aad_len <= INT_MAX,
                   "AAD was too big, needs to be broken up\n");
+  EXPECT_TRUE_RET(plain->data_len > 0, "No data to encrypt\n");
 
   const EVP_CIPHER *cipher = parse_cipher(cfg.symm_cipher);
   EXPECT_NOT_NULL_RET(cipher, "parsing openssl cipher failed\n");
@@ -494,7 +496,7 @@ bool peacemakr_decrypt(const peacemakr_key_t *recipient_key,
   if (recipient_key == NULL) {
     PEACEMAKR_LOG("NULL key, populating plain with AAD\n");
     const buffer_t *aad_buf = CiphertextBlob_aad(cipher);
-    EXPECT_NOT_NULL_RET_VALUE(aad_buf, false, "No AAD in ciphertext\n");
+    EXPECT_NOT_NULL_RET_VALUE(aad_buf, true, "No AAD in ciphertext\n");
     const unsigned char *tmp_aad = Buffer_get_bytes(aad_buf, &plain->aad_len);
     plain->aad = calloc(plain->aad_len, sizeof(unsigned char));
     memcpy((void *)plain->aad, tmp_aad, plain->aad_len);

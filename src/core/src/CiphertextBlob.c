@@ -44,7 +44,7 @@ typedef struct CiphertextBlob ciphertext_blob_t;
 
 ciphertext_blob_t *API(new)(crypto_config_t cfg, size_t iv_len, size_t tag_len,
                             size_t aad_len, size_t ciphertext_len,
-                            size_t digest_len) {
+                            size_t signature_len) {
   ciphertext_blob_t *out = malloc(sizeof(ciphertext_blob_t));
 
   out->m_encrypted_key_ = NULL;
@@ -96,10 +96,10 @@ ciphertext_blob_t *API(new)(crypto_config_t cfg, size_t iv_len, size_t tag_len,
   EXPECT_TRUE_CLEANUP_RET((out->m_aad_ != NULL || aad_len == 0), API(free)(out),
                           "creation of aad buffer failed\n");
   out->m_ciphertext_ = Buffer_new(ciphertext_len);
-  EXPECT_NOT_NULL_CLEANUP_RET(out->m_ciphertext_, API(free)(out),
+  EXPECT_TRUE_CLEANUP_RET((out->m_ciphertext_ != NULL || ciphertext_len == 0), API(free)(out),
                               "creation of ciphertext buffer failed\n");
-  out->m_signature_ = Buffer_new(digest_len);
-  EXPECT_NOT_NULL_CLEANUP_RET(out->m_signature_, API(free)(out),
+  out->m_signature_ = Buffer_new(signature_len);
+  EXPECT_TRUE_CLEANUP_RET((out->m_signature_ != NULL || signature_len == 0), API(free)(out),
                               "creation of digest buffer failed\n");
 
   return out;

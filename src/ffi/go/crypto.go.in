@@ -290,6 +290,45 @@ func Encrypt(key PeacemakrKey, plaintext Plaintext, rand RandomDevice) ([]byte, 
 	return serialized, nil
 }
 
+func EncryptAndSign(recipientKey PeacemakrKey, senderKey PeacemakrKey, plaintext Plaintext, rand RandomDevice) ([]byte, error) {
+	if !recipientKey.IsValid() {
+		return nil, errors.New("invalid key passed to Encrypt")
+	}
+	cfg, err := GetKeyConfig(&recipientKey)
+	if err != nil {
+		return nil, err
+	}
+	if cfg.Mode == ASYMMETRIC && !senderKey.IsValid() {
+		return nil, errors.New("invalid sender key passed to sign")
+	}
+
+	cPlaintext := plaintextToInternal(plaintext)
+	defer freeInternalPlaintext(&cPlaintext)
+
+	blob := C.peacemakr_encrypt(recipientKey.key, (*C.plaintext_t)(unsafe.Pointer(&cPlaintext)), (*C.random_device_t)(unsafe.Pointer(&rand.randomDevice)))
+
+	if blob == nil {
+		return nil, errors.New("encryption failed")
+	}
+
+	// In symmetric mode, the senderKey can be nil (because it's the same key anyway)
+	if cfg.Mode == SYMMETRIC {
+		C.peacemakr_sign(recipientKey.key, (*C.plaintext_t)(unsafe.Pointer(&cPlaintext)), blob)
+	} else {
+		C.peacemakr_sign(senderKey.key, (*C.plaintext_t)(unsafe.Pointer(&cPlaintext)), blob)
+	}
+
+	serialized, err := serialize(&CiphertextBlob{
+		blob: blob,
+	})
+
+	if err != nil {
+		return nil, errors.New("serialization failed")
+	}
+
+	return serialized, nil
+}
+
 func ExtractCiphertextBlob(ciphertext []byte) (*CiphertextBlob, bool) {
 	return deserialize(ciphertext)
 }
@@ -306,7 +345,7 @@ func ExtractUnverifiedAAD(ciphertext []byte) ([]byte, bool) {
 		return nil, false
 	}
 
-	extractSuccess := bool(C.peacemakr_decrypt(nil, deserialized.blob, (*C.plaintext_t)(unsafe.Pointer(&plaintext))))
+	extractSuccess := bool(C.peacemakr_decrypt(nil, deserialized.blob, (*C.plaintext_t)(unsafe.Pointer(&plaintext)), C.bool(false)))
 	if !extractSuccess {
 		return nil, false
 	}
@@ -331,12 +370,60 @@ func Decrypt(key PeacemakrKey, ciphertext []byte) (*Plaintext, bool) {
 		return nil, false
 	}
 
-	out := C.peacemakr_decrypt(key.key, deserialized.blob, (*C.plaintext_t)(unsafe.Pointer(&plaintext)))
+	out := C.peacemakr_decrypt(key.key, deserialized.blob, (*C.plaintext_t)(unsafe.Pointer(&plaintext)), C.bool(false))
 
 	return &Plaintext{
 		Data: C.GoBytes(unsafe.Pointer(plaintext.data), C.int(plaintext.data_len)),
 		Aad:  C.GoBytes(unsafe.Pointer(plaintext.aad), C.int(plaintext.aad_len)),
 	}, bool(out)
+}
+
+func DecryptAndVerify(recipientKey, senderKey PeacemakrKey, ciphertext []byte) (*Plaintext, bool) {
+	if !recipientKey.IsValid() {
+		log.Print("invalid key passed to Encrypt")
+		return nil, false
+	}
+	cfg, err := GetKeyConfig(&recipientKey)
+	if err != nil {
+		log.Printf("%v", err)
+		return nil, false
+	}
+	if cfg.Mode == ASYMMETRIC && !senderKey.IsValid() {
+		log.Print("invalid sender key passed to sign")
+		return nil, false
+	}
+
+
+	var plaintext C.plaintext_t
+	defer freeInternalPlaintext(&plaintext)
+	if ciphertext[len(ciphertext)-1] != 0 {
+		ciphertext = append(ciphertext, byte(0)) // add NULL terminator
+	}
+
+	deserialized, success := deserialize(ciphertext)
+	if !success {
+		return nil, false
+	}
+
+	out := bool(C.peacemakr_decrypt(recipientKey.key, deserialized.blob, (*C.plaintext_t)(unsafe.Pointer(&plaintext)), C.bool(true)))
+	if out == false {
+		return &Plaintext{
+			Data: C.GoBytes(unsafe.Pointer(plaintext.data), C.int(plaintext.data_len)),
+			Aad:  C.GoBytes(unsafe.Pointer(plaintext.aad), C.int(plaintext.aad_len)),
+		}, out
+	}
+
+	// In symmetric mode, the senderKey can be nil (because it's the same key anyway)
+	if cfg.Mode == SYMMETRIC {
+		out = out && bool(C.peacemakr_verify(recipientKey.key, (*C.plaintext_t)(unsafe.Pointer(&plaintext)), deserialized.blob))
+	} else {
+		out = out && bool(C.peacemakr_verify(senderKey.key, (*C.plaintext_t)(unsafe.Pointer(&plaintext)), deserialized.blob))
+	}
+
+	return &Plaintext{
+		Data: C.GoBytes(unsafe.Pointer(plaintext.data), C.int(plaintext.data_len)),
+		Aad:  C.GoBytes(unsafe.Pointer(plaintext.aad), C.int(plaintext.aad_len)),
+	}, out
 }
 
 func HMAC(algo MessageDigestAlgorithm, key PeacemakrKey, buf []byte) ([]byte, error) {

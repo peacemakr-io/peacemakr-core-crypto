@@ -108,16 +108,12 @@ std::string peacemakr::CryptoContext::Encrypt(
     m_log_("invalid key in Encrypt");
     return "";
   }
-
-  // Early exit if there's nothing in there
-  if (plaintext.data.empty()) {
-    m_log_("empty plaintext in Encrypt");
-    return "";
-  }
-
+  
   plaintext_t plain = {
-      .data = (const unsigned char *)plaintext.data.c_str(),
-      .data_len = (size_t)plaintext.data.size(),
+      .data = plaintext.data.empty()
+              ? nullptr
+              : (const unsigned char *)plaintext.data.c_str(),
+      .data_len = plaintext.data.empty() ? 0 : (size_t)plaintext.data.size(),
       .aad = plaintext.aad.empty()
                  ? nullptr
                  : (const unsigned char *)plaintext.aad.c_str(),
@@ -154,7 +150,7 @@ peacemakr::Plaintext
 peacemakr::CryptoContext::ExtractUnverifiedAAD(const std::string &serialized) {
   // Early exit if there is nothing to decrypt
   if (serialized.empty()) {
-    m_log_("noting to decrypt");
+    m_log_("nothing to decrypt");
     return Plaintext{};
   }
 

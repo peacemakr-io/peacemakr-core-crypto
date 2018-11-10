@@ -49,7 +49,7 @@ public class CryptoContext {
     }
 
     var out = plaintext_t(data: nil, data_len: 0, aad: nil, aad_len: 0)
-    if !peacemakr_decrypt(nil, ciphertext_blob, &out) {
+    if !peacemakr_decrypt(nil, ciphertext_blob, &out, false) {
       throw PeacemakrError.decryptionFailed
     }
     return Plaintext(cstyle: out)
@@ -62,7 +62,7 @@ public class CryptoContext {
     }
 
     var out = plaintext_t(data: nil, data_len: 0, aad: nil, aad_len: 0)
-    if !peacemakr_decrypt(key.getInternal(), ciphertext_blob, &out) {
+    if !peacemakr_decrypt(key.getInternal(), ciphertext_blob, &out, false) {
       throw PeacemakrError.decryptionFailed
     }
     return Plaintext(cstyle: out)

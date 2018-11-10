@@ -28,6 +28,11 @@ std::string get_random_string() {
 
   size_t len = dis(gen) * 10; // also include zero-length randomly
 
+  bool outIsEmpty = (dis(gen) % 2 == 1);
+  if (outIsEmpty) {
+    return std::string{};
+  }
+
   std::string out(len, (char)0x0); // fill us up with null characters
   std::generate_n(out.begin(), len, call);
 
@@ -52,9 +57,14 @@ void test_asymmetric(symmetric_cipher symm_cipher, asymmetric_cipher cipher, mes
 
   peacemakr::CryptoContext ctx(log_fn);
   std::string encrypted = ctx.Encrypt(key, plaintext_in, rand, false);
+  if (encrypted.empty() && plaintext_in.data.empty()) {
+    return;
+  }
 
-  peacemakr::Plaintext unverified_aad = ctx.ExtractUnverifiedAAD(encrypted);
-  assert(plaintext_in.aad == unverified_aad.aad);
+  if (!plaintext_in.aad.empty()) {
+    peacemakr::Plaintext unverified_aad = ctx.ExtractUnverifiedAAD(encrypted);
+    assert(plaintext_in.aad == unverified_aad.aad);
+  }
 
   peacemakr::Plaintext plaintext_out = ctx.Decrypt(key, encrypted, false);
 
@@ -80,9 +90,14 @@ void test_symmetric(symmetric_cipher symm_cipher, message_digest_algorithm diges
 
   peacemakr::CryptoContext ctx(log_fn);
   std::string encrypted = ctx.Encrypt(key, plaintext_in, rand, false);
+  if (encrypted.empty() && plaintext_in.data.empty()) {
+    return;
+  }
 
-  peacemakr::Plaintext unverified_aad = ctx.ExtractUnverifiedAAD(encrypted);
-  assert(plaintext_in.aad == unverified_aad.aad);
+  if (!plaintext_in.aad.empty()) {
+    peacemakr::Plaintext unverified_aad = ctx.ExtractUnverifiedAAD(encrypted);
+    assert(plaintext_in.aad == unverified_aad.aad);
+  }
 
   peacemakr::Plaintext plaintext_out = ctx.Decrypt(key, encrypted, false);
 
@@ -108,9 +123,14 @@ void test_sign_symmetric(symmetric_cipher symm_cipher, message_digest_algorithm 
 
   peacemakr::CryptoContext ctx(log_fn);
   std::string encrypted = ctx.Encrypt(key, plaintext_in, rand, true);
+  if (encrypted.empty() && plaintext_in.data.empty()) {
+    return;
+  }
 
-  peacemakr::Plaintext unverified_aad = ctx.ExtractUnverifiedAAD(encrypted);
-  assert(plaintext_in.aad == unverified_aad.aad);
+  if (!plaintext_in.aad.empty()) {
+    peacemakr::Plaintext unverified_aad = ctx.ExtractUnverifiedAAD(encrypted);
+    assert(plaintext_in.aad == unverified_aad.aad);
+  }
 
   peacemakr::Plaintext plaintext_out = ctx.Decrypt(key, encrypted, true);
 
@@ -136,14 +156,23 @@ void test_sign_asymmetric(symmetric_cipher symm_cipher, asymmetric_cipher cipher
 
   peacemakr::CryptoContext ctx(log_fn);
   std::string encrypted = ctx.Encrypt(key, plaintext_in, rand, true, &key);
+  if (encrypted.empty() && plaintext_in.data.empty()) {
+    return;
+  }
 
-  peacemakr::Plaintext unverified_aad = ctx.ExtractUnverifiedAAD(encrypted);
-  assert(plaintext_in.aad == unverified_aad.aad);
+  if (!plaintext_in.aad.empty()) {
+    peacemakr::Plaintext unverified_aad = ctx.ExtractUnverifiedAAD(encrypted);
+    assert(plaintext_in.aad == unverified_aad.aad);
+  }
 
   peacemakr::Plaintext plaintext_out = ctx.Decrypt(key, encrypted, true, &key);
 
-  assert(plaintext_in.data == plaintext_out.data);
-  assert(plaintext_in.aad == plaintext_out.aad);
+  if (!plaintext_in.data.empty()) {
+    assert(plaintext_in.data == plaintext_out.data);
+  }
+  if (!plaintext_in.aad.empty()) {
+    assert(plaintext_in.aad == plaintext_out.aad);
+  }
 }
 
 void test_uninit_crash() {
@@ -165,6 +194,10 @@ void test_uninit_crash() {
 
   peacemakr::CryptoContext ctx(log_fn);
   std::string encrypted = ctx.Encrypt(key, plaintext_in, rand, false);
+  if (encrypted.empty() && plaintext_in.data.empty()) {
+    return;
+  }
+
   if (encrypted.empty()) { // couldn't encrypt
     assert(false);
   }
