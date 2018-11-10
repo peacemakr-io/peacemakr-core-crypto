@@ -218,12 +218,12 @@ void peacemakr_sign(const peacemakr_key_t *sender_key, const plaintext_t *plain,
  * then the decryption will attempt to extract any AAD from the message.
  * Note that this AAD is unconfirmed and may have been tampered with.
  * If the message is signed and needs to be verified with peacemakr_verify
- * then the last parameter should be set to true so that the ciphertext
- * structure is not freed and it can be freed after message verification.
+ * then \p cipher will NOT be freed and set to NULL. That is, the caller should
+ * check the value of \p cipher after decrypting and call peacemakr_verify if it
+ * is non-null.
  */
 bool peacemakr_decrypt(const peacemakr_key_t *recipient_key,
-                       ciphertext_blob_t *cipher, plaintext_t *plain,
-                       bool should_free_ciphertext);
+                       ciphertext_blob_t *cipher, plaintext_t *plain);
 
 /**
  * Verifies the plaintext in \p plain with key \p sender_key. If the

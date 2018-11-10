@@ -42,7 +42,7 @@ void test_symmetric_algo(symmetric_cipher cipher) {
   ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, &plaintext_in, &rand);
   assert(ciphertext != NULL);
 
-  bool success = peacemakr_decrypt(key, ciphertext, &plaintext_out, false);
+  bool success = peacemakr_decrypt(key, ciphertext, &plaintext_out);
 
   assert(success);
 
@@ -80,7 +80,7 @@ void test_master_key_symmetric_algo(peacemakr_key_t *master_key, symmetric_ciphe
   ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, &plaintext_in, &rand);
   assert(ciphertext != NULL);
 
-  bool success = peacemakr_decrypt(key, ciphertext, &plaintext_out, false);
+  bool success = peacemakr_decrypt(key, ciphertext, &plaintext_out);
 
   assert(success);
 
@@ -125,7 +125,7 @@ void test_uninit_crash() {
 
   ciphertext_blob_t *deserialized = peacemakr_deserialize(serialized, out_size);
 
-  bool success = peacemakr_decrypt(key, deserialized, &plaintext_out, false);
+  bool success = peacemakr_decrypt(key, deserialized, &plaintext_out);
 
   assert(success);
 

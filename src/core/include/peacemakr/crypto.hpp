@@ -145,7 +145,7 @@ public:
    */
   explicit CryptoContext(LogFunctionType logger);
   /**
-   * Initializes the crypto library that logs everything to the stdout.
+   * Initializes the crypto library and logs everything to the stdout.
    */
   CryptoContext();
   ~CryptoContext() = default;
@@ -170,7 +170,7 @@ public:
   void Sign(const Key &senderKey, const Plaintext &plaintext, Ciphertext *blob);
 
   /**
-   * Serializes \p blob into a \return Base64 encoded buffer.
+   * Serializes \p blob into a \returns Base64 encoded buffer.
    */
   std::string Serialize(Ciphertext *blob);
 
@@ -196,8 +196,7 @@ public:
    * to true so that the ciphertext structure is not freed. It will be freed
    * after message verification.
    */
-  Plaintext Decrypt(const Key &key, Ciphertext *blob,
-                    bool should_free_ciphertext);
+  Plaintext Decrypt(const Key &key, Ciphertext *blob);
 
   /**
    * Verifies the plaintext in \p plain with key \p senderKey. If the

@@ -162,7 +162,7 @@ peacemakr::CryptoContext::ExtractUnverifiedAAD(const std::string &serialized) {
       (unsigned char *)serialized.c_str(), serialized.size());
 
   plaintext_t out;
-  bool success = peacemakr_decrypt(nullptr, blob, &out, false);
+  bool success = peacemakr_decrypt(nullptr, blob, &out);
   if (!success) {
     m_log_("extract failed");
     return Plaintext{};
@@ -184,12 +184,10 @@ peacemakr::CryptoContext::Deserialize(const std::string &serialized) {
 }
 
 peacemakr::Plaintext
-peacemakr::CryptoContext::Decrypt(const Key &key, ciphertext_blob_t *blob,
-                                  bool should_free_ciphertext) {
+peacemakr::CryptoContext::Decrypt(const Key &key, ciphertext_blob_t *blob) {
 
   plaintext_t out;
-  bool success =
-      peacemakr_decrypt(key.getKey(), blob, &out, should_free_ciphertext);
+  bool success = peacemakr_decrypt(key.getKey(), blob, &out);
   if (!success) {
     m_log_("decryption failed");
     return Plaintext{};

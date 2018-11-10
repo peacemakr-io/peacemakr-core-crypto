@@ -73,7 +73,7 @@ void test_asymmetric(symmetric_cipher symm_cipher, asymmetric_cipher cipher, mes
 
   peacemakr::Ciphertext *deserialized = ctx.Deserialize(serialized);
 
-  peacemakr::Plaintext plaintext_out = ctx.Decrypt(key, deserialized, false);
+  peacemakr::Plaintext plaintext_out = ctx.Decrypt(key, deserialized);
 
   assert(plaintext_in.data == plaintext_out.data);
   assert(plaintext_in.aad == plaintext_out.aad);
@@ -113,7 +113,7 @@ void test_symmetric(symmetric_cipher symm_cipher, message_digest_algorithm diges
 
   peacemakr::Ciphertext *deserialized = ctx.Deserialize(serialized);
 
-  peacemakr::Plaintext plaintext_out = ctx.Decrypt(key, deserialized, false);
+  peacemakr::Plaintext plaintext_out = ctx.Decrypt(key, deserialized);
 
   assert(plaintext_in.data == plaintext_out.data);
   assert(plaintext_in.aad == plaintext_out.aad);
@@ -153,7 +153,7 @@ void test_sign_symmetric(symmetric_cipher symm_cipher, message_digest_algorithm 
   }
 
   peacemakr::Ciphertext *deserialized = ctx.Deserialize(serialized);
-  peacemakr::Plaintext plaintext_out = ctx.Decrypt(key, deserialized, true);
+  peacemakr::Plaintext plaintext_out = ctx.Decrypt(key, deserialized);
   bool verified = ctx.Verify(key, plaintext_out, deserialized);
   assert(verified);
 
@@ -195,7 +195,7 @@ void test_sign_asymmetric(symmetric_cipher symm_cipher, asymmetric_cipher cipher
   }
 
   peacemakr::Ciphertext *deserialized = ctx.Deserialize(serialized);
-  peacemakr::Plaintext plaintext_out = ctx.Decrypt(key, deserialized, true);
+  peacemakr::Plaintext plaintext_out = ctx.Decrypt(key, deserialized);
   bool verified = ctx.Verify(key, plaintext_out, deserialized);
   assert(verified);
 
@@ -242,7 +242,7 @@ void test_uninit_crash() {
 
   peacemakr::Ciphertext *deserialized = ctx.Deserialize(serialized);
 
-  peacemakr::Plaintext plaintext_out = ctx.Decrypt(key, deserialized, false);
+  peacemakr::Plaintext plaintext_out = ctx.Decrypt(key, deserialized);
   if (plaintext_out.data.empty()) { // couldn't decrypt
     assert(false);
   }

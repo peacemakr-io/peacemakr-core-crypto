@@ -484,8 +484,7 @@ ciphertext_blob_t *peacemakr_encrypt(const peacemakr_key_t *recipient_key,
 }
 
 bool peacemakr_decrypt(const peacemakr_key_t *recipient_key,
-                       ciphertext_blob_t *cipher, plaintext_t *plain,
-                       bool should_free_ciphertext) {
+                       ciphertext_blob_t *cipher, plaintext_t *plain) {
 
   EXPECT_NOT_NULL_RET_VALUE(plain, false, "plain was null\n");
   EXPECT_NOT_NULL_RET_VALUE(cipher, false, "cipher was null\n");
@@ -505,6 +504,11 @@ bool peacemakr_decrypt(const peacemakr_key_t *recipient_key,
     plain->data_len = 0;
     return true;
   }
+
+  // If the signature buffer has size 1 then there's no signature and we should
+  // free the ciphertext.
+  bool should_free_ciphertext =
+      Buffer_get_size(CiphertextBlob_signature(cipher)) == 1;
 
   switch (CiphertextBlob_encryption_mode(cipher)) {
   case SYMMETRIC: {
@@ -539,7 +543,7 @@ bool peacemakr_decrypt(const peacemakr_key_t *recipient_key,
     plain->data = calloc(plain->data_len, sizeof(unsigned char));
   }
 
-  if (!should_free_ciphertext) {
+  if (should_free_ciphertext) {
     CiphertextBlob_free(cipher);
     cipher = NULL;
   }

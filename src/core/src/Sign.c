@@ -232,17 +232,28 @@ bool peacemakr_verify(const peacemakr_key_t *sender_key,
                             "Cannot verify with nothing to compare against\n");
   EXPECT_NOT_NULL_RET_VALUE(plain, false, "Cannot verify an empty plaintext\n");
 
+  bool success = false;
+
+  if (Buffer_get_size(CiphertextBlob_signature(cipher)) == 1) {
+    PEACEMAKR_LOG("No signature to verify\n");
+    CiphertextBlob_free(cipher);
+    cipher = NULL;
+    return success;
+  }
+
   switch (PeacemakrKey_get_config(sender_key).mode) {
   case SYMMETRIC:
-    return symmetric_verify(sender_key, plain->data, plain->data_len,
-                            plain->aad, plain->aad_len, cipher);
+    success = symmetric_verify(sender_key, plain->data, plain->data_len,
+                               plain->aad, plain->aad_len, cipher);
+    break;
   case ASYMMETRIC:
-    return asymmetric_verify(sender_key, plain->data, plain->data_len,
-                             plain->aad, plain->aad_len, cipher);
+    success = asymmetric_verify(sender_key, plain->data, plain->data_len,
+                                plain->aad, plain->aad_len, cipher);
+    break;
   }
 
   CiphertextBlob_free(cipher);
   cipher = NULL;
 
-  return false;
+  return success;
 }

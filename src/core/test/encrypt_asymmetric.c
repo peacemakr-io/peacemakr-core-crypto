@@ -43,7 +43,7 @@ void test_asymmetric_algo(symmetric_cipher symm_cipher, asymmetric_cipher cipher
   ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, &plaintext_in, &rand);
   assert(ciphertext != NULL);
 
-  bool success = peacemakr_decrypt(key, ciphertext, &plaintext_out, false);
+  bool success = peacemakr_decrypt(key, ciphertext, &plaintext_out);
 
   assert(success);
 
