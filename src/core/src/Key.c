@@ -260,7 +260,7 @@ crypto_config_t API(get_config)(const peacemakr_key_t *key) {
 const buffer_t *API(symmetric)(const peacemakr_key_t *key) {
   EXPECT_TRUE_RET(
       (key->m_cfg_.mode == SYMMETRIC),
-      "Attempting to access the asymmetric part of a symmetric key\n");
+      "Attempting to access the symmetric part of an asymmetric key\n");
 
   return key->m_contents_.symm;
 }
@@ -268,7 +268,7 @@ const buffer_t *API(symmetric)(const peacemakr_key_t *key) {
 EVP_PKEY *API(asymmetric)(const peacemakr_key_t *key) {
   EXPECT_TRUE_RET(
       (key->m_cfg_.mode == ASYMMETRIC),
-      "Attempting to access the symmetric part of an asymmetric key\n");
+      "Attempting to access the asymmetric part of a symmetric key\n");
 
   return key->m_contents_.asymm;
 }

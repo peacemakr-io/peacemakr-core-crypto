@@ -224,7 +224,7 @@ void peacemakr_sign(const peacemakr_key_t *sender_key, const plaintext_t *plain,
  */
 bool peacemakr_decrypt(const peacemakr_key_t *recipient_key,
                        ciphertext_blob_t *cipher, plaintext_t *plain,
-                       bool need_verify);
+                       bool should_free_ciphertext);
 
 /**
  * Verifies the plaintext in \p plain with key \p sender_key. If the

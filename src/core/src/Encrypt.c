@@ -248,6 +248,7 @@ static bool asymmetric_encrypt(const peacemakr_key_t *pub_key,
   }
 
   CiphertextBlob_set_iv(out, iv_buf, ivlen);
+  Buffer_set_size(encrypted_key, (size_t)encrypted_key_len);
   Buffer_set_bytes(encrypted_key, encrypted_key_buf, (size_t)encrypted_key_len);
 
   /* Handle any AAD */
@@ -482,7 +483,7 @@ ciphertext_blob_t *peacemakr_encrypt(const peacemakr_key_t *recipient_key,
 
 bool peacemakr_decrypt(const peacemakr_key_t *recipient_key,
                        ciphertext_blob_t *cipher, plaintext_t *plain,
-                       bool need_verify) {
+                       bool should_free_ciphertext) {
 
   EXPECT_NOT_NULL_RET_VALUE(plain, false, "plain was null\n");
   EXPECT_NOT_NULL_RET_VALUE(cipher, false, "cipher was null\n");
@@ -536,7 +537,7 @@ bool peacemakr_decrypt(const peacemakr_key_t *recipient_key,
     plain->data = calloc(plain->data_len, sizeof(unsigned char));
   }
 
-  if (!need_verify) {
+  if (!should_free_ciphertext) {
     CiphertextBlob_free(cipher);
     cipher = NULL;
   }

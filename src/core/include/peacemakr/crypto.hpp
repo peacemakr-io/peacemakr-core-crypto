@@ -156,8 +156,7 @@ public:
                       const Key *sender_key = nullptr);
 
   Plaintext ExtractUnverifiedAAD(const std::string &serialized);
-
-  // TODO: unclear why this fails...
+  
   /**
    * Deserializes \p serialized and decrypts it using \p key. \returns a
    * Plaintext object that holds the decrypted data and the AAD (if any exists).

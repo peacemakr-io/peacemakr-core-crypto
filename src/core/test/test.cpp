@@ -184,11 +184,11 @@ int main() {
     for (int j = AES_128_GCM; j <= CHACHA20_POLY1305; ++j) {
       for (int k = SHA_224; k <= SHA_512; k++) {
         runners.emplace_back(test_asymmetric, (symmetric_cipher)j, (asymmetric_cipher)i, (message_digest_algorithm)k);
-//        runners.emplace_back(test_sign_asymmetric, (symmetric_cipher)j, (asymmetric_cipher)i, (message_digest_algorithm)k);
+        runners.emplace_back(test_sign_asymmetric, (symmetric_cipher)j, (asymmetric_cipher)i, (message_digest_algorithm)k);
       }
+      std::for_each(runners.begin(), runners.end(), [](std::thread &t){t.join();});
+      runners.clear();
     }
-    std::for_each(runners.begin(), runners.end(), [](std::thread &t){t.join();});
-    runners.clear();
   }
 
   for (int j = AES_128_GCM; j <= CHACHA20_POLY1305; ++j) {

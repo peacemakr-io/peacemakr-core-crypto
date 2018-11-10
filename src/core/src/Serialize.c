@@ -23,8 +23,6 @@
 
 #define _PEACEMAKR_MAGIC_ (uint32_t)1054
 
-// TODO: handle signed messages better (the sha is not the signature)
-
 static void digest_message(const unsigned char *message, size_t message_len,
                            const EVP_MD *digest_algo, buffer_t *digest) {
   EVP_MD_CTX *mdctx;
@@ -57,66 +55,51 @@ uint8_t *serialize_blob(ciphertext_blob_t *cipher, size_t *out_size) {
 
   size_t buffer_len = sizeof(uint32_t); // magic number
   buffer_len += sizeof(uint64_t);       // size of message up until digest
-  buffer_len += sizeof(uint32_t);       // digest algo
-  // version, encryption mode, symm_cipher, asymm_cipher
-  buffer_len += sizeof(uint32_t) * 4;
+  buffer_len += sizeof(uint8_t);       // digest algo
+  // version
+  buffer_len += sizeof(uint32_t);
+  // encryption mode, symm_cipher, asymm_cipher
+  buffer_len += sizeof(uint8_t) * 3;
 
   const buffer_t *encrypted_key = CiphertextBlob_encrypted_key(cipher);
-  buffer_len += sizeof(size_t);
-  if (encrypted_key != NULL) {
-    buffer_len += Buffer_get_size(encrypted_key);
-  }
+  buffer_len += Buffer_get_serialized_size(encrypted_key);
 
   const buffer_t *iv = CiphertextBlob_iv(cipher);
-  buffer_len += sizeof(size_t);
-  if (iv != NULL) {
-    buffer_len += Buffer_get_size(iv);
-  }
+  buffer_len += Buffer_get_serialized_size(iv);
 
   const buffer_t *tag = CiphertextBlob_tag(cipher);
-  buffer_len += sizeof(size_t);
-  if (tag != NULL) {
-    buffer_len += Buffer_get_size(tag);
-  }
+  buffer_len += Buffer_get_serialized_size(tag);
 
   const buffer_t *aad = CiphertextBlob_aad(cipher);
-  buffer_len += sizeof(size_t);
-  if (aad != NULL) {
-    buffer_len += Buffer_get_size(aad);
-  }
+  buffer_len += Buffer_get_serialized_size(aad);
 
   const buffer_t *ciphertext = CiphertextBlob_ciphertext(cipher);
-  buffer_len += sizeof(size_t);
-  if (ciphertext != NULL) {
-    buffer_len += Buffer_get_size(ciphertext);
-  }
+  buffer_len += Buffer_get_serialized_size(ciphertext);
 
-  const buffer_t *digest = CiphertextBlob_digest(cipher);
-  buffer_len += sizeof(size_t);
-  if (digest != NULL) {
-    buffer_len += Buffer_get_size(digest);
-  }
+  const buffer_t *signature = CiphertextBlob_signature(cipher);
+  buffer_len += Buffer_get_serialized_size(signature);
 
   // We will digest the message and set it at the end
-  buffer_len += sizeof(size_t);
+  buffer_len += sizeof(uint64_t);
   size_t digest_len = get_digest_len(CiphertextBlob_digest_algo(cipher));
   buffer_len += digest_len;
 
   uint8_t *buf = alloca(buffer_len * sizeof(uint8_t));
+  size_t current_pos = 0;
 
   // magic
   uint32_t magic = htonl(_PEACEMAKR_MAGIC_);
   memcpy(buf, &magic, sizeof(uint32_t));
-  size_t current_pos = sizeof(uint32_t);
+  current_pos += sizeof(uint32_t);
 
   // len until digest
   memset((buf + current_pos), 0, sizeof(uint64_t));
   current_pos += sizeof(uint64_t);
 
   // digest algo
-  uint32_t digest_algo = htonl(CiphertextBlob_digest_algo(cipher));
-  memcpy(buf + current_pos, &digest_algo, sizeof(uint32_t));
-  current_pos += sizeof(uint32_t);
+  uint8_t digest_algo = CiphertextBlob_digest_algo(cipher);
+  *(buf + current_pos) = digest_algo;
+  current_pos += sizeof(uint8_t);
 
   // version
   uint32_t version = htonl(CiphertextBlob_version(cipher));
@@ -124,87 +107,43 @@ uint8_t *serialize_blob(ciphertext_blob_t *cipher, size_t *out_size) {
   current_pos += sizeof(uint32_t);
 
   // encryption mode
-  uint32_t encryption_mode = htonl(CiphertextBlob_encryption_mode(cipher));
-  memcpy(buf + current_pos, &encryption_mode, sizeof(uint32_t));
-  current_pos += sizeof(uint32_t);
+  uint8_t encryption_mode = CiphertextBlob_encryption_mode(cipher);
+  *(buf + current_pos) = encryption_mode;
+  current_pos += sizeof(uint8_t);
 
   // symm cipher
-  uint32_t symm_cipher = htonl(CiphertextBlob_symm_cipher(cipher));
-  memcpy(buf + current_pos, &symm_cipher, sizeof(uint32_t));
-  current_pos += sizeof(uint32_t);
+  uint8_t symm_cipher = CiphertextBlob_symm_cipher(cipher);
+  *(buf + current_pos) = symm_cipher;
+  current_pos += sizeof(uint8_t);
 
   // asymm cipher
-  uint32_t asymm_cipher = htonl(CiphertextBlob_asymm_cipher(cipher));
-  memcpy(buf + current_pos, &asymm_cipher, sizeof(uint32_t));
-  current_pos += sizeof(uint32_t);
+  uint8_t asymm_cipher = CiphertextBlob_asymm_cipher(cipher);
+  *(buf + current_pos) = asymm_cipher;
+  current_pos += sizeof(uint8_t);
 
-  if (encrypted_key != NULL) {
-    size_t bufsize = htonl(Buffer_get_size(encrypted_key));
-    memcpy(buf + current_pos, &bufsize, sizeof(size_t));
-    current_pos += sizeof(size_t);
-    memcpy(buf + current_pos, Buffer_get_bytes(encrypted_key, NULL),
-           ntohl(bufsize));
-    current_pos += ntohl(bufsize);
-  } else {
-    memset((buf + current_pos), 0, sizeof(size_t));
-    current_pos += sizeof(size_t);
-  }
+  // encrypted key
+  size_t ekey_len = Buffer_serialize(encrypted_key, buf + current_pos);
+  current_pos += ekey_len;
 
-  if (iv != NULL) {
-    size_t bufsize = htonl(Buffer_get_size(iv));
-    memcpy(buf + current_pos, &bufsize, sizeof(size_t));
-    current_pos += sizeof(size_t);
-    memcpy(buf + current_pos, Buffer_get_bytes(iv, NULL), ntohl(bufsize));
-    current_pos += ntohl(bufsize);
-  } else {
-    memset((buf + current_pos), 0, sizeof(size_t));
-    current_pos += sizeof(size_t);
-  }
+  // iv
+  size_t ivlen = Buffer_serialize(iv, buf + current_pos);
+  current_pos += ivlen;
 
-  if (tag != NULL) {
-    size_t bufsize = htonl(Buffer_get_size(tag));
-    memcpy(buf + current_pos, &bufsize, sizeof(size_t));
-    current_pos += sizeof(size_t);
-    memcpy(buf + current_pos, Buffer_get_bytes(tag, NULL), ntohl(bufsize));
-    current_pos += ntohl(bufsize);
-  } else {
-    memset((buf + current_pos), 0, sizeof(size_t));
-    current_pos += sizeof(size_t);
-  }
+  // tag
+  size_t taglen = Buffer_serialize(tag, buf + current_pos);
+  current_pos += taglen;
 
-  if (aad != NULL) {
-    size_t bufsize = htonl(Buffer_get_size(aad));
-    memcpy(buf + current_pos, &bufsize, sizeof(size_t));
-    current_pos += sizeof(size_t);
-    memcpy(buf + current_pos, Buffer_get_bytes(aad, NULL), ntohl(bufsize));
-    current_pos += ntohl(bufsize);
-  } else {
-    memset((buf + current_pos), 0, sizeof(size_t));
-    current_pos += sizeof(size_t);
-  }
+  // aad
+  size_t aadlen = Buffer_serialize(aad, buf + current_pos);
+  current_pos += aadlen;
 
-  if (ciphertext != NULL) {
-    size_t bufsize = htonl(Buffer_get_size(ciphertext));
-    memcpy(buf + current_pos, &bufsize, sizeof(size_t));
-    current_pos += sizeof(size_t);
-    memcpy(buf + current_pos, Buffer_get_bytes(ciphertext, NULL),
-           ntohl(bufsize));
-    current_pos += ntohl(bufsize);
-  } else {
-    memset((buf + current_pos), 0, sizeof(size_t));
-    current_pos += sizeof(size_t);
-  }
+  // ciphertext
+  size_t ciphertextlen = Buffer_serialize(ciphertext, buf + current_pos);
+  current_pos += ciphertextlen;
 
-  if (digest != NULL) {
-    size_t bufsize = htonl(Buffer_get_size(digest));
-    memcpy(buf + current_pos, &bufsize, sizeof(size_t));
-    current_pos += sizeof(size_t);
-    memcpy(buf + current_pos, Buffer_get_bytes(digest, NULL), ntohl(bufsize));
-    current_pos += ntohl(bufsize);
-  } else {
-    memset((buf + current_pos), 0, sizeof(size_t));
-    current_pos += sizeof(size_t);
-  }
+  // signature
+  size_t signaturelen = Buffer_serialize(signature, buf + current_pos);
+  current_pos += signaturelen;
 
   // set the size of the buffer until the digest (at offset sizeof(uint32_t))
   uint64_t curr_pos = htonl(current_pos);
@@ -217,11 +156,8 @@ uint8_t *serialize_blob(ciphertext_blob_t *cipher, size_t *out_size) {
                  message_digest);
 
   // Append the digest
-  size_t net_digest_len = htonl(digest_len);
-  memcpy(buf + current_pos, &net_digest_len, sizeof(size_t));
-  current_pos += sizeof(size_t);
-  memcpy(buf + current_pos, Buffer_get_bytes(message_digest, NULL), digest_len);
-  current_pos += digest_len;
+  size_t digestlen = Buffer_serialize(message_digest, buf + current_pos);
+  current_pos += digestlen;
 
   CiphertextBlob_free(cipher);
   cipher = NULL;
@@ -243,39 +179,43 @@ ciphertext_blob_t *deserialize_blob(const uint8_t *b64_serialized_cipher,
                   "b64 decode failed\n");
 
   size_t current_position = 0;
+
+  // magic
   uint32_t magic = ntohl(*(uint32_t *)serialized_cipher);
   EXPECT_TRUE_RET((magic == _PEACEMAKR_MAGIC_),
                   "magic number corrupted/missing, aborting\n");
   current_position += sizeof(uint32_t);
 
+  // len until digest
   uint64_t len_before_digest =
       ntohl(*(uint64_t *)(serialized_cipher + current_position));
   current_position += sizeof(uint64_t);
 
-  message_digest_algorithm digest_algo =
-      ntohl(*(uint32_t *)(serialized_cipher + current_position));
-  current_position += sizeof(uint32_t);
+  // digest algo
+  uint8_t digest_algo =
+      *(serialized_cipher + current_position);
+  current_position += sizeof(uint8_t);
 
-  uint64_t digestlen = (size_t)EVP_MD_size(parse_digest(digest_algo));
-  uint64_t serialized_digest_size =
-      ntohl(*(uint64_t *)(serialized_cipher + len_before_digest));
+  { // Check that the message digests are equal
+    uint64_t digestlen = (uint64_t)EVP_MD_size(parse_digest(digest_algo));
+    buffer_t *serialized_digest = Buffer_deserialize(serialized_cipher + len_before_digest);
 
-  EXPECT_TRUE_RET((serialized_digest_size == digestlen),
-                  "serialized digest is not of the correct length, aborting\n");
+    EXPECT_TRUE_RET(
+        (Buffer_get_size(serialized_digest) == digestlen),
+        "serialized digest is not of the correct length, aborting\n");
 
-  buffer_t *digest_buf = Buffer_new(digestlen);
-  digest_message(serialized_cipher, len_before_digest,
-                 parse_digest(digest_algo), digest_buf);
+    buffer_t *computed_digest = Buffer_new(digestlen);
+    digest_message(serialized_cipher, len_before_digest,
+                   parse_digest(digest_algo), computed_digest);
 
-  const uint8_t *serialized_digest_ptr =
-      serialized_cipher + len_before_digest + sizeof(size_t);
+    if (0 != CRYPTO_memcmp(Buffer_get_bytes(computed_digest, NULL),
+                           Buffer_get_bytes(serialized_digest, NULL), digestlen)) {
+      PEACEMAKR_LOG("digests don't compare equal, aborting\n");
+      Buffer_free(computed_digest);
+      return NULL;
+    }
 
-  rc = CRYPTO_memcmp(Buffer_get_bytes(digest_buf, NULL), serialized_digest_ptr,
-                     digestlen);
-  if (rc != 0) {
-    PEACEMAKR_LOG("digests don't compare equal, aborting\n");
-    Buffer_free(digest_buf);
-    return NULL;
+    Buffer_free(computed_digest);
   }
 
   // version
@@ -284,44 +224,23 @@ ciphertext_blob_t *deserialize_blob(const uint8_t *b64_serialized_cipher,
   current_position += sizeof(uint32_t);
   if (version > PEACEMAKR_CORE_CRYPTO_VERSION_MAX) {
     PEACEMAKR_LOG("version greater than max supported");
-    Buffer_free(digest_buf);
     return NULL;
   }
 
   // encryption mode
-  uint32_t encryption_mode =
-      ntohl(*((uint32_t *)(serialized_cipher + current_position)));
-  current_position += sizeof(uint32_t);
-
-  EXPECT_TRUE_RET(
-      (serialized_digest_size == digestlen || encryption_mode == ASYMMETRIC),
-      "serialized digest is not of the correct length, aborting\n");
-
-  rc = CRYPTO_memcmp(Buffer_get_bytes(digest_buf, NULL), serialized_digest_ptr,
-                     digestlen);
-  if (rc != 0 && encryption_mode != ASYMMETRIC) {
-    PEACEMAKR_LOG("digests don't compare equal, aborting\n");
-    Buffer_free(digest_buf);
-    return NULL;
-  }
-
-  // If it's asymmetric encryption, leave the veriification to the decrypt
-  // function.
-  if (encryption_mode == ASYMMETRIC) {
-    Buffer_set_size(digest_buf, serialized_digest_size);
-    Buffer_set_bytes(digest_buf, serialized_digest_ptr, serialized_digest_size);
-    digestlen = serialized_digest_size;
-  }
+  uint8_t encryption_mode =
+      *(serialized_cipher + current_position);
+  current_position += sizeof(uint8_t);
 
   // symm_cipher
-  uint32_t symm_cipher =
-      ntohl(*((uint32_t *)(serialized_cipher + current_position)));
-  current_position += sizeof(uint32_t);
+  uint8_t symm_cipher =
+      *(serialized_cipher + current_position);
+  current_position += sizeof(uint8_t);
 
   // asymm_cipher
-  uint32_t asymm_cipher =
-      ntohl(*((uint32_t *)(serialized_cipher + current_position)));
-  current_position += sizeof(uint32_t);
+  uint8_t asymm_cipher =
+      *(serialized_cipher + current_position);
+  current_position += sizeof(uint8_t);
 
   crypto_config_t cfg = {.mode = encryption_mode,
                          .symm_cipher = symm_cipher,
@@ -329,85 +248,74 @@ ciphertext_blob_t *deserialize_blob(const uint8_t *b64_serialized_cipher,
                          .digest_algorithm = digest_algo};
 
   // encrypted key
-  size_t keylen = ntohl(*((size_t *)(serialized_cipher + current_position)));
-  current_position += sizeof(size_t);
-  uint8_t *encrypted_key = NULL;
-  if (keylen != 0) {
-    encrypted_key = alloca(keylen);
-    memcpy(encrypted_key, serialized_cipher + current_position, keylen);
-    current_position += keylen;
-  }
+  buffer_t *encrypted_key =
+      Buffer_deserialize(serialized_cipher + current_position);
+  current_position += Buffer_get_serialized_size(encrypted_key);
 
   // iv
-  size_t ivlen = ntohl(*((size_t *)(serialized_cipher + current_position)));
-  current_position += sizeof(size_t);
-  uint8_t *iv = NULL;
-  if (ivlen != 0) {
-    iv = alloca(ivlen);
-    memcpy(iv, serialized_cipher + current_position, ivlen);
-    current_position += ivlen;
-  }
+  buffer_t *iv = Buffer_deserialize(serialized_cipher + current_position);
+  current_position += Buffer_get_serialized_size(iv);
 
   // tag
-  size_t taglen = ntohl(*((size_t *)(serialized_cipher + current_position)));
-  current_position += sizeof(size_t);
-  uint8_t *tag = NULL;
-  if (taglen != 0) {
-    tag = alloca(taglen);
-    memcpy(tag, serialized_cipher + current_position, taglen);
-    current_position += taglen;
-  }
+  buffer_t *tag = Buffer_deserialize(serialized_cipher + current_position);
+  current_position += Buffer_get_serialized_size(tag);
 
   // aad
-  size_t aadlen = ntohl(*((size_t *)(serialized_cipher + current_position)));
-  current_position += sizeof(size_t);
-  uint8_t *aad = NULL;
-  if (aadlen != 0) {
-    aad = alloca(aadlen);
-    memcpy(aad, serialized_cipher + current_position, aadlen);
-    current_position += aadlen;
-  }
+  buffer_t *aad = Buffer_deserialize(serialized_cipher + current_position);
+  current_position += Buffer_get_serialized_size(aad);
 
   // ciphertext
-  size_t cipherlen = ntohl(*((size_t *)(serialized_cipher + current_position)));
-  current_position += sizeof(size_t);
-  uint8_t *ciphertext = NULL;
-  if (cipherlen != 0) {
-    ciphertext = alloca(cipherlen);
-    memcpy(ciphertext, serialized_cipher + current_position, cipherlen);
-    //    current_position += cipherlen;
-  }
+  buffer_t *ciphertext =
+      Buffer_deserialize(serialized_cipher + current_position);
+  current_position += Buffer_get_serialized_size(ciphertext);
 
-  ciphertext_blob_t *out =
-      CiphertextBlob_new(cfg, ivlen, taglen, aadlen, cipherlen, digestlen);
+  // signature
+  buffer_t *signature =
+      Buffer_deserialize(serialized_cipher + current_position);
+
+  ciphertext_blob_t *out = CiphertextBlob_new(
+      cfg, Buffer_get_size(iv), Buffer_get_size(tag), Buffer_get_size(aad),
+      Buffer_get_size(ciphertext), Buffer_get_size(signature));
+
   CiphertextBlob_set_version(out, version);
 
   if (encrypted_key != NULL) {
-    Buffer_set_bytes(CiphertextBlob_mutable_encrypted_key(out), encrypted_key,
-                     keylen);
+    Buffer_set_bytes(CiphertextBlob_mutable_encrypted_key(out), Buffer_get_bytes(encrypted_key, NULL),
+                     Buffer_get_size(encrypted_key));
   }
 
   if (iv != NULL) {
-    CiphertextBlob_set_iv(out, iv, ivlen);
+    CiphertextBlob_set_iv(out, Buffer_get_bytes(iv, NULL), Buffer_get_size(iv));
   }
 
   if (tag != NULL) {
-    Buffer_set_bytes(CiphertextBlob_mutable_tag(out), tag, taglen);
+    Buffer_set_bytes(CiphertextBlob_mutable_tag(out),
+                     Buffer_get_bytes(tag, NULL), Buffer_get_size(tag));
   }
 
   if (aad != NULL) {
-    Buffer_set_bytes(CiphertextBlob_mutable_aad(out), aad, aadlen);
+    Buffer_set_bytes(CiphertextBlob_mutable_aad(out),
+                     Buffer_get_bytes(aad, NULL), Buffer_get_size(aad));
   }
 
   if (ciphertext != NULL) {
-    Buffer_set_bytes(CiphertextBlob_mutable_ciphertext(out), ciphertext,
-                     cipherlen);
+    Buffer_set_bytes(CiphertextBlob_mutable_ciphertext(out),
+                     Buffer_get_bytes(ciphertext, NULL),
+                     Buffer_get_size(ciphertext));
   }
 
-  Buffer_set_bytes(CiphertextBlob_mutable_digest(out),
-                   Buffer_get_bytes(digest_buf, NULL), digestlen);
+  if (signature != NULL) {
+    Buffer_set_bytes(CiphertextBlob_mutable_signature(out),
+                     Buffer_get_bytes(signature, NULL),
+                     Buffer_get_size(signature));
+  }
 
-  Buffer_free(digest_buf);
+  Buffer_free(encrypted_key);
+  Buffer_free(iv);
+  Buffer_free(tag);
+  Buffer_free(aad);
+  Buffer_free(ciphertext);
+  Buffer_free(signature);
 
   return out;
 }

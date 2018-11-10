@@ -13,6 +13,7 @@
 #include "Key.h"
 #include "Logging.h"
 
+#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <string.h>
 
@@ -26,8 +27,7 @@ static void asymmetric_sign(const peacemakr_key_t *sender_key,
   EXPECT_NOT_NULL_RET_NONE(
       sign_key, "can't sign the message with a NULL asymmetric key\n");
 
-  const EVP_MD *digest_algo =
-      parse_digest(PeacemakrKey_get_config(sender_key).digest_algorithm);
+  const EVP_MD *digest_algo = parse_digest(CiphertextBlob_digest_algo(cipher));
 
   md_ctx = EVP_MD_CTX_new();
   EXPECT_NOT_NULL_RET_NONE(md_ctx, "md_ctx_new failed\n");
@@ -37,6 +37,8 @@ static void asymmetric_sign(const peacemakr_key_t *sender_key,
     EVP_MD_CTX_free(md_ctx);
     return;
   }
+
+  EVP_MD_CTX_set_flags(md_ctx, EVP_MD_CTX_FLAG_PAD_PKCS1);
 
   if (aad != NULL && aad_len > 0) {
     if (1 != EVP_DigestSignUpdate(md_ctx, aad, aad_len)) {
@@ -62,7 +64,7 @@ static void asymmetric_sign(const peacemakr_key_t *sender_key,
     return;
   }
   // Realloc if necessary and sign
-  buffer_t *digest_buf = CiphertextBlob_mutable_digest(cipher);
+  buffer_t *digest_buf = CiphertextBlob_mutable_signature(cipher);
   Buffer_set_size(digest_buf, signature_len);
   unsigned char *digest_bytes = Buffer_mutable_bytes(digest_buf);
   if (1 != EVP_DigestSignFinal(md_ctx, digest_bytes, &signature_len)) {
@@ -93,7 +95,7 @@ void symmetric_sign(const peacemakr_key_t *key, const uint8_t *plaintext,
       peacemakr_hmac(PeacemakrKey_get_config(key).digest_algorithm, key,
                      concat_buf, plaintext_len + aad_len, &out_size);
 
-  buffer_t *digest_buf = CiphertextBlob_mutable_digest(cipher);
+  buffer_t *digest_buf = CiphertextBlob_mutable_signature(cipher);
   Buffer_set_size(digest_buf, out_size);
   Buffer_set_bytes(digest_buf, hmac, out_size);
 
@@ -136,7 +138,7 @@ static bool asymmetric_verify(const peacemakr_key_t *sender_key,
   md_ctx = EVP_MD_CTX_new();
   EXPECT_NOT_NULL_RET_VALUE(md_ctx, false, "md_ctx_new failed\n");
 
-  const buffer_t *stored_digest = CiphertextBlob_digest(cipher);
+  const buffer_t *stored_digest = CiphertextBlob_signature(cipher);
   size_t digestlen = 0;
   unsigned char *digest_buf = NULL;
   if (stored_digest != NULL) {
@@ -149,6 +151,8 @@ static bool asymmetric_verify(const peacemakr_key_t *sender_key,
     EVP_MD_CTX_free(md_ctx);
     return false;
   }
+
+  EVP_MD_CTX_set_flags(md_ctx, EVP_MD_CTX_FLAG_PAD_PKCS1);
 
   if (aad != NULL && aad_len > 0) {
     if (1 != EVP_DigestVerifyUpdate(md_ctx, aad, aad_len)) {
@@ -168,6 +172,7 @@ static bool asymmetric_verify(const peacemakr_key_t *sender_key,
 
   if (1 != EVP_DigestVerifyFinal(md_ctx, digest_buf, digestlen)) {
     PEACEMAKR_LOG("DigestVerifyFinal failed\n");
+    ERR_print_errors_fp(stderr);
     EVP_MD_CTX_free(md_ctx);
     return false;
   }
@@ -196,8 +201,8 @@ static bool symmetric_verify(const peacemakr_key_t *key,
       peacemakr_hmac(PeacemakrKey_get_config(key).digest_algorithm, key,
                      concat_buf, plaintext_len + aad_len, &out_size);
 
-  const buffer_t *digest_buf = CiphertextBlob_digest(cipher);
-  size_t stored_size = 1;
+  const buffer_t *digest_buf = CiphertextBlob_signature(cipher);
+  size_t stored_size = 0;
   const uint8_t *stored_hmac = Buffer_get_bytes(digest_buf, &stored_size);
 
   if (stored_size != out_size) {
@@ -206,7 +211,7 @@ static bool symmetric_verify(const peacemakr_key_t *key,
     return false;
   }
 
-  if (CRYPTO_memcmp(hmac, stored_hmac, out_size)) {
+  if (0 != CRYPTO_memcmp(hmac, stored_hmac, out_size)) {
     // failed
     free(concat_buf);
     free(hmac);

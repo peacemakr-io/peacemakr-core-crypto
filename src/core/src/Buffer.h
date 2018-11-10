@@ -30,4 +30,8 @@ uint8_t *Buffer_mutable_bytes(buffer_t *buf);
 const size_t Buffer_get_size(const buffer_t *buf);
 void Buffer_set_size(buffer_t *buf, size_t size);
 
+size_t Buffer_serialize(const buffer_t *buf, uint8_t *serialized);
+buffer_t *Buffer_deserialize(uint8_t *serialized);
+size_t Buffer_get_serialized_size(const buffer_t *buf);
+
 #endif // PEACEMAKR_CORE_CRYPTO_MEMORY_H

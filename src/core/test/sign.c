@@ -12,6 +12,7 @@
 #include <assert.h>
 
 #include "test_helper.h"
+#include "../src/CiphertextBlob.h"
 
 const char *message = "Hello, world! I'm testing encryption."; // 37 + 1
 const char *message_aad = "And I'm AAD"; // 11 + 1
@@ -43,8 +44,13 @@ void test_symmetric_algo(symmetric_cipher cipher) {
   peacemakr_sign(key, &plaintext_in, ciphertext);
   assert(ciphertext != NULL);
 
-  bool success = peacemakr_decrypt(key, ciphertext, &plaintext_out, true);
-  success &= peacemakr_verify(key, &plaintext_out, ciphertext);
+  size_t out_size = 0;
+  uint8_t *serialized = serialize_blob(ciphertext, &out_size);
+  assert(serialized != NULL);
+
+  ciphertext_blob_t *deserialized = deserialize_blob(serialized, out_size);
+  bool success = peacemakr_decrypt(key, deserialized, &plaintext_out, true);
+  success &= peacemakr_verify(key, &plaintext_out, deserialized);
 
   assert(success);
 
@@ -84,8 +90,15 @@ void test_asymmetric_algo(symmetric_cipher cipher, asymmetric_cipher asymmcipher
   peacemakr_sign(key, &plaintext_in, ciphertext);
   assert(ciphertext != NULL);
 
-  bool success = peacemakr_decrypt(key, ciphertext, &plaintext_out, true);
-  success &= peacemakr_verify(key, &plaintext_out, ciphertext);
+  size_t out_size = 0;
+  // this isn't serializing the signature properly...
+  uint8_t *serialized = serialize_blob(ciphertext, &out_size);
+  assert(serialized != NULL);
+
+  // or this isn't deserializing the signature properly...
+  ciphertext_blob_t *deserialized = deserialize_blob(serialized, out_size);
+  bool success = peacemakr_decrypt(key, deserialized, &plaintext_out, true);
+  success &= peacemakr_verify(key, &plaintext_out, deserialized);
 
   assert(success);
 
@@ -105,7 +118,7 @@ int main() {
   for (int i = AES_128_GCM; i <= CHACHA20_POLY1305; ++i) {
     test_symmetric_algo(i);
   }
-  
+
   for (int i = RSA_2048; i <= RSA_4096; ++i) {
     for (int j = AES_128_GCM; j <= CHACHA20_POLY1305; ++j) {
       test_asymmetric_algo(j, i);
