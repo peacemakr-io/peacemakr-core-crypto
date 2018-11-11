@@ -196,8 +196,8 @@ func TestAsymmetricEncrypt(t *testing.T) {
 				}
 
 
-				plaintextOut, success := Decrypt(key, deserialized)
-				if !success {
+				plaintextOut, err := Decrypt(key, deserialized)
+				if err != nil {
 					DestroyPeacemakrKey(key)
 					t.Fatalf("Decrypt failed")
 				}
@@ -270,8 +270,8 @@ func TestAsymmetricEncryptFromPem(t *testing.T) {
 				t.Fatalf("%v", err)
 			}
 
-			plaintextOut, success := Decrypt(privkey, deserialized)
-			if !success {
+			plaintextOut, err := Decrypt(privkey, deserialized)
+			if err != nil {
 				DestroyPeacemakrKey(pubkey)
 				DestroyPeacemakrKey(privkey)
 				t.Fatalf("Decrypt failed")
@@ -363,8 +363,8 @@ func TestAsymmetricEncryptFromRandomPem(t *testing.T) {
 					t.Fatalf("%v", err)
 				}
 
-				plaintextOut, success := Decrypt(privkey, deserialized)
-				if !success {
+				plaintextOut, err := Decrypt(privkey, deserialized)
+				if err != nil {
 					DestroyPeacemakrKey(pubkey)
 					DestroyPeacemakrKey(privkey)
 					t.Fatalf("Decrypt failed")
@@ -445,8 +445,8 @@ func TestSymmetricEncrypt(t *testing.T) {
 		}
 
 
-		plaintextOut, success := Decrypt(key, deserialized)
-		if !success {
+		plaintextOut, err := Decrypt(key, deserialized)
+		if err != nil {
 			DestroyPeacemakrKey(key)
 			t.Fatalf("Decrypt failed")
 		}
@@ -519,8 +519,8 @@ func TestSerialize(t *testing.T) {
 						t.Fatalf("%v", err)
 					}
 
-					plaintextOut, success := Decrypt(key, deserialized)
-					if !success {
+					plaintextOut, err := Decrypt(key, deserialized)
+					if err != nil {
 						DestroyPeacemakrKey(key)
 						t.Fatalf("Decrypt failed")
 					}
@@ -597,13 +597,13 @@ func TestSignatures(t *testing.T) {
 						t.Fatalf("%v", err)
 					}
 
-					plaintextOut, success := Decrypt(key, deserialized)
-					if !success {
+					plaintextOut, err := Decrypt(key, deserialized)
+					if err != nil {
 						DestroyPeacemakrKey(key)
 						t.Fatalf("Decrypt failed")
 					}
-					success = Verify(key, plaintextOut, deserialized)
-					if !success {
+					err = Verify(key, plaintextOut, deserialized)
+					if err != nil {
 						DestroyPeacemakrKey(key)
 						t.Fatalf("Verify failed")
 					}

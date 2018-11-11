@@ -316,16 +316,18 @@ func ExtractUnverifiedAAD(ciphertext []byte) ([]byte, error) {
 	return C.GoBytes(unsafe.Pointer(plaintext.aad), C.int(plaintext.aad_len)), nil
 }
 
-func Decrypt(key PeacemakrKey, ciphertext *CiphertextBlob) (*Plaintext, bool) {
+func Decrypt(key PeacemakrKey, ciphertext *CiphertextBlob) (*Plaintext, error) {
 	if !key.IsValid() {
-		log.Printf("invalid key passed to Decrypt")
-		return nil, false
+		return nil, errors.New("invalid key passed to Decrypt")
 	}
 
 	var plaintext C.plaintext_t
 	defer freeInternalPlaintext(&plaintext)
 
-	out := C.peacemakr_decrypt(key.key, ciphertext.blob, (*C.plaintext_t)(unsafe.Pointer(&plaintext)))
+	decryptSucceeded := C.peacemakr_decrypt(key.key, ciphertext.blob, (*C.plaintext_t)(unsafe.Pointer(&plaintext)))
+	if !decryptSucceeded {
+		return nil, errors.New("decrypt failed")
+	}
 
 	// If decrypt has freed the blob, we can also set the parent to nil
 	if ciphertext.blob == nil {
@@ -335,18 +337,20 @@ func Decrypt(key PeacemakrKey, ciphertext *CiphertextBlob) (*Plaintext, bool) {
 	return &Plaintext{
 		Data: C.GoBytes(unsafe.Pointer(plaintext.data), C.int(plaintext.data_len)),
 		Aad:  C.GoBytes(unsafe.Pointer(plaintext.aad), C.int(plaintext.aad_len)),
-	}, bool(out)
+	}, nil
 }
 
-func Verify(senderKey PeacemakrKey, plaintext *Plaintext, ciphertext *CiphertextBlob) bool {
+func Verify(senderKey PeacemakrKey, plaintext *Plaintext, ciphertext *CiphertextBlob) error {
 	if !senderKey.IsValid() {
-		log.Print("invalid key passed to Encrypt")
-		return false
+		return errors.New("invalid key passed to Encrypt")
 	}
 
-	out := bool(C.peacemakr_verify(senderKey.key, (*C.plaintext_t)(unsafe.Pointer(&plaintext)), ciphertext.blob))
+	verified := C.peacemakr_verify(senderKey.key, (*C.plaintext_t)(unsafe.Pointer(&plaintext)), ciphertext.blob)
+	if !verified {
+		return errors.New("verification failed")
+	}
 
-	return out
+	return nil
 }
 
 func HMAC(algo MessageDigestAlgorithm, key PeacemakrKey, buf []byte) ([]byte, error) {
