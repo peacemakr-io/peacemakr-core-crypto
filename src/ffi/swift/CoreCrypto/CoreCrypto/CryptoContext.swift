@@ -37,7 +37,7 @@ public class CryptoContext {
     return ciphertext_blob!
   }
 
-  public func Sign(senderKey: PeacemakrKey, plaintext: Plaintext, ciphertext: inout Ciphertext) {
+  public func Sign(senderKey: PeacemakrKey, plaintext: Plaintext, ciphertext: inout Ciphertext) -> Void {
     var innerPlaintext = plaintext.getInternal()
     peacemakr_sign(senderKey.getInternal(), &innerPlaintext, ciphertext);
   }

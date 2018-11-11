@@ -170,9 +170,16 @@ func TestAsymmetricEncrypt(t *testing.T) {
 					t.Fatalf("%v", err)
 				}
 
+				serialized, err := Serialize(ciphertext)
+				if err != nil {
+					DestroyPeacemakrKey(key)
+					t.Fatalf("%v", err)
+				}
+
+
 				if plaintextIn.Aad != nil {
-					AAD, success := ExtractUnverifiedAAD(ciphertext)
-					if !success {
+					AAD, err := ExtractUnverifiedAAD(serialized)
+					if err != nil {
 						DestroyPeacemakrKey(key)
 						t.Fatalf("Extract failed")
 					}
@@ -182,7 +189,14 @@ func TestAsymmetricEncrypt(t *testing.T) {
 					}
 				}
 
-				plaintextOut, success := Decrypt(key, ciphertext)
+				deserialized, err := Deserialize(serialized)
+				if err != nil {
+					DestroyPeacemakrKey(key)
+					t.Fatalf("%v", err)
+				}
+
+
+				plaintextOut, success := Decrypt(key, deserialized)
 				if !success {
 					DestroyPeacemakrKey(key)
 					t.Fatalf("Decrypt failed")
@@ -232,9 +246,14 @@ func TestAsymmetricEncryptFromPem(t *testing.T) {
 				t.Fatalf("%v", err)
 			}
 
+			serialized, err := Serialize(ciphertext)
+			if err != nil {
+				t.Fatalf("%v", err)
+			}
+
 			if plaintextIn.Aad != nil {
-				AAD, success := ExtractUnverifiedAAD(ciphertext)
-				if !success {
+				AAD, err := ExtractUnverifiedAAD(serialized)
+				if err != nil {
 					DestroyPeacemakrKey(pubkey)
 					t.Fatalf("Extract failed")
 				}
@@ -246,7 +265,12 @@ func TestAsymmetricEncryptFromPem(t *testing.T) {
 
 			privkey := NewPeacemakrKeyFromPrivPem(cfg, GetPrivKey())
 
-			plaintextOut, success := Decrypt(privkey, ciphertext)
+			deserialized, err := Deserialize(serialized)
+			if err != nil {
+				t.Fatalf("%v", err)
+			}
+
+			plaintextOut, success := Decrypt(privkey, deserialized)
 			if !success {
 				DestroyPeacemakrKey(pubkey)
 				DestroyPeacemakrKey(privkey)
@@ -310,9 +334,17 @@ func TestAsymmetricEncryptFromRandomPem(t *testing.T) {
 					t.Fatalf("%v", err)
 				}
 
+				serialized, err := Serialize(ciphertext)
+				if err != nil {
+					DestroyPeacemakrKey(pubkey)
+					DestroyPeacemakrKey(privkey)
+					t.Fatalf("%v", err)
+				}
+
+
 				if plaintextIn.Aad != nil {
-					AAD, success := ExtractUnverifiedAAD(ciphertext)
-					if !success {
+					AAD, err := ExtractUnverifiedAAD(serialized)
+					if err != nil {
 						DestroyPeacemakrKey(pubkey)
 						DestroyPeacemakrKey(privkey)
 						t.Fatalf("Extract failed")
@@ -324,7 +356,14 @@ func TestAsymmetricEncryptFromRandomPem(t *testing.T) {
 					}
 				}
 
-				plaintextOut, success := Decrypt(privkey, ciphertext)
+				deserialized, err := Deserialize(serialized)
+				if err != nil {
+					DestroyPeacemakrKey(pubkey)
+					DestroyPeacemakrKey(privkey)
+					t.Fatalf("%v", err)
+				}
+
+				plaintextOut, success := Decrypt(privkey, deserialized)
 				if !success {
 					DestroyPeacemakrKey(pubkey)
 					DestroyPeacemakrKey(privkey)
@@ -381,9 +420,15 @@ func TestSymmetricEncrypt(t *testing.T) {
 			t.Fatalf("%v", err)
 		}
 
+		serialized, err := Serialize(ciphertext)
+		if err != nil {
+			DestroyPeacemakrKey(key)
+			t.Fatalf("%v", err)
+		}
+
 		if plaintextIn.Aad != nil {
-			AAD, success := ExtractUnverifiedAAD(ciphertext)
-			if !success {
+			AAD, err := ExtractUnverifiedAAD(serialized)
+			if err != nil {
 				DestroyPeacemakrKey(key)
 				t.Fatalf("Extract failed")
 			}
@@ -393,7 +438,14 @@ func TestSymmetricEncrypt(t *testing.T) {
 			}
 		}
 
-		plaintextOut, success := Decrypt(key, ciphertext)
+		deserialized, err := Deserialize(serialized)
+		if err != nil {
+			DestroyPeacemakrKey(key)
+			t.Fatalf("%v", err)
+		}
+
+
+		plaintextOut, success := Decrypt(key, deserialized)
 		if !success {
 			DestroyPeacemakrKey(key)
 			t.Fatalf("Decrypt failed")
@@ -443,14 +495,15 @@ func TestSerialize(t *testing.T) {
 						t.Fatalf("%v", err)
 					}
 
+					serialized, err := Serialize(ciphertext)
 					if err != nil {
 						DestroyPeacemakrKey(key)
 						t.Fatalf("%v", err)
 					}
 
 					if plaintextIn.Aad != nil {
-						AAD, success := ExtractUnverifiedAAD(ciphertext)
-						if !success {
+						AAD, err := ExtractUnverifiedAAD(serialized)
+						if err != nil {
 							DestroyPeacemakrKey(key)
 							t.Fatalf("Extract failed")
 						}
@@ -460,7 +513,13 @@ func TestSerialize(t *testing.T) {
 						}
 					}
 
-					plaintextOut, success := Decrypt(key, ciphertext)
+					deserialized, err := Deserialize(serialized)
+					if err != nil {
+						DestroyPeacemakrKey(key)
+						t.Fatalf("%v", err)
+					}
+
+					plaintextOut, success := Decrypt(key, deserialized)
 					if !success {
 						DestroyPeacemakrKey(key)
 						t.Fatalf("Decrypt failed")
@@ -504,7 +563,7 @@ func TestSignatures(t *testing.T) {
 
 					key := NewPeacemakrKey(cfg, randomDevice)
 
-					ciphertext, err := EncryptAndSign(key, key, plaintextIn, randomDevice)
+					ciphertext, err := Encrypt(key, plaintextIn, randomDevice)
 					if err != nil && len(plaintextIn.Data) == 0 {
 						return
 					}
@@ -512,15 +571,17 @@ func TestSignatures(t *testing.T) {
 						DestroyPeacemakrKey(key)
 						t.Fatalf("%v", err)
 					}
+					err = Sign(key, plaintextIn, ciphertext)
 
+					serialized, err := Serialize(ciphertext)
 					if err != nil {
 						DestroyPeacemakrKey(key)
 						t.Fatalf("%v", err)
 					}
 
 					if plaintextIn.Aad != nil {
-						AAD, success := ExtractUnverifiedAAD(ciphertext)
-						if !success {
+						AAD, err := ExtractUnverifiedAAD(serialized)
+						if err != nil {
 							DestroyPeacemakrKey(key)
 							t.Fatalf("Extract failed")
 						}
@@ -530,10 +591,21 @@ func TestSignatures(t *testing.T) {
 						}
 					}
 
-					plaintextOut, success := DecryptAndVerify(key, key, ciphertext)
+					deserialized, err := Deserialize(serialized)
+					if err != nil {
+						DestroyPeacemakrKey(key)
+						t.Fatalf("%v", err)
+					}
+
+					plaintextOut, success := Decrypt(key, deserialized)
 					if !success {
 						DestroyPeacemakrKey(key)
 						t.Fatalf("Decrypt failed")
+					}
+					success = Verify(key, plaintextOut, deserialized)
+					if !success {
+						DestroyPeacemakrKey(key)
+						t.Fatalf("Verify failed")
 					}
 
 					if !bytes.Equal(plaintextIn.Data, plaintextOut.Data) {
@@ -619,10 +691,16 @@ func TestSignatures(t *testing.T) {
 //
 //	pmkey := NewPeacemakrKeyFromPrivPem(cfg, []byte(privKey))
 //
-//	_, success := Decrypt(pmkey, []byte(blob))
+//	cipher, err := Deserialize([]byte(blob))
+//	if err != nil {
+//		DestroyPeacemakrKey(pmkey)
+//		t.Fatalf("Deserialize failed")
+//	}
+//	_, success := Decrypt(pmkey, cipher)
 //	if !success {
 //		DestroyPeacemakrKey(pmkey)
 //		t.Fatalf("Decrypt failed")
 //	}
+//
 //	DestroyPeacemakrKey(pmkey)
 //}
