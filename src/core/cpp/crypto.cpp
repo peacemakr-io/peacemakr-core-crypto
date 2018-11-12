@@ -182,18 +182,22 @@ peacemakr::CryptoContext::Deserialize(const std::string &serialized) {
   return peacemakr_deserialize((uint8_t *)serialized.data(), serialized.size());
 }
 
-peacemakr::Plaintext
-peacemakr::CryptoContext::Decrypt(const Key &key, ciphertext_blob_t *blob, bool &needVerify) {
+peacemakr::Plaintext peacemakr::CryptoContext::Decrypt(const Key &key,
+                                                       ciphertext_blob_t *blob,
+                                                       bool &needVerify) {
 
   plaintext_t out;
   decrypt_code success = peacemakr_decrypt(key.getKey(), blob, &out);
   switch (success) {
-    case DECRYPT_SUCCESS: break;
-    case DECRYPT_NEED_VERIFY: needVerify = true; break;
-    case DECRYPT_FAILED: {
-      m_log_("decryption failed");
-      return Plaintext{};
-    }
+  case DECRYPT_SUCCESS:
+    break;
+  case DECRYPT_NEED_VERIFY:
+    needVerify = true;
+    break;
+  case DECRYPT_FAILED: {
+    m_log_("decryption failed");
+    return Plaintext{};
+  }
   }
 
   Plaintext plain{};

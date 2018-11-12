@@ -484,7 +484,7 @@ ciphertext_blob_t *peacemakr_encrypt(const peacemakr_key_t *recipient_key,
 }
 
 decrypt_code peacemakr_decrypt(const peacemakr_key_t *recipient_key,
-                       ciphertext_blob_t *cipher, plaintext_t *plain) {
+                               ciphertext_blob_t *cipher, plaintext_t *plain) {
 
   EXPECT_NOT_NULL_RET_VALUE(plain, false, "plain was null\n");
   EXPECT_NOT_NULL_RET_VALUE(cipher, false, "cipher was null\n");

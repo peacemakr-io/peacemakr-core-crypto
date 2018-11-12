@@ -219,11 +219,13 @@ typedef enum {
 
 /**
  * Performs the decryption operation using the configuration and the (symmetric
- * or asymmetric) key in \p recipient_key. The operation is performed over \p cipher and the result is stored in \p plain. \returns a
- * code to indicate if verify needs to be called on the result of decryption, if decrypt succeeded outright, or if decrypt failed.
+ * or asymmetric) key in \p recipient_key. The operation is performed over \p
+ * cipher and the result is stored in \p plain. \returns a code to indicate if
+ * verify needs to be called on the result of decryption, if decrypt succeeded
+ * outright, or if decrypt failed.
  */
 decrypt_code peacemakr_decrypt(const peacemakr_key_t *recipient_key,
-                       ciphertext_blob_t *cipher, plaintext_t *plain);
+                               ciphertext_blob_t *cipher, plaintext_t *plain);
 
 /**
  * Attempts to extract any AAD from the message.
