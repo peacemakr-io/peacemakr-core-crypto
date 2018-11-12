@@ -9,7 +9,6 @@
 #include "crypto.hpp"
 
 #include <cassert>
-#include <crypto.hpp>
 #include <cstdio>
 #include <stdexcept>
 
