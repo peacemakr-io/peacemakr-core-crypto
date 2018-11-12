@@ -75,14 +75,14 @@ public class CryptoContext {
 
   public func Decrypt(key: PeacemakrKey, ciphertext: Ciphertext) throws -> (Plaintext, Bool) {
     var out = plaintext_t(data: nil, data_len: 0, aad: nil, aad_len: 0)
-    let out = peacemakr_decrypt(key.getInternal(), ciphertext, &out)
+    let success = peacemakr_decrypt(key.getInternal(), ciphertext, &out)
 
-    if out == decrypt_code.DECRYPT_FAILED {
+    if success == DECRYPT_FAILED {
       throw PeacemakrError.decryptionFailed
     }
 
     var needVerify = false
-    if out == decrypt_code.DECRYPT_NEED_VERIFY {
+    if success == DECRYPT_NEED_VERIFY {
       needVerify = true
     }
 

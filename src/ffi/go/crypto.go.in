@@ -326,7 +326,7 @@ const (
 
 func Decrypt(key PeacemakrKey, ciphertext *CiphertextBlob) (*Plaintext, bool, error) {
 	if !key.IsValid() {
-		return nil, errors.New("invalid key passed to Decrypt")
+		return nil, false, errors.New("invalid key passed to Decrypt")
 	}
 
 	var plaintext C.plaintext_t
@@ -334,7 +334,7 @@ func Decrypt(key PeacemakrKey, ciphertext *CiphertextBlob) (*Plaintext, bool, er
 
 	decryptCode := DecryptCode(C.peacemakr_decrypt(key.key, ciphertext.blob, (*C.plaintext_t)(unsafe.Pointer(&plaintext))))
 	if decryptCode == DECRYPT_FAILED {
-		return nil, errors.New("decrypt failed")
+		return nil, false, errors.New("decrypt failed")
 	}
 
 	needVerify := false
