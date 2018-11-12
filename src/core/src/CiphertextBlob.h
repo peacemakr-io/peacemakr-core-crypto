@@ -9,8 +9,8 @@
 #ifndef PEACEMAKR_CORE_CRYPTO_CIPHERTEXT_H
 #define PEACEMAKR_CORE_CRYPTO_CIPHERTEXT_H
 
-#include <Buffer.h>
-#include <crypto.h>
+#include "Buffer.h"
+#include "crypto.h"
 
 #include <stdint.h>
 
@@ -42,8 +42,8 @@ buffer_t *CiphertextBlob_mutable_aad(ciphertext_blob_t *ciphertext);
 const buffer_t *CiphertextBlob_aad(const ciphertext_blob_t *ciphertext);
 buffer_t *CiphertextBlob_mutable_ciphertext(ciphertext_blob_t *ciphertext);
 const buffer_t *CiphertextBlob_ciphertext(const ciphertext_blob_t *ciphertext);
-buffer_t *CiphertextBlob_mutable_digest(ciphertext_blob_t *ciphertext);
-const buffer_t *CiphertextBlob_digest(const ciphertext_blob_t *ciphertext);
+buffer_t *CiphertextBlob_mutable_signature(ciphertext_blob_t *ciphertext);
+const buffer_t *CiphertextBlob_signature(const ciphertext_blob_t *ciphertext);
 
 const symmetric_cipher
 CiphertextBlob_symm_cipher(const ciphertext_blob_t *ciphertext);
@@ -53,5 +53,8 @@ const message_digest_algorithm
 CiphertextBlob_digest_algo(const ciphertext_blob_t *ciphertext);
 const encryption_mode
 CiphertextBlob_encryption_mode(const ciphertext_blob_t *ciphertext);
+
+bool CiphertextBlob_compare(const ciphertext_blob_t *lhs,
+                            const ciphertext_blob_t *rhs);
 
 #endif // PEACEMAKR_CORE_CRYPTO_CIPHERTEXT_H

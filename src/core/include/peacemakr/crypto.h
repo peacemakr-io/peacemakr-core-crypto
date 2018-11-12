@@ -191,55 +191,83 @@ crypto_config_t PeacemakrKey_get_config(const peacemakr_key_t *key);
 void PeacemakrKey_free(peacemakr_key_t *key);
 
 /**
- * Performs the encryption operation using the configuration and
- * the (symmetric or asymmetric) key in \p key. The operation is performed
- * over \p plain and uses \p rand to generate the IV/nonce. Returns a
- * ciphertext_blob_t that can be used in calls to uint8_t
- * *serialize_blob(ciphertext_blob_t *, size_t *) and bool
- * peacemakr_decrypt(const peacemakr_key_t *, ciphertext_blob_t *, plaintext_t
- * *)
+ * Performs the encryption operation using the configuration and the (symmetric
+ * or asymmetric) key in \p recipient_key. The operation is
+ * performed over \p plain and uses \p rand to generate the IV/nonce. Returns a
+ * ciphertext_blob_t that can be used in calls to peacemakr_sign,
+ * peacemakr_serialize, peacemakr_decrypt, and peacemakr_verify
  */
-ciphertext_blob_t *peacemakr_encrypt(const peacemakr_key_t *key,
+ciphertext_blob_t *peacemakr_encrypt(const peacemakr_key_t *recipient_key,
                                      const plaintext_t *plain,
                                      random_device_t *rand);
 
 /**
- * Performs the decryption operation using the configuration and
- * the (symmetric or asymmetric) key in \p key. The operation is performed
- * over \p cipher and the result is stored in \p plain. Returns a
- * boolean to indicate if decryption was successful. If the \p key is NULL
- * then the decryption will attempt to extract any AAD from the message.
- * Note that this AAD is unconfirmed and may have been tampered with.
+ * Signs the plaintext in \p plain with key \p sender_key. If the configuration
+ * in \p sender_key is SYMMETRIC then this method stores an HMAC in \p cipher.
+ * If the configuration is ASYMMETRIC then this method uses the EVP_DigestSign*
+ * functions to do asymmetric signing of \p plain and stores it in \p cipher.
  */
-bool peacemakr_decrypt(const peacemakr_key_t *key, ciphertext_blob_t *cipher,
-                       plaintext_t *plain);
+void peacemakr_sign(const peacemakr_key_t *sender_key, const plaintext_t *plain,
+                    ciphertext_blob_t *cipher);
+
+//! Possible decrypt outcomes
+typedef enum {
+  DECRYPT_SUCCESS = 0,
+  DECRYPT_NEED_VERIFY = 1,
+  DECRYPT_FAILED = 2,
+} decrypt_code;
 
 /**
- * Computes the HMAC SHA3-256 of \p buf with \p master_key. Allocates memory and
- * returns it to the caller with the HMAC stored inside. The length of the
- * output is guaranteed to be 256 bits.
+ * Performs the decryption operation using the configuration and the (symmetric
+ * or asymmetric) key in \p recipient_key. The operation is performed over \p
+ * cipher and the result is stored in \p plain. \returns a code to indicate if
+ * verify needs to be called on the result of decryption, if decrypt succeeded
+ * outright, or if decrypt failed.
+ */
+decrypt_code peacemakr_decrypt(const peacemakr_key_t *recipient_key,
+                               ciphertext_blob_t *cipher, plaintext_t *plain);
+
+/**
+ * Attempts to extract any AAD from the message.
+ * Note that this AAD is unconfirmed and may have been tampered with.
+ */
+bool peacemakr_get_unverified_aad(ciphertext_blob_t *cipher,
+                                  plaintext_t *plain);
+
+/**
+ * Verifies the plaintext in \p plain with key \p sender_key. If the
+ * configuration in \p sender_key is SYMMETRIC then this method compares a
+ * computed HMAC against the one in \p cipher. If the configuration is
+ * ASYMMETRIC then this method uses the EVP_DigestVerify* functions to do
+ * asymmetric verification of \p plain against the signature in \p cipher.
+ * \returns false if verification is unsuccessful.
+ */
+bool peacemakr_verify(const peacemakr_key_t *sender_key,
+                      const plaintext_t *plain, ciphertext_blob_t *cipher);
+
+/**
+ * Computes the HMAC of \p buf with \p master_key. Allocates memory and
+ * returns it to the caller with the HMAC stored inside.
  */
 uint8_t *peacemakr_hmac(const message_digest_algorithm digest_algorithm,
                         const peacemakr_key_t *master_key, const uint8_t *buf,
                         const size_t buf_len, size_t *out_bytes);
 
-// TODO: should calculate HMAC instead of just hash? In which case, should move
-// serialize/deserialize into encrypt/decrypt respectively
 /**
  * Serializes \p cipher into a \return Base64 encoded buffer. Stores the size of
  * said buffer into \p out_size. The caller is responsible for managing
  * memory returned from this function.
  */
-uint8_t *serialize_blob(ciphertext_blob_t *cipher, size_t *out_size);
+uint8_t *peacemakr_serialize(ciphertext_blob_t *cipher, size_t *out_size);
 
 /**
  * Deserializes a ciphertext_blob_t from \p b64_encoded_cipher. \p
  * serialized_len must be the same as out_size from uint8_t
- * *serialize_blob(ciphertext_blob_t *, size_t *). \returns A ciphertext_blob_t
- * that may be passed to bool peacemakr_decrypt(const peacemakr_key_t *,
- * ciphertext_blob_t *, plaintext_t *)
+ * *peacemakr_serialize(ciphertext_blob_t *, size_t *). \returns A
+ * ciphertext_blob_t that may be passed to bool peacemakr_decrypt(const
+ * peacemakr_key_t *, ciphertext_blob_t *, plaintext_t *)
  */
-ciphertext_blob_t *deserialize_blob(const uint8_t *b64_serialized_cipher,
-                                    size_t serialized_len);
+ciphertext_blob_t *peacemakr_deserialize(const uint8_t *b64_serialized_cipher,
+                                         size_t serialized_len);
 
 #endif // PEACEMAKR_CORE_CRYPTO_CRYPTO_H

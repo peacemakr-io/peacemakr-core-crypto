@@ -58,7 +58,7 @@ peacemakr::Key::Key(crypto_config_t cfg, const std::string &pem, bool priv) {
 
 peacemakr::Key::~Key() { PeacemakrKey_free(m_key_); }
 
-crypto_config_t peacemakr::Key::getConfig() {
+crypto_config_t peacemakr::Key::getConfig() const {
   return PeacemakrKey_get_config(m_key_);
 }
 
@@ -100,25 +100,20 @@ peacemakr::CryptoContext::CryptoContext() : m_log_(log) {
   }
 }
 
-std::string
-peacemakr::CryptoContext::Encrypt(const peacemakr::Key &key,
-                                  const peacemakr::Plaintext &plaintext,
-                                  peacemakr::RandomDevice &rand) {
+ciphertext_blob_t *peacemakr::CryptoContext::Encrypt(const Key &key,
+                                                     const Plaintext &plaintext,
+                                                     RandomDevice &rand) {
   // Early exit if the key is invalid
   if (!key.isValid()) {
     m_log_("invalid key in Encrypt");
-    return "";
-  }
-
-  // Early exit if there's nothing in there
-  if (plaintext.data.empty()) {
-    m_log_("empty plaintext in Encrypt");
-    return "";
+    return nullptr;
   }
 
   plaintext_t plain = {
-      .data = (const unsigned char *)plaintext.data.c_str(),
-      .data_len = (size_t)plaintext.data.size(),
+      .data = plaintext.data.empty()
+                  ? nullptr
+                  : (const unsigned char *)plaintext.data.c_str(),
+      .data_len = plaintext.data.empty() ? 0 : (size_t)plaintext.data.size(),
       .aad = plaintext.aad.empty()
                  ? nullptr
                  : (const unsigned char *)plaintext.aad.c_str(),
@@ -128,14 +123,29 @@ peacemakr::CryptoContext::Encrypt(const peacemakr::Key &key,
 
   ciphertext_blob_t *blob =
       peacemakr_encrypt(pmKey, &plain, &rand.getContents());
-  if (blob == nullptr) {
-    m_log_("encryption failed");
-    return "";
-  }
+  return blob;
+}
 
+void peacemakr::CryptoContext::Sign(const peacemakr::Key &senderKey,
+                                    const peacemakr::Plaintext &plaintext,
+                                    ciphertext_blob_t *blob) {
+
+  plaintext_t plain = {
+      .data = plaintext.data.empty()
+                  ? nullptr
+                  : (const unsigned char *)plaintext.data.c_str(),
+      .data_len = plaintext.data.empty() ? 0 : (size_t)plaintext.data.size(),
+      .aad = plaintext.aad.empty()
+                 ? nullptr
+                 : (const unsigned char *)plaintext.aad.c_str(),
+      .aad_len = plaintext.aad.empty() ? 0 : (size_t)plaintext.aad.size()};
+
+  return peacemakr_sign(senderKey.getKey(), &plain, blob);
+}
+
+std::string peacemakr::CryptoContext::Serialize(ciphertext_blob_t *blob) {
   size_t out_size = 0;
-  uint8_t *serialized = serialize_blob(blob, &out_size);
-
+  uint8_t *serialized = peacemakr_serialize(blob, &out_size);
   return std::string(serialized, serialized + out_size);
 }
 
@@ -143,20 +153,19 @@ peacemakr::Plaintext
 peacemakr::CryptoContext::ExtractUnverifiedAAD(const std::string &serialized) {
   // Early exit if there is nothing to decrypt
   if (serialized.empty()) {
-    m_log_("noting to decrypt");
+    m_log_("nothing to extract from");
     return Plaintext{};
   }
 
-  ciphertext_blob_t *blob =
-      deserialize_blob((unsigned char *)serialized.c_str(), serialized.size());
+  ciphertext_blob_t *blob = peacemakr_deserialize(
+      (unsigned char *)serialized.c_str(), serialized.size());
 
   plaintext_t out;
-  bool success = peacemakr_decrypt(nullptr, blob, &out);
+  bool success = peacemakr_get_unverified_aad(blob, &out);
   if (!success) {
     m_log_("extract failed");
     return Plaintext{};
   }
-  // LOL sometimes out has aad_len as some huge number
 
   Plaintext plain;
   setContents(plain, out);
@@ -164,28 +173,49 @@ peacemakr::CryptoContext::ExtractUnverifiedAAD(const std::string &serialized) {
   return plain;
 }
 
-peacemakr::Plaintext
-peacemakr::CryptoContext::Decrypt(const peacemakr::Key &key,
-                                  const std::string &serialized) {
-
-  // Early exit if there is nothing to decrypt
+ciphertext_blob_t *
+peacemakr::CryptoContext::Deserialize(const std::string &serialized) {
   if (serialized.empty()) {
-    m_log_("noting to decrypt");
-    return Plaintext{};
+    m_log_("noting to deserialize");
+    return nullptr;
   }
+  return peacemakr_deserialize((uint8_t *)serialized.data(), serialized.size());
+}
 
-  ciphertext_blob_t *blob =
-      deserialize_blob((unsigned char *)serialized.c_str(), serialized.size());
+peacemakr::Plaintext peacemakr::CryptoContext::Decrypt(const Key &key,
+                                                       ciphertext_blob_t *blob,
+                                                       bool &needVerify) {
 
   plaintext_t out;
-  bool success = peacemakr_decrypt(key.getKey(), blob, &out);
-  if (!success) {
+  decrypt_code success = peacemakr_decrypt(key.getKey(), blob, &out);
+  switch (success) {
+  case DECRYPT_SUCCESS:
+    break;
+  case DECRYPT_NEED_VERIFY:
+    needVerify = true;
+    break;
+  case DECRYPT_FAILED: {
     m_log_("decryption failed");
     return Plaintext{};
   }
+  }
 
-  Plaintext plain;
+  Plaintext plain{};
   setContents(plain, out);
 
   return plain;
+}
+
+bool peacemakr::CryptoContext::Verify(const peacemakr::Key &senderKey,
+                                      const peacemakr::Plaintext &plain,
+                                      ciphertext_blob_t *blob) {
+  plaintext_t cplain = {
+      .data = plain.data.empty() ? nullptr
+                                 : (const unsigned char *)plain.data.c_str(),
+      .data_len = plain.data.empty() ? 0 : (size_t)plain.data.size(),
+      .aad = plain.aad.empty() ? nullptr
+                               : (const unsigned char *)plain.aad.c_str(),
+      .aad_len = plain.aad.empty() ? 0 : (size_t)plain.aad.size()};
+
+  return peacemakr_verify(senderKey.getKey(), &cplain, blob);
 }

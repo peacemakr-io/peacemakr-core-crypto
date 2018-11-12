@@ -22,18 +22,24 @@ class CoreCryptoTests: XCTestCase {
     let device = DefaultRandomDevice()
 
     let plaintextIn = Plaintext(data: "Hello from swift!", aad: "And I'm AAD")
-    let context = try? CryptoContext()
-    let key = try? PeacemakrKey(config: cfg, rand: device)
-    XCTAssert(context != nil && key != nil, "Setup failed")
-    
-    let encrypted = try? context!.Encrypt(key: key!, plaintext: plaintextIn, rand: device)
-    XCTAssert(encrypted != nil, "Something failed in Encryption")
-    let unverfiedAAD = try? context!.ExtractUnverifiedAAD(serialized: encrypted!)
+    let context = try! CryptoContext()
+    let key = try! PeacemakrKey(config: cfg, rand: device)
+
+    var encrypted = try! context.Encrypt(key: key, plaintext: plaintextIn, rand: device)
+    context.Sign(senderKey: key, plaintext: plaintextIn, ciphertext: &(encrypted))
+    let serialized = try! context.Serialize(encrypted)
+
+    let unverfiedAAD = try? context.ExtractUnverifiedAAD(serialized)
     XCTAssert(unverfiedAAD!.AuthenticatableData == plaintextIn.AuthenticatableData, "Something failed in ExtractUnverfiedAAD")
-    let decrypted = try? context!.Decrypt(key: key!, serialized: encrypted!)
-    XCTAssert(decrypted != nil, "Something failed in Decryption")
-    XCTAssert(decrypted!.EncryptableData == plaintextIn.EncryptableData)
-    XCTAssert(decrypted!.AuthenticatableData == plaintextIn.AuthenticatableData)
+
+    var deserialized = try! context.Deserialize(serialized)
+    let (decrypted, needVerify) = try! context.Decrypt(key: key, ciphertext: deserialized)
+    if needVerify {
+      let success = context.Verify(senderKey: key, plaintext: decrypted, ciphertext: &(deserialized))
+      XCTAssert(success)
+    }
+    XCTAssert(decrypted.EncryptableData == plaintextIn.EncryptableData)
+    XCTAssert(decrypted.AuthenticatableData == plaintextIn.AuthenticatableData)
     
   }
 

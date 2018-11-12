@@ -1,7 +1,7 @@
 set(CORE_LIB_INCLUDE ${CMAKE_SOURCE_DIR}/src/core/include)
 set(CORE_LIB_DIR ${CMAKE_BINARY_DIR}/src/core)
 
-option(PEACEMAKR_BUILD_GO "Whether to build the Golang bindings" OFF)
+option(PEACEMAKR_BUILD_GO "Whether to build the Golang bindings" ON)
 if (PEACEMAKR_BUILD_GO)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/go/crypto.go.in ${CMAKE_CURRENT_SOURCE_DIR}/go/src/peacemakr/crypto/crypto.go @ONLY)
 

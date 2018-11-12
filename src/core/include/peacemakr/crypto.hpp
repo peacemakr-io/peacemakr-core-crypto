@@ -29,6 +29,8 @@ extern "C" {
  */
 
 namespace peacemakr {
+typedef ciphertext_blob_t Ciphertext;
+
 /**
  * @class RandomDevice
  *
@@ -92,14 +94,14 @@ public:
   Key(Key &&other) = delete;
 
   /**
-   * Clears memory associated with this, and cleans up.
+   * Clears memory associated with this Key, and cleans up.
    */
   ~Key();
 
   /**
    * Get the crypto_config_t used to construct this key.
    */
-  crypto_config_t getConfig();
+  crypto_config_t getConfig() const;
 
   /**
    * Check if this key is valid. Any number of errors can produce an invalid
@@ -133,7 +135,8 @@ typedef std::function<void(const std::string &)> LogFunctionType;
  * @class CryptoContext
  *
  * The constructor for this class initializes the library, ensuring that the
- * csprng is properly seeded.
+ * csprng is properly seeded. This class will be the client SDK's primary point
+ * of contact with the core crypto library.
  */
 class CryptoContext {
 public:
@@ -142,25 +145,68 @@ public:
    */
   explicit CryptoContext(LogFunctionType logger);
   /**
-   * Initializes the crypto library that logs everything to the stdout.
+   * Initializes the crypto library and logs everything to the stdout.
    */
   CryptoContext();
   ~CryptoContext() = default;
 
   /**
-   * Uses \p key and \p rand to encrypt \p plaintext and base64 serialize it.
-   * \returns A string holding the B64 encoded, encrypted contents.
+   * Performs the encryption operation using the configuration and the
+   * (symmetric or asymmetric) key in \p key. The operation is performed over \p
+   * plain and uses \p rand to generate the IV/nonce. Returns a
+   * peacemakr::Ciphertext* that can be used in calls to CryptoContext::Sign and
+   * CryptoContext::Serialize.
    */
-  std::string Encrypt(const Key &key, const Plaintext &plaintext,
+  Ciphertext *Encrypt(const Key &key, const Plaintext &plaintext,
                       RandomDevice &rand);
 
+  /**
+   * Signs the plaintext in \p plaintext with key \p senderKey. If the
+   * configuration in \p senderKey is SYMMETRIC then this method stores an HMAC
+   * in \p blob. If the configuration is ASYMMETRIC then this method uses the
+   * EVP_DigestSign* functions to do asymmetric signing of \p plaintext and
+   * stores it in \p blob.
+   */
+  void Sign(const Key &senderKey, const Plaintext &plaintext, Ciphertext *blob);
+
+  /**
+   * Serializes \p blob into a \returns Base64 encoded buffer.
+   */
+  std::string Serialize(Ciphertext *blob);
+
+  /**
+   * Extracts unverified AAD from a serialized peacemakr::Ciphertext. Note that
+   * no authentication or verification has been performed on the AAD and it may
+   * be corrupted.
+   */
   Plaintext ExtractUnverifiedAAD(const std::string &serialized);
 
   /**
-   * Deserializes \p serialized and decrypts it using \p key. \returns a
-   * Plaintext object that holds the decrypted data and the AAD (if any exists).
+   * Deserializes a peacemakr::Ciphertext* from \p serialized. \returns A
+   * peacemakr::Ciphertext* that may be passed to CryptoContext::Decrypt and
+   * CryptoContext::Verify.
    */
-  Plaintext Decrypt(const Key &key, const std::string &serialized);
+  Ciphertext *Deserialize(const std::string &serialized);
+
+  /**
+   * Performs the decryption operation using the configuration and the
+   * (symmetric or asymmetric) key in \p key. The operation is performed over \p
+   * blob and \returns the result. If the message is signed and needs to be
+   * verified with CryptoContext::Verify, then the last parameter should be set
+   * to true so that the ciphertext structure is not freed. It will be freed
+   * after message verification.
+   */
+  Plaintext Decrypt(const Key &key, Ciphertext *blob, bool &needVerify);
+
+  /**
+   * Verifies the plaintext in \p plain with key \p senderKey. If the
+   * configuration in \p senderKey is SYMMETRIC then this method compares a
+   * computed HMAC against the one in \p blob. If the configuration is
+   * ASYMMETRIC then this method uses the EVP_DigestVerify* functions to do
+   * asymmetric verification of \p plain against the signature in \p blob.
+   * \returns false if verification is unsuccessful.
+   */
+  bool Verify(const Key &senderKey, const Plaintext &plain, Ciphertext *blob);
 
 private:
   LogFunctionType m_log_;

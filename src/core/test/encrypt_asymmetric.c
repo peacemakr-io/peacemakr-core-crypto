@@ -43,9 +43,9 @@ void test_asymmetric_algo(symmetric_cipher symm_cipher, asymmetric_cipher cipher
   ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, &plaintext_in, &rand);
   assert(ciphertext != NULL);
 
-  bool success = peacemakr_decrypt(key, ciphertext, &plaintext_out);
+  decrypt_code success = peacemakr_decrypt(key, ciphertext, &plaintext_out);
 
-  assert(success);
+  assert(success == DECRYPT_SUCCESS);
 
   assert(strncmp((const char *)plaintext_out.data, (const char *)plaintext_in.data, plaintext_in.data_len) == 0);
   free((void *)plaintext_out.data);

@@ -6,8 +6,8 @@
 // Full license at peacemakr_core_crypto/LICENSE.txt
 //
 
-#include <Logging.h>
-#include <crypto.h>
+#include "Logging.h"
+#include "crypto.h"
 
 #ifdef linux
 #include <bsd/stdlib.h>

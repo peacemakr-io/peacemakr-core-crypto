@@ -15,7 +15,10 @@ public enum PeacemakrError: Error {
   case serializationFailed
   case deserializationFailed
   case decryptionFailed
+  case HMACFailed
 }
+
+public typealias Ciphertext = OpaquePointer
 
 public class CryptoContext {
   public init() throws {
@@ -24,16 +27,24 @@ public class CryptoContext {
     }
   }
 
-  public func Encrypt(key: PeacemakrKey, plaintext: Plaintext, rand: RandomDevice) throws -> [UInt8] {
+  public func Encrypt(key: PeacemakrKey, plaintext: Plaintext, rand: RandomDevice) throws -> Ciphertext {
     var innerRand = rand.getInternal()
     var innerPlaintext = plaintext.getInternal()
     let ciphertext_blob = peacemakr_encrypt(key.getInternal(), &innerPlaintext, &innerRand)
     if ciphertext_blob == nil {
       throw PeacemakrError.encryptionFailed
     }
+    return ciphertext_blob!
+  }
 
+  public func Sign(senderKey: PeacemakrKey, plaintext: Plaintext, ciphertext: inout Ciphertext) -> Void {
+    var innerPlaintext = plaintext.getInternal()
+    peacemakr_sign(senderKey.getInternal(), &innerPlaintext, ciphertext);
+  }
+
+  public func Serialize(_ ciphertext_blob: Ciphertext) throws -> [UInt8] {
     var out_size: size_t = 0
-    let bytes = serialize_blob(ciphertext_blob, &out_size)
+    let bytes = peacemakr_serialize(ciphertext_blob, &out_size)
     if bytes == nil {
       throw PeacemakrError.serializationFailed
     }
@@ -41,29 +52,54 @@ public class CryptoContext {
     return Array(UnsafeBufferPointer(start: bytes, count: out_size))
   }
 
-  public func ExtractUnverifiedAAD(serialized: [UInt8]) throws -> Plaintext {
-    let ciphertext_blob = deserialize_blob(UnsafePointer(serialized), serialized.count)
+  public func ExtractUnverifiedAAD(_ serialized: [UInt8]) throws -> Plaintext {
+    let ciphertext_blob = peacemakr_deserialize(UnsafePointer(serialized), serialized.count)
     if ciphertext_blob == nil {
       throw PeacemakrError.deserializationFailed
     }
 
     var out = plaintext_t(data: nil, data_len: 0, aad: nil, aad_len: 0)
-    if !peacemakr_decrypt(nil, ciphertext_blob, &out) {
+    if !peacemakr_get_unverified_aad(ciphertext_blob, &out) {
       throw PeacemakrError.decryptionFailed
     }
     return Plaintext(cstyle: out)
   }
 
-  public func Decrypt(key: PeacemakrKey, serialized: [UInt8]) throws -> Plaintext {
-    let ciphertext_blob = deserialize_blob(UnsafePointer(serialized), serialized.count)
+  public func Deserialize(_ serialized: [UInt8]) throws -> Ciphertext {
+    let ciphertext_blob = peacemakr_deserialize(UnsafePointer(serialized), serialized.count)
     if ciphertext_blob == nil {
       throw PeacemakrError.deserializationFailed
     }
+    return ciphertext_blob!
+  }
 
+  public func Decrypt(key: PeacemakrKey, ciphertext: Ciphertext) throws -> (Plaintext, Bool) {
     var out = plaintext_t(data: nil, data_len: 0, aad: nil, aad_len: 0)
-    if !peacemakr_decrypt(key.getInternal(), ciphertext_blob, &out) {
+    let success = peacemakr_decrypt(key.getInternal(), ciphertext, &out)
+
+    if success == DECRYPT_FAILED {
       throw PeacemakrError.decryptionFailed
     }
-    return Plaintext(cstyle: out)
+
+    var needVerify = false
+    if success == DECRYPT_NEED_VERIFY {
+      needVerify = true
+    }
+
+    return (Plaintext(cstyle: out), needVerify)
+  }
+
+  public func Verify(senderKey: PeacemakrKey, plaintext: Plaintext, ciphertext: inout Ciphertext) -> Bool {
+    var innerPlaintext = plaintext.getInternal()
+    return peacemakr_verify(senderKey.getInternal(), &innerPlaintext, ciphertext);
+  }
+
+  public func HMAC(digestAlgorithm: MessageDigestAlgorithm, key: PeacemakrKey, buf: [UInt8]) throws -> [UInt8] {
+    var outLen = 0
+    let outPtr = peacemakr_hmac(message_digest_algorithm(digestAlgorithm.rawValue), key.getInternal(), UnsafePointer(buf), buf.count, &outLen)
+    if outPtr == nil {
+      throw PeacemakrError.HMACFailed
+    }
+    return Array(UnsafeBufferPointer(start: outPtr, count: outLen))
   }
 }

@@ -16,6 +16,7 @@
 #include <stdlib.h>
 
 #include <openssl/ec.h>
+#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
 #include <openssl/pem.h>
@@ -156,13 +157,13 @@ peacemakr_key_t *API(new_from_master)(crypto_config_t cfg,
   uint8_t *keybytes = NULL;
   // Compute HMAC
   switch (cfg.symm_cipher) {
-    case AES_256_GCM:
-    case CHACHA20_POLY1305:
-      keybytes = peacemakr_hmac(SHA3_256, master_key, key_id, key_id_len, NULL);
-      break;
-    default:
-      PEACEMAKR_LOG("Unsupported symmetric cipher for HMAC key generation\n");
-      return NULL;
+  case AES_256_GCM:
+  case CHACHA20_POLY1305:
+    keybytes = peacemakr_hmac(SHA3_256, master_key, key_id, key_id_len, NULL);
+    break;
+  default:
+    PEACEMAKR_LOG("Unsupported symmetric cipher for HMAC key generation\n");
+    return NULL;
   }
 
   peacemakr_key_t *out = PeacemakrKey_new_bytes(cfg, keybytes, keylen);
@@ -186,7 +187,7 @@ peacemakr_key_t *API(new_pem)(crypto_config_t cfg, const char *buf,
   out->m_contents_.asymm = NULL;
 
   BIO *bo = BIO_new_mem_buf(buf, (int)buflen);
-
+  RSA *rsaKey = NULL;
   if (is_priv) {
     out->m_contents_.asymm = PEM_read_bio_PrivateKey(bo, NULL, NULL, NULL);
     EXPECT_NOT_NULL_CLEANUP_RET(out->m_contents_.asymm,
@@ -196,11 +197,26 @@ peacemakr_key_t *API(new_pem)(crypto_config_t cfg, const char *buf,
                                 },
                                 "PEM_read_bio_PrivateKey failed\n");
   } else {
-    out->m_contents_.asymm = PEM_read_bio_PUBKEY(bo, NULL, NULL, NULL);
+    if (!PEM_read_bio_RSA_PUBKEY(bo, &rsaKey, NULL, NULL)) {
+      PEACEMAKR_LOG("PEM_read_bio_RSA_PUBKEY failed\n");
+      BIO_free(bo);
+      API(free)(out);
+      RSA_free(rsaKey);
+      return NULL;
+    }
+    out->m_contents_.asymm = EVP_PKEY_new();
+    if (1 != EVP_PKEY_assign_RSA(out->m_contents_.asymm, rsaKey)) {
+      PEACEMAKR_LOG("EVP_PKEY_assign_RSA failed\n");
+      BIO_free(bo);
+      RSA_free(rsaKey);
+      API(free)(out);
+      return NULL;
+    }
     EXPECT_NOT_NULL_CLEANUP_RET(out->m_contents_.asymm,
                                 {
                                   BIO_free(bo);
                                   API(free)(out);
+                                  RSA_free(rsaKey);
                                 },
                                 "PEM_read_bio_PUBKEY failed\n");
   }
@@ -244,7 +260,7 @@ crypto_config_t API(get_config)(const peacemakr_key_t *key) {
 const buffer_t *API(symmetric)(const peacemakr_key_t *key) {
   EXPECT_TRUE_RET(
       (key->m_cfg_.mode == SYMMETRIC),
-      "Attempting to access the asymmetric part of a symmetric key\n");
+      "Attempting to access the symmetric part of an asymmetric key\n");
 
   return key->m_contents_.symm;
 }
@@ -252,7 +268,7 @@ const buffer_t *API(symmetric)(const peacemakr_key_t *key) {
 EVP_PKEY *API(asymmetric)(const peacemakr_key_t *key) {
   EXPECT_TRUE_RET(
       (key->m_cfg_.mode == ASYMMETRIC),
-      "Attempting to access the symmetric part of an asymmetric key\n");
+      "Attempting to access the asymmetric part of a symmetric key\n");
 
   return key->m_contents_.asymm;
 }

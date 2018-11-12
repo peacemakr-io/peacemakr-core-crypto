@@ -66,14 +66,14 @@ void log_printf(const char *filename, int line, level_t level, const char *fmt,
     return;                                                                    \
   }
 #define OPENSSL_CHECK_RET_VALUE(call, ctx, value)                              \
-  if (1 != call) {                                                             \
-    PEACEMAKR_LOG("%s failed\n", #call);                                       \
+  if (1 != (call)) {                                                           \
+    PEACEMAKR_LOG("call failed\n");                                            \
     EVP_CIPHER_CTX_free(ctx);                                                  \
     return value;                                                              \
   }
 #define OPENSSL_CHECK_RET_NONE(call, free_call)                                \
-  if (1 != call) {                                                             \
-    PEACEMAKR_LOG("%s failed\n", #call);                                       \
+  if (1 != (call)) {                                                           \
+    PEACEMAKR_LOG("call failed\n");                                            \
     free_call;                                                                 \
     return;                                                                    \
   }

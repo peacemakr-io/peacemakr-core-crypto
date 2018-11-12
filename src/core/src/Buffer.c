@@ -6,14 +6,14 @@
 // Full license at peacemakr-core-crypto/LICENSE.txt
 //
 
-#include <Buffer.h>
-#include <Logging.h>
-
 #define __STDC_WANT_LIB_EXT1__ 1
+#include <arpa/inet.h>
 #include <memory.h>
 #include <stddef.h>
 #include <stdlib.h>
 
+#include "Buffer.h"
+#include "Logging.h"
 #include <openssl/crypto.h>
 
 #ifdef PEACEMAKR_NO_MEMSET_S
@@ -118,6 +118,11 @@ const uint8_t *API(get_bytes)(const buffer_t *buf, size_t *out_size) {
   return buf->m_mem_;
 }
 
+uint8_t *Buffer_mutable_bytes(buffer_t *buf) {
+  EXPECT_NOT_NULL_RET(buf, "buf was null\n");
+  return buf->m_mem_;
+}
+
 const size_t API(get_size)(const buffer_t *buf) {
   EXPECT_NOT_NULL_RET_VALUE(buf, 0, "buf was null\n");
 
@@ -126,6 +131,43 @@ const size_t API(get_size)(const buffer_t *buf) {
 
 void API(set_size)(buffer_t *buf, size_t size) {
   EXPECT_NOT_NULL_RET_NONE(buf, "buf was null\n");
-
+  if (buf->m_size_bytes_ == size) {
+    return;
+  }
+  buf->m_mem_ = realloc((void *)buf->m_mem_, size);
+  EXPECT_NOT_NULL_RET_NONE(buf->m_mem_, "realloc failed\n");
   buf->m_size_bytes_ = size;
+}
+
+size_t API(serialize)(const buffer_t *buf, uint8_t *serialized) {
+  EXPECT_NOT_NULL_RET_VALUE(serialized, 0, "serialized was null\n");
+
+  if (buf == NULL) {
+    memset(serialized, 0, sizeof(uint64_t));
+    return sizeof(uint64_t);
+  }
+
+  uint64_t buf_len = htonl(buf->m_size_bytes_);
+  memcpy(serialized, &buf_len, sizeof(uint64_t));
+  memcpy(serialized + sizeof(uint64_t), buf->m_mem_, buf->m_size_bytes_);
+  return buf->m_size_bytes_ + sizeof(uint64_t);
+}
+
+buffer_t *API(deserialize)(uint8_t *serialized) {
+  EXPECT_NOT_NULL_RET(serialized, "serialized was null\n");
+
+  uint64_t buflen = ntohl(*((uint64_t *)serialized));
+  buffer_t *out = Buffer_new(buflen);
+  if (out != NULL) {
+    Buffer_set_bytes(out, serialized + sizeof(uint64_t), buflen);
+  }
+  return out;
+}
+
+size_t API(get_serialized_size)(const buffer_t *buf) {
+  if (buf == NULL) {
+    return sizeof(uint64_t); // we will serialize to zero
+  }
+
+  return buf->m_size_bytes_ + sizeof(uint64_t);
 }
