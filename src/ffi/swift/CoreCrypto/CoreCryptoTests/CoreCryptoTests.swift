@@ -35,10 +35,13 @@ class CoreCryptoTests: XCTestCase {
     XCTAssert(unverfiedAAD!.AuthenticatableData == plaintextIn.AuthenticatableData, "Something failed in ExtractUnverfiedAAD")
 
     var deserialized = try? context!.Deserialize(serialized!)
-    let decrypted = try? context!.Decrypt(key: key!, ciphertext: deserialized!)
+    let decrypted, needVerify = try? context!.Decrypt(key: key!, ciphertext: deserialized!)
     XCTAssert(decrypted != nil, "Something failed in Decryption")
-    let success = context!.Verify(senderKey: key!, plaintext: decrypted!, ciphertext: &(deserialized!))
-    XCTAssert(success)
+    XCTAssert(needVerify != nil, "Something failed in Decryption")
+    if needVerify {
+      let success = context!.Verify(senderKey: key!, plaintext: decrypted!, ciphertext: &(deserialized!))
+      XCTAssert(success)
+    }
     XCTAssert(decrypted!.EncryptableData == plaintextIn.EncryptableData)
     XCTAssert(decrypted!.AuthenticatableData == plaintextIn.AuthenticatableData)
     

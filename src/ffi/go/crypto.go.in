@@ -308,7 +308,7 @@ func ExtractUnverifiedAAD(ciphertext []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	extractSuccess := bool(C.peacemakr_decrypt(nil, deserialized.blob, (*C.plaintext_t)(unsafe.Pointer(&plaintext))))
+	extractSuccess := bool(C.peacemakr_get_unverified_aad(deserialized.blob, (*C.plaintext_t)(unsafe.Pointer(&plaintext))))
 	if !extractSuccess {
 		return nil, errors.New("extraction failed")
 	}
@@ -316,7 +316,15 @@ func ExtractUnverifiedAAD(ciphertext []byte) ([]byte, error) {
 	return C.GoBytes(unsafe.Pointer(plaintext.aad), C.int(plaintext.aad_len)), nil
 }
 
-func Decrypt(key PeacemakrKey, ciphertext *CiphertextBlob) (*Plaintext, error) {
+type DecryptCode int
+const (
+	DECRYPT_SUCCESS       DecryptCode = 0
+	DECRYPT_NEED_VERIFY   DecryptCode = 1
+	DECRYPT_FAILED        DecryptCode = 2
+)
+
+
+func Decrypt(key PeacemakrKey, ciphertext *CiphertextBlob) (*Plaintext, bool, error) {
 	if !key.IsValid() {
 		return nil, errors.New("invalid key passed to Decrypt")
 	}
@@ -324,20 +332,20 @@ func Decrypt(key PeacemakrKey, ciphertext *CiphertextBlob) (*Plaintext, error) {
 	var plaintext C.plaintext_t
 	defer freeInternalPlaintext(&plaintext)
 
-	decryptSucceeded := C.peacemakr_decrypt(key.key, ciphertext.blob, (*C.plaintext_t)(unsafe.Pointer(&plaintext)))
-	if !decryptSucceeded {
+	decryptCode := DecryptCode(C.peacemakr_decrypt(key.key, ciphertext.blob, (*C.plaintext_t)(unsafe.Pointer(&plaintext))))
+	if decryptCode == DECRYPT_FAILED {
 		return nil, errors.New("decrypt failed")
 	}
 
-	// If decrypt has freed the blob, we can also set the parent to nil
-	if ciphertext.blob == nil {
-		ciphertext = nil
+	needVerify := false
+	if decryptCode == DECRYPT_NEED_VERIFY {
+	    needVerify = true
 	}
 
 	return &Plaintext{
 		Data: C.GoBytes(unsafe.Pointer(plaintext.data), C.int(plaintext.data_len)),
 		Aad:  C.GoBytes(unsafe.Pointer(plaintext.aad), C.int(plaintext.aad_len)),
-	}, nil
+	}, needVerify, nil
 }
 
 func Verify(senderKey PeacemakrKey, plaintext *Plaintext, ciphertext *CiphertextBlob) error {

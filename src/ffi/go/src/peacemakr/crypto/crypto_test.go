@@ -196,7 +196,7 @@ func TestAsymmetricEncrypt(t *testing.T) {
 				}
 
 
-				plaintextOut, err := Decrypt(key, deserialized)
+				plaintextOut, _, err := Decrypt(key, deserialized)
 				if err != nil {
 					DestroyPeacemakrKey(key)
 					t.Fatalf("Decrypt failed")
@@ -270,7 +270,7 @@ func TestAsymmetricEncryptFromPem(t *testing.T) {
 				t.Fatalf("%v", err)
 			}
 
-			plaintextOut, err := Decrypt(privkey, deserialized)
+			plaintextOut, _, err := Decrypt(privkey, deserialized)
 			if err != nil {
 				DestroyPeacemakrKey(pubkey)
 				DestroyPeacemakrKey(privkey)
@@ -363,7 +363,7 @@ func TestAsymmetricEncryptFromRandomPem(t *testing.T) {
 					t.Fatalf("%v", err)
 				}
 
-				plaintextOut, err := Decrypt(privkey, deserialized)
+				plaintextOut, _, err := Decrypt(privkey, deserialized)
 				if err != nil {
 					DestroyPeacemakrKey(pubkey)
 					DestroyPeacemakrKey(privkey)
@@ -445,7 +445,7 @@ func TestSymmetricEncrypt(t *testing.T) {
 		}
 
 
-		plaintextOut, err := Decrypt(key, deserialized)
+		plaintextOut, _, err := Decrypt(key, deserialized)
 		if err != nil {
 			DestroyPeacemakrKey(key)
 			t.Fatalf("Decrypt failed")
@@ -519,7 +519,7 @@ func TestSerialize(t *testing.T) {
 						t.Fatalf("%v", err)
 					}
 
-					plaintextOut, err := Decrypt(key, deserialized)
+					plaintextOut, _, err := Decrypt(key, deserialized)
 					if err != nil {
 						DestroyPeacemakrKey(key)
 						t.Fatalf("Decrypt failed")
@@ -597,11 +597,16 @@ func TestSignatures(t *testing.T) {
 						t.Fatalf("%v", err)
 					}
 
-					plaintextOut, err := Decrypt(key, deserialized)
+					plaintextOut, needVerify, err := Decrypt(key, deserialized)
 					if err != nil {
 						DestroyPeacemakrKey(key)
 						t.Fatalf("Decrypt failed")
 					}
+					if !needVerify {
+						DestroyPeacemakrKey(key)
+						t.Fatalf("Decrypt failed - should need verify")
+					}
+
 					err = Verify(key, plaintextOut, deserialized)
 					if err != nil {
 						DestroyPeacemakrKey(key)

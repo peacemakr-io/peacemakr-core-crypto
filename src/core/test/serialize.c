@@ -48,9 +48,9 @@ void test_serialize(symmetric_cipher symm_cipher, asymmetric_cipher cipher, mess
   assert(serialized != NULL);
 
   ciphertext_blob_t *deserialized = peacemakr_deserialize(serialized, out_size);
-  bool success = peacemakr_decrypt(key, deserialized, &plaintext_out);
+  decrypt_code success = peacemakr_decrypt(key, deserialized, &plaintext_out);
 
-  assert(success);
+  assert(success == DECRYPT_SUCCESS);
   free(serialized);
 
   assert(strncmp((const char *)plaintext_out.data, (const char *)plaintext_in.data, plaintext_in.data_len) == 0);

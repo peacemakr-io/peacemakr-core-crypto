@@ -13,6 +13,7 @@
 #include "Key.h"
 #include "Logging.h"
 
+#include <crypto.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <string.h>
@@ -238,7 +239,7 @@ bool peacemakr_verify(const peacemakr_key_t *sender_key,
     PEACEMAKR_LOG("No signature to verify\n");
     CiphertextBlob_free(cipher);
     cipher = NULL;
-    return success;
+    return true;
   }
 
   switch (PeacemakrKey_get_config(sender_key).mode) {

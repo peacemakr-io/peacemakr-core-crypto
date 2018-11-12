@@ -42,9 +42,9 @@ void test_symmetric_algo(symmetric_cipher cipher) {
   ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, &plaintext_in, &rand);
   assert(ciphertext != NULL);
 
-  bool success = peacemakr_decrypt(key, ciphertext, &plaintext_out);
+  decrypt_code success = peacemakr_decrypt(key, ciphertext, &plaintext_out);
 
-  assert(success);
+  assert(success == DECRYPT_SUCCESS);
 
   assert(strncmp((const char *)plaintext_out.data, (const char *)plaintext_in.data, plaintext_in.data_len) == 0);
   free((void *)plaintext_out.data);
@@ -80,9 +80,9 @@ void test_master_key_symmetric_algo(peacemakr_key_t *master_key, symmetric_ciphe
   ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, &plaintext_in, &rand);
   assert(ciphertext != NULL);
 
-  bool success = peacemakr_decrypt(key, ciphertext, &plaintext_out);
+  decrypt_code success = peacemakr_decrypt(key, ciphertext, &plaintext_out);
 
-  assert(success);
+  assert(success == DECRYPT_SUCCESS);
 
   assert(strncmp((const char *)plaintext_out.data, (const char *)plaintext_in.data, plaintext_in.data_len) == 0);
   free((void *)plaintext_out.data);
@@ -125,9 +125,9 @@ void test_uninit_crash() {
 
   ciphertext_blob_t *deserialized = peacemakr_deserialize(serialized, out_size);
 
-  bool success = peacemakr_decrypt(key, deserialized, &plaintext_out);
+  decrypt_code success = peacemakr_decrypt(key, deserialized, &plaintext_out);
 
-  assert(success);
+  assert(success == DECRYPT_SUCCESS);
 
   assert(strncmp((const char *)plaintext_out.data, (const char *)plaintext_in.data, plaintext_in.data_len) == 0);
   free((void *)plaintext_out.data);

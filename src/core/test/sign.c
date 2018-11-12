@@ -97,10 +97,9 @@ void test_asymmetric_algo(symmetric_cipher cipher, asymmetric_cipher asymmcipher
 
   // or this isn't deserializing the signature properly...
   ciphertext_blob_t *deserialized = peacemakr_deserialize(serialized, out_size);
-  bool success = peacemakr_decrypt(key, deserialized, &plaintext_out);
-  success &= peacemakr_verify(key, &plaintext_out, deserialized);
-
-  assert(success);
+  decrypt_code success = peacemakr_decrypt(key, deserialized, &plaintext_out);
+  assert(success == DECRYPT_NEED_VERIFY);
+  assert(peacemakr_verify(key, &plaintext_out, deserialized));
 
   assert(strncmp((const char *)plaintext_out.data, (const char *)plaintext_in.data, plaintext_in.data_len) == 0);
   free((void *)plaintext_out.data);

@@ -210,20 +210,27 @@ ciphertext_blob_t *peacemakr_encrypt(const peacemakr_key_t *recipient_key,
 void peacemakr_sign(const peacemakr_key_t *sender_key, const plaintext_t *plain,
                     ciphertext_blob_t *cipher);
 
+//! Possible decrypt outcomes
+typedef enum {
+  DECRYPT_SUCCESS = 0,
+  DECRYPT_NEED_VERIFY = 1,
+  DECRYPT_FAILED = 2,
+} decrypt_code;
+
 /**
  * Performs the decryption operation using the configuration and the (symmetric
- * or asymmetric) key in \p recipient_key. The operation is
- * performed over \p cipher and the result is stored in \p plain. Returns a
- * boolean to indicate if decryption was successful. If the \p key is NULL
- * then the decryption will attempt to extract any AAD from the message.
- * Note that this AAD is unconfirmed and may have been tampered with.
- * If the message is signed and needs to be verified with peacemakr_verify
- * then \p cipher will NOT be freed and set to NULL. That is, the caller should
- * check the value of \p cipher after decrypting and call peacemakr_verify if it
- * is non-null.
+ * or asymmetric) key in \p recipient_key. The operation is performed over \p cipher and the result is stored in \p plain. \returns a
+ * code to indicate if verify needs to be called on the result of decryption, if decrypt succeeded outright, or if decrypt failed.
  */
-bool peacemakr_decrypt(const peacemakr_key_t *recipient_key,
+decrypt_code peacemakr_decrypt(const peacemakr_key_t *recipient_key,
                        ciphertext_blob_t *cipher, plaintext_t *plain);
+
+/**
+ * Attempts to extract any AAD from the message.
+ * Note that this AAD is unconfirmed and may have been tampered with.
+ */
+bool peacemakr_get_unverified_aad(ciphertext_blob_t *cipher,
+                                  plaintext_t *plain);
 
 /**
  * Verifies the plaintext in \p plain with key \p sender_key. If the

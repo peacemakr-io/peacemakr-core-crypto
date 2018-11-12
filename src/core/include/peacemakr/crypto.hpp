@@ -196,7 +196,7 @@ public:
    * to true so that the ciphertext structure is not freed. It will be freed
    * after message verification.
    */
-  Plaintext Decrypt(const Key &key, Ciphertext *blob);
+  Plaintext Decrypt(const Key &key, Ciphertext *blob, bool &needVerify);
 
   /**
    * Verifies the plaintext in \p plain with key \p senderKey. If the

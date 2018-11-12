@@ -483,27 +483,15 @@ ciphertext_blob_t *peacemakr_encrypt(const peacemakr_key_t *recipient_key,
   return out;
 }
 
-bool peacemakr_decrypt(const peacemakr_key_t *recipient_key,
+decrypt_code peacemakr_decrypt(const peacemakr_key_t *recipient_key,
                        ciphertext_blob_t *cipher, plaintext_t *plain) {
 
   EXPECT_NOT_NULL_RET_VALUE(plain, false, "plain was null\n");
   EXPECT_NOT_NULL_RET_VALUE(cipher, false, "cipher was null\n");
+  EXPECT_NOT_NULL_RET_VALUE(recipient_key, false, "recipient_key was null\n");
 
   bool success = false;
   buffer_t *plaintext = NULL, *aad = NULL;
-
-  if (recipient_key == NULL) {
-    PEACEMAKR_LOG("NULL key, populating plain with AAD\n");
-    const buffer_t *aad_buf = CiphertextBlob_aad(cipher);
-    EXPECT_NOT_NULL_RET_VALUE(aad_buf, true, "No AAD in ciphertext\n");
-    const unsigned char *tmp_aad = Buffer_get_bytes(aad_buf, &plain->aad_len);
-    plain->aad = calloc(plain->aad_len, sizeof(unsigned char));
-    memcpy((void *)plain->aad, tmp_aad, plain->aad_len);
-    // Initialize the data to NULL
-    plain->data = NULL;
-    plain->data_len = 0;
-    return true;
-  }
 
   // If the signature buffer has size 1 then there's no signature and we should
   // free the ciphertext.
@@ -546,7 +534,31 @@ bool peacemakr_decrypt(const peacemakr_key_t *recipient_key,
   if (should_free_ciphertext) {
     CiphertextBlob_free(cipher);
     cipher = NULL;
+    return DECRYPT_SUCCESS;
   }
 
-  return success;
+  if (success) {
+    return DECRYPT_NEED_VERIFY;
+  }
+
+  return DECRYPT_FAILED;
+}
+
+bool peacemakr_get_unverified_aad(ciphertext_blob_t *cipher,
+                                  plaintext_t *plain) {
+  EXPECT_NOT_NULL_RET_VALUE(plain, false, "plain was null\n");
+  EXPECT_NOT_NULL_RET_VALUE(cipher, false, "cipher was null\n");
+
+  const buffer_t *aad_buf = CiphertextBlob_aad(cipher);
+
+  EXPECT_NOT_NULL_RET_VALUE(aad_buf, true, "No AAD in ciphertext\n");
+
+  const unsigned char *tmp_aad = Buffer_get_bytes(aad_buf, &plain->aad_len);
+  plain->aad = calloc(plain->aad_len, sizeof(unsigned char));
+  memcpy((void *)plain->aad, tmp_aad, plain->aad_len);
+
+  // Initialize the data to NULL
+  plain->data = NULL;
+  plain->data_len = 0;
+  return true;
 }

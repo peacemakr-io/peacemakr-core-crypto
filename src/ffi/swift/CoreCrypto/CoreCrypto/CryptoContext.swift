@@ -59,7 +59,7 @@ public class CryptoContext {
     }
 
     var out = plaintext_t(data: nil, data_len: 0, aad: nil, aad_len: 0)
-    if !peacemakr_decrypt(nil, ciphertext_blob, &out) {
+    if !peacemakr_get_unverified_aad(ciphertext_blob, &out) {
       throw PeacemakrError.decryptionFailed
     }
     return Plaintext(cstyle: out)
@@ -73,12 +73,20 @@ public class CryptoContext {
     return ciphertext_blob!
   }
 
-  public func Decrypt(key: PeacemakrKey, ciphertext: Ciphertext) throws -> Plaintext {
+  public func Decrypt(key: PeacemakrKey, ciphertext: Ciphertext) throws -> (Plaintext, Bool) {
     var out = plaintext_t(data: nil, data_len: 0, aad: nil, aad_len: 0)
-    if !peacemakr_decrypt(key.getInternal(), ciphertext, &out) {
+    let out = peacemakr_decrypt(key.getInternal(), ciphertext, &out)
+
+    if out == decrypt_code.DECRYPT_FAILED {
       throw PeacemakrError.decryptionFailed
     }
-    return Plaintext(cstyle: out)
+
+    var needVerify = false
+    if out == decrypt_code.DECRYPT_NEED_VERIFY {
+      needVerify = true
+    }
+
+    return (Plaintext(cstyle: out), needVerify)
   }
 
   public func Verify(senderKey: PeacemakrKey, plaintext: Plaintext, ciphertext: inout Ciphertext) -> Bool {
