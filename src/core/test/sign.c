@@ -48,9 +48,13 @@ void test_symmetric_algo(symmetric_cipher cipher) {
   uint8_t *serialized = peacemakr_serialize(ciphertext, &out_size);
   assert(serialized != NULL);
 
-  ciphertext_blob_t *deserialized = peacemakr_deserialize(serialized, out_size);
+  crypto_config_t out_cfg;
+
+  ciphertext_blob_t *deserialized = peacemakr_deserialize(serialized, out_size, &out_cfg);
   bool success = peacemakr_decrypt(key, deserialized, &plaintext_out);
   success &= peacemakr_verify(key, &plaintext_out, deserialized);
+
+  assert(out_cfg.mode == cfg.mode && out_cfg.asymm_cipher == cfg.asymm_cipher && out_cfg.symm_cipher == cfg.symm_cipher && out_cfg.digest_algorithm == cfg.digest_algorithm);
 
   assert(success);
 
@@ -95,9 +99,14 @@ void test_asymmetric_algo(symmetric_cipher cipher, asymmetric_cipher asymmcipher
   uint8_t *serialized = peacemakr_serialize(ciphertext, &out_size);
   assert(serialized != NULL);
 
+  crypto_config_t out_cfg;
+
   // or this isn't deserializing the signature properly...
-  ciphertext_blob_t *deserialized = peacemakr_deserialize(serialized, out_size);
+  ciphertext_blob_t *deserialized = peacemakr_deserialize(serialized, out_size, &out_cfg);
   decrypt_code success = peacemakr_decrypt(key, deserialized, &plaintext_out);
+
+  assert(out_cfg.mode == cfg.mode && out_cfg.asymm_cipher == cfg.asymm_cipher && out_cfg.symm_cipher == cfg.symm_cipher && out_cfg.digest_algorithm == cfg.digest_algorithm);
+
   assert(success == DECRYPT_NEED_VERIFY);
   assert(peacemakr_verify(key, &plaintext_out, deserialized));
 

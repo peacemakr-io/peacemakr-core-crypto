@@ -166,10 +166,11 @@ uint8_t *peacemakr_serialize(ciphertext_blob_t *cipher, size_t *out_size) {
 }
 
 ciphertext_blob_t *peacemakr_deserialize(const uint8_t *b64_serialized_cipher,
-                                         size_t serialized_len) {
+                                         size_t serialized_len, crypto_config_t *cfg) {
 
   EXPECT_TRUE_RET((b64_serialized_cipher != NULL && serialized_len != 0),
                   "b64 serialized cipher was NULL or serialized len was 0\n");
+  EXPECT_NOT_NULL_RET(cfg, "need to store the deserialized configuration somewhere\n");
 
   uint8_t *serialized_cipher = alloca(serialized_len);
   int rc = b64_decode((const char *)b64_serialized_cipher, serialized_cipher,
@@ -240,10 +241,10 @@ ciphertext_blob_t *peacemakr_deserialize(const uint8_t *b64_serialized_cipher,
   uint8_t asymm_cipher = *(serialized_cipher + current_position);
   current_position += sizeof(uint8_t);
 
-  crypto_config_t cfg = {.mode = encryption_mode,
-                         .symm_cipher = symm_cipher,
-                         .asymm_cipher = asymm_cipher,
-                         .digest_algorithm = digest_algo};
+  cfg->mode = encryption_mode;
+  cfg->symm_cipher = symm_cipher;
+  cfg->asymm_cipher = asymm_cipher;
+  cfg->digest_algorithm = digest_algo;
 
   // encrypted key
   buffer_t *encrypted_key =
@@ -272,7 +273,7 @@ ciphertext_blob_t *peacemakr_deserialize(const uint8_t *b64_serialized_cipher,
       Buffer_deserialize(serialized_cipher + current_position);
 
   ciphertext_blob_t *out = CiphertextBlob_new(
-      cfg, Buffer_get_size(iv), Buffer_get_size(tag), Buffer_get_size(aad),
+      *cfg, Buffer_get_size(iv), Buffer_get_size(tag), Buffer_get_size(aad),
       Buffer_get_size(ciphertext), Buffer_get_size(signature));
 
   CiphertextBlob_set_version(out, version);

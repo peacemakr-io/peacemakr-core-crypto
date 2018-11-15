@@ -427,8 +427,6 @@ ciphertext_blob_t *peacemakr_encrypt(const peacemakr_key_t *recipient_key,
                                      const plaintext_t *plain,
                                      random_device_t *rand) {
 
-  const crypto_config_t cfg = PeacemakrKey_get_config(recipient_key);
-
   EXPECT_NOT_NULL_RET(recipient_key, "recipient key was null\n");
   EXPECT_NOT_NULL_RET(plain, "plain was null\n");
   EXPECT_NOT_NULL_RET(rand, "rand was null\n");
@@ -437,6 +435,8 @@ ciphertext_blob_t *peacemakr_encrypt(const peacemakr_key_t *recipient_key,
   EXPECT_TRUE_RET(plain->aad_len <= INT_MAX,
                   "AAD was too big, needs to be broken up\n");
   EXPECT_TRUE_RET(plain->data_len > 0, "No data to encrypt\n");
+
+  const crypto_config_t cfg = PeacemakrKey_get_config(recipient_key);
 
   const EVP_CIPHER *cipher = parse_cipher(cfg.symm_cipher);
   EXPECT_NOT_NULL_RET(cipher, "parsing openssl cipher failed\n");

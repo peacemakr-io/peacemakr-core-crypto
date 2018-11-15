@@ -15,6 +15,7 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	mrand "math/rand"
+	"reflect"
 	"testing"
 )
 
@@ -189,10 +190,15 @@ func TestAsymmetricEncrypt(t *testing.T) {
 					}
 				}
 
-				deserialized, err := Deserialize(serialized)
+				deserialized, deserializedConfig, err := Deserialize(serialized)
 				if err != nil {
 					DestroyPeacemakrKey(key)
 					t.Fatalf("%v", err)
+				}
+
+				if !reflect.DeepEqual(*deserializedConfig, cfg) {
+					DestroyPeacemakrKey(key)
+					t.Fatalf("did not deserialize the correct configuration")
 				}
 
 
@@ -265,9 +271,15 @@ func TestAsymmetricEncryptFromPem(t *testing.T) {
 
 			privkey := NewPeacemakrKeyFromPrivPem(cfg, GetPrivKey())
 
-			deserialized, err := Deserialize(serialized)
+			deserialized, deserializedConfig, err := Deserialize(serialized)
 			if err != nil {
+				DestroyPeacemakrKey(pubkey)
 				t.Fatalf("%v", err)
+			}
+
+			if !reflect.DeepEqual(*deserializedConfig, cfg) {
+				DestroyPeacemakrKey(pubkey)
+				t.Fatalf("did not deserialize the correct configuration")
 			}
 
 			plaintextOut, _, err := Decrypt(privkey, deserialized)
@@ -356,11 +368,17 @@ func TestAsymmetricEncryptFromRandomPem(t *testing.T) {
 					}
 				}
 
-				deserialized, err := Deserialize(serialized)
+				deserialized, deserializedConfig, err := Deserialize(serialized)
 				if err != nil {
 					DestroyPeacemakrKey(pubkey)
 					DestroyPeacemakrKey(privkey)
 					t.Fatalf("%v", err)
+				}
+
+				if !reflect.DeepEqual(*deserializedConfig, cfg) {
+					DestroyPeacemakrKey(pubkey)
+					DestroyPeacemakrKey(privkey)
+					t.Fatalf("did not deserialize the correct configuration")
 				}
 
 				plaintextOut, _, err := Decrypt(privkey, deserialized)
@@ -406,7 +424,8 @@ func TestSymmetricEncrypt(t *testing.T) {
 		var key PeacemakrKey
 		if j == AES_256_GCM || j == CHACHA20_POLY1305 {
 			masterKey := NewPeacemakrKey(cfg, randomDevice)
-			key = NewPeacemakrKeyFromMasterKey(cfg, masterKey, []byte("abcdefghijklmnop"))
+			key = NewPeacemakrKeyFromMasterKey(cfg, masterKey, []byte("abcdefghijklmnopqrstuvwxyz"))
+			DestroyPeacemakrKey(masterKey)
 		} else {
 			key = NewPeacemakrKey(cfg, randomDevice)
 		}
@@ -438,10 +457,15 @@ func TestSymmetricEncrypt(t *testing.T) {
 			}
 		}
 
-		deserialized, err := Deserialize(serialized)
+		deserialized, deserializedConfig, err := Deserialize(serialized)
 		if err != nil {
 			DestroyPeacemakrKey(key)
 			t.Fatalf("%v", err)
+		}
+
+		if !reflect.DeepEqual(*deserializedConfig, cfg) {
+			DestroyPeacemakrKey(key)
+			t.Fatalf("did not deserialize the correct configuration, %v vs %v", *deserializedConfig, cfg)
 		}
 
 
@@ -513,10 +537,15 @@ func TestSerialize(t *testing.T) {
 						}
 					}
 
-					deserialized, err := Deserialize(serialized)
+					deserialized, deserializedConfig, err := Deserialize(serialized)
 					if err != nil {
 						DestroyPeacemakrKey(key)
 						t.Fatalf("%v", err)
+					}
+
+					if !reflect.DeepEqual(*deserializedConfig, cfg) {
+						DestroyPeacemakrKey(key)
+						t.Fatalf("did not deserialize the correct configuration")
 					}
 
 					plaintextOut, _, err := Decrypt(key, deserialized)
@@ -591,10 +620,15 @@ func TestSignatures(t *testing.T) {
 						}
 					}
 
-					deserialized, err := Deserialize(serialized)
+					deserialized, deserializedConfig, err := Deserialize(serialized)
 					if err != nil {
 						DestroyPeacemakrKey(key)
 						t.Fatalf("%v", err)
+					}
+
+					if !reflect.DeepEqual(*deserializedConfig, cfg) {
+						DestroyPeacemakrKey(key)
+						t.Fatalf("did not deserialize the correct configuration")
 					}
 
 					plaintextOut, needVerify, err := Decrypt(key, deserialized)

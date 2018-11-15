@@ -186,7 +186,7 @@ public:
    * peacemakr::Ciphertext* that may be passed to CryptoContext::Decrypt and
    * CryptoContext::Verify.
    */
-  Ciphertext *Deserialize(const std::string &serialized);
+  Ciphertext *Deserialize(const std::string &serialized, crypto_config_t *out_cfg);
 
   /**
    * Performs the decryption operation using the configuration and the

@@ -271,17 +271,22 @@ func Serialize(blob *CiphertextBlob) ([]byte, error) {
 	return C.GoBytes(unsafe.Pointer(serialized), C.int(cSize)), nil
 }
 
-func Deserialize(serialized []byte) (*CiphertextBlob, error) {
+func Deserialize(serialized []byte) (*CiphertextBlob, *CryptoConfig, error) {
 	cBlobBytes := C.CBytes(serialized)
 	defer C.free(cBlobBytes)
 	cBlobLen := C.size_t(len(serialized))
-	deserialized := C.peacemakr_deserialize((*C.uint8_t)(cBlobBytes), cBlobLen)
+
+	cConfig := C.crypto_config_t{}
+
+	deserialized := C.peacemakr_deserialize((*C.uint8_t)(cBlobBytes), cBlobLen, (*C.crypto_config_t)(unsafe.Pointer(&cConfig)))
 	if deserialized == nil {
-		return nil, errors.New("deserialization failed")
+		return nil, nil, errors.New("deserialization failed")
 	}
+
+	outConfig := configFromInternal(cConfig)
 	return &CiphertextBlob{
 		blob: deserialized,
-	}, nil
+	}, &outConfig, nil
 }
 
 func Sign(senderKey PeacemakrKey, plaintext Plaintext, ciphertext *CiphertextBlob) error {
@@ -303,7 +308,7 @@ func ExtractUnverifiedAAD(ciphertext []byte) ([]byte, error) {
 		ciphertext = append(ciphertext, byte(0)) // add NULL terminator
 	}
 
-	deserialized, err := Deserialize(ciphertext)
+	deserialized, _, err := Deserialize(ciphertext)
 	if err != nil {
 		return nil, err
 	}
