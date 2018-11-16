@@ -31,6 +31,7 @@ function get_crypto_file {
 export AWS_PROFILE=${1}
 aws ecr get-login --no-include-email | sh
 docker build -t peacemakr-core-crypto:${4} . -f docker/go.Dockerfile --build-arg="CMAKE_BUILD_TYPE=RELEASE"
+docker build -t peacemakr-core-crypto:${4}-debug . -f docker/go.Dockerfile
 docker tag peacemakr-core-crypto:${4} 716293438869.dkr.ecr.us-east-2.amazonaws.com/peacemakr-core-crypto:${4}
 docker push 716293438869.dkr.ecr.us-east-2.amazonaws.com/peacemakr-core-crypto:${4}
 get_crypto_file ${2} ${3} ${4}
