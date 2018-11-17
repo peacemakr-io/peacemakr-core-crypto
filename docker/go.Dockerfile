@@ -24,7 +24,6 @@ ADD src /opt/src
 ADD cmake /opt/cmake
 
 ENV GOPATH=/go
-ENV DEBUG=1
 
 ARG CMAKE_BUILD_TYPE=DEBUG
 RUN mkdir -p build && cd build && cmake .. -DCMAKE_BUILD_TYPE=${DEBUG} -DPEACEMAKR_BUILD_GO=ON && make check install
