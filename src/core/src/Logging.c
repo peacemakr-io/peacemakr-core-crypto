@@ -28,6 +28,10 @@ void log_printf(const char *filename, int line, level_t level, const char *fmt,
       PEACEMAKR_LOG_LEVEL < 0)
     return;
 
+  if (out_stream == NULL) {
+    out_stream = stderr;
+  }
+
   char linenum[4];
   int num_digits = sprintf(linenum, "%d", line);
 
