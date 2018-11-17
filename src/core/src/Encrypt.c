@@ -427,6 +427,8 @@ ciphertext_blob_t *peacemakr_encrypt(const peacemakr_key_t *recipient_key,
                                      const plaintext_t *plain,
                                      random_device_t *rand) {
 
+  PEACEMAKR_LOG("LOOK WE MADE IT INSIDE ...\n");
+
   EXPECT_NOT_NULL_RET(recipient_key, "recipient key was null\n");
   EXPECT_NOT_NULL_RET(plain, "plain was null\n");
   EXPECT_NOT_NULL_RET(rand, "rand was null\n");
@@ -437,12 +439,21 @@ ciphertext_blob_t *peacemakr_encrypt(const peacemakr_key_t *recipient_key,
   EXPECT_TRUE_RET((plain->data != NULL && plain->data_len > 0),
                   "No data to encrypt\n");
 
+  PEACEMAKR_LOG("OK NOTHING IS NULL WAHTEVERZ ...\n");
+
   const crypto_config_t cfg = PeacemakrKey_get_config(recipient_key);
+
+
+  PEACEMAKR_LOG("OK 1 ...\n");
 
   const EVP_CIPHER *cipher = parse_cipher(cfg.symm_cipher);
   EXPECT_NOT_NULL_RET(cipher, "parsing openssl cipher failed\n");
 
+  PEACEMAKR_LOG("OK 2 ...\n");
+
   const int cipher_block_size = EVP_CIPHER_block_size(cipher);
+
+  PEACEMAKR_LOG("OK 3 ...\n");
 
   // guard against the possibility of getting a weird value
   const int ossl_iv_len = EVP_CIPHER_iv_length(cipher);
@@ -464,6 +475,8 @@ ciphertext_blob_t *peacemakr_encrypt(const peacemakr_key_t *recipient_key,
 
   // always init the iv...worst case you seed the random state
   CiphertextBlob_init_iv(out, rand);
+
+  PEACEMAKR_LOG("OK 100 ...\n");
 
   bool success = false;
   switch (cfg.mode) {
