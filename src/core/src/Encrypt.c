@@ -222,11 +222,11 @@ static bool asymmetric_encrypt(const peacemakr_key_t *pub_key,
   EXPECT_NOT_NULL_RET_VALUE(
       pkey, false, "can't do asymmetric crypto with a NULL asymmetric key\n");
 
+  buffer_t *tag = CiphertextBlob_mutable_tag(out);
+
   /* Create and initialise the context */
   ctx = EVP_CIPHER_CTX_new();
   EXPECT_NOT_NULL_RET_VALUE(ctx, false, "cipher_ctx_new failed\n");
-
-  buffer_t *tag = CiphertextBlob_mutable_tag(out);
 
   buffer_t *encrypted_key = CiphertextBlob_mutable_encrypted_key(out);
   size_t keylen = Buffer_get_size(encrypted_key);
