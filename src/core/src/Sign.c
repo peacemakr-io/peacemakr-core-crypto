@@ -13,7 +13,6 @@
 #include "Key.h"
 #include "Logging.h"
 
-#include <crypto.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <string.h>

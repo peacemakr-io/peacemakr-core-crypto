@@ -6,11 +6,11 @@
 // Full license at peacemakr-core-crypto/LICENSE.txt
 //
 
-#include <Buffer.h>
-#include <EVPHelper.h>
-#include <Logging.h>
-#include <crypto.h>
-#include <random.h>
+#include "Buffer.h"
+#include "EVPHelper.h"
+#include "Logging.h"
+#include "crypto.h"
+#include "random.h"
 
 #include <stdbool.h>
 #include <stdlib.h>

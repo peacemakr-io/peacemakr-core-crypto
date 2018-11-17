@@ -342,6 +342,7 @@ func Decrypt(key PeacemakrKey, ciphertext *CiphertextBlob) (*Plaintext, bool, er
 	    needVerify = true
 	}
 
+    // the C.GoBytes functions make copies of the underlying data so it's OK to free the original ptr
 	return &Plaintext{
 		Data: C.GoBytes(unsafe.Pointer(plaintext.data), C.int(plaintext.data_len)),
 		Aad:  C.GoBytes(unsafe.Pointer(plaintext.aad), C.int(plaintext.aad_len)),
@@ -353,7 +354,10 @@ func Verify(senderKey PeacemakrKey, plaintext *Plaintext, ciphertext *Ciphertext
 		return errors.New("invalid key passed to Encrypt")
 	}
 
-	verified := C.peacemakr_verify(senderKey.key, (*C.plaintext_t)(unsafe.Pointer(&plaintext)), ciphertext.blob)
+    cPlaintext := plaintextToInternal(*plaintext)
+    defer freeInternalPlaintext(&cPlaintext)
+
+	verified := C.peacemakr_verify(senderKey.key, (*C.plaintext_t)(unsafe.Pointer(&cPlaintext)), ciphertext.blob)
 	if !verified {
 		return errors.New("verification failed")
 	}
