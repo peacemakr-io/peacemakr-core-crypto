@@ -44,6 +44,7 @@ void log_printf(const char *filename, int line, level_t level, const char *fmt,
   va_list argp;
   va_start(argp, fmt);
   int rc = vfprintf(out_stream, fmt_str, argp);
+  fflush(out_stream); // TODO: remove me?
   if (rc < 0) {
     fprintf(stderr, "error on vfprintf");
   }
