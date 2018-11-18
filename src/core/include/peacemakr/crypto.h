@@ -268,6 +268,7 @@ uint8_t *peacemakr_serialize(ciphertext_blob_t *cipher, size_t *out_size);
  * peacemakr_key_t *, ciphertext_blob_t *, plaintext_t *)
  */
 ciphertext_blob_t *peacemakr_deserialize(const uint8_t *b64_serialized_cipher,
-                                         size_t serialized_len, crypto_config_t *cfg);
+                                         size_t serialized_len,
+                                         crypto_config_t *cfg);
 
 #endif // PEACEMAKR_CORE_CRYPTO_CRYPTO_H

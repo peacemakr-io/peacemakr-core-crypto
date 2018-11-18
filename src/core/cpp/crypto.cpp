@@ -157,7 +157,7 @@ peacemakr::CryptoContext::ExtractUnverifiedAAD(const std::string &serialized) {
     return Plaintext{};
   }
 
-  crypto_config_t out_cfg; // FIXME
+  crypto_config_t out_cfg;
 
   ciphertext_blob_t *blob = peacemakr_deserialize(
       (unsigned char *)serialized.c_str(), serialized.size(), &out_cfg);
@@ -176,12 +176,14 @@ peacemakr::CryptoContext::ExtractUnverifiedAAD(const std::string &serialized) {
 }
 
 ciphertext_blob_t *
-peacemakr::CryptoContext::Deserialize(const std::string &serialized, crypto_config_t *out_cfg) {
+peacemakr::CryptoContext::Deserialize(const std::string &serialized,
+                                      crypto_config_t *out_cfg) {
   if (serialized.empty()) {
     m_log_("noting to deserialize");
     return nullptr;
   }
-  return peacemakr_deserialize((uint8_t *)serialized.data(), serialized.size(), out_cfg);
+  return peacemakr_deserialize((uint8_t *)serialized.data(), serialized.size(),
+                               out_cfg);
 }
 
 peacemakr::Plaintext peacemakr::CryptoContext::Decrypt(const Key &key,

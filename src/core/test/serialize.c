@@ -52,7 +52,10 @@ void test_serialize(symmetric_cipher symm_cipher, asymmetric_cipher cipher, mess
   ciphertext_blob_t *deserialized = peacemakr_deserialize(serialized, out_size, &out_cfg);
   decrypt_code success = peacemakr_decrypt(key, deserialized, &plaintext_out);
 
-  assert(out_cfg.mode == cfg.mode && out_cfg.asymm_cipher == cfg.asymm_cipher && out_cfg.symm_cipher == cfg.symm_cipher && out_cfg.digest_algorithm == cfg.digest_algorithm);
+  assert((out_cfg.mode == cfg.mode) &&
+         (out_cfg.asymm_cipher == cfg.asymm_cipher) &&
+         (out_cfg.symm_cipher == cfg.symm_cipher) &&
+         (out_cfg.digest_algorithm == cfg.digest_algorithm));
 
   assert(success == DECRYPT_SUCCESS);
   free(serialized);

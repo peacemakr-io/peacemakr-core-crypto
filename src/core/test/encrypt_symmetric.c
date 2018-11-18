@@ -129,7 +129,10 @@ void test_uninit_crash() {
 
   decrypt_code success = peacemakr_decrypt(key, deserialized, &plaintext_out);
 
-  assert(out_cfg.mode == cfg.mode && out_cfg.asymm_cipher == cfg.asymm_cipher && out_cfg.symm_cipher == cfg.symm_cipher && out_cfg.digest_algorithm == cfg.digest_algorithm);
+  assert((out_cfg.mode == cfg.mode) &&
+         (out_cfg.asymm_cipher == cfg.asymm_cipher) &&
+         (out_cfg.symm_cipher == cfg.symm_cipher) &&
+         (out_cfg.digest_algorithm == cfg.digest_algorithm));
 
   assert(success == DECRYPT_SUCCESS);
 
@@ -148,9 +151,10 @@ int main() {
     return 1;
   }
 
+  test_uninit_crash();
+
   for (int i = AES_128_GCM; i <= CHACHA20_POLY1305; ++i) {
     test_symmetric_algo(i);
-    test_uninit_crash();
   }
 
   crypto_config_t cfg = {

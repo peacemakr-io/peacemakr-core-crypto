@@ -166,11 +166,13 @@ uint8_t *peacemakr_serialize(ciphertext_blob_t *cipher, size_t *out_size) {
 }
 
 ciphertext_blob_t *peacemakr_deserialize(const uint8_t *b64_serialized_cipher,
-                                         size_t serialized_len, crypto_config_t *cfg) {
+                                         size_t serialized_len,
+                                         crypto_config_t *cfg) {
 
   EXPECT_TRUE_RET((b64_serialized_cipher != NULL && serialized_len != 0),
                   "b64 serialized cipher was NULL or serialized len was 0\n");
-  EXPECT_NOT_NULL_RET(cfg, "need to store the deserialized configuration somewhere\n");
+  EXPECT_NOT_NULL_RET(
+      cfg, "need to store the deserialized configuration somewhere\n");
 
   uint8_t *serialized_cipher = alloca(serialized_len);
   int rc = b64_decode((const char *)b64_serialized_cipher, serialized_cipher,
