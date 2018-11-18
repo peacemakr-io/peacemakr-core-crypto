@@ -12,17 +12,13 @@ From the repository base directory,
 
 ## Build - Golang
 `docker build -t corecrypto:latest . -f docker/go.Dockerfile`
+## Build (release) - Golang
+`docker build -t corecrypto:latest . -f docker/go.Dockerfile --build-arg="CMAKE_BUILD_TYPE=RELEASE"`
 
 ## Integrate - Golang:
-`docker run corecrypto:latest cat /go/src/peacemakr/crypto/crypto.go > src/ffi/go/src/peacemakr/crypto/crypto.go`
-`docker run corecrypto:latest cat /go/src/peacemakr/crypto/crypto_test.go > src/ffi/go/src/peacemakr/crypto/crypto_test.go`
-
-`docker run corecrypto:latest cat /usr/local/include/peacemakr/crypto.h > src/core/include/peacemakr/crypto.h`
-`docker run corecrypto:latest cat /usr/local/include/peacemakr/random.h > src/core/include/peacemakr/random.h`
-
-Copy glue to peacemakr:
-`cp src/ffi/go/src/peacemakr/crypto/crypto* ~/peacemakr/peacemakr-api/src/peacemakr/crypto/.`
-`cp src/core/include/peacemakr/* ~/peacemakr/peacemakr-api/include/peacemakr/.`
+`./bin/release-golang.sh /path/to/peacemakr-api release`
+For a debug build
+`./bin/release-golang.sh /path/to/peacemakr-api`
 
 ## Build - Swift
 `cd /path/to/peacemakr-core-crypto/bin && ./release-ios.sh /where/to/put/build/artifacts`

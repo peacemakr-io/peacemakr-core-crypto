@@ -269,7 +269,6 @@ func TestAsymmetricEncryptFromPem(t *testing.T) {
 				}
 			}
 
-			privkey := NewPeacemakrKeyFromPrivPem(cfg, GetPrivKey())
 
 			deserialized, deserializedConfig, err := Deserialize(serialized)
 			if err != nil {
@@ -281,6 +280,8 @@ func TestAsymmetricEncryptFromPem(t *testing.T) {
 				DestroyPeacemakrKey(pubkey)
 				t.Fatalf("did not deserialize the correct configuration")
 			}
+
+			privkey := NewPeacemakrKeyFromPrivPem(cfg, GetPrivKey())
 
 			plaintextOut, _, err := Decrypt(privkey, deserialized)
 			if err != nil {
