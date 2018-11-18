@@ -71,7 +71,9 @@ void test_asymmetric(symmetric_cipher symm_cipher, asymmetric_cipher cipher, mes
     assert(plaintext_in.aad == unverified_aad.aad);
   }
 
-  peacemakr::Ciphertext *deserialized = ctx.Deserialize(serialized);
+  crypto_config_t out_cfg;
+
+  peacemakr::Ciphertext *deserialized = ctx.Deserialize(serialized, &out_cfg);
   bool needVerify = false;
   peacemakr::Plaintext plaintext_out = ctx.Decrypt(key, deserialized, needVerify);
   assert(!needVerify);
@@ -112,7 +114,9 @@ void test_symmetric(symmetric_cipher symm_cipher, message_digest_algorithm diges
     assert(plaintext_in.aad == unverified_aad.aad);
   }
 
-  peacemakr::Ciphertext *deserialized = ctx.Deserialize(serialized);
+  crypto_config_t out_cfg;
+
+  peacemakr::Ciphertext *deserialized = ctx.Deserialize(serialized, &out_cfg);
 
   bool needVerify = false;
   peacemakr::Plaintext plaintext_out = ctx.Decrypt(key, deserialized, needVerify);
@@ -155,7 +159,9 @@ void test_sign_symmetric(symmetric_cipher symm_cipher, message_digest_algorithm 
     assert(plaintext_in.aad == unverified_aad.aad);
   }
 
-  peacemakr::Ciphertext *deserialized = ctx.Deserialize(serialized);
+  crypto_config_t out_cfg;
+
+  peacemakr::Ciphertext *deserialized = ctx.Deserialize(serialized, &out_cfg);
   bool needVerify = false;
   peacemakr::Plaintext plaintext_out = ctx.Decrypt(key, deserialized, needVerify);
   assert(needVerify);
@@ -199,7 +205,8 @@ void test_sign_asymmetric(symmetric_cipher symm_cipher, asymmetric_cipher cipher
     assert(plaintext_in.aad == unverified_aad.aad);
   }
 
-  peacemakr::Ciphertext *deserialized = ctx.Deserialize(serialized);
+  crypto_config_t out_cfg;
+  peacemakr::Ciphertext *deserialized = ctx.Deserialize(serialized, &out_cfg);
   bool needVerify = false;
   peacemakr::Plaintext plaintext_out = ctx.Decrypt(key, deserialized, needVerify);
   assert(needVerify);
@@ -247,7 +254,8 @@ void test_uninit_crash() {
     assert(plaintext_in.aad == unverified_aad.aad);
   }
 
-  peacemakr::Ciphertext *deserialized = ctx.Deserialize(serialized);
+  crypto_config_t out_cfg;
+  peacemakr::Ciphertext *deserialized = ctx.Deserialize(serialized, &out_cfg);
 
   bool needVerify = false;
   peacemakr::Plaintext plaintext_out = ctx.Decrypt(key, deserialized, needVerify);

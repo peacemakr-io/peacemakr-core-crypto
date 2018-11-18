@@ -57,11 +57,13 @@ ciphertext_blob_t *API(new)(crypto_config_t cfg, size_t iv_len, size_t tag_len,
   EXPECT_NOT_NULL_RET(out, "malloc returned nullptr\n");
   // set constants
   out->m_version_ = PEACEMAKR_CORE_CRYPTO_VERSION;
+  out->m_encrypted_key_ = NULL;
   out->m_encryption_mode_ = cfg.mode;
+  out->m_symm_cipher_ = cfg.symm_cipher;
+  out->m_asymm_cipher_ = cfg.asymm_cipher;
+  out->m_digest_algorithm_ = cfg.digest_algorithm;
   switch (out->m_encryption_mode_) {
   case SYMMETRIC:
-    out->m_encrypted_key_ = NULL;
-    out->m_symm_cipher_ = cfg.symm_cipher;
     break;
   case ASYMMETRIC:
     switch (cfg.asymm_cipher) {
@@ -79,11 +81,8 @@ ciphertext_blob_t *API(new)(crypto_config_t cfg, size_t iv_len, size_t tag_len,
                                   "creation of encrypted key buffer failed\n");
       break;
     }
-    out->m_asymm_cipher_ = cfg.asymm_cipher;
-    out->m_symm_cipher_ = cfg.symm_cipher;
     break;
   }
-  out->m_digest_algorithm_ = cfg.digest_algorithm;
 
   // now alloc space for buffers if we know how big they should be
   out->m_iv_ = Buffer_new(iv_len);

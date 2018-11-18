@@ -439,6 +439,8 @@ ciphertext_blob_t *peacemakr_encrypt(const peacemakr_key_t *recipient_key,
 
   const crypto_config_t cfg = PeacemakrKey_get_config(recipient_key);
 
+  const crypto_config_t cfg = PeacemakrKey_get_config(recipient_key);
+
   const EVP_CIPHER *cipher = parse_cipher(cfg.symm_cipher);
   EXPECT_NOT_NULL_RET(cipher, "parsing openssl cipher failed\n");
 
