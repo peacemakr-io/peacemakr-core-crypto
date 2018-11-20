@@ -17,6 +17,7 @@ import (
 	mrand "math/rand"
 	"reflect"
 	"testing"
+	"encoding/base64"
 )
 
 func SetUpPlaintext() Plaintext {
@@ -663,6 +664,83 @@ func TestSignatures(t *testing.T) {
 		}
 	}
 }
+
+
+func TestIssueNumber27FailToDecrypt(t *testing.T) {
+	EncryptedBytes := "AAAEHgAABA0AAAAAAwAAAAEBAgIAAAIAAAAAAIWesorxYFmTFTivS6OXTemz+/dAeD6dd+TYBOIWqKVZGgbQ1VgnvcU+nDcPVJqIDBYPE5u4Vx283F+21wCeFWGeeMMST9be9bxRXqnRHcyu5q2zWJ86EJAS7fcJtqTqUNRHyCLpQaekYpp/VxKjk4qNXbdcttGqi69Vr9DH1Jjsks2ENETYkxWIRg4zfFTNqtm16OKY/zI0Gts3OBDlbQstRA/XhazbrxaU8EOfE4aW3AkjzubYGniAXUyn9/2UYsB0GA7ABptqA4Kb3lI4bzLDEgt77EOaLF+x/KcppS90zm+Oq8MX8E2JwzQH0UrRyY+mmvkGHFnLqZrApzpnbRhH3o8KgN1ynZJU7Azibd7zTCrBYxWdihUn10l+yGima9cbLcCTJXwOhytiW/ntOZo/L2noELHuXQ+00CDFAOTSvDq1d8dQqU9nPoFemplhz7j4zuHwJ1MRRVe999u/3/uzewZvdacOVXxR7nQTjT+RUeqh9xhNcpEn8WwPVEjvvgvWtxQ43oA1T76vd0W34w/FJUFfrcrLP36E3e1sl/0OuIzhX9aIy2+2198eT89oKFOsGgGYsS4Z8R/PnLwwcw4bGKBnoLV6qNy59e3PEtwCxmdtwEjRl+zUMQtguxB2vg9ujRHZVBDE5TwE6s321JlCbWZ+gD68MK2Hkc7WKnNKAAAADAAAAADT4hIm+8GJtFOaIegAAAAQAAAAACC444WSNi247Vylls+h/5kAAAAAAAAAAAAAAawAAAAALZso9KFyh29Ja3s6KVH/vdp+6P6GWH/zrnME3+8VwJC02vZ5FgLMJMjGmmdF1r3c7Bc5j4bUhKyKODLh+4tnYra6jR2ap15z1Afn5fP7uT2uqSXuPdFB7eRByFBrlNW9cuIfXhrQWjSp91Sz079oTEFarOfqTI/ORZyG/h3zUvCRKGSfgF+xDL00V0snROhg2HdK3CUZBvdCAJVDaFDYXaq1FtLFkJzNCeBd+PAtbMM9lcqTsYxHZEDHlEJDQA12Z52DzrFWonN7QgDey4bzgbN2WY9IClbEszpVZXhyrprZj4TsGyFCuwQT/dwLmlFWnYGFj3/sKcSNlHrG1YdtWJt0tvZaQf4fjc2TLwWiLSseMG6c97PVTn9blL1dgjm0VyvudEOFwJNMHGi0JvSY8leFD0tQ5qXo+w73AUmLWQ/F++qQc4hgT7XXuhJmXeuSh3fnvfhHqojPWHZ40e04Yr8HmoyOOaiBGVpjU7rbTIH4korcGcW3BMOMBzZTUIzexjeLTte63lUe/xvpgAuCVtLXBQgs81TlngXLmz8NvbAnlJj3mbGJE/Nkk2sAAAABAAAAAAAAAABAAAAAAIQBX8pvxbKj84Um0UMGQWNUjggUVRiU7liVNPMZPdVoLS12YBhNBy8hvcUKdnWRI3FwcbPqiUh1TDC+Dr85vYo="
+	privKeyPem := "-----BEGIN RSA PRIVATE KEY-----\n" +
+		"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\n" +
+		"-----END RSA PRIVATE KEY-----"
+
+	blob, cfg, err := Deserialize([]byte(EncryptedBytes))
+	if err != nil {
+		t.Fatalf("Failed to deserialize")
+	}
+	decryptKey := NewPeacemakrKeyFromPrivPem(*cfg, []byte(privKeyPem))
+
+	// Decrypt the binary ciphertext
+	plaintext, _, err := Decrypt(decryptKey, blob)
+	if err != nil {
+		t.Fatalf("Failed to decrypt")
+	}
+
+	// Since these are keys, convert the decrypted base64 string into binary.
+	_, err = base64.StdEncoding.DecodeString(string(plaintext.Data))
+	if err != nil {
+		t.Fatalf("Failed to decode base64 encoded stuff after decryption")
+	}
+
+	// ok.
+}
+
 
 //func TestDecryptionCrash(t *testing.T) {
 //	t.Parallel()
