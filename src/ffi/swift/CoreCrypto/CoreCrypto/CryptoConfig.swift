@@ -60,7 +60,7 @@ public enum MessageDigestAlgorithm: UInt32, CaseIterable {
   case SHA3_512 = 7
 }
 
-public class CryptoConfig {
+public class CryptoConfig: Equatable {
   let internalRepr: crypto_config_t
 
   init(cfg: crypto_config_t) {
@@ -94,5 +94,12 @@ public class CryptoConfig {
 
   func getInternal() -> crypto_config_t {
     return internalRepr
+  }
+  
+  public static func == (lhs: CryptoConfig, rhs: CryptoConfig) -> Bool {
+    return (lhs.Mode == rhs.Mode) &&
+           (lhs.SymmCipher == rhs.SymmCipher) &&
+           (lhs.AsymmCipher == rhs.AsymmCipher) &&
+           (lhs.DigestAlgorithm == rhs.DigestAlgorithm)
   }
 }

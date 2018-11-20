@@ -53,7 +53,8 @@ public class CryptoContext {
   }
 
   public func ExtractUnverifiedAAD(_ serialized: [UInt8]) throws -> Plaintext {
-    let ciphertext_blob = peacemakr_deserialize(UnsafePointer(serialized), serialized.count)
+    var out_cfg_internal = crypto_config_t()
+    let ciphertext_blob = peacemakr_deserialize(UnsafePointer(serialized), serialized.count, &out_cfg_internal)
     if ciphertext_blob == nil {
       throw PeacemakrError.deserializationFailed
     }
@@ -65,12 +66,13 @@ public class CryptoContext {
     return Plaintext(cstyle: out)
   }
 
-  public func Deserialize(_ serialized: [UInt8]) throws -> Ciphertext {
-    let ciphertext_blob = peacemakr_deserialize(UnsafePointer(serialized), serialized.count)
+  public func Deserialize(_ serialized: [UInt8]) throws -> (Ciphertext, CryptoConfig) {
+    var out_cfg_internal = crypto_config_t()
+    let ciphertext_blob = peacemakr_deserialize(UnsafePointer(serialized), serialized.count, &out_cfg_internal)
     if ciphertext_blob == nil {
       throw PeacemakrError.deserializationFailed
     }
-    return ciphertext_blob!
+    return (ciphertext_blob!, CryptoConfig(cfg: out_cfg_internal))
   }
 
   public func Decrypt(key: PeacemakrKey, ciphertext: Ciphertext) throws -> (Plaintext, Bool) {
