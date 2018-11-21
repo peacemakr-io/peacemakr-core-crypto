@@ -243,6 +243,7 @@ static bool asymmetric_encrypt(const peacemakr_key_t *pub_key,
    * a key for the provided cipher, and then encrypts that key. */
   if (1 != EVP_SealInit(ctx, cipher, &encrypted_key_buf, &encrypted_key_len,
                         iv_buf, &pkey, 1)) {
+    PEACEMAKR_OPENSSL_LOG;
     PEACEMAKR_LOG("SealInit failed\n");
     EVP_CIPHER_CTX_free(ctx);
     return false;
@@ -255,6 +256,7 @@ static bool asymmetric_encrypt(const peacemakr_key_t *pub_key,
   /* Handle any AAD */
   if (aad != NULL && aad_len > 0) {
     if (1 != EVP_SealUpdate(ctx, NULL, &len, aad, (int)aad_len)) {
+      PEACEMAKR_OPENSSL_LOG;
       PEACEMAKR_LOG("SealUpdate failed\n");
       EVP_CIPHER_CTX_free(ctx);
       return false;
@@ -269,6 +271,7 @@ static bool asymmetric_encrypt(const peacemakr_key_t *pub_key,
    */
   if (1 != EVP_SealUpdate(ctx, ciphertext_buf, &len, plaintext,
                           (int)plaintext_len)) {
+    PEACEMAKR_OPENSSL_LOG;
     PEACEMAKR_LOG("SealUpdate failed\n");
     EVP_CIPHER_CTX_free(ctx);
     return false;
@@ -279,6 +282,7 @@ static bool asymmetric_encrypt(const peacemakr_key_t *pub_key,
    * this stage.
    */
   if (1 != EVP_SealFinal(ctx, ciphertext_buf + ciphertext_len, &len)) {
+    PEACEMAKR_OPENSSL_LOG;
     PEACEMAKR_LOG("SealFinal failed\n");
     EVP_CIPHER_CTX_free(ctx);
     return false;
@@ -294,6 +298,7 @@ static bool asymmetric_encrypt(const peacemakr_key_t *pub_key,
 
       if (1 != EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, (int)taglen,
                                    tag_buf)) {
+        PEACEMAKR_OPENSSL_LOG;
         PEACEMAKR_LOG("GET_TAG failed\n");
         EVP_CIPHER_CTX_free(ctx);
         return false;
@@ -359,6 +364,7 @@ static bool asymmetric_decrypt(const peacemakr_key_t *pkey,
     if (1 != EVP_OpenInit(ctx, cipher, Buffer_get_bytes(encrypted_key, NULL),
                           (int)encrypted_key_len, Buffer_get_bytes(iv, NULL),
                           priv_key)) {
+      PEACEMAKR_OPENSSL_LOG;
       PEACEMAKR_LOG("OpenInit failed\n");
       EVP_CIPHER_CTX_free(ctx);
       return false;
@@ -367,6 +373,7 @@ static bool asymmetric_decrypt(const peacemakr_key_t *pkey,
   } else {
     if (1 != EVP_OpenInit(ctx, cipher, Buffer_get_bytes(encrypted_key, NULL),
                           (int)encrypted_key_len, NULL, priv_key)) {
+      PEACEMAKR_OPENSSL_LOG;
       PEACEMAKR_LOG("OpenInit failed\n");
       EVP_CIPHER_CTX_free(ctx);
       return false;
@@ -376,6 +383,7 @@ static bool asymmetric_decrypt(const peacemakr_key_t *pkey,
   /* Handle any AAD */
   if (aad != NULL && aad_len > 0) {
     if (1 != EVP_OpenUpdate(ctx, NULL, &len, aad_buf, (int)aad_len)) {
+      PEACEMAKR_OPENSSL_LOG;
       PEACEMAKR_LOG("OpenUpdate failed\n");
       EVP_CIPHER_CTX_free(ctx);
       return false;
@@ -387,6 +395,7 @@ static bool asymmetric_decrypt(const peacemakr_key_t *pkey,
    */
   if (1 != EVP_OpenUpdate(ctx, plaintext_buf, &len, ciphertext_buf,
                           (int)ciphertext_len)) {
+    PEACEMAKR_OPENSSL_LOG;
     PEACEMAKR_LOG("OpenUpdate failed\n");
     EVP_CIPHER_CTX_free(ctx);
     return false;
@@ -397,6 +406,7 @@ static bool asymmetric_decrypt(const peacemakr_key_t *pkey,
   if (taglen > 0 && tag_buf != NULL) {
     if (1 != EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, (int)taglen,
                                  (void *)tag_buf)) {
+      PEACEMAKR_OPENSSL_LOG;
       PEACEMAKR_LOG("SET_TAG failed\n");
       EVP_CIPHER_CTX_free(ctx);
       return false;
@@ -407,6 +417,7 @@ static bool asymmetric_decrypt(const peacemakr_key_t *pkey,
    * this stage.
    */
   if (1 != EVP_OpenFinal(ctx, plaintext_buf + plaintext_len, &len)) {
+    PEACEMAKR_OPENSSL_LOG;
     PEACEMAKR_LOG("OpenFinal failed\n");
     EVP_CIPHER_CTX_free(ctx);
     return false;

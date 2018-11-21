@@ -14,7 +14,10 @@ typedef enum { LOG = 0 } level_t;
 void log_printf(const char *filename, int line, level_t level, const char *fmt,
                 ...);
 
+void openssl_log(const char *filename, int line);
+
 #define PEACEMAKR_LOG(...) log_printf(__FILE__, __LINE__, LOG, __VA_ARGS__)
+#define PEACEMAKR_OPENSSL_LOG openssl_log(__FILE__, __LINE__)
 
 #define EXPECT_NOT_NULL_RET(ptr, ...)                                          \
   if (ptr == NULL) {                                                           \
@@ -67,12 +70,14 @@ void log_printf(const char *filename, int line, level_t level, const char *fmt,
   }
 #define OPENSSL_CHECK_RET_VALUE(call, ctx, value)                              \
   if (1 != (call)) {                                                           \
+    PEACEMAKR_OPENSSL_LOG;                                                     \
     PEACEMAKR_LOG("call failed\n");                                            \
     EVP_CIPHER_CTX_free(ctx);                                                  \
     return value;                                                              \
   }
 #define OPENSSL_CHECK_RET_NONE(call, free_call)                                \
   if (1 != (call)) {                                                           \
+    PEACEMAKR_OPENSSL_LOG;                                                     \
     PEACEMAKR_LOG("call failed\n");                                            \
     free_call;                                                                 \
     return;                                                                    \
