@@ -527,7 +527,13 @@ decrypt_code peacemakr_decrypt(const peacemakr_key_t *recipient_key,
 
   if (aad != NULL) {
     const unsigned char *tmp_aad = Buffer_get_bytes(aad, &plain->aad_len);
+
     plain->aad = calloc(plain->aad_len, sizeof(unsigned char));
+    if (plain->aad == NULL) {
+      PEACEMAKR_LOG("calloc failed on successful decrypt, aborting\n");
+      return DECRYPT_FAILED;
+    }
+
     memcpy((void *)plain->aad, tmp_aad, plain->aad_len);
     Buffer_free(aad);
   } else {
@@ -536,7 +542,13 @@ decrypt_code peacemakr_decrypt(const peacemakr_key_t *recipient_key,
   }
   const unsigned char *tmp_plain =
       Buffer_get_bytes(plaintext, &plain->data_len);
+
   plain->data = calloc(plain->data_len, sizeof(unsigned char));
+  if (plain->data == NULL) {
+    PEACEMAKR_LOG("calloc failed on successful decrypt, aborting\n");
+    return DECRYPT_FAILED;
+  }
+
   memcpy((void *)plain->data, tmp_plain, plain->data_len);
   Buffer_free(plaintext);
 
