@@ -510,39 +510,33 @@ decrypt_code peacemakr_decrypt(const peacemakr_key_t *recipient_key,
   }
   }
 
-  if (success) {
-    if (aad != NULL) {
-      const unsigned char *tmp_aad = Buffer_get_bytes(aad, &plain->aad_len);
-      plain->aad = calloc(plain->aad_len, sizeof(unsigned char));
-      memcpy((void *)plain->aad, tmp_aad, plain->aad_len);
-      Buffer_free(aad);
-    } else {
-      plain->aad = NULL;
-      plain->aad_len = 0;
-    }
-    const unsigned char *tmp_plain =
-        Buffer_get_bytes(plaintext, &plain->data_len);
-    plain->data = calloc(plain->data_len, sizeof(unsigned char));
-    memcpy((void *)plain->data, tmp_plain, plain->data_len);
-    Buffer_free(plaintext);
-  } else { // fill with zeros
-    plain->aad_len = (size_t)rand() % (2 << 8);
-    plain->aad = calloc(plain->aad_len, sizeof(unsigned char));
-    plain->data_len = (size_t)rand() % (2 << 8);
-    plain->data = calloc(plain->data_len, sizeof(unsigned char));
+  if (success == false) {
+    return DECRYPT_FAILED;
   }
 
+  if (aad != NULL) {
+    const unsigned char *tmp_aad = Buffer_get_bytes(aad, &plain->aad_len);
+    plain->aad = calloc(plain->aad_len, sizeof(unsigned char));
+    memcpy((void *)plain->aad, tmp_aad, plain->aad_len);
+    Buffer_free(aad);
+  } else {
+    plain->aad = NULL;
+    plain->aad_len = 0;
+  }
+  const unsigned char *tmp_plain =
+      Buffer_get_bytes(plaintext, &plain->data_len);
+  plain->data = calloc(plain->data_len, sizeof(unsigned char));
+  memcpy((void *)plain->data, tmp_plain, plain->data_len);
+  Buffer_free(plaintext);
+
+  // Don't need verify so just return success
   if (should_free_ciphertext) {
     CiphertextBlob_free(cipher);
     cipher = NULL;
     return DECRYPT_SUCCESS;
   }
 
-  if (success) {
-    return DECRYPT_NEED_VERIFY;
-  }
-
-  return DECRYPT_FAILED;
+  return DECRYPT_NEED_VERIFY;
 }
 
 bool peacemakr_get_unverified_aad(ciphertext_blob_t *cipher,

@@ -13,11 +13,11 @@ import (
 	crand "crypto/rand"
 	crsa "crypto/rsa"
 	"crypto/x509"
+	"encoding/base64"
 	"encoding/pem"
 	mrand "math/rand"
 	"reflect"
 	"testing"
-	"encoding/base64"
 )
 
 func SetUpPlaintext() Plaintext {
