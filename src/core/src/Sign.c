@@ -33,6 +33,7 @@ static void asymmetric_sign(const peacemakr_key_t *sender_key,
   EXPECT_NOT_NULL_RET_NONE(md_ctx, "md_ctx_new failed\n");
 
   if (1 != EVP_DigestSignInit(md_ctx, NULL, digest_algo, NULL, sign_key)) {
+    PEACEMAKR_OPENSSL_LOG;
     PEACEMAKR_LOG("DigestSignInit failed\n");
     EVP_MD_CTX_free(md_ctx);
     return;
@@ -42,6 +43,7 @@ static void asymmetric_sign(const peacemakr_key_t *sender_key,
 
   if (aad != NULL && aad_len > 0) {
     if (1 != EVP_DigestSignUpdate(md_ctx, aad, aad_len)) {
+      PEACEMAKR_OPENSSL_LOG;
       PEACEMAKR_LOG("DigestSignUpdate failed\n");
       EVP_MD_CTX_free(md_ctx);
       return;
@@ -50,6 +52,7 @@ static void asymmetric_sign(const peacemakr_key_t *sender_key,
 
   if (plaintext != NULL && plaintext_len > 0) {
     if (1 != EVP_DigestSignUpdate(md_ctx, plaintext, plaintext_len)) {
+      PEACEMAKR_OPENSSL_LOG;
       PEACEMAKR_LOG("DigestSignUpdate failed\n");
       EVP_MD_CTX_free(md_ctx);
       return;
@@ -59,6 +62,7 @@ static void asymmetric_sign(const peacemakr_key_t *sender_key,
   // Set the digest in the message digest buffer (get the size first)
   size_t signature_len = 0;
   if (1 != EVP_DigestSignFinal(md_ctx, NULL, &signature_len)) {
+    PEACEMAKR_OPENSSL_LOG;
     PEACEMAKR_LOG("DigestSignFinal failed\n");
     EVP_MD_CTX_free(md_ctx);
     return;
@@ -68,6 +72,7 @@ static void asymmetric_sign(const peacemakr_key_t *sender_key,
   Buffer_set_size(digest_buf, signature_len);
   unsigned char *digest_bytes = Buffer_mutable_bytes(digest_buf);
   if (1 != EVP_DigestSignFinal(md_ctx, digest_bytes, &signature_len)) {
+    PEACEMAKR_OPENSSL_LOG;
     PEACEMAKR_LOG("DigestSignFinal failed\n");
     EVP_MD_CTX_free(md_ctx);
     return;
@@ -145,9 +150,9 @@ static bool asymmetric_verify(const peacemakr_key_t *sender_key,
     digest_buf = (unsigned char *)Buffer_get_bytes(stored_digest, &digestlen);
   }
 
-  int rc = EVP_DigestVerifyInit(md_ctx, NULL, digest_algo, NULL, verif_key);
-  if (rc != 1) {
-    PEACEMAKR_LOG("DigestVerifyInit failed with code %d\n", rc);
+  if (1 != EVP_DigestVerifyInit(md_ctx, NULL, digest_algo, NULL, verif_key)) {
+    PEACEMAKR_OPENSSL_LOG;
+    PEACEMAKR_LOG("DigestVerifyInit failed\n");
     EVP_MD_CTX_free(md_ctx);
     return false;
   }
@@ -156,6 +161,7 @@ static bool asymmetric_verify(const peacemakr_key_t *sender_key,
 
   if (aad != NULL && aad_len > 0) {
     if (1 != EVP_DigestVerifyUpdate(md_ctx, aad, aad_len)) {
+      PEACEMAKR_OPENSSL_LOG;
       PEACEMAKR_LOG("DigestVerifyInit failed\n");
       EVP_MD_CTX_free(md_ctx);
       return false;
@@ -164,6 +170,7 @@ static bool asymmetric_verify(const peacemakr_key_t *sender_key,
 
   if (plaintext != NULL && plaintext_len > 0) {
     if (1 != EVP_DigestVerifyUpdate(md_ctx, plaintext, plaintext_len)) {
+      PEACEMAKR_OPENSSL_LOG;
       PEACEMAKR_LOG("DigestVerifyInit failed\n");
       EVP_MD_CTX_free(md_ctx);
       return false;
@@ -171,6 +178,7 @@ static bool asymmetric_verify(const peacemakr_key_t *sender_key,
   }
 
   if (1 != EVP_DigestVerifyFinal(md_ctx, digest_buf, digestlen)) {
+    PEACEMAKR_OPENSSL_LOG;
     PEACEMAKR_LOG("DigestVerifyFinal failed\n");
     ERR_print_errors_fp(stderr);
     EVP_MD_CTX_free(md_ctx);
