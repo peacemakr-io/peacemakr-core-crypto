@@ -7,8 +7,8 @@
 #
 
 if((CMAKE_BUILD_TYPE MATCHES RELEASE) OR (CMAKE_BUILD_TYPE MATCHES Release))
-    message("Disabling all logging")
-    add_definitions(-DPEACEMAKR_LOG_LEVEL=2)
+    message("Setting log to file")
+    add_definitions(-DPEACEMAKR_CORE_CRYPTO_NDEBUG)
 endif()
 
 option(PEACEMAKR_BUILD_CPP "Whether to build the C++ bindings" ON)

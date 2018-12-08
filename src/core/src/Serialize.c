@@ -227,7 +227,7 @@ ciphertext_blob_t *peacemakr_deserialize(const uint8_t *b64_serialized_cipher,
       ntohl(*((uint32_t *)(serialized_cipher + current_position)));
   current_position += sizeof(uint32_t);
   if (version > PEACEMAKR_CORE_CRYPTO_VERSION_MAX) {
-    PEACEMAKR_LOG("version greater than max supported");
+    PEACEMAKR_ERROR("version greater than max supported");
     return NULL;
   }
 

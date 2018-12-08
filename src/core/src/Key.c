@@ -28,7 +28,7 @@ static bool keygen_inner(int key_type, EVP_PKEY **pkey, int rsa_bits) {
 
   int rc = EVP_PKEY_keygen_init(ctx);
   if (rc <= 0) {
-    PEACEMAKR_LOG("EVP_PKEY_keygen_init failed with rc %d\n", rc);
+    PEACEMAKR_ERROR("EVP_PKEY_keygen_init failed with rc %d\n", rc);
     EVP_PKEY_CTX_free(ctx);
     return false;
   }
@@ -37,7 +37,7 @@ static bool keygen_inner(int key_type, EVP_PKEY **pkey, int rsa_bits) {
       (rsa_bits == 2048 || rsa_bits == 4096)) {
     rc = EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, rsa_bits);
     if (rc <= 0) {
-      PEACEMAKR_LOG("set_rsa_keygen_bits failed\n");
+      PEACEMAKR_ERROR("set_rsa_keygen_bits failed\n");
       EVP_PKEY_CTX_free(ctx);
       return false;
     }
@@ -45,7 +45,7 @@ static bool keygen_inner(int key_type, EVP_PKEY **pkey, int rsa_bits) {
 
   rc = EVP_PKEY_keygen(ctx, pkey);
   if (rc <= 0) {
-    PEACEMAKR_LOG("EVP_PKEY_keygen failed\n");
+    PEACEMAKR_ERROR("EVP_PKEY_keygen failed\n");
     EVP_PKEY_CTX_free(ctx);
     return false;
   }
@@ -88,7 +88,7 @@ peacemakr_key_t *API(new)(crypto_config_t cfg, random_device_t *rand) {
     out->m_contents_.asymm = NULL;
     switch (cfg.asymm_cipher) {
     case NONE: {
-      PEACEMAKR_LOG("asymmetric cipher not specified for asymmetric mode\n");
+      PEACEMAKR_ERROR("asymmetric cipher not specified for asymmetric mode\n");
       API(free)(out);
       return NULL;
     }
@@ -101,7 +101,7 @@ peacemakr_key_t *API(new)(crypto_config_t cfg, random_device_t *rand) {
       //    }
     case RSA_2048: {
       if (keygen_inner(EVP_PKEY_RSA, &out->m_contents_.asymm, 2048) == false) {
-        PEACEMAKR_LOG("keygen failed\n");
+        PEACEMAKR_ERROR("keygen failed\n");
         API(free)(out);
         return NULL;
       }
@@ -109,7 +109,7 @@ peacemakr_key_t *API(new)(crypto_config_t cfg, random_device_t *rand) {
     }
     case RSA_4096: {
       if (keygen_inner(EVP_PKEY_RSA, &out->m_contents_.asymm, 4096) == false) {
-        PEACEMAKR_LOG("keygen failed\n");
+        PEACEMAKR_ERROR("keygen failed\n");
         API(free)(out);
         return NULL;
       }
@@ -120,7 +120,7 @@ peacemakr_key_t *API(new)(crypto_config_t cfg, random_device_t *rand) {
   }
   }
 
-  PEACEMAKR_LOG("unknown failure\n");
+  PEACEMAKR_ERROR("unknown failure\n");
   API(free)(out);
   return NULL;
 }
@@ -162,7 +162,7 @@ peacemakr_key_t *API(new_from_master)(crypto_config_t cfg,
     keybytes = peacemakr_hmac(SHA3_256, master_key, key_id, key_id_len, NULL);
     break;
   default:
-    PEACEMAKR_LOG("Unsupported symmetric cipher for HMAC key generation\n");
+    PEACEMAKR_ERROR("Unsupported symmetric cipher for HMAC key generation\n");
     return NULL;
   }
 
@@ -198,7 +198,7 @@ peacemakr_key_t *API(new_pem)(crypto_config_t cfg, const char *buf,
                                 "PEM_read_bio_PrivateKey failed\n");
   } else {
     if (!PEM_read_bio_RSA_PUBKEY(bo, &rsaKey, NULL, NULL)) {
-      PEACEMAKR_LOG("PEM_read_bio_RSA_PUBKEY failed\n");
+      PEACEMAKR_ERROR("PEM_read_bio_RSA_PUBKEY failed\n");
       BIO_free(bo);
       API(free)(out);
       RSA_free(rsaKey);
@@ -206,7 +206,7 @@ peacemakr_key_t *API(new_pem)(crypto_config_t cfg, const char *buf,
     }
     out->m_contents_.asymm = EVP_PKEY_new();
     if (1 != EVP_PKEY_assign_RSA(out->m_contents_.asymm, rsaKey)) {
-      PEACEMAKR_LOG("EVP_PKEY_assign_RSA failed\n");
+      PEACEMAKR_ERROR("EVP_PKEY_assign_RSA failed\n");
       BIO_free(bo);
       RSA_free(rsaKey);
       API(free)(out);

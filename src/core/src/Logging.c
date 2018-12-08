@@ -13,6 +13,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <syslog.h>
 
 #ifndef PEACEMAKR_LOG_LEVEL
 #define PEACEMAKR_LOG_LEVEL 0
@@ -22,12 +23,8 @@ static FILE *out_stream = NULL;
 
 void peacemakr_set_log_out_stream(FILE *new_stream) { out_stream = new_stream; }
 
-void log_printf(const char *filename, int line, level_t level, const char *fmt,
+void log_printf(const char *function_name, int line, level_t level, const char *fmt,
                 ...) {
-
-  if (level < PEACEMAKR_LOG_LEVEL || PEACEMAKR_LOG_LEVEL > 1 ||
-      PEACEMAKR_LOG_LEVEL < 0)
-    return;
 
   if (out_stream == NULL) {
     out_stream = stderr;
@@ -36,15 +33,15 @@ void log_printf(const char *filename, int line, level_t level, const char *fmt,
   char linenum[4];
   int num_digits = sprintf(linenum, "%d", line);
 
-  const size_t fmt_len = strlen(filename) + 2 // ": "
+  const size_t fmt_len = strlen(function_name) + 2 // ": "
                          + num_digits + 3     // " - "
                          + strlen(fmt) + 1;   // null terminator
   char fmt_str[fmt_len];
-  memcpy(fmt_str, filename, strlen(filename));
-  memcpy(fmt_str + strlen(filename), ": ", 2);
-  memcpy(fmt_str + strlen(filename) + 2, linenum, num_digits);
-  memcpy(fmt_str + strlen(filename) + 2 + num_digits, " - ", 3);
-  memcpy(fmt_str + strlen(filename) + 2 + num_digits + 3, fmt, strlen(fmt) + 1);
+  memcpy(fmt_str, function_name, strlen(function_name));
+  memcpy(fmt_str + strlen(function_name), ": ", 2);
+  memcpy(fmt_str + strlen(function_name) + 2, linenum, num_digits);
+  memcpy(fmt_str + strlen(function_name) + 2 + num_digits, " - ", 3);
+  memcpy(fmt_str + strlen(function_name) + 2 + num_digits + 3, fmt, strlen(fmt) + 1);
 
   va_list argp;
   va_start(argp, fmt);
@@ -56,10 +53,7 @@ void log_printf(const char *filename, int line, level_t level, const char *fmt,
   va_end(argp);
 }
 
-void openssl_log(const char *filename, int line) {
-  if (PEACEMAKR_LOG_LEVEL > 1) {
-    return;
-  }
+void openssl_log(const char *function_name, int line) {
 
   if (out_stream == NULL) {
     out_stream = stderr;
@@ -68,14 +62,14 @@ void openssl_log(const char *filename, int line) {
   char linenum[4];
   int num_digits = sprintf(linenum, "%d", line);
 
-  const size_t fmt_len = strlen(filename) + 2 // ": "
+  const size_t fmt_len = strlen(function_name) + 2 // ": "
                          + num_digits + 3;    // " - "
 
   char fmt_str[fmt_len];
-  memcpy(fmt_str, filename, strlen(filename));
-  memcpy(fmt_str + strlen(filename), ": ", 2);
-  memcpy(fmt_str + strlen(filename) + 2, linenum, num_digits);
-  memcpy(fmt_str + strlen(filename) + 2 + num_digits, " - ", 3);
+  memcpy(fmt_str, function_name, strlen(function_name));
+  memcpy(fmt_str + strlen(function_name), ": ", 2);
+  memcpy(fmt_str + strlen(function_name) + 2, linenum, num_digits);
+  memcpy(fmt_str + strlen(function_name) + 2 + num_digits, " - ", 3);
 
   fprintf(out_stream, "%s\n", fmt_str);
   ERR_print_errors_fp(out_stream);
