@@ -23,8 +23,8 @@ static FILE *out_stream = NULL;
 
 void peacemakr_set_log_out_stream(FILE *new_stream) { out_stream = new_stream; }
 
-void log_printf(const char *function_name, int line, level_t level, const char *fmt,
-                ...) {
+void log_printf(const char *function_name, int line, level_t level,
+                const char *fmt, ...) {
 
   if (out_stream == NULL) {
     out_stream = stderr;
@@ -34,14 +34,15 @@ void log_printf(const char *function_name, int line, level_t level, const char *
   int num_digits = sprintf(linenum, "%d", line);
 
   const size_t fmt_len = strlen(function_name) + 2 // ": "
-                         + num_digits + 3     // " - "
-                         + strlen(fmt) + 1;   // null terminator
+                         + num_digits + 3          // " - "
+                         + strlen(fmt) + 1;        // null terminator
   char fmt_str[fmt_len];
   memcpy(fmt_str, function_name, strlen(function_name));
   memcpy(fmt_str + strlen(function_name), ": ", 2);
   memcpy(fmt_str + strlen(function_name) + 2, linenum, num_digits);
   memcpy(fmt_str + strlen(function_name) + 2 + num_digits, " - ", 3);
-  memcpy(fmt_str + strlen(function_name) + 2 + num_digits + 3, fmt, strlen(fmt) + 1);
+  memcpy(fmt_str + strlen(function_name) + 2 + num_digits + 3, fmt,
+         strlen(fmt) + 1);
 
   va_list argp;
   va_start(argp, fmt);
@@ -63,7 +64,7 @@ void openssl_log(const char *function_name, int line) {
   int num_digits = sprintf(linenum, "%d", line);
 
   const size_t fmt_len = strlen(function_name) + 2 // ": "
-                         + num_digits + 3;    // " - "
+                         + num_digits + 3;         // " - "
 
   char fmt_str[fmt_len];
   memcpy(fmt_str, function_name, strlen(function_name));

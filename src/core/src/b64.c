@@ -119,7 +119,7 @@ bool b64_decode(const char *in, unsigned char *out, size_t outlen) {
   len = strlen(in);
   if (outlen < b64_decoded_size(in) || len % 4 != 0) {
     PEACEMAKR_ERROR("outlen was either too small or not divisible by 4 "
-                  "(corrupted message)\n");
+                    "(corrupted message)\n");
     return 0;
   }
 
