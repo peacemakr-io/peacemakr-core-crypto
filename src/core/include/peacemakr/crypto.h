@@ -105,7 +105,7 @@ typedef struct {
 } plaintext_t;
 
 //! Opaque type holding everything necessary to decrypt the encrypted message,
-//! save for the key iteself
+//! save for the key itself
 typedef struct CiphertextBlob ciphertext_blob_t;
 
 //! Opaque type holding the key itself (EVP_PKEY or just a symmetric key)
@@ -196,10 +196,12 @@ crypto_config_t PeacemakrKey_get_config(const peacemakr_key_t *key);
  * Serializes private key \p key into \p buf in PEM format and places its size into
  * \p bufsize. The caller is responsible for memory returned from this function via \p buf.
  */
-//!@{
 bool PeacemakrKey_priv_to_pem(const peacemakr_key_t *key, char **buf, size_t *bufsize);
+
+/**
+ * @copydoc PeacemakrKey_priv_to_pem
+ */
 bool PeacemakrKey_pub_to_pem(const peacemakr_key_t *key, char **buf, size_t *bufsize);
-//!@}
 
 /**
  * Free \p key. Attempts to securely clear all memory associated with \p key.
