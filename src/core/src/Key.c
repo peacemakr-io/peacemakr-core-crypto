@@ -14,6 +14,7 @@
 
 #include <stdbool.h>
 #include <stdlib.h>
+#include <memory.h>
 
 #include <openssl/ec.h>
 #include <openssl/err.h>
@@ -271,4 +272,60 @@ EVP_PKEY *API(asymmetric)(const peacemakr_key_t *key) {
       "Attempting to access the asymmetric part of a symmetric key\n");
 
   return key->m_contents_.asymm;
+}
+
+bool API(priv_to_pem)(const peacemakr_key_t *key, char **buf, size_t *bufsize) {
+  EXPECT_NOT_NULL_RET_VALUE(key, false, "Cannot serialize a NULL key\n");
+  EXPECT_NOT_NULL_RET_VALUE(buf, false, "Cannot serialize into a NULL buffer\n");
+  EXPECT_NOT_NULL_RET_VALUE(bufsize, false, "Cannot serialize into a NULL bufsize\n");
+
+  BIO *bio = BIO_new(BIO_s_secmem());
+  if (!PEM_write_bio_PrivateKey(bio, key->m_contents_.asymm, NULL, NULL, 0, NULL, NULL)) {
+    PEACEMAKR_OPENSSL_LOG;
+    PEACEMAKR_ERROR("Failed to write the PrivateKey\n");
+    return false;
+  }
+  if (BIO_eof(bio)) {
+    PEACEMAKR_ERROR("No data stored in bio\n");
+    return false;
+  }
+  char *memdata = NULL;
+  *bufsize = BIO_get_mem_data(bio, &memdata);
+  if (memdata == NULL) {
+    BIO_free(bio);
+    PEACEMAKR_ERROR("Failed to get memdata from bio\n");
+    return false;
+  }
+  *buf = calloc(*bufsize, sizeof(char));
+  memcpy(*buf, memdata, *bufsize);
+  BIO_free(bio);
+  return true;
+}
+
+bool API(pub_to_pem)(const peacemakr_key_t *key, char **buf, size_t *bufsize) {
+  EXPECT_NOT_NULL_RET_VALUE(key, false, "Cannot serialize a NULL key\n");
+  EXPECT_NOT_NULL_RET_VALUE(buf, false, "Cannot serialize into a NULL buffer\n");
+  EXPECT_NOT_NULL_RET_VALUE(bufsize, false, "Cannot serialize into a NULL bufsize\n");
+
+  BIO *bio = BIO_new(BIO_s_mem());
+  if (!PEM_write_bio_PUBKEY(bio, key->m_contents_.asymm)) {
+    PEACEMAKR_OPENSSL_LOG;
+    PEACEMAKR_ERROR("Failed to write the PrivateKey\n");
+    return false;
+  }
+  if (BIO_eof(bio)) {
+    PEACEMAKR_ERROR("No data stored in bio\n");
+    return false;
+  }
+  char *memdata = NULL;
+  *bufsize = BIO_get_mem_data(bio, &memdata);
+  if (memdata == NULL) {
+    BIO_free(bio);
+    PEACEMAKR_ERROR("Failed to get memdata from bio\n");
+    return false;
+  }
+  *buf = calloc(*bufsize, sizeof(char));
+  memcpy(*buf, memdata, *bufsize);
+  BIO_free(bio);
+  return true;
 }

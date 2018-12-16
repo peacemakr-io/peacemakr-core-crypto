@@ -193,6 +193,15 @@ peacemakr_key_t *PeacemakrKey_new_pem_priv(crypto_config_t cfg, const char *buf,
 crypto_config_t PeacemakrKey_get_config(const peacemakr_key_t *key);
 
 /**
+ * Serializes private key \p key into \p buf in PEM format and places its size into
+ * \p bufsize. The caller is responsible for memory returned from this function via \p buf.
+ */
+//!@{
+bool PeacemakrKey_priv_to_pem(const peacemakr_key_t *key, char **buf, size_t *bufsize);
+bool PeacemakrKey_pub_to_pem(const peacemakr_key_t *key, char **buf, size_t *bufsize);
+//!@}
+
+/**
  * Free \p key. Attempts to securely clear all memory associated with \p key.
  */
 void PeacemakrKey_free(peacemakr_key_t *key);
