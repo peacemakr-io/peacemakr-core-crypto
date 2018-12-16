@@ -121,6 +121,66 @@ void test_asymmetric_algo(symmetric_cipher cipher, asymmetric_cipher asymmcipher
   PeacemakrKey_free(key);
 }
 
+void test_symmetric_algo_x_sign(symmetric_cipher cipher) {
+  crypto_config_t cfg = {
+          .mode = SYMMETRIC,
+          .symm_cipher = cipher,
+          .digest_algorithm = SHA_512
+  };
+
+  crypto_config_t asymm_cfg = {
+          .mode = ASYMMETRIC,
+          .asymm_cipher = RSA_4096,
+          .symm_cipher = cipher,
+          .digest_algorithm = SHA_512
+  };
+
+  plaintext_t plaintext_in = {
+          .data = (const unsigned char *)message,
+          .data_len = strlen(message) + 1,
+          .aad = (const unsigned char *)message_aad,
+          .aad_len = strlen(message_aad) + 1
+  };
+
+  plaintext_t plaintext_out;
+
+  random_device_t rand = {
+          .generator = &fill_rand,
+          .err = &rand_err
+  };
+
+  peacemakr_key_t *key = PeacemakrKey_new(cfg, &rand);
+  peacemakr_key_t *sign_key = PeacemakrKey_new(asymm_cfg, &rand);
+
+  ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, &plaintext_in, &rand);
+  // Sign with asymmetric key
+  peacemakr_sign(sign_key, &plaintext_in, ciphertext);
+  assert(ciphertext != NULL);
+
+  size_t out_size = 0;
+  uint8_t *serialized = peacemakr_serialize(ciphertext, &out_size);
+  assert(serialized != NULL);
+
+  crypto_config_t out_cfg;
+
+  ciphertext_blob_t *deserialized = peacemakr_deserialize(serialized, out_size, &out_cfg);
+  bool success = peacemakr_decrypt(key, deserialized, &plaintext_out);
+  // Verify with that asymmetric key
+  success &= peacemakr_verify(sign_key, &plaintext_out, deserialized);
+
+  assert(out_cfg.mode == cfg.mode && out_cfg.asymm_cipher == cfg.asymm_cipher && out_cfg.symm_cipher == cfg.symm_cipher && out_cfg.digest_algorithm == cfg.digest_algorithm);
+
+  assert(success);
+
+  assert(strncmp((const char *)plaintext_out.data, (const char *)plaintext_in.data, plaintext_in.data_len) == 0);
+  free((void *)plaintext_out.data);
+  assert(strncmp((const char *)plaintext_out.aad, (const char *)plaintext_in.aad, plaintext_in.aad_len) == 0);
+  free((void *)plaintext_out.aad);
+
+  PeacemakrKey_free(key);
+  PeacemakrKey_free(sign_key);
+}
+
 int main() {
   if (!peacemakr_init()) {
     return 1;
@@ -128,6 +188,7 @@ int main() {
 
   for (int i = AES_128_GCM; i <= CHACHA20_POLY1305; ++i) {
     test_symmetric_algo(i);
+    test_symmetric_algo_x_sign(i);
   }
 
   for (int i = RSA_2048; i <= RSA_4096; ++i) {
