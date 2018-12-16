@@ -30,6 +30,11 @@ package crypto
 		};
 		return rand;
    }
+
+   extern void go_log_export(char *);
+   static inline peacemakr_log_cb go_log_cbridge() {
+   		return (peacemakr_log_cb)go_log_export;
+   }
 */
 import "C"
 import (
@@ -69,6 +74,12 @@ func go_rng_err(err C.int) *C.char {
 		return C.CString("size passed in was zero")
 	}
 	return nil
+}
+
+//export go_log_export
+func go_log_export(buf *C.char) {
+	goStr := C.GoString(buf)
+	log.Print(goStr)
 }
 
 func NewRandomDevice() RandomDevice {
@@ -172,6 +183,8 @@ func GetMaxSupportedVersion() uint8 {
 }
 
 func PeacemakrInit() bool {
+	C.peacemakr_set_log_callback(C.go_log_cbridge())
+
 	return bool(C.peacemakr_init())
 }
 

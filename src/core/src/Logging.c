@@ -19,15 +19,20 @@
 #define PEACEMAKR_LOG_LEVEL 0
 #endif
 
-static FILE *out_stream = NULL;
+typedef void (*peacemakr_log_cb)(char *);
+static peacemakr_log_cb log_fn = NULL;
 
-void peacemakr_set_log_out_stream(FILE *new_stream) { out_stream = new_stream; }
+void peacemakr_set_log_callback(peacemakr_log_cb  l) { log_fn = l; }
+
+static void log_to_stderr(char *msg) {
+  fprintf(stderr, "%s", msg);
+}
 
 void log_printf(const char *function_name, int line, level_t level,
                 const char *fmt, ...) {
 
-  if (out_stream == NULL) {
-    out_stream = stderr;
+  if (log_fn == NULL) {
+    log_fn = &log_to_stderr;
   }
 
   char linenum[4];
@@ -44,27 +49,29 @@ void log_printf(const char *function_name, int line, level_t level,
   memcpy(fmt_str + strlen(function_name) + 2 + num_digits + 3, fmt,
          strlen(fmt) + 1);
 
+  char *message = calloc(2 * fmt_len, sizeof(char));
+
   va_list argp;
   va_start(argp, fmt);
-  int rc = vfprintf(out_stream, fmt_str, argp);
-  fflush(out_stream); // we just flush the out_stream since it's a log line
-  if (rc < 0) {
-    fprintf(stderr, "error on vfprintf");
-  }
+  vsprintf(message, fmt_str, argp);
+  log_fn(message);
   va_end(argp);
+
+  free(message);
 }
 
 void openssl_log(const char *function_name, int line) {
 
-  if (out_stream == NULL) {
-    out_stream = stderr;
+  if (log_fn == NULL) {
+    log_fn = &log_to_stderr;
   }
 
   char linenum[4];
   int num_digits = sprintf(linenum, "%d", line);
 
   const size_t fmt_len = strlen(function_name) + 2 // ": "
-                         + num_digits + 3;         // " - "
+                         + num_digits + 3          // " - "
+                         + 256;                    // error str from openssl
 
   char fmt_str[fmt_len];
   memcpy(fmt_str, function_name, strlen(function_name));
@@ -72,7 +79,15 @@ void openssl_log(const char *function_name, int line) {
   memcpy(fmt_str + strlen(function_name) + 2, linenum, num_digits);
   memcpy(fmt_str + strlen(function_name) + 2 + num_digits, " - ", 3);
 
-  fprintf(out_stream, "%s\n", fmt_str);
-  ERR_print_errors_fp(out_stream);
-  fflush(out_stream);
+  char openssl_error[256];
+  memset(openssl_error, 0, 256);
+  unsigned long err_no = ERR_get_error();
+  ERR_error_string_n(err_no, openssl_error, 256);
+
+  memcpy(fmt_str + strlen(function_name) + 2 + num_digits + 3, openssl_error, strlen(openssl_error));
+
+  char *message = calloc(fmt_len + strlen(openssl_error), sizeof(char));
+  sprintf(message, "%s\n", fmt_str);
+  log_fn(message);
+  free(message);
 }

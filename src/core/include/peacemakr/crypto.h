@@ -125,10 +125,17 @@ static inline uint8_t get_max_version() {
 bool peacemakr_init();
 
 /**
- * Sets the output of peacemakr logging to \p new_stream. The core crypto
- * library defaults to stdout.
+ * Logging callback that takes a C string and does something with it.
+ * The library calls this function with any log messages in order to pass
+ * them up to the user.
  */
-void peacemakr_set_log_out_stream(FILE *new_stream);
+typedef void (*peacemakr_log_cb)(char *);
+
+/**
+ * Sets peacemakr logging utilities to use \p log_fn as a callback to return
+ * log messages upstream.
+ */
+void peacemakr_set_log_callback(peacemakr_log_cb log_fn);
 
 /**
  * Create a new peacemakr_key_t from scratch with user-defined \p cfg and \p
