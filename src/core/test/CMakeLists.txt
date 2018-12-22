@@ -7,7 +7,7 @@
 #
 
 enable_testing()
-add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} -V)
+add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} -j4 --schedule-random -V)
 
 if (UNIX AND NOT APPLE)
     find_package(PkgConfig)
