@@ -46,8 +46,6 @@ if (PEACEMAKR_BUILD_CPP)
     add_subdirectory(cpp)
 endif (PEACEMAKR_BUILD_CPP)
 
-set(ALL_C_SOURCE_FILES ${SOURCES_C} ${SOURCES_H} ${INCLUDES} ${ALL_C_SOURCE_FILES} PARENT_SCOPE)
-
 install(TARGETS peacemakr-core-crypto
         EXPORT peacemakr-core-crypto-targets
         LIBRARY DESTINATION lib
@@ -58,3 +56,5 @@ install(TARGETS peacemakr-core-crypto
 if (BUILD_TESTS)
     add_subdirectory(test)
 endif(BUILD_TESTS)
+
+set(ALL_C_SOURCE_FILES ${SOURCES_C} ${SOURCES_H} ${INCLUDES} ${ALL_C_SOURCE_FILES} PARENT_SCOPE)

@@ -9,17 +9,9 @@
 #include "Buffer.h"
 #include "EVPHelper.h"
 #include "Logging.h"
-#include "crypto.h"
-#include "random.h"
 
-#include <stdbool.h>
-#include <stdlib.h>
 #include <memory.h>
 
-#include <openssl/ec.h>
-#include <openssl/err.h>
-#include <openssl/evp.h>
-#include <openssl/hmac.h>
 #include <openssl/pem.h>
 #include <openssl/rsa.h>
 
@@ -276,11 +268,14 @@ EVP_PKEY *API(asymmetric)(const peacemakr_key_t *key) {
 
 bool API(priv_to_pem)(const peacemakr_key_t *key, char **buf, size_t *bufsize) {
   EXPECT_NOT_NULL_RET_VALUE(key, false, "Cannot serialize a NULL key\n");
-  EXPECT_NOT_NULL_RET_VALUE(buf, false, "Cannot serialize into a NULL buffer\n");
-  EXPECT_NOT_NULL_RET_VALUE(bufsize, false, "Cannot serialize into a NULL bufsize\n");
+  EXPECT_NOT_NULL_RET_VALUE(buf, false,
+                            "Cannot serialize into a NULL buffer\n");
+  EXPECT_NOT_NULL_RET_VALUE(bufsize, false,
+                            "Cannot serialize into a NULL bufsize\n");
 
   BIO *bio = BIO_new(BIO_s_secmem());
-  if (!PEM_write_bio_PrivateKey(bio, key->m_contents_.asymm, NULL, NULL, 0, NULL, NULL)) {
+  if (!PEM_write_bio_PrivateKey(bio, key->m_contents_.asymm, NULL, NULL, 0,
+                                NULL, NULL)) {
     PEACEMAKR_OPENSSL_LOG;
     PEACEMAKR_ERROR("Failed to write the PrivateKey\n");
     return false;
@@ -304,8 +299,10 @@ bool API(priv_to_pem)(const peacemakr_key_t *key, char **buf, size_t *bufsize) {
 
 bool API(pub_to_pem)(const peacemakr_key_t *key, char **buf, size_t *bufsize) {
   EXPECT_NOT_NULL_RET_VALUE(key, false, "Cannot serialize a NULL key\n");
-  EXPECT_NOT_NULL_RET_VALUE(buf, false, "Cannot serialize into a NULL buffer\n");
-  EXPECT_NOT_NULL_RET_VALUE(bufsize, false, "Cannot serialize into a NULL bufsize\n");
+  EXPECT_NOT_NULL_RET_VALUE(buf, false,
+                            "Cannot serialize into a NULL buffer\n");
+  EXPECT_NOT_NULL_RET_VALUE(bufsize, false,
+                            "Cannot serialize into a NULL bufsize\n");
 
   BIO *bio = BIO_new(BIO_s_mem());
   if (!PEM_write_bio_PUBKEY(bio, key->m_contents_.asymm)) {

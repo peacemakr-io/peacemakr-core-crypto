@@ -10,10 +10,6 @@
 
 #include <memory.h>
 #include <openssl/err.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <syslog.h>
 
 #ifndef PEACEMAKR_LOG_LEVEL
 #define PEACEMAKR_LOG_LEVEL 0
@@ -22,11 +18,9 @@
 typedef void (*peacemakr_log_cb)(char *);
 static peacemakr_log_cb log_fn = NULL;
 
-void peacemakr_set_log_callback(peacemakr_log_cb  l) { log_fn = l; }
+void peacemakr_set_log_callback(peacemakr_log_cb l) { log_fn = l; }
 
-static void log_to_stderr(char *msg) {
-  fprintf(stderr, "%s", msg);
-}
+static void log_to_stderr(char *msg) { fprintf(stderr, "%s", msg); }
 
 void log_printf(const char *function_name, int line, level_t level,
                 const char *fmt, ...) {
@@ -84,7 +78,8 @@ void openssl_log(const char *function_name, int line) {
   unsigned long err_no = ERR_get_error();
   ERR_error_string_n(err_no, openssl_error, 256);
 
-  memcpy(fmt_str + strlen(function_name) + 2 + num_digits + 3, openssl_error, strlen(openssl_error));
+  memcpy(fmt_str + strlen(function_name) + 2 + num_digits + 3, openssl_error,
+         strlen(openssl_error));
 
   char *message = calloc(fmt_len + strlen(openssl_error), sizeof(char));
   sprintf(message, "%s\n", fmt_str);
