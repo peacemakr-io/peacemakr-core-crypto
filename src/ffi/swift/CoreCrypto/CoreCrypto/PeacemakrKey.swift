@@ -12,6 +12,7 @@ import libCoreCrypto
 
 public enum PeacemakrKeyError: Error {
   case allocationFailed
+  case serializationFailed
 }
 
 public class PeacemakrKey {
@@ -48,5 +49,21 @@ public class PeacemakrKey {
 
   func getInternal() -> OpaquePointer {
     return internalRepr
+  }
+  
+  public func toPem(is_priv: Bool) throws -> [Int8] {
+    var out: UnsafeMutablePointer<Int8>?
+    var outsize: CLong = 0
+    if is_priv {
+      if !PeacemakrKey_priv_to_pem(internalRepr, &out, &outsize) {
+        throw PeacemakrKeyError.serializationFailed
+      }
+    } else {
+      if !PeacemakrKey_pub_to_pem(internalRepr, &out, &outsize) {
+        throw PeacemakrKeyError.serializationFailed
+      }
+    }
+    
+    return [Int8](UnsafeBufferPointer(start: out, count: outsize))
   }
 }

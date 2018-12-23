@@ -33,8 +33,9 @@ void test_asymmetric(const std::string &msg, symmetric_cipher symm_cipher, asymm
   peacemakr::Key key(cfg, rand);
 
   peacemakr::CryptoContext ctx;
-  std::string encrypted = ctx.Encrypt(key, plaintext_in, rand);
-  peacemakr::Plaintext plaintext_out = ctx.Decrypt(key, encrypted);
+  peacemakr::Ciphertext *ciphertext = ctx.Encrypt(key, plaintext_in, rand);
+  bool need_verify = false;
+  peacemakr::Plaintext plaintext_out = ctx.Decrypt(key, ciphertext, need_verify);
 
   assert(plaintext_in.data == plaintext_out.data);
   assert(plaintext_in.aad == plaintext_out.aad);
@@ -57,8 +58,9 @@ void test_symmetric(const std::string &msg, symmetric_cipher symm_cipher, messag
   peacemakr::Key key(cfg, rand);
 
   peacemakr::CryptoContext ctx;
-  std::string encrypted = ctx.Encrypt(key, plaintext_in, rand);
-  peacemakr::Plaintext plaintext_out = ctx.Decrypt(key, encrypted);
+  peacemakr::Ciphertext *ciphertext = ctx.Encrypt(key, plaintext_in, rand);
+  bool need_verify = false;
+  peacemakr::Plaintext plaintext_out = ctx.Decrypt(key, ciphertext, need_verify);
 
   assert(plaintext_in.data == plaintext_out.data);
   assert(plaintext_in.aad == plaintext_out.aad);
@@ -92,13 +94,16 @@ void test_symm_keygen(const uint8_t *data, size_t size, symmetric_cipher symm_ci
   assert(key.isValid() || size >= keylen);
 
   peacemakr::CryptoContext ctx;
-  std::string encrypted = ctx.Encrypt(key, plaintext_in, rand);
+  peacemakr::Ciphertext *ciphertext = ctx.Encrypt(key, plaintext_in, rand);
+  std::string encrypted = ctx.Serialize(ciphertext);
   if (encrypted.empty()) { // couldn't encrypt
     return;
   }
 
   // somehow there's a certain key that causes a crash in Decrypt?
-  peacemakr::Plaintext plaintext_out = ctx.Decrypt(key, encrypted);
+  bool need_verify = false;
+  crypto_config_t out_cfg;
+  peacemakr::Plaintext plaintext_out = ctx.Decrypt(key, ctx.Deserialize(encrypted, &out_cfg), need_verify);
   if (plaintext_out.data.empty()) {
     return;
   }

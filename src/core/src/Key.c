@@ -9,16 +9,9 @@
 #include "Buffer.h"
 #include "EVPHelper.h"
 #include "Logging.h"
-#include "crypto.h"
-#include "random.h"
 
-#include <stdbool.h>
-#include <stdlib.h>
+#include <memory.h>
 
-#include <openssl/ec.h>
-#include <openssl/err.h>
-#include <openssl/evp.h>
-#include <openssl/hmac.h>
 #include <openssl/pem.h>
 #include <openssl/rsa.h>
 
@@ -28,7 +21,7 @@ static bool keygen_inner(int key_type, EVP_PKEY **pkey, int rsa_bits) {
 
   int rc = EVP_PKEY_keygen_init(ctx);
   if (rc <= 0) {
-    PEACEMAKR_LOG("EVP_PKEY_keygen_init failed with rc %d\n", rc);
+    PEACEMAKR_ERROR("EVP_PKEY_keygen_init failed with rc %d\n", rc);
     EVP_PKEY_CTX_free(ctx);
     return false;
   }
@@ -37,7 +30,7 @@ static bool keygen_inner(int key_type, EVP_PKEY **pkey, int rsa_bits) {
       (rsa_bits == 2048 || rsa_bits == 4096)) {
     rc = EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, rsa_bits);
     if (rc <= 0) {
-      PEACEMAKR_LOG("set_rsa_keygen_bits failed\n");
+      PEACEMAKR_ERROR("set_rsa_keygen_bits failed\n");
       EVP_PKEY_CTX_free(ctx);
       return false;
     }
@@ -45,7 +38,7 @@ static bool keygen_inner(int key_type, EVP_PKEY **pkey, int rsa_bits) {
 
   rc = EVP_PKEY_keygen(ctx, pkey);
   if (rc <= 0) {
-    PEACEMAKR_LOG("EVP_PKEY_keygen failed\n");
+    PEACEMAKR_ERROR("EVP_PKEY_keygen failed\n");
     EVP_PKEY_CTX_free(ctx);
     return false;
   }
@@ -88,7 +81,7 @@ peacemakr_key_t *API(new)(crypto_config_t cfg, random_device_t *rand) {
     out->m_contents_.asymm = NULL;
     switch (cfg.asymm_cipher) {
     case NONE: {
-      PEACEMAKR_LOG("asymmetric cipher not specified for asymmetric mode\n");
+      PEACEMAKR_ERROR("asymmetric cipher not specified for asymmetric mode\n");
       API(free)(out);
       return NULL;
     }
@@ -101,7 +94,7 @@ peacemakr_key_t *API(new)(crypto_config_t cfg, random_device_t *rand) {
       //    }
     case RSA_2048: {
       if (keygen_inner(EVP_PKEY_RSA, &out->m_contents_.asymm, 2048) == false) {
-        PEACEMAKR_LOG("keygen failed\n");
+        PEACEMAKR_ERROR("keygen failed\n");
         API(free)(out);
         return NULL;
       }
@@ -109,7 +102,7 @@ peacemakr_key_t *API(new)(crypto_config_t cfg, random_device_t *rand) {
     }
     case RSA_4096: {
       if (keygen_inner(EVP_PKEY_RSA, &out->m_contents_.asymm, 4096) == false) {
-        PEACEMAKR_LOG("keygen failed\n");
+        PEACEMAKR_ERROR("keygen failed\n");
         API(free)(out);
         return NULL;
       }
@@ -120,7 +113,7 @@ peacemakr_key_t *API(new)(crypto_config_t cfg, random_device_t *rand) {
   }
   }
 
-  PEACEMAKR_LOG("unknown failure\n");
+  PEACEMAKR_ERROR("unknown failure\n");
   API(free)(out);
   return NULL;
 }
@@ -162,7 +155,7 @@ peacemakr_key_t *API(new_from_master)(crypto_config_t cfg,
     keybytes = peacemakr_hmac(SHA3_256, master_key, key_id, key_id_len, NULL);
     break;
   default:
-    PEACEMAKR_LOG("Unsupported symmetric cipher for HMAC key generation\n");
+    PEACEMAKR_ERROR("Unsupported symmetric cipher for HMAC key generation\n");
     return NULL;
   }
 
@@ -198,7 +191,7 @@ peacemakr_key_t *API(new_pem)(crypto_config_t cfg, const char *buf,
                                 "PEM_read_bio_PrivateKey failed\n");
   } else {
     if (!PEM_read_bio_RSA_PUBKEY(bo, &rsaKey, NULL, NULL)) {
-      PEACEMAKR_LOG("PEM_read_bio_RSA_PUBKEY failed\n");
+      PEACEMAKR_ERROR("PEM_read_bio_RSA_PUBKEY failed\n");
       BIO_free(bo);
       API(free)(out);
       RSA_free(rsaKey);
@@ -206,7 +199,7 @@ peacemakr_key_t *API(new_pem)(crypto_config_t cfg, const char *buf,
     }
     out->m_contents_.asymm = EVP_PKEY_new();
     if (1 != EVP_PKEY_assign_RSA(out->m_contents_.asymm, rsaKey)) {
-      PEACEMAKR_LOG("EVP_PKEY_assign_RSA failed\n");
+      PEACEMAKR_ERROR("EVP_PKEY_assign_RSA failed\n");
       BIO_free(bo);
       RSA_free(rsaKey);
       API(free)(out);
@@ -271,4 +264,65 @@ EVP_PKEY *API(asymmetric)(const peacemakr_key_t *key) {
       "Attempting to access the asymmetric part of a symmetric key\n");
 
   return key->m_contents_.asymm;
+}
+
+bool API(priv_to_pem)(const peacemakr_key_t *key, char **buf, size_t *bufsize) {
+  EXPECT_NOT_NULL_RET_VALUE(key, false, "Cannot serialize a NULL key\n");
+  EXPECT_NOT_NULL_RET_VALUE(buf, false,
+                            "Cannot serialize into a NULL buffer\n");
+  EXPECT_NOT_NULL_RET_VALUE(bufsize, false,
+                            "Cannot serialize into a NULL bufsize\n");
+
+  BIO *bio = BIO_new(BIO_s_secmem());
+  if (!PEM_write_bio_PrivateKey(bio, key->m_contents_.asymm, NULL, NULL, 0,
+                                NULL, NULL)) {
+    PEACEMAKR_OPENSSL_LOG;
+    PEACEMAKR_ERROR("Failed to write the PrivateKey\n");
+    return false;
+  }
+  if (BIO_eof(bio)) {
+    PEACEMAKR_ERROR("No data stored in bio\n");
+    return false;
+  }
+  char *memdata = NULL;
+  *bufsize = BIO_get_mem_data(bio, &memdata);
+  if (memdata == NULL) {
+    BIO_free(bio);
+    PEACEMAKR_ERROR("Failed to get memdata from bio\n");
+    return false;
+  }
+  *buf = calloc(*bufsize, sizeof(char));
+  memcpy(*buf, memdata, *bufsize);
+  BIO_free(bio);
+  return true;
+}
+
+bool API(pub_to_pem)(const peacemakr_key_t *key, char **buf, size_t *bufsize) {
+  EXPECT_NOT_NULL_RET_VALUE(key, false, "Cannot serialize a NULL key\n");
+  EXPECT_NOT_NULL_RET_VALUE(buf, false,
+                            "Cannot serialize into a NULL buffer\n");
+  EXPECT_NOT_NULL_RET_VALUE(bufsize, false,
+                            "Cannot serialize into a NULL bufsize\n");
+
+  BIO *bio = BIO_new(BIO_s_mem());
+  if (!PEM_write_bio_PUBKEY(bio, key->m_contents_.asymm)) {
+    PEACEMAKR_OPENSSL_LOG;
+    PEACEMAKR_ERROR("Failed to write the PrivateKey\n");
+    return false;
+  }
+  if (BIO_eof(bio)) {
+    PEACEMAKR_ERROR("No data stored in bio\n");
+    return false;
+  }
+  char *memdata = NULL;
+  *bufsize = BIO_get_mem_data(bio, &memdata);
+  if (memdata == NULL) {
+    BIO_free(bio);
+    PEACEMAKR_ERROR("Failed to get memdata from bio\n");
+    return false;
+  }
+  *buf = calloc(*bufsize, sizeof(char));
+  memcpy(*buf, memdata, *bufsize);
+  BIO_free(bio);
+  return true;
 }

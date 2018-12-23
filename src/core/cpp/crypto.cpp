@@ -8,10 +8,6 @@
 
 #include "crypto.hpp"
 
-#include <cassert>
-#include <cstdio>
-#include <stdexcept>
-
 peacemakr::RandomDevice::RandomDevice(rng_buf generator, rng_err err_handler)
     : m_rand_{.generator = generator, .err = err_handler} {}
 
@@ -85,6 +81,9 @@ void setContents(peacemakr::Plaintext &plain, plaintext_t &cstyle) {
 
 peacemakr::CryptoContext::CryptoContext(LogFunctionType logger)
     : m_log_(std::move(logger)) {
+
+  peacemakr_set_log_callback([](char *msg) { printf("%s", msg); });
+
   if (!peacemakr_init()) {
     m_log_("Unable to properly start the random device");
   }
@@ -95,6 +94,8 @@ void log(const std::string &msg) { printf("%s", msg.c_str()); }
 } // namespace
 
 peacemakr::CryptoContext::CryptoContext() : m_log_(log) {
+  peacemakr_set_log_callback([](char *msg) { log({msg, msg + strlen(msg)}); });
+
   if (!peacemakr_init()) {
     m_log_("Unable to properly start the random device");
   }

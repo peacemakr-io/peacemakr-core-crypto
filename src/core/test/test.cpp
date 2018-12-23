@@ -6,25 +6,21 @@
 // Full license at peacemakr_core_crypto/LICENSE.txt
 //
 
-#include <peacemakr/crypto.hpp>
-#include <cassert>
-#include <thread>
 #include <algorithm>
-#include <random>
 #include <iostream>
+#include <peacemakr/crypto.hpp>
+#include <random>
+#include <thread>
 
-void log_fn(const std::string &str) {
-  std::cerr << str << std::endl;
-}
+void log_fn(const std::string &str) { std::cerr << str << std::endl; }
 
 std::string get_random_string() {
 
   std::random_device rd;
   std::mt19937 gen(rd());
-  std::uniform_int_distribution<size_t> dis(0, (2<<7) - 1); // 0-127 (so it checks if we handle nulls as well)
-  auto call = [&]() -> char {
-    return (char)dis(gen);
-  };
+  std::uniform_int_distribution<size_t> dis(
+      0, (2 << 7) - 1); // 0-127 (so it checks if we handle nulls as well)
+  auto call = [&]() -> char { return (char)dis(gen); };
 
   size_t len = dis(gen) * 10; // also include zero-length randomly
 
@@ -39,13 +35,12 @@ std::string get_random_string() {
   return out;
 }
 
-void test_asymmetric(symmetric_cipher symm_cipher, asymmetric_cipher cipher, message_digest_algorithm digest) {
-  crypto_config_t cfg = {
-          .mode = ASYMMETRIC,
-          .symm_cipher = symm_cipher,
-          .asymm_cipher = cipher,
-          .digest_algorithm = digest
-  };
+void test_asymmetric(symmetric_cipher symm_cipher, asymmetric_cipher cipher,
+                     message_digest_algorithm digest) {
+  crypto_config_t cfg = {.mode = ASYMMETRIC,
+                         .symm_cipher = symm_cipher,
+                         .asymm_cipher = cipher,
+                         .digest_algorithm = digest};
 
   peacemakr::Plaintext plaintext_in;
   plaintext_in.data = get_random_string();
@@ -75,20 +70,20 @@ void test_asymmetric(symmetric_cipher symm_cipher, asymmetric_cipher cipher, mes
 
   peacemakr::Ciphertext *deserialized = ctx.Deserialize(serialized, &out_cfg);
   bool needVerify = false;
-  peacemakr::Plaintext plaintext_out = ctx.Decrypt(key, deserialized, needVerify);
+  peacemakr::Plaintext plaintext_out =
+      ctx.Decrypt(key, deserialized, needVerify);
   assert(!needVerify);
 
   assert(plaintext_in.data == plaintext_out.data);
   assert(plaintext_in.aad == plaintext_out.aad);
 }
 
-void test_symmetric(symmetric_cipher symm_cipher, message_digest_algorithm digest) {
-  crypto_config_t cfg = {
-          .mode = SYMMETRIC,
-          .symm_cipher = symm_cipher,
-          .asymm_cipher = NONE,
-          .digest_algorithm = digest
-  };
+void test_symmetric(symmetric_cipher symm_cipher,
+                    message_digest_algorithm digest) {
+  crypto_config_t cfg = {.mode = SYMMETRIC,
+                         .symm_cipher = symm_cipher,
+                         .asymm_cipher = NONE,
+                         .digest_algorithm = digest};
 
   peacemakr::Plaintext plaintext_in;
   plaintext_in.data = get_random_string();
@@ -119,20 +114,20 @@ void test_symmetric(symmetric_cipher symm_cipher, message_digest_algorithm diges
   peacemakr::Ciphertext *deserialized = ctx.Deserialize(serialized, &out_cfg);
 
   bool needVerify = false;
-  peacemakr::Plaintext plaintext_out = ctx.Decrypt(key, deserialized, needVerify);
+  peacemakr::Plaintext plaintext_out =
+      ctx.Decrypt(key, deserialized, needVerify);
   assert(!needVerify);
 
   assert(plaintext_in.data == plaintext_out.data);
   assert(plaintext_in.aad == plaintext_out.aad);
 }
 
-void test_sign_symmetric(symmetric_cipher symm_cipher, message_digest_algorithm digest) {
-  crypto_config_t cfg = {
-          .mode = SYMMETRIC,
-          .symm_cipher = symm_cipher,
-          .asymm_cipher = NONE,
-          .digest_algorithm = digest
-  };
+void test_sign_symmetric(symmetric_cipher symm_cipher,
+                         message_digest_algorithm digest) {
+  crypto_config_t cfg = {.mode = SYMMETRIC,
+                         .symm_cipher = symm_cipher,
+                         .asymm_cipher = NONE,
+                         .digest_algorithm = digest};
 
   peacemakr::Plaintext plaintext_in;
   plaintext_in.data = get_random_string();
@@ -163,7 +158,8 @@ void test_sign_symmetric(symmetric_cipher symm_cipher, message_digest_algorithm 
 
   peacemakr::Ciphertext *deserialized = ctx.Deserialize(serialized, &out_cfg);
   bool needVerify = false;
-  peacemakr::Plaintext plaintext_out = ctx.Decrypt(key, deserialized, needVerify);
+  peacemakr::Plaintext plaintext_out =
+      ctx.Decrypt(key, deserialized, needVerify);
   assert(needVerify);
   bool verified = ctx.Verify(key, plaintext_out, deserialized);
   assert(verified);
@@ -172,13 +168,13 @@ void test_sign_symmetric(symmetric_cipher symm_cipher, message_digest_algorithm 
   assert(plaintext_in.aad == plaintext_out.aad);
 }
 
-void test_sign_asymmetric(symmetric_cipher symm_cipher, asymmetric_cipher cipher, message_digest_algorithm digest) {
-  crypto_config_t cfg = {
-          .mode = ASYMMETRIC,
-          .symm_cipher = symm_cipher,
-          .asymm_cipher = cipher,
-          .digest_algorithm = digest
-  };
+void test_sign_asymmetric(symmetric_cipher symm_cipher,
+                          asymmetric_cipher cipher,
+                          message_digest_algorithm digest) {
+  crypto_config_t cfg = {.mode = ASYMMETRIC,
+                         .symm_cipher = symm_cipher,
+                         .asymm_cipher = cipher,
+                         .digest_algorithm = digest};
 
   peacemakr::Plaintext plaintext_in;
   plaintext_in.data = get_random_string();
@@ -208,7 +204,8 @@ void test_sign_asymmetric(symmetric_cipher symm_cipher, asymmetric_cipher cipher
   crypto_config_t out_cfg;
   peacemakr::Ciphertext *deserialized = ctx.Deserialize(serialized, &out_cfg);
   bool needVerify = false;
-  peacemakr::Plaintext plaintext_out = ctx.Decrypt(key, deserialized, needVerify);
+  peacemakr::Plaintext plaintext_out =
+      ctx.Decrypt(key, deserialized, needVerify);
   assert(needVerify);
   bool verified = ctx.Verify(key, plaintext_out, deserialized);
   assert(verified);
@@ -222,12 +219,10 @@ void test_sign_asymmetric(symmetric_cipher symm_cipher, asymmetric_cipher cipher
 }
 
 void test_uninit_crash() {
-  crypto_config_t cfg = {
-          .mode = SYMMETRIC,
-          .symm_cipher = AES_128_GCM,
-          .asymm_cipher = NONE,
-          .digest_algorithm = SHA_256
-  };
+  crypto_config_t cfg = {.mode = SYMMETRIC,
+                         .symm_cipher = AES_128_GCM,
+                         .asymm_cipher = NONE,
+                         .digest_algorithm = SHA_256};
 
   peacemakr::Plaintext plaintext_in;
   plaintext_in.data = "Hello world!";
@@ -258,14 +253,17 @@ void test_uninit_crash() {
   peacemakr::Ciphertext *deserialized = ctx.Deserialize(serialized, &out_cfg);
 
   bool needVerify = false;
-  peacemakr::Plaintext plaintext_out = ctx.Decrypt(key, deserialized, needVerify);
+  peacemakr::Plaintext plaintext_out =
+      ctx.Decrypt(key, deserialized, needVerify);
   assert(!needVerify);
   if (plaintext_out.data.empty()) { // couldn't decrypt
     assert(false);
   }
 
-  assert(plaintext_in.data == plaintext_out.data && "symmetric encrypt-decrypt failed");
-  assert(plaintext_in.aad == plaintext_out.aad && "symmetric encrypt-decrypt failed");
+  assert(plaintext_in.data == plaintext_out.data &&
+         "symmetric encrypt-decrypt failed");
+  assert(plaintext_in.aad == plaintext_out.aad &&
+         "symmetric encrypt-decrypt failed");
 }
 
 int main() {
@@ -273,22 +271,28 @@ int main() {
   for (int i = RSA_2048; i <= RSA_4096; ++i) {
     for (int j = AES_128_GCM; j <= CHACHA20_POLY1305; ++j) {
       for (int k = SHA_224; k <= SHA_512; k++) {
-        runners.emplace_back(test_asymmetric, (symmetric_cipher)j, (asymmetric_cipher)i, (message_digest_algorithm)k);
-        runners.emplace_back(test_sign_asymmetric, (symmetric_cipher)j, (asymmetric_cipher)i, (message_digest_algorithm)k);
+        runners.emplace_back(test_asymmetric, (symmetric_cipher)j,
+                             (asymmetric_cipher)i, (message_digest_algorithm)k);
+        runners.emplace_back(test_sign_asymmetric, (symmetric_cipher)j,
+                             (asymmetric_cipher)i, (message_digest_algorithm)k);
       }
-      std::for_each(runners.begin(), runners.end(), [](std::thread &t){t.join();});
+      std::for_each(runners.begin(), runners.end(),
+                    [](std::thread &t) { t.join(); });
       runners.clear();
     }
   }
 
   for (int j = AES_128_GCM; j <= CHACHA20_POLY1305; ++j) {
     for (int k = SHA_224; k <= SHA_512; k++) {
-      runners.emplace_back(test_symmetric, (symmetric_cipher)j, (message_digest_algorithm)k);
-      runners.emplace_back(test_sign_symmetric, (symmetric_cipher)j, (message_digest_algorithm)k);
+      runners.emplace_back(test_symmetric, (symmetric_cipher)j,
+                           (message_digest_algorithm)k);
+      runners.emplace_back(test_sign_symmetric, (symmetric_cipher)j,
+                           (message_digest_algorithm)k);
     }
   }
 
-  std::for_each(runners.begin(), runners.end(), [](std::thread &t){t.join();});
+  std::for_each(runners.begin(), runners.end(),
+                [](std::thread &t) { t.join(); });
 
   test_uninit_crash();
 }
