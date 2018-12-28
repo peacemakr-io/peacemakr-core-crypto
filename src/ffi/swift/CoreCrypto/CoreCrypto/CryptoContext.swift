@@ -18,7 +18,7 @@ public class CryptoContext {
     }
   }
 
-  public func Encrypt(key: PeacemakrKey, plaintext: Plaintext, rand: RandomDevice) -> PeacemakrResult<Ciphertext> {
+  public func Encrypt(key: PeacemakrKey, plaintext: Plaintext, rand: RandomDevice) -> Result<Ciphertext> {
     var innerRand = rand.getInternal()
     var innerPlaintext = plaintext.getInternal()
     let ciphertext_blob = peacemakr_encrypt(key.getInternal(), &innerPlaintext, &innerRand)
@@ -33,7 +33,7 @@ public class CryptoContext {
     peacemakr_sign(senderKey.getInternal(), &innerPlaintext, ciphertext);
   }
 
-  public func Serialize(_ ciphertext_blob: Ciphertext) -> PeacemakrResult<[UInt8]> {
+  public func Serialize(_ ciphertext_blob: Ciphertext) -> Result<[UInt8]> {
     var out_size: size_t = 0
     let bytes = peacemakr_serialize(ciphertext_blob, &out_size)
     if bytes == nil {
@@ -43,7 +43,7 @@ public class CryptoContext {
     return .result(Array(UnsafeBufferPointer(start: bytes, count: out_size)))
   }
 
-  public func ExtractUnverifiedAAD(_ serialized: [UInt8]) -> PeacemakrResult<Plaintext> {
+  public func ExtractUnverifiedAAD(_ serialized: [UInt8]) -> Result<Plaintext> {
     var out_cfg_internal = crypto_config_t()
     let ciphertext_blob = peacemakr_deserialize(UnsafePointer(serialized), serialized.count, &out_cfg_internal)
     if ciphertext_blob == nil {
@@ -57,7 +57,7 @@ public class CryptoContext {
     return .result(Plaintext(cstyle: out))
   }
 
-  public func Deserialize(_ serialized: [UInt8]) -> PeacemakrResult<(Ciphertext, CryptoConfig)> {
+  public func Deserialize(_ serialized: [UInt8]) -> Result<(Ciphertext, CryptoConfig)> {
     var out_cfg_internal = crypto_config_t()
     let ciphertext_blob = peacemakr_deserialize(UnsafePointer(serialized), serialized.count, &out_cfg_internal)
     if ciphertext_blob == nil {
@@ -66,7 +66,7 @@ public class CryptoContext {
     return .result((ciphertext_blob!, CryptoConfig(cfg: out_cfg_internal)))
   }
 
-  public func Decrypt(key: PeacemakrKey, ciphertext: Ciphertext) -> PeacemakrResult<(Plaintext, Bool)> {
+  public func Decrypt(key: PeacemakrKey, ciphertext: Ciphertext) -> Result<(Plaintext, Bool)> {
     var out = plaintext_t(data: nil, data_len: 0, aad: nil, aad_len: 0)
     let success = peacemakr_decrypt(key.getInternal(), ciphertext, &out)
 
@@ -82,7 +82,7 @@ public class CryptoContext {
     return .result((Plaintext(cstyle: out), needVerify))
   }
 
-  public func Verify(senderKey: PeacemakrKey, plaintext: Plaintext, ciphertext: inout Ciphertext) -> PeacemakrResult<Bool> {
+  public func Verify(senderKey: PeacemakrKey, plaintext: Plaintext, ciphertext: inout Ciphertext) -> Result<Bool> {
     var innerPlaintext = plaintext.getInternal()
     let verified = peacemakr_verify(senderKey.getInternal(), &innerPlaintext, ciphertext)
     if !verified {
@@ -91,7 +91,7 @@ public class CryptoContext {
     return .result(true)
   }
 
-  public func HMAC(digestAlgorithm: MessageDigestAlgorithm, key: PeacemakrKey, buf: [UInt8]) -> PeacemakrResult<[UInt8]> {
+  public func HMAC(digestAlgorithm: MessageDigestAlgorithm, key: PeacemakrKey, buf: [UInt8]) -> Result<[UInt8]> {
     var outLen = 0
     let outPtr = peacemakr_hmac(message_digest_algorithm(digestAlgorithm.rawValue), key.getInternal(), UnsafePointer(buf), buf.count, &outLen)
     if outPtr == nil {

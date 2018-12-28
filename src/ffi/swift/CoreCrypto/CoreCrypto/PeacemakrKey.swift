@@ -10,10 +10,6 @@ import Foundation
 
 import libCoreCrypto
 
-public enum PeacemakrKeyError: Error {
-  
-}
-
 public class PeacemakrKey {
   let internalRepr: OpaquePointer
     
@@ -69,7 +65,7 @@ public class PeacemakrKey {
     return internalRepr
   }
   
-  public func toPem(is_priv: Bool) -> PeacemakrResult<[Int8]> {
+  public func toPem(is_priv: Bool) -> Result<[Int8]> {
     var out: UnsafeMutablePointer<Int8>?
     var outsize: CLong = 0
     if is_priv {

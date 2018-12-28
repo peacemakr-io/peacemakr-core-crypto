@@ -8,7 +8,7 @@
 
 import Foundation
 
-public enum PeacemakrResult<T> {
+public enum Result<T> {
   case result (T)
   case error (CoreCryptoError)
 }
@@ -48,7 +48,7 @@ public enum CoreCryptoError: LocalizedError {
   }
 }
 
-public func UnwrapCall<T>(_ r: PeacemakrResult<T>, onError: ((String) -> Void)) -> T? {
+public func UnwrapCall<T>(_ r: Result<T>, onError: ((String) -> Void)) -> T? {
   switch r {
   case let .error(err):
     onError(err.localizedDescription)
@@ -58,7 +58,7 @@ public func UnwrapCall<T>(_ r: PeacemakrResult<T>, onError: ((String) -> Void)) 
   }
 }
 
-public func UnwrapCall<T>(_ r: PeacemakrResult<T>) throws -> T {
+public func UnwrapCall<T>(_ r: Result<T>) throws -> T {
   switch r {
   case let .error(err):
     throw err
