@@ -9,6 +9,10 @@
 import XCTest
 @testable import CoreCrypto
 
+fileprivate func assertFalse(_ s: String) -> Void {
+  XCTAssert(false, s)
+}
+
 class CoreCryptoTests: XCTestCase {
 
   override func setUp() {
@@ -22,22 +26,27 @@ class CoreCryptoTests: XCTestCase {
     let device = DefaultRandomDevice()
 
     let plaintextIn = Plaintext(data: "Hello from swift!", aad: "And I'm AAD")
-    let context = try! CryptoContext()
-    let key = try! PeacemakrKey(config: cfg, rand: device)
+    let context = CryptoContext()!
+    let key = PeacemakrKey(config: cfg, rand: device)!
 
-    var encrypted = try! context.Encrypt(key: key, plaintext: plaintextIn, rand: device)
+    var encrypted = UnwrapCall(context.Encrypt(key: key, plaintext: plaintextIn, rand: device), onError: assertFalse)!
+    
     context.Sign(senderKey: key, plaintext: plaintextIn, ciphertext: &(encrypted))
-    let serialized = try! context.Serialize(encrypted)
+    let serialized = UnwrapCall(context.Serialize(encrypted), onError: assertFalse)!
+    
+    let unverfiedAAD = UnwrapCall(context.ExtractUnverifiedAAD(serialized), onError: assertFalse)!
+    
+    XCTAssert(unverfiedAAD.AuthenticatableData == plaintextIn.AuthenticatableData, "Something failed in ExtractUnverfiedAAD")
 
-    let unverfiedAAD = try? context.ExtractUnverifiedAAD(serialized)
-    XCTAssert(unverfiedAAD!.AuthenticatableData == plaintextIn.AuthenticatableData, "Something failed in ExtractUnverfiedAAD")
-
-    var (deserialized, outCfg) = try! context.Deserialize(serialized)
+    var (deserialized, outCfg) = UnwrapCall(context.Deserialize(serialized), onError: assertFalse)!
+    
     XCTAssert(cfg == outCfg)
-    let (decrypted, needVerify) = try! context.Decrypt(key: key, ciphertext: deserialized)
+    let (decrypted, needVerify) = UnwrapCall(context.Decrypt(key: key, ciphertext: deserialized), onError: assertFalse)!
+    
+    
     if needVerify {
-      let success = context.Verify(senderKey: key, plaintext: decrypted, ciphertext: &(deserialized))
-      XCTAssert(success)
+      let success = UnwrapCall(context.Verify(senderKey: key, plaintext: decrypted, ciphertext: &(deserialized)), onError: assertFalse)!
+      XCTAssert(success, "Verification failed")
     }
     XCTAssert(decrypted.EncryptableData == plaintextIn.EncryptableData)
     XCTAssert(decrypted.AuthenticatableData == plaintextIn.AuthenticatableData)

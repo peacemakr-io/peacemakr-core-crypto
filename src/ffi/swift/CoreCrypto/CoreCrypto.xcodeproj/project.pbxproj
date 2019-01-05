@@ -19,6 +19,7 @@
 		077EEDB4218E1FD200A0899D /* crypto.h in Headers */ = {isa = PBXBuildFile; fileRef = 077EEDB2218E1FD200A0899D /* crypto.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		077EEDB5218E1FD200A0899D /* random.h in Headers */ = {isa = PBXBuildFile; fileRef = 077EEDB3218E1FD200A0899D /* random.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		077EEDB8218E21DB00A0899D /* libpeacemakr-core-crypto.dylib in Resources */ = {isa = PBXBuildFile; fileRef = 077029AD218D2F5E00F33713 /* libpeacemakr-core-crypto.dylib */; };
+		07D8947321D544D200663904 /* Errors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07D8947221D544D200663904 /* Errors.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -47,6 +48,7 @@
 		077EEDB2218E1FD200A0899D /* crypto.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = crypto.h; path = ../libCoreCrypto/include/peacemakr/crypto.h; sourceTree = "<group>"; };
 		077EEDB3218E1FD200A0899D /* random.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = random.h; path = ../libCoreCrypto/include/peacemakr/random.h; sourceTree = "<group>"; };
 		077EEDB6218E1FED00A0899D /* module.map */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.module-map"; name = module.map; path = CoreCrypto/module.map; sourceTree = "<group>"; };
+		07D8947221D544D200663904 /* Errors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Errors.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -103,6 +105,7 @@
 				0764D241218D269C00409B73 /* CryptoContext.swift */,
 				075623F9218CECAA0066BF29 /* Info.plist */,
 				0756240F218CED310066BF29 /* PeacemakrKey.swift */,
+				07D8947221D544D200663904 /* Errors.swift */,
 			);
 			path = CoreCrypto;
 			sourceTree = "<group>";
@@ -240,6 +243,7 @@
 				077EEDA3218D4B8700A0899D /* Plaintext.swift in Sources */,
 				077EED9F218D40E900A0899D /* CryptoConfig.swift in Sources */,
 				077EEDA1218D44BE00A0899D /* RandomDevice.swift in Sources */,
+				07D8947321D544D200663904 /* Errors.swift in Sources */,
 				07562410218CED310066BF29 /* PeacemakrKey.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -409,7 +413,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
-					"/Users/aman/peacemakr/peacemakr-core-crypto/src/ffi/swift/libCoreCrypto/lib",
+					"$(SRCROOT)/../libCoreCrypto/lib",
 				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(SRCROOT)/../openssl/openssl-build/lib",
@@ -451,7 +455,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
-					"/Users/aman/peacemakr/peacemakr-core-crypto/src/ffi/swift/libCoreCrypto/lib",
+					"$(SRCROOT)/../libCoreCrypto/lib",
 				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(SRCROOT)/../openssl/openssl-build/lib",

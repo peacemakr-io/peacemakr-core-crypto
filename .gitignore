@@ -20,4 +20,12 @@ CMakeFiles/
 **/Doxyfile.doxygen
 **/CMakeDoxyfile.in
 
+xcuserdata/
+*.dSYM
+
+*.moved-aside
+*.xccheckout
+*.xcscmblueprint
+*.xcworkspacedata
+
 *.DS_Store
