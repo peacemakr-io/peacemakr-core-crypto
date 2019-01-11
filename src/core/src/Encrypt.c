@@ -444,7 +444,8 @@ ciphertext_blob_t *peacemakr_encrypt(const peacemakr_key_t *recipient_key,
                   "AAD was too big, needs to be broken up\n");
 
   if (plain->data == NULL && plain->data_len <= 0) {
-    PEACEMAKR_LOG("No data to encrypt\n");
+    // TODO: should be log or error?
+    PEACEMAKR_ERROR("No data to encrypt\n");
     return NULL;
   }
 
