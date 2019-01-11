@@ -57,10 +57,7 @@ struct PeacemakrKey {
 
 typedef struct PeacemakrKey peacemakr_key_t;
 
-#define GLUE(prefix, name) prefix##name
-#define API(name) GLUE(PeacemakrKey_, name)
-
-peacemakr_key_t *API(new)(crypto_config_t cfg, random_device_t *rand) {
+peacemakr_key_t *PeacemakrKey_new(crypto_config_t cfg, random_device_t *rand) {
   EXPECT_NOT_NULL_RET(
       rand, "Cannot create a new key without a source of randomness\n");
 
@@ -82,7 +79,7 @@ peacemakr_key_t *API(new)(crypto_config_t cfg, random_device_t *rand) {
     switch (cfg.asymm_cipher) {
     case NONE: {
       PEACEMAKR_ERROR("asymmetric cipher not specified for asymmetric mode\n");
-      API(free)(out);
+      PeacemakrKey_free(out);
       return NULL;
     }
       //    case EC25519: {
@@ -95,7 +92,7 @@ peacemakr_key_t *API(new)(crypto_config_t cfg, random_device_t *rand) {
     case RSA_2048: {
       if (keygen_inner(EVP_PKEY_RSA, &out->m_contents_.asymm, 2048) == false) {
         PEACEMAKR_ERROR("keygen failed\n");
-        API(free)(out);
+        PeacemakrKey_free(out);
         return NULL;
       }
       break;
@@ -103,7 +100,7 @@ peacemakr_key_t *API(new)(crypto_config_t cfg, random_device_t *rand) {
     case RSA_4096: {
       if (keygen_inner(EVP_PKEY_RSA, &out->m_contents_.asymm, 4096) == false) {
         PEACEMAKR_ERROR("keygen failed\n");
-        API(free)(out);
+        PeacemakrKey_free(out);
         return NULL;
       }
       break;
@@ -114,12 +111,12 @@ peacemakr_key_t *API(new)(crypto_config_t cfg, random_device_t *rand) {
   }
 
   PEACEMAKR_ERROR("unknown failure\n");
-  API(free)(out);
+  PeacemakrKey_free(out);
   return NULL;
 }
 
-peacemakr_key_t *API(new_bytes)(crypto_config_t cfg, const uint8_t *buf,
-                                const size_t bufsize) {
+peacemakr_key_t *PeacemakrKey_new_bytes(crypto_config_t cfg, const uint8_t *buf,
+                                        const size_t bufsize) {
   EXPECT_TRUE_RET((cfg.mode == SYMMETRIC),
                   "Can't set a raw bytes for asymmetric crypto\n");
   EXPECT_NOT_NULL_RET(buf, "buffer is null\n");
@@ -138,10 +135,10 @@ peacemakr_key_t *API(new_bytes)(crypto_config_t cfg, const uint8_t *buf,
   return out;
 }
 
-peacemakr_key_t *API(new_from_master)(crypto_config_t cfg,
-                                      const peacemakr_key_t *master_key,
-                                      const uint8_t *key_id,
-                                      const size_t key_id_len) {
+peacemakr_key_t *PeacemakrKey_new_from_master(crypto_config_t cfg,
+                                              const peacemakr_key_t *master_key,
+                                              const uint8_t *key_id,
+                                              const size_t key_id_len) {
   EXPECT_TRUE_RET((cfg.mode == SYMMETRIC),
                   "Can't set a raw bytes for asymmetric crypto\n");
 
@@ -165,8 +162,8 @@ peacemakr_key_t *API(new_from_master)(crypto_config_t cfg,
   return out;
 }
 
-peacemakr_key_t *API(new_pem)(crypto_config_t cfg, const char *buf,
-                              const size_t buflen, bool is_priv) {
+peacemakr_key_t *PeacemakrKey_new_pem(crypto_config_t cfg, const char *buf,
+                                      const size_t buflen, bool is_priv) {
 
   EXPECT_TRUE_RET((buf != NULL && buflen > 0),
                   "buf was null or buflen was 0\n");
@@ -186,14 +183,14 @@ peacemakr_key_t *API(new_pem)(crypto_config_t cfg, const char *buf,
     EXPECT_NOT_NULL_CLEANUP_RET(out->m_contents_.asymm,
                                 {
                                   BIO_free(bo);
-                                  API(free)(out);
+                                  PeacemakrKey_free(out);
                                 },
                                 "PEM_read_bio_PrivateKey failed\n");
   } else {
     if (!PEM_read_bio_RSA_PUBKEY(bo, &rsaKey, NULL, NULL)) {
       PEACEMAKR_ERROR("PEM_read_bio_RSA_PUBKEY failed\n");
       BIO_free(bo);
-      API(free)(out);
+      PeacemakrKey_free(out);
       RSA_free(rsaKey);
       return NULL;
     }
@@ -202,13 +199,13 @@ peacemakr_key_t *API(new_pem)(crypto_config_t cfg, const char *buf,
       PEACEMAKR_ERROR("EVP_PKEY_assign_RSA failed\n");
       BIO_free(bo);
       RSA_free(rsaKey);
-      API(free)(out);
+      PeacemakrKey_free(out);
       return NULL;
     }
     EXPECT_NOT_NULL_CLEANUP_RET(out->m_contents_.asymm,
                                 {
                                   BIO_free(bo);
-                                  API(free)(out);
+                                  PeacemakrKey_free(out);
                                   RSA_free(rsaKey);
                                 },
                                 "PEM_read_bio_PUBKEY failed\n");
@@ -219,17 +216,17 @@ peacemakr_key_t *API(new_pem)(crypto_config_t cfg, const char *buf,
   return out;
 }
 
-peacemakr_key_t *API(new_pem_pub)(crypto_config_t cfg, const char *buf,
-                                  const size_t buflen) {
-  return API(new_pem)(cfg, buf, buflen, false);
+peacemakr_key_t *PeacemakrKey_new_pem_pub(crypto_config_t cfg, const char *buf,
+                                          const size_t buflen) {
+  return PeacemakrKey_new_pem(cfg, buf, buflen, false);
 }
 
-peacemakr_key_t *API(new_pem_priv)(crypto_config_t cfg, const char *buf,
-                                   const size_t buflen) {
-  return API(new_pem)(cfg, buf, buflen, true);
+peacemakr_key_t *PeacemakrKey_new_pem_priv(crypto_config_t cfg, const char *buf,
+                                           const size_t buflen) {
+  return PeacemakrKey_new_pem(cfg, buf, buflen, true);
 }
 
-void API(free)(peacemakr_key_t *key) {
+void PeacemakrKey_free(peacemakr_key_t *key) {
   EXPECT_NOT_NULL_RET_NONE(key, "key was null\n");
 
   switch (key->m_cfg_.mode) {
@@ -246,11 +243,11 @@ void API(free)(peacemakr_key_t *key) {
   key = NULL;
 }
 
-crypto_config_t API(get_config)(const peacemakr_key_t *key) {
+crypto_config_t PeacemakrKey_get_config(const peacemakr_key_t *key) {
   return key->m_cfg_;
 }
 
-const buffer_t *API(symmetric)(const peacemakr_key_t *key) {
+const buffer_t *PeacemakrKey_symmetric(const peacemakr_key_t *key) {
   EXPECT_TRUE_RET(
       (key->m_cfg_.mode == SYMMETRIC),
       "Attempting to access the symmetric part of an asymmetric key\n");
@@ -258,7 +255,7 @@ const buffer_t *API(symmetric)(const peacemakr_key_t *key) {
   return key->m_contents_.symm;
 }
 
-EVP_PKEY *API(asymmetric)(const peacemakr_key_t *key) {
+EVP_PKEY *PeacemakrKey_asymmetric(const peacemakr_key_t *key) {
   EXPECT_TRUE_RET(
       (key->m_cfg_.mode == ASYMMETRIC),
       "Attempting to access the asymmetric part of a symmetric key\n");
@@ -266,7 +263,8 @@ EVP_PKEY *API(asymmetric)(const peacemakr_key_t *key) {
   return key->m_contents_.asymm;
 }
 
-bool API(priv_to_pem)(const peacemakr_key_t *key, char **buf, size_t *bufsize) {
+bool PeacemakrKey_priv_to_pem(const peacemakr_key_t *key, char **buf,
+                              size_t *bufsize) {
   EXPECT_NOT_NULL_RET_VALUE(key, false, "Cannot serialize a NULL key\n");
   EXPECT_NOT_NULL_RET_VALUE(buf, false,
                             "Cannot serialize into a NULL buffer\n");
@@ -297,7 +295,8 @@ bool API(priv_to_pem)(const peacemakr_key_t *key, char **buf, size_t *bufsize) {
   return true;
 }
 
-bool API(pub_to_pem)(const peacemakr_key_t *key, char **buf, size_t *bufsize) {
+bool PeacemakrKey_pub_to_pem(const peacemakr_key_t *key, char **buf,
+                             size_t *bufsize) {
   EXPECT_NOT_NULL_RET_VALUE(key, false, "Cannot serialize a NULL key\n");
   EXPECT_NOT_NULL_RET_VALUE(buf, false,
                             "Cannot serialize into a NULL buffer\n");
