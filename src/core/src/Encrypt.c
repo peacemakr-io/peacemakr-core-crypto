@@ -14,9 +14,6 @@
 #include "Logging.h"
 
 #include <memory.h>
-#include <openssl/err.h>
-#include <openssl/evp.h>
-#include <stdbool.h>
 
 // None of the input lengths can be larger than INT_MAX
 static bool symmetric_encrypt(const peacemakr_key_t *peacemakrkey,
@@ -445,8 +442,12 @@ ciphertext_blob_t *peacemakr_encrypt(const peacemakr_key_t *recipient_key,
                   "Data was too big, needs to be broken up\n");
   EXPECT_TRUE_RET(plain->aad_len <= INT_MAX,
                   "AAD was too big, needs to be broken up\n");
-  EXPECT_TRUE_RET((plain->data != NULL && plain->data_len > 0),
-                  "No data to encrypt\n");
+
+  if (plain->data == NULL && plain->data_len <= 0) {
+    // TODO: should be log or error?
+    PEACEMAKR_ERROR("No data to encrypt\n");
+    return NULL;
+  }
 
   const crypto_config_t cfg = PeacemakrKey_get_config(recipient_key);
 

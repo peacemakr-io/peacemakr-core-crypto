@@ -31,10 +31,10 @@
  * interface in OpenSSL and can be reliably swapped in and out for each other.
  */
 typedef enum {
-  AES_128_GCM,
-  AES_192_GCM,
-  AES_256_GCM,
-  CHACHA20_POLY1305
+  AES_128_GCM = 0,
+  AES_192_GCM = 1,
+  AES_256_GCM = 2,
+  CHACHA20_POLY1305 = 3,
 } symmetric_cipher;
 
 /**
@@ -44,9 +44,9 @@ typedef enum {
  * so only the RSA_* algorithms are currently supported
  */
 typedef enum {
-  NONE,
-  RSA_2048,
-  RSA_4096,
+  NONE = 0,
+  RSA_2048 = 1,
+  RSA_4096 = 2,
   //  EC25519,
 } asymmetric_cipher;
 
@@ -58,14 +58,14 @@ typedef enum {
  * the ones that are considered to be secure.
  */
 typedef enum {
-  SHA_224,
-  SHA_256,
-  SHA_384,
-  SHA_512,
-  SHA3_224,
-  SHA3_256,
-  SHA3_384,
-  SHA3_512
+  SHA_224 = 0,
+  SHA_256 = 1,
+  SHA_384 = 2,
+  SHA_512 = 3,
+  SHA3_224 = 4,
+  SHA3_256 = 5,
+  SHA3_384 = 6,
+  SHA3_512 = 7,
 } message_digest_algorithm;
 
 /**

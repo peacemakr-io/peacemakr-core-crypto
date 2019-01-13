@@ -25,6 +25,10 @@ static void log_to_stderr(char *msg) { fprintf(stderr, "%s", msg); }
 void log_printf(const char *function_name, int line, level_t level,
                 const char *fmt, ...) {
 
+  if (level < PEACEMAKR_LOG_LEVEL) {
+    return;
+  }
+
   if (log_fn == NULL) {
     log_fn = &log_to_stderr;
   }

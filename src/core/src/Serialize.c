@@ -14,12 +14,7 @@
 #include "Logging.h"
 #include "b64.h"
 
-#include <arpa/inet.h>
 #include <memory.h>
-
-#include <openssl/bio.h>
-#include <openssl/buffer.h>
-#include <openssl/evp.h>
 
 #define _PEACEMAKR_MAGIC_ (uint32_t)1054
 
@@ -280,7 +275,7 @@ ciphertext_blob_t *peacemakr_deserialize(const uint8_t *b64_serialized_cipher,
 
   CiphertextBlob_set_version(out, version);
 
-  if (encrypted_key != NULL) {
+  if (Buffer_get_size(encrypted_key) != 0) {
     Buffer_set_bytes(CiphertextBlob_mutable_encrypted_key(out),
                      Buffer_get_bytes(encrypted_key, NULL),
                      Buffer_get_size(encrypted_key));

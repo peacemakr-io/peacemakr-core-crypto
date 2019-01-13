@@ -39,6 +39,10 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/AddClangAnalyzer.cmake)
 find_package(Doxygen)
 if (DOXYGEN_FOUND)
     set(DOXYGEN_EXTRACT_STATIC YES)
+    # Workaround for what I assume is a bug in cmake 3.12
+    set(DOXYGEN_LATEX_MAKEINDEX_CMD "makeindex")
+    set(DOXYGEN_GENERATE_HTML YES)
+    set(DOXYGEN_OPTIMIZE_OUTPUT_FOR_C YES)
     set(DOXYGEN_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/docs)
     set(DOXYGEN_USE_MDFILE_AS_MAINPAGE ${CMAKE_CURRENT_SOURCE_DIR}/README.md)
     doxygen_add_docs(doxygen
