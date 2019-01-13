@@ -11,6 +11,7 @@
 #include <peacemakr/crypto.hpp>
 #include <random>
 #include <thread>
+#include <cassert>
 
 void log_fn(const std::string &str) { std::cerr << str << std::endl; }
 
