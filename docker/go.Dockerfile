@@ -41,9 +41,6 @@ RUN go test -v peacemakr/crypto
 
 FROM alpine:3.8
 
-# WTF is this shit. I don't want to dev in this container, just run.
-# RUN apk add --no-cache gcc musl-dev libbsd-dev
-
 COPY --from=builder /usr/local/lib/cmake /usr/local/lib/cmake
 COPY --from=builder /usr/local/lib/libpeacemakr* /usr/local/lib/
 COPY --from=builder /usr/local/include/peacemakr /usr/local/include/peacemakr
