@@ -6,7 +6,7 @@
 # Full license at peacemakr-core-crypto/LICENSE.txt
 #
 
-FROM alpine:3.8 as builder
+FROM golang:alpine3.8 as builder
 
 RUN apk add --no-cache libbsd-dev git alpine-sdk perl cmake linux-headers
 
@@ -30,7 +30,14 @@ ENV GOPATH=/go
 ARG CMAKE_BUILD_TYPE=DEBUG
 RUN mkdir -p build && cd build && cmake .. -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DPEACEMAKR_BUILD_GO=ON -DPEACEMAKR_BUILD_IOS=OFF && make check install
 
-FROM golang:alpine3.8
+ENV GOPATH=/go
+ENV LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
+
+WORKDIR /go/src
+
+RUN go test -v peacemakr/crypto
+
+FROM alpine:3.8
 
 RUN apk add --no-cache gcc musl-dev libbsd-dev
 
