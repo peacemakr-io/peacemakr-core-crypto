@@ -33,13 +33,16 @@ RUN mkdir -p build && cd build && cmake .. -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE
 ENV GOPATH=/go
 ENV LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
 
+RUN apk add --no-cache gcc musl-dev libbsd-dev
+RUN cp -r /opt/src/ffi/go/src /go
 WORKDIR /go/src
 
 RUN go test -v peacemakr/crypto
 
 FROM alpine:3.8
 
-RUN apk add --no-cache gcc musl-dev libbsd-dev
+# WTF is this shit. I don't want to dev in this container, just run.
+# RUN apk add --no-cache gcc musl-dev libbsd-dev
 
 COPY --from=builder /usr/local/lib/cmake /usr/local/lib/cmake
 COPY --from=builder /usr/local/lib/libpeacemakr* /usr/local/lib/
@@ -51,7 +54,3 @@ ENV GOPATH=/go
 ENV LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
 
 WORKDIR /go/src
-
-#RUN go fmt /go/src/peacemakr/crypto
-
-RUN go test -v peacemakr/crypto
