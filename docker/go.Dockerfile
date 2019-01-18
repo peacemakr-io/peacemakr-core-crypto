@@ -41,6 +41,8 @@ RUN go test -v peacemakr/crypto
 
 FROM alpine:3.8
 
+RUN apk add --no-cache libbsd
+
 COPY --from=builder /usr/local/lib/cmake /usr/local/lib/cmake
 COPY --from=builder /usr/local/lib/libpeacemakr* /usr/local/lib/
 COPY --from=builder /usr/local/include/peacemakr /usr/local/include/peacemakr
