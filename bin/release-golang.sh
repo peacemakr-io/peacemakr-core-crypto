@@ -30,5 +30,6 @@ if [[ "${2}" == "release" ]]; then
     BUILD_ARG="CMAKE_BUILD_TYPE=RELEASE"
 fi
 
+docker build -t corecrypto-dependencies:latest . -f docker/go-dependencies.Dockerfile --build-arg=${BUILD_ARG}
 docker build -t corecrypto:latest . -f docker/go.Dockerfile --build-arg=${BUILD_ARG}
 get_crypto_file ${1}
