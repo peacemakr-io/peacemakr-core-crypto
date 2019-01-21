@@ -10,6 +10,9 @@ From the repository base directory,
 
 ---
 
+## Build Dependencies - Golang
+`docker build -t corecrypto-dependencies:latest . -f docker/go-dependencies.Dockerfile --build-arg="CMAKE_BUILD_TYPE=RELEASE"`
+
 ## Build - Golang
 `docker build -t corecrypto:latest . -f docker/go.Dockerfile`
 ## Build (release) - Golang
