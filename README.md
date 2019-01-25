@@ -2,14 +2,11 @@
 [![CircleCI](https://circleci.com/gh/notasecret/peacemakr-core-crypto/tree/master.svg?style=svg&circle-token=a5e0dd516384638b6e97cd79c7963d8081873df2)](https://circleci.com/gh/notasecret/peacemakr-core-crypto/tree/master)
 
 ## About
-
 This package defines the core crypto functionality for peacemakr.
 
 ## Documentation
 From the repository base directory,
 `./bin/serve-docs.sh` will set up a docker image that serves the doxygen docs on `localhost:3000`
-
----
 
 ## Build Dependencies - Golang
 `docker build -t corecrypto-dependencies:latest . -f docker/go-dependencies.Dockerfile --build-arg="CMAKE_BUILD_TYPE=RELEASE"`
