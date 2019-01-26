@@ -8,7 +8,7 @@
 
 FROM corecrypto-dependencies:latest as builder
 
-FROM alpine:3.8
+FROM alpine
 
 RUN apk add --no-cache libbsd
 
