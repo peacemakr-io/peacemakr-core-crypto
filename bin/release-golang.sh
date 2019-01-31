@@ -33,3 +33,14 @@ fi
 docker build -t corecrypto-dependencies:latest . -f docker/go-dependencies.Dockerfile --build-arg=${BUILD_ARG}
 docker build -t corecrypto:latest . -f docker/go.Dockerfile --build-arg=${BUILD_ARG}
 get_crypto_file ${1}
+
+# Setup aws credentials
+`aws ecr get-login --no-include-email --region us-east-2 --profile peacemakr` || true
+
+# Release to ECR
+docker tag corecrypto-dependencies:latest 716293438869.dkr.ecr.us-east-2.amazonaws.com/corecrypto-dependencies:latest
+docker push 716293438869.dkr.ecr.us-east-2.amazonaws.com/corecrypto-dependencies:latest
+
+docker tag corecrypto:latest 716293438869.dkr.ecr.us-east-2.amazonaws.com/corecrypto:latest
+docker push 716293438869.dkr.ecr.us-east-2.amazonaws.com/corecrypto:latest
+

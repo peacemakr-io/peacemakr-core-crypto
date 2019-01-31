@@ -1,4 +1,4 @@
-FROM golang:alpine3.8 as builder
+FROM golang:1.11-alpine as builder
 
 RUN apk add --no-cache libbsd-dev git alpine-sdk perl cmake linux-headers
 

@@ -1,0 +1,20 @@
+version: 2
+jobs:
+  build:
+    machine: true
+    steps:
+      - checkout
+      - run: docker build -t corecrypto-dependencies:latest . -f docker/go-dependencies.Dockerfile --build-arg="CMAKE_BUILD_TYPE=RELEASE"
+      - run: docker build -t corecrypto:latest . -f docker/go.Dockerfile
+
+  deploy:
+    machine: true
+    branches:
+      only:
+        - master
+    steps:
+      - run: $(aws ecr get-login --no-include-email --region us-east-2)
+      - run: docker tag corecrypto-dependencies:latest 716293438869.dkr.ecr.us-east-2.amazonaws.com/corecrypto-dependencies:latest
+      - run: docker push 716293438869.dkr.ecr.us-east-2.amazonaws.com/corecrypto-dependencies:latest
+      - run: docker tag corecrypto:latest 716293438869.dkr.ecr.us-east-2.amazonaws.com/corecrypto:latest
+      - run: docker push 716293438869.dkr.ecr.us-east-2.amazonaws.com/corecrypto:latest
