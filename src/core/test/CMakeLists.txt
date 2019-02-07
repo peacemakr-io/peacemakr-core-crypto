@@ -31,6 +31,7 @@ add_ctest(encrypt_asymmetric_gen_pem)
 add_ctest(serialize)
 add_ctest(big_message)
 add_ctest(sign)
+add_ctest(garbage)
 
 enable_language(CXX)
 set(CMAKE_CXX_STANDARD 11)

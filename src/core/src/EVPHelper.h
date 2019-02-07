@@ -76,7 +76,7 @@ static inline const EVP_MD *parse_digest(message_digest_algorithm cfg) {
   case SHA3_512:
     return EVP_sha3_512();
   }
-  return 0;
+  return NULL;
 }
 
 static inline size_t get_digest_len(message_digest_algorithm cfg) {

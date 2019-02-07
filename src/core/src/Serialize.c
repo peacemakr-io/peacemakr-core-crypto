@@ -189,12 +189,19 @@ ciphertext_blob_t *peacemakr_deserialize(const uint8_t *b64_serialized_cipher,
       ntohl(*(uint64_t *)(serialized_cipher + current_position));
   current_position += sizeof(uint64_t);
 
+  // Something is bad
+  EXPECT_TRUE_RET(len_before_digest < serialized_len, "corrupted length in message, aborting\n");
+
   // digest algo
   uint8_t digest_algo = *(serialized_cipher + current_position);
   current_position += sizeof(uint8_t);
 
   { // Check that the message digests are equal
-    uint64_t digestlen = (uint64_t)EVP_MD_size(parse_digest(digest_algo));
+    const EVP_MD *digest_algorithm = parse_digest(digest_algo);
+    EXPECT_NOT_NULL_RET(digest_algorithm, "corrupted digest algorithm, aborting\n");
+
+    uint64_t digestlen = (uint64_t)EVP_MD_size(digest_algorithm);
+    EXPECT_TRUE_RET((serialized_len - len_before_digest) > digestlen, "corrupted digest length in message, aborting\n");
     buffer_t *serialized_digest =
         Buffer_deserialize(serialized_cipher + len_before_digest);
 
