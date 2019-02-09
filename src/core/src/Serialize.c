@@ -191,11 +191,11 @@ ciphertext_blob_t *peacemakr_deserialize(const uint8_t *b64_serialized_cipher,
       cfg, "need to store the deserialized configuration somewhere\n");
 
   uint8_t *serialized_cipher = alloca(serialized_len);
+  EXPECT_NOT_NULL_RET(serialized_cipher, "failed to allocate serialize_cipher")
+  
   int rc = b64_decode((const char *)b64_serialized_cipher, serialized_cipher,
                       serialized_len);
-
-  EXPECT_TRUE_RET((serialized_cipher != NULL && rc == 1),
-                  "b64 decode failed\n");
+  EXPECT_TRUE_RET((rc == 1), "b64 decode failed\n");
 
   size_t current_position = 0;
 
