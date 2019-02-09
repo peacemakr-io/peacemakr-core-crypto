@@ -20,12 +20,12 @@ void test_deserialize_garbage() {
 
   fill_rand(garbage_message, message_len);
 
-  crypto_config_t out_cfg = {
-          .mode = SYMMETRIC, .symm_cipher = AES_256_GCM, .digest_algorithm = SHA_512
-  };
+  crypto_config_t out_cfg = {.mode = SYMMETRIC,
+                             .symm_cipher = AES_256_GCM,
+                             .digest_algorithm = SHA_512};
 
   ciphertext_blob_t *deserialized =
-          peacemakr_deserialize(garbage_message, message_len, &out_cfg);
+      peacemakr_deserialize(garbage_message, message_len, &out_cfg);
   assert(deserialized == NULL);
 }
 
@@ -36,12 +36,13 @@ void test_deserialize_b64_garbage() {
   fill_rand(garbage_message, message_len);
 
   size_t outlen;
-  uint8_t *b64_msg = (uint8_t *)b64_encode(garbage_message, message_len, &outlen);
+  uint8_t *b64_msg =
+      (uint8_t *)b64_encode(garbage_message, message_len, &outlen);
 
   crypto_config_t out_cfg;
 
   ciphertext_blob_t *deserialized =
-          peacemakr_deserialize(b64_msg, outlen, &out_cfg);
+      peacemakr_deserialize(b64_msg, outlen, &out_cfg);
   assert(deserialized == NULL);
   free(b64_msg);
 }
@@ -56,12 +57,13 @@ void test_deserialize_b64_with_magic_garbage() {
   memcpy(garbage_message, &magic, sizeof(uint32_t));
 
   size_t outlen;
-  uint8_t *b64_msg = (uint8_t *)b64_encode(garbage_message, message_len, &outlen);
+  uint8_t *b64_msg =
+      (uint8_t *)b64_encode(garbage_message, message_len, &outlen);
 
   crypto_config_t out_cfg;
 
   ciphertext_blob_t *deserialized =
-          peacemakr_deserialize(b64_msg, outlen, &out_cfg);
+      peacemakr_deserialize(b64_msg, outlen, &out_cfg);
   assert(deserialized == NULL);
   free(b64_msg);
 }
@@ -75,15 +77,17 @@ void test_deserialize_b64_with_magic_and_correct_len_garbage() {
   uint32_t magic = htonl(1054);
   memcpy(garbage_message, &magic, sizeof(uint32_t));
   uint64_t len_until_digest = htonl(message_len - 32);
-  memcpy(garbage_message + sizeof(uint32_t), &len_until_digest, sizeof(uint64_t));
+  memcpy(garbage_message + sizeof(uint32_t), &len_until_digest,
+         sizeof(uint64_t));
 
   size_t outlen;
-  uint8_t *b64_msg = (uint8_t *)b64_encode(garbage_message, message_len, &outlen);
+  uint8_t *b64_msg =
+      (uint8_t *)b64_encode(garbage_message, message_len, &outlen);
 
   crypto_config_t out_cfg;
 
   ciphertext_blob_t *deserialized =
-          peacemakr_deserialize(b64_msg, outlen, &out_cfg);
+      peacemakr_deserialize(b64_msg, outlen, &out_cfg);
   assert(deserialized == NULL);
   free(b64_msg);
 }
@@ -98,5 +102,3 @@ int main() {
   test_deserialize_b64_with_magic_garbage();
   test_deserialize_b64_with_magic_and_correct_len_garbage();
 }
-
-

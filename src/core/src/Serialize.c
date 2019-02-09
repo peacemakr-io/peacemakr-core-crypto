@@ -18,30 +18,18 @@
 
 #define _PEACEMAKR_MAGIC_ (uint32_t)1054
 
-static void digest_message(const unsigned char *message, size_t message_len,
-                           const EVP_MD *digest_algo, buffer_t *digest) {
-  EVP_MD_CTX *mdctx;
+// HMAC-SHA512 needs a 64 byte key. Shorter HMAC versions will truncate.
+static const uint8_t PEACEMAKR_MAGIC_KEY[64] =
+    "7d3rAfIHtCbYLm1OY6IRjvoBdqw2QdyvPIECF4Aczs2LgiShn8CeO8c21Q+GMuGf";
 
-  mdctx = EVP_MD_CTX_create();
-  EXPECT_NOT_NULL_RET_NONE(mdctx, "mdctx_create failed\n");
-
-  OPENSSL_CHECK_RET_NONE(EVP_DigestInit_ex(mdctx, digest_algo, NULL),
-                         EVP_MD_CTX_destroy(mdctx));
-  OPENSSL_CHECK_RET_NONE(EVP_DigestUpdate(mdctx, message, message_len),
-                         EVP_MD_CTX_destroy(mdctx));
-
-  size_t digest_len = Buffer_get_size(digest);
-  unsigned int size;
-
-  OPENSSL_CHECK_RET_NONE(
-      EVP_DigestFinal_ex(mdctx, Buffer_mutable_bytes(digest), &size),
-      EVP_MD_CTX_destroy(mdctx));
-
-  EXPECT_TRUE_CLEANUP_RET_NONE(
-      (size == digest_len), EVP_MD_CTX_free(mdctx),
-      "sizes different than expected for message digest\n");
-
-  EVP_MD_CTX_free(mdctx);
+static peacemakr_key_t *get_hmac_key(message_digest_algorithm digest_algo) {
+  crypto_config_t hmac_cfg = {.mode = SYMMETRIC,
+                              .symm_cipher = CHACHA20_POLY1305,
+                              .asymm_cipher = NONE,
+                              .digest_algorithm = digest_algo};
+  peacemakr_key_t *hmac_key =
+      PeacemakrKey_new_bytes(hmac_cfg, PEACEMAKR_MAGIC_KEY, 32);
+  return hmac_key;
 }
 
 /*
@@ -59,7 +47,7 @@ static void digest_message(const unsigned char *message, size_t message_len,
  * (9) Tag (128 bits)
  * (10) AAD
  * (11) Ciphertext
- * (12) Message Digest (224, 256, 384, or 512 bits)
+ * (12) Message HMAC (224, 256, 384, or 512 bits)
  */
 
 uint8_t *peacemakr_serialize(ciphertext_blob_t *cipher, size_t *out_size) {
@@ -164,9 +152,24 @@ uint8_t *peacemakr_serialize(ciphertext_blob_t *cipher, size_t *out_size) {
 
   // digest the message
   buffer_t *message_digest = Buffer_new(digest_len);
-  digest_message(buf, current_pos,
-                 parse_digest(CiphertextBlob_digest_algo(cipher)),
-                 message_digest);
+
+  // get our hmac key
+  peacemakr_key_t *hmac_key = get_hmac_key(CiphertextBlob_digest_algo(cipher));
+
+  // Digest the message
+  size_t digest_out_size = 0;
+  uint8_t *raw_digest = peacemakr_hmac(CiphertextBlob_digest_algo(cipher), hmac_key,
+                                   buf, current_pos, &digest_out_size);
+
+  // Make sure we didn't do a stupid
+  EXPECT_TRUE_RET(digest_out_size == digest_len, "Computed HMAC was of the incorrect size\n");
+
+  // Store it
+  Buffer_set_bytes(message_digest, raw_digest, digest_out_size);
+
+  // Clean up
+  free(raw_digest);
+  PeacemakrKey_free(hmac_key);
 
   // Append the digest
   size_t digestlen = Buffer_serialize(message_digest, buf + current_pos);
@@ -208,7 +211,8 @@ ciphertext_blob_t *peacemakr_deserialize(const uint8_t *b64_serialized_cipher,
   current_position += sizeof(uint64_t);
 
   // Something is bad
-  EXPECT_TRUE_RET(len_before_digest < serialized_len, "corrupted length in message, aborting\n");
+  EXPECT_TRUE_RET(len_before_digest < serialized_len,
+                  "corrupted length in message, aborting\n");
 
   // digest algo
   uint8_t digest_algo = *(serialized_cipher + current_position);
@@ -216,10 +220,12 @@ ciphertext_blob_t *peacemakr_deserialize(const uint8_t *b64_serialized_cipher,
 
   { // Check that the message digests are equal
     const EVP_MD *digest_algorithm = parse_digest(digest_algo);
-    EXPECT_NOT_NULL_RET(digest_algorithm, "corrupted digest algorithm, aborting\n");
+    EXPECT_NOT_NULL_RET(digest_algorithm,
+                        "corrupted digest algorithm, aborting\n");
 
     uint64_t digestlen = (uint64_t)EVP_MD_size(digest_algorithm);
-    EXPECT_TRUE_RET((serialized_len - len_before_digest) > digestlen, "corrupted digest length in message, aborting\n");
+    EXPECT_TRUE_RET((serialized_len - len_before_digest) > digestlen,
+                    "corrupted digest length in message, aborting\n");
     buffer_t *serialized_digest =
         Buffer_deserialize(serialized_cipher + len_before_digest);
 
@@ -227,19 +233,29 @@ ciphertext_blob_t *peacemakr_deserialize(const uint8_t *b64_serialized_cipher,
         (Buffer_get_size(serialized_digest) == digestlen),
         "serialized digest is not of the correct length, aborting\n");
 
-    buffer_t *computed_digest = Buffer_new(digestlen);
-    digest_message(serialized_cipher, len_before_digest,
-                   parse_digest(digest_algo), computed_digest);
+    // Compute our digest
 
-    if (0 != CRYPTO_memcmp(Buffer_get_bytes(computed_digest, NULL),
-                           Buffer_get_bytes(serialized_digest, NULL),
-                           digestlen)) {
+    // get our hmac key
+    peacemakr_key_t *hmac_key = get_hmac_key(digest_algo);
+
+    // Digest the message
+    size_t computed_digest_out_size = 0;
+    uint8_t *computed_raw_digest =
+        peacemakr_hmac(digest_algo, hmac_key, serialized_cipher,
+                       len_before_digest, &computed_digest_out_size);
+
+    // Clean up
+    PeacemakrKey_free(hmac_key);
+    int memcmp_ret = CRYPTO_memcmp(computed_raw_digest,
+                                   Buffer_get_bytes(serialized_digest, NULL),
+                                   digestlen);
+    free(computed_raw_digest);
+
+    // Compare the HMACs
+    if (memcmp_ret != 0) {
       PEACEMAKR_LOG("digests don't compare equal, aborting\n");
-      Buffer_free(computed_digest);
       return NULL;
     }
-
-    Buffer_free(computed_digest);
   }
 
   // version
