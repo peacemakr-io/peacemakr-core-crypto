@@ -61,8 +61,8 @@ void test_master_key_symmetric_algo(peacemakr_key_t *master_key,
 
   random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
 
-  peacemakr_key_t *key =
-      PeacemakrKey_new_from_master(cfg, master_key, "abcdefghijk", 11);
+  peacemakr_key_t *key = PeacemakrKey_new_from_master(
+      cfg, master_key, (uint8_t *)"abcdefghijk", 11);
 
   ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, &plaintext_in, &rand);
   assert(ciphertext != NULL);
