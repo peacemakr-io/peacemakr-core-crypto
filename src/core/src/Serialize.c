@@ -44,6 +44,24 @@ static void digest_message(const unsigned char *message, size_t message_len,
   EVP_MD_CTX_free(mdctx);
 }
 
+/*
+ * Peacemakr message serialization format:
+ *
+ * (0) Magic number (32 bits)
+ * (1) Size of the message until the digest (64 bits)
+ * (2) Digest algorithm (8 bits)
+ * (3) Version (32 bits)
+ * (4) Encryption mode (8 bits)
+ * (5) Symmetric cipher algorithm (8 bits)
+ * (6) Asymmetric cipher algorithm (8 bits)
+ * (7) Encrypted key (128, 192, or 256 bits)
+ * (8) IV (usually 96 bits, always <= 128 bits)
+ * (9) Tag (128 bits)
+ * (10) AAD
+ * (11) Ciphertext
+ * (12) Message Digest (224, 256, 384, or 512 bits)
+ */
+
 uint8_t *peacemakr_serialize(ciphertext_blob_t *cipher, size_t *out_size) {
   EXPECT_TRUE_RET((cipher != NULL && out_size != NULL),
                   "cipher or out_size was null in call to serialize\n");
