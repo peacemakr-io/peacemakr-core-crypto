@@ -85,7 +85,7 @@ uint8_t *peacemakr_serialize(ciphertext_blob_t *cipher, size_t *out_size) {
   size_t digest_len = get_digest_len(CiphertextBlob_digest_algo(cipher));
   buffer_len += digest_len;
 
-  uint8_t *buf = alloca(buffer_len * sizeof(uint8_t));
+  uint8_t *buf = malloc(buffer_len * sizeof(uint8_t));
   size_t current_pos = 0;
 
   // magic
@@ -178,7 +178,10 @@ uint8_t *peacemakr_serialize(ciphertext_blob_t *cipher, size_t *out_size) {
   CiphertextBlob_free(cipher);
   cipher = NULL;
 
-  return (uint8_t *)b64_encode(buf, current_pos, out_size);
+  uint8_t *b64_buf = (uint8_t *)b64_encode(buf, current_pos, out_size);
+  free(buf);
+
+  return b64_buf;
 }
 
 ciphertext_blob_t *peacemakr_deserialize(const uint8_t *b64_serialized_cipher,
@@ -190,7 +193,7 @@ ciphertext_blob_t *peacemakr_deserialize(const uint8_t *b64_serialized_cipher,
   EXPECT_NOT_NULL_RET(
       cfg, "need to store the deserialized configuration somewhere\n");
 
-  uint8_t *serialized_cipher = alloca(serialized_len);
+  uint8_t *serialized_cipher = malloc(serialized_len * sizeof(uint8_t));
   EXPECT_NOT_NULL_RET(serialized_cipher, "failed to allocate serialize_cipher")
   
   int rc = b64_decode((const char *)b64_serialized_cipher, serialized_cipher,
@@ -223,7 +226,7 @@ ciphertext_blob_t *peacemakr_deserialize(const uint8_t *b64_serialized_cipher,
     EXPECT_NOT_NULL_RET(digest_algorithm,
                         "corrupted digest algorithm, aborting\n");
 
-    uint64_t digestlen = (uint64_t)EVP_MD_size(digest_algorithm);
+    size_t digestlen = get_digest_len(digest_algo);
     EXPECT_TRUE_RET((serialized_len - len_before_digest) > digestlen,
                     "corrupted digest length in message, aborting\n");
     buffer_t *serialized_digest =
@@ -250,6 +253,7 @@ ciphertext_blob_t *peacemakr_deserialize(const uint8_t *b64_serialized_cipher,
                                    Buffer_get_bytes(serialized_digest, NULL),
                                    digestlen);
     free(computed_raw_digest);
+    Buffer_free(serialized_digest);
 
     // Compare the HMACs
     if (memcmp_ret != 0) {
@@ -354,6 +358,8 @@ ciphertext_blob_t *peacemakr_deserialize(const uint8_t *b64_serialized_cipher,
   Buffer_free(aad);
   Buffer_free(ciphertext);
   Buffer_free(signature);
+
+  free(serialized_cipher);
 
   return out;
 }
