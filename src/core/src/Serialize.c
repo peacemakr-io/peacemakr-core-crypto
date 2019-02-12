@@ -158,11 +158,13 @@ uint8_t *peacemakr_serialize(ciphertext_blob_t *cipher, size_t *out_size) {
 
   // Digest the message
   size_t digest_out_size = 0;
-  uint8_t *raw_digest = peacemakr_hmac(CiphertextBlob_digest_algo(cipher), hmac_key,
-                                   buf, current_pos, &digest_out_size);
+  uint8_t *raw_digest =
+      peacemakr_hmac(CiphertextBlob_digest_algo(cipher), hmac_key, buf,
+                     current_pos, &digest_out_size);
 
   // Make sure we didn't do a stupid
-  EXPECT_TRUE_RET(digest_out_size == digest_len, "Computed HMAC was of the incorrect size\n");
+  EXPECT_TRUE_RET(digest_out_size == digest_len,
+                  "Computed HMAC was of the incorrect size\n");
 
   // Store it
   Buffer_set_bytes(message_digest, raw_digest, digest_out_size);
@@ -194,8 +196,8 @@ ciphertext_blob_t *peacemakr_deserialize(const uint8_t *b64_serialized_cipher,
       cfg, "need to store the deserialized configuration somewhere\n");
 
   uint8_t *serialized_cipher = malloc(serialized_len * sizeof(uint8_t));
-  EXPECT_NOT_NULL_RET(serialized_cipher, "failed to allocate serialize_cipher")
-  
+  EXPECT_NOT_NULL_RET(serialized_cipher, "failed to allocate serialize_cipher");
+
   int rc = b64_decode((const char *)b64_serialized_cipher, serialized_cipher,
                       serialized_len);
   EXPECT_TRUE_RET((rc == 1), "b64 decode failed\n");
@@ -214,7 +216,7 @@ ciphertext_blob_t *peacemakr_deserialize(const uint8_t *b64_serialized_cipher,
   current_position += sizeof(uint64_t);
 
   // Something is bad
-  EXPECT_TRUE_RET(len_before_digest < serialized_len,
+  EXPECT_TRUE_RET((len_before_digest < serialized_len),
                   "corrupted length in message, aborting\n");
 
   // digest algo
@@ -249,15 +251,15 @@ ciphertext_blob_t *peacemakr_deserialize(const uint8_t *b64_serialized_cipher,
 
     // Clean up
     PeacemakrKey_free(hmac_key);
-    int memcmp_ret = CRYPTO_memcmp(computed_raw_digest,
-                                   Buffer_get_bytes(serialized_digest, NULL),
-                                   digestlen);
+    int memcmp_ret =
+        CRYPTO_memcmp(computed_raw_digest,
+                      Buffer_get_bytes(serialized_digest, NULL), digestlen);
     free(computed_raw_digest);
     Buffer_free(serialized_digest);
 
     // Compare the HMACs
     if (memcmp_ret != 0) {
-      PEACEMAKR_LOG("digests don't compare equal, aborting\n");
+      PEACEMAKR_ERROR("digests don't compare equal, aborting\n");
       return NULL;
     }
   }
