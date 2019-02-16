@@ -9,9 +9,6 @@ jobs:
 
   deploy:
     machine: true
-    branches:
-      only:
-        - master
     steps:
       - checkout
       - run: $(aws ecr get-login --no-include-email --region us-east-2)
