@@ -279,7 +279,7 @@ uint8_t *peacemakr_hmac(const message_digest_algorithm digest_algorithm,
  * said buffer into \p out_size. The caller is responsible for managing
  * memory returned from this function.
  */
-uint8_t *peacemakr_serialize(ciphertext_blob_t *cipher, size_t *out_size);
+uint8_t *peacemakr_serialize(ciphertext_blob_t *cipher, size_t *b64_size);
 
 /**
  * Deserializes a ciphertext_blob_t from \p b64_encoded_cipher. \p
@@ -289,7 +289,7 @@ uint8_t *peacemakr_serialize(ciphertext_blob_t *cipher, size_t *out_size);
  * peacemakr_key_t *, ciphertext_blob_t *, plaintext_t *)
  */
 ciphertext_blob_t *peacemakr_deserialize(const uint8_t *b64_serialized_cipher,
-                                         size_t serialized_len,
+                                         size_t b64_serialized_len,
                                          crypto_config_t *cfg);
 
 #endif // PEACEMAKR_CORE_CRYPTO_CRYPTO_H

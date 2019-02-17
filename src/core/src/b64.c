@@ -64,15 +64,14 @@ char *b64_encode(const unsigned char *in, size_t len, size_t *enc_len) {
   return out;
 }
 
-size_t b64_decoded_size(const char *in) {
-  size_t len;
+size_t b64_decoded_size(const char *in, size_t inlen) {
+  size_t len = inlen;
   size_t ret;
   size_t i;
 
   if (in == NULL)
     return 0;
 
-  len = strlen(in);
   ret = len / 4 * 3;
 
   for (i = len; i-- > 0;) {
@@ -105,28 +104,28 @@ bool b64_isvalidchar(char c) {
   return false;
 }
 
-bool b64_decode(const char *in, unsigned char *out, size_t outlen) {
-  size_t len = 0;
+bool b64_decode(const char *in, size_t inlen, unsigned char *out,
+                size_t outlen) {
+  size_t len = inlen; // assume inlen does not contain a null terminator
   size_t i = 0;
   size_t j = 0;
   int v = 0;
 
   if (in == NULL || out == NULL) {
     PEACEMAKR_ERROR("parameter was null\n");
-    return 0;
+    return false;
   }
 
-  len = strlen(in);
-  if (outlen < b64_decoded_size(in) || len % 4 != 0) {
+  if (outlen < b64_decoded_size(in, inlen) || len % 4 != 0) {
     PEACEMAKR_ERROR("outlen was either too small or not divisible by 4 "
                     "(corrupted message)\n");
-    return 0;
+    return false;
   }
 
   for (i = 0; i < len; i++) {
     if (!b64_isvalidchar(in[i])) {
       PEACEMAKR_ERROR("invalid char encountered, %x at index %d\n", in[i], i);
-      return 0;
+      return false;
     }
   }
 
@@ -145,5 +144,5 @@ bool b64_decode(const char *in, unsigned char *out, size_t outlen) {
       out[j + 2] = (unsigned char)(v & 0xFF);
   }
 
-  return 1;
+  return true;
 }

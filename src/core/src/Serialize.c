@@ -50,9 +50,9 @@ static peacemakr_key_t *get_hmac_key(message_digest_algorithm digest_algo) {
  * (12) Message HMAC (224, 256, 384, or 512 bits)
  */
 
-uint8_t *peacemakr_serialize(ciphertext_blob_t *cipher, size_t *out_size) {
-  EXPECT_TRUE_RET((cipher != NULL && out_size != NULL),
-                  "cipher or out_size was null in call to serialize\n");
+uint8_t *peacemakr_serialize(ciphertext_blob_t *cipher, size_t *b64_size) {
+  EXPECT_TRUE_RET((cipher != NULL && b64_size != NULL),
+                  "cipher or b64_size was null in call to serialize\n");
 
   size_t buffer_len = sizeof(uint32_t); // magic number
   buffer_len += sizeof(uint64_t);       // size of message up until digest
@@ -85,7 +85,7 @@ uint8_t *peacemakr_serialize(ciphertext_blob_t *cipher, size_t *out_size) {
   size_t digest_len = get_digest_len(CiphertextBlob_digest_algo(cipher));
   buffer_len += digest_len;
 
-  uint8_t *buf = alloca(buffer_len * sizeof(uint8_t));
+  uint8_t *buf = calloc(buffer_len, sizeof(uint8_t));
   size_t current_pos = 0;
 
   // magic
@@ -158,11 +158,13 @@ uint8_t *peacemakr_serialize(ciphertext_blob_t *cipher, size_t *out_size) {
 
   // Digest the message
   size_t digest_out_size = 0;
-  uint8_t *raw_digest = peacemakr_hmac(CiphertextBlob_digest_algo(cipher), hmac_key,
-                                   buf, current_pos, &digest_out_size);
+  uint8_t *raw_digest =
+      peacemakr_hmac(CiphertextBlob_digest_algo(cipher), hmac_key, buf,
+                     current_pos, &digest_out_size);
 
   // Make sure we didn't do a stupid
-  EXPECT_TRUE_RET(digest_out_size == digest_len, "Computed HMAC was of the incorrect size\n");
+  EXPECT_TRUE_CLEANUP_RET(digest_out_size == digest_len, free(buf),
+                          "Computed HMAC was of the incorrect size\n");
 
   // Store it
   Buffer_set_bytes(message_digest, raw_digest, digest_out_size);
@@ -178,31 +180,49 @@ uint8_t *peacemakr_serialize(ciphertext_blob_t *cipher, size_t *out_size) {
   CiphertextBlob_free(cipher);
   cipher = NULL;
 
-  return (uint8_t *)b64_encode(buf, current_pos, out_size);
+  uint8_t *b64_buf = (uint8_t *)b64_encode(buf, current_pos, b64_size);
+  free(buf);
+
+  return b64_buf;
 }
 
 ciphertext_blob_t *peacemakr_deserialize(const uint8_t *b64_serialized_cipher,
-                                         size_t serialized_len,
+                                         size_t b64_serialized_len,
                                          crypto_config_t *cfg) {
 
-  EXPECT_TRUE_RET((b64_serialized_cipher != NULL && serialized_len != 0),
-                  "b64 serialized cipher was NULL or serialized len was 0\n");
+  // Make sure the input is valid
+  EXPECT_TRUE_RET((b64_serialized_cipher != NULL),
+                  "b64 serialized cipher was NULL or invalid\n");
+  EXPECT_TRUE_RET((b64_serialized_len != 0), "b64_serialized_len was 0\n");
   EXPECT_NOT_NULL_RET(
       cfg, "need to store the deserialized configuration somewhere\n");
 
-  uint8_t *serialized_cipher = alloca(serialized_len);
-  EXPECT_NOT_NULL_RET(serialized_cipher, "failed to allocate serialize_cipher")
-  
-  int rc = b64_decode((const char *)b64_serialized_cipher, serialized_cipher,
-                      serialized_len);
-  EXPECT_TRUE_RET((rc == 1), "b64 decode failed\n");
+  // If we are a null-terminated string, then remove that from the size.
+  // The b64 decode expects that the length passed in does NOT include the
+  // null terminator.
+  b64_serialized_len -= (b64_serialized_cipher[b64_serialized_len - 1] == '\0');
+
+  // We're decoding a b64 message so get the serialized length (rounded up)
+  size_t serialized_len = (b64_serialized_len + 3) / 4 * 3;
+  EXPECT_TRUE_RET((serialized_len < b64_serialized_len),
+                  "Unexpected condition in computing b64 decoded length\n");
+  uint8_t *serialized_cipher = calloc(serialized_len, sizeof(uint8_t));
+  EXPECT_NOT_NULL_RET(serialized_cipher,
+                      "failed to allocate serialized_cipher");
+
+  // Don't free the b64 cipher because we don't own that memory
+  bool decoded =
+      b64_decode((const char *)b64_serialized_cipher, b64_serialized_len,
+                 serialized_cipher, serialized_len);
+  EXPECT_TRUE_CLEANUP_RET(decoded, free(serialized_cipher),
+                          "b64 decode failed\n");
 
   size_t current_position = 0;
 
   // magic
   uint32_t magic = ntohl(*(uint32_t *)serialized_cipher);
-  EXPECT_TRUE_RET((magic == _PEACEMAKR_MAGIC_),
-                  "magic number corrupted/missing, aborting\n");
+  EXPECT_TRUE_CLEANUP_RET((magic == _PEACEMAKR_MAGIC_), free(serialized_cipher),
+                          "magic number corrupted/missing, aborting\n");
   current_position += sizeof(uint32_t);
 
   // len until digest
@@ -211,8 +231,9 @@ ciphertext_blob_t *peacemakr_deserialize(const uint8_t *b64_serialized_cipher,
   current_position += sizeof(uint64_t);
 
   // Something is bad
-  EXPECT_TRUE_RET(len_before_digest < serialized_len,
-                  "corrupted length in message, aborting\n");
+  EXPECT_TRUE_CLEANUP_RET((len_before_digest < b64_serialized_len),
+                          free(serialized_cipher),
+                          "corrupted length in message, aborting\n");
 
   // digest algo
   uint8_t digest_algo = *(serialized_cipher + current_position);
@@ -220,17 +241,20 @@ ciphertext_blob_t *peacemakr_deserialize(const uint8_t *b64_serialized_cipher,
 
   { // Check that the message digests are equal
     const EVP_MD *digest_algorithm = parse_digest(digest_algo);
-    EXPECT_NOT_NULL_RET(digest_algorithm,
-                        "corrupted digest algorithm, aborting\n");
+    EXPECT_NOT_NULL_CLEANUP_RET(digest_algorithm, free(serialized_cipher),
+                                "corrupted digest algorithm, aborting\n");
 
-    uint64_t digestlen = (uint64_t)EVP_MD_size(digest_algorithm);
-    EXPECT_TRUE_RET((serialized_len - len_before_digest) > digestlen,
-                    "corrupted digest length in message, aborting\n");
+    size_t digestlen = get_digest_len(digest_algo);
+    EXPECT_TRUE_CLEANUP_RET((b64_serialized_len - len_before_digest) >
+                                digestlen,
+                            free(serialized_cipher),
+                            "corrupted digest length in message, aborting\n");
     buffer_t *serialized_digest =
         Buffer_deserialize(serialized_cipher + len_before_digest);
 
-    EXPECT_TRUE_RET(
+    EXPECT_TRUE_CLEANUP_RET(
         (Buffer_get_size(serialized_digest) == digestlen),
+        free(serialized_cipher),
         "serialized digest is not of the correct length, aborting\n");
 
     // Compute our digest
@@ -246,26 +270,25 @@ ciphertext_blob_t *peacemakr_deserialize(const uint8_t *b64_serialized_cipher,
 
     // Clean up
     PeacemakrKey_free(hmac_key);
-    int memcmp_ret = CRYPTO_memcmp(computed_raw_digest,
-                                   Buffer_get_bytes(serialized_digest, NULL),
-                                   digestlen);
+    int memcmp_ret =
+        CRYPTO_memcmp(computed_raw_digest,
+                      Buffer_get_bytes(serialized_digest, NULL), digestlen);
+
     free(computed_raw_digest);
+    Buffer_free(serialized_digest);
 
     // Compare the HMACs
-    if (memcmp_ret != 0) {
-      PEACEMAKR_LOG("digests don't compare equal, aborting\n");
-      return NULL;
-    }
+    EXPECT_TRUE_CLEANUP_RET((memcmp_ret == 0), free(serialized_cipher),
+                            "digests don't compare equal, aborting\n");
   }
 
   // version
   uint32_t version =
       ntohl(*((uint32_t *)(serialized_cipher + current_position)));
   current_position += sizeof(uint32_t);
-  if (version > PEACEMAKR_CORE_CRYPTO_VERSION_MAX) {
-    PEACEMAKR_ERROR("version greater than max supported");
-    return NULL;
-  }
+  EXPECT_TRUE_CLEANUP_RET((version <= PEACEMAKR_CORE_CRYPTO_VERSION_MAX),
+                          free(serialized_cipher),
+                          "version greater than max supported\n");
 
   // encryption mode
   uint8_t encryption_mode = *(serialized_cipher + current_position);
@@ -354,6 +377,8 @@ ciphertext_blob_t *peacemakr_deserialize(const uint8_t *b64_serialized_cipher,
   Buffer_free(aad);
   Buffer_free(ciphertext);
   Buffer_free(signature);
+
+  free(serialized_cipher);
 
   return out;
 }

@@ -144,28 +144,35 @@ void test_asymm_keygen(const uint8_t *data, size_t size, symmetric_cipher symm_c
 //  assert(plaintext_in.aad == plaintext_out.aad);
 }
 
-// Interesting problems exposed in keygen with fuzzing
-int run(const uint8_t *data, size_t size) {
-  for (int i = RSA_2048; i <= RSA_4096; ++i) {
-    for (int j = AES_128_GCM; j <= CHACHA20_POLY1305; ++j) {
-      for (int k = SHA_224; k <= SHA_512; k++) {
-        test_asymmetric(std::string(data, data+size), (symmetric_cipher)j, (asymmetric_cipher)i, (message_digest_algorithm)k);
-        test_asymm_keygen(data, size, (symmetric_cipher)j, (asymmetric_cipher)i, (message_digest_algorithm)k);
-      }
-    }
-  }
-
-  for (int j = AES_128_GCM; j <= CHACHA20_POLY1305; ++j) {
-    for (int k = SHA_224; k <= SHA_512; k++) {
-      test_symmetric(std::string(data, data+size), (symmetric_cipher)j, (message_digest_algorithm)k);
-      test_symm_keygen(data, size, (symmetric_cipher)AES_128_GCM, (message_digest_algorithm)SHA_256);
-    }
-  }
-
-  return 0;
+void test_deserialize(const uint8_t *data, size_t size) {
+  crypto_config_t out_cfg = {};
+  uint8_t null_term_data[size + 1];
+  null_term_data[size] = '\0';
+  peacemakr_deserialize(null_term_data, size + 1, &out_cfg);
 }
 
+// Interesting problems exposed in keygen with fuzzing
+//int run(const uint8_t *data, size_t size) {
+//  for (int i = RSA_2048; i <= RSA_4096; ++i) {
+//    for (int j = AES_128_GCM; j <= CHACHA20_POLY1305; ++j) {
+//      for (int k = SHA_224; k <= SHA_512; k++) {
+//        test_asymmetric(std::string(data, data+size), (symmetric_cipher)j, (asymmetric_cipher)i, (message_digest_algorithm)k);
+//        test_asymm_keygen(data, size, (symmetric_cipher)j, (asymmetric_cipher)i, (message_digest_algorithm)k);
+//      }
+//    }
+//  }
+//
+//  for (int j = AES_128_GCM; j <= CHACHA20_POLY1305; ++j) {
+//    for (int k = SHA_224; k <= SHA_512; k++) {
+//      test_symmetric(std::string(data, data+size), (symmetric_cipher)j, (message_digest_algorithm)k);
+//      test_symm_keygen(data, size, (symmetric_cipher)AES_128_GCM, (message_digest_algorithm)SHA_256);
+//    }
+//  }
+//
+//  return 0;
+//}
+
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
-  test_symm_keygen(Data, Size, (symmetric_cipher)AES_128_GCM, (message_digest_algorithm)SHA_256);
+  test_deserialize(Data, Size);
   return 0;
 }

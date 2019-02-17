@@ -9,12 +9,22 @@ jobs:
 
   deploy:
     machine: true
-    branches:
-      only:
-        - master
     steps:
+      - checkout
       - run: $(aws ecr get-login --no-include-email --region us-east-2)
       - run: docker tag corecrypto-dependencies:latest 716293438869.dkr.ecr.us-east-2.amazonaws.com/corecrypto-dependencies:latest
       - run: docker push 716293438869.dkr.ecr.us-east-2.amazonaws.com/corecrypto-dependencies:latest
       - run: docker tag corecrypto:latest 716293438869.dkr.ecr.us-east-2.amazonaws.com/corecrypto:latest
       - run: docker push 716293438869.dkr.ecr.us-east-2.amazonaws.com/corecrypto:latest
+
+workflows:
+  version: 2
+  build-and-deploy:
+    jobs:
+      - build
+      - deploy:
+          requires:
+            - build
+          filters:
+            branches:
+              only: master
