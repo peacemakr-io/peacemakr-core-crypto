@@ -202,8 +202,8 @@ ciphertext_blob_t *peacemakr_deserialize(const uint8_t *b64_serialized_cipher,
   // null terminator.
   b64_serialized_len -= (b64_serialized_cipher[b64_serialized_len - 1] == '\0');
 
-  // We're decoding a b64 message
-  size_t serialized_len = b64_serialized_len / 4 * 3;
+  // We're decoding a b64 message so get the serialized length (rounded up)
+  size_t serialized_len = (b64_serialized_len + 3) / 4 * 3;
   EXPECT_TRUE_RET((serialized_len < b64_serialized_len), "Unexpected condition in computing b64 decoded length\n");
   uint8_t *serialized_cipher = calloc(serialized_len, sizeof(uint8_t));
   EXPECT_NOT_NULL_RET(serialized_cipher,
