@@ -85,7 +85,7 @@ uint8_t *peacemakr_serialize(ciphertext_blob_t *cipher, size_t *b64_size) {
   size_t digest_len = get_digest_len(CiphertextBlob_digest_algo(cipher));
   buffer_len += digest_len;
 
-  uint8_t *buf = malloc(buffer_len * sizeof(uint8_t));
+  uint8_t *buf = calloc(buffer_len, sizeof(uint8_t));
   size_t current_pos = 0;
 
   // magic
@@ -163,8 +163,8 @@ uint8_t *peacemakr_serialize(ciphertext_blob_t *cipher, size_t *b64_size) {
                      current_pos, &digest_out_size);
 
   // Make sure we didn't do a stupid
-  EXPECT_TRUE_RET(digest_out_size == digest_len,
-                  "Computed HMAC was of the incorrect size\n");
+  EXPECT_TRUE_CLEANUP_RET(digest_out_size == digest_len, free(buf),
+                          "Computed HMAC was of the incorrect size\n");
 
   // Store it
   Buffer_set_bytes(message_digest, raw_digest, digest_out_size);
@@ -204,14 +204,16 @@ ciphertext_blob_t *peacemakr_deserialize(const uint8_t *b64_serialized_cipher,
 
   // We're decoding a b64 message so get the serialized length (rounded up)
   size_t serialized_len = (b64_serialized_len + 3) / 4 * 3;
-  EXPECT_TRUE_RET((serialized_len < b64_serialized_len), "Unexpected condition in computing b64 decoded length\n");
+  EXPECT_TRUE_RET((serialized_len < b64_serialized_len),
+                  "Unexpected condition in computing b64 decoded length\n");
   uint8_t *serialized_cipher = calloc(serialized_len, sizeof(uint8_t));
   EXPECT_NOT_NULL_RET(serialized_cipher,
                       "failed to allocate serialized_cipher");
 
   // Don't free the b64 cipher because we don't own that memory
-  bool decoded = b64_decode((const char *)b64_serialized_cipher, b64_serialized_len,
-          serialized_cipher, serialized_len);
+  bool decoded =
+      b64_decode((const char *)b64_serialized_cipher, b64_serialized_len,
+                 serialized_cipher, serialized_len);
   EXPECT_TRUE_CLEANUP_RET(decoded, free(serialized_cipher),
                           "b64 decode failed\n");
 
@@ -243,7 +245,8 @@ ciphertext_blob_t *peacemakr_deserialize(const uint8_t *b64_serialized_cipher,
                                 "corrupted digest algorithm, aborting\n");
 
     size_t digestlen = get_digest_len(digest_algo);
-    EXPECT_TRUE_CLEANUP_RET((b64_serialized_len - len_before_digest) > digestlen,
+    EXPECT_TRUE_CLEANUP_RET((b64_serialized_len - len_before_digest) >
+                                digestlen,
                             free(serialized_cipher),
                             "corrupted digest length in message, aborting\n");
     buffer_t *serialized_digest =

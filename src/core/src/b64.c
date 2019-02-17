@@ -104,7 +104,8 @@ bool b64_isvalidchar(char c) {
   return false;
 }
 
-bool b64_decode(const char *in, size_t inlen, unsigned char *out, size_t outlen) {
+bool b64_decode(const char *in, size_t inlen, unsigned char *out,
+                size_t outlen) {
   size_t len = inlen; // assume inlen does not contain a null terminator
   size_t i = 0;
   size_t j = 0;
