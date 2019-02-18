@@ -41,6 +41,7 @@ ciphertext_blob_t *CiphertextBlob_new(crypto_config_t cfg, size_t iv_len,
                                       size_t ciphertext_len,
                                       size_t signature_len) {
   ciphertext_blob_t *out = malloc(sizeof(ciphertext_blob_t));
+  EXPECT_NOT_NULL_RET(out, "malloc returned nullptr\n");
 
   out->m_encrypted_key_ = NULL;
   out->m_iv_ = NULL;
@@ -49,7 +50,6 @@ ciphertext_blob_t *CiphertextBlob_new(crypto_config_t cfg, size_t iv_len,
   out->m_ciphertext_ = NULL;
   out->m_signature_ = NULL;
 
-  EXPECT_NOT_NULL_RET(out, "malloc returned nullptr\n");
   // set constants
   out->m_version_ = PEACEMAKR_CORE_CRYPTO_VERSION;
   out->m_encrypted_key_ = NULL;
@@ -102,6 +102,35 @@ ciphertext_blob_t *CiphertextBlob_new(crypto_config_t cfg, size_t iv_len,
   EXPECT_TRUE_CLEANUP_RET((out->m_signature_ != NULL || signature_len == 0),
                           CiphertextBlob_free(out),
                           "creation of digest buffer failed\n");
+
+  return out;
+}
+
+ciphertext_blob_t *
+CiphertextBlob_from_buffers(crypto_config_t cfg, buffer_t *encrypted_key,
+                            buffer_t *iv, buffer_t *tag, buffer_t *aad,
+                            buffer_t *ciphertext, buffer_t *signature) {
+  ciphertext_blob_t *out = malloc(sizeof(ciphertext_blob_t));
+  EXPECT_NOT_NULL_RET(out, "malloc returned nullptr\n");
+  // set constants
+  out->m_version_ = PEACEMAKR_CORE_CRYPTO_VERSION;
+  out->m_encrypted_key_ = NULL;
+  out->m_encryption_mode_ = cfg.mode;
+  out->m_symm_cipher_ = cfg.symm_cipher;
+  out->m_asymm_cipher_ = cfg.asymm_cipher;
+  out->m_digest_algorithm_ = cfg.digest_algorithm;
+
+  if (Buffer_get_size(encrypted_key) != 0) {
+    out->m_encrypted_key_ = encrypted_key;
+  } else {
+    out->m_encrypted_key_ = NULL;
+  }
+
+  out->m_iv_ = iv;
+  out->m_tag_ = tag;
+  out->m_aad_ = aad;
+  out->m_ciphertext_ = ciphertext;
+  out->m_signature_ = signature;
 
   return out;
 }

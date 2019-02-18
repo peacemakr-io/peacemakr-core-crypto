@@ -8,12 +8,14 @@
 
 #include <peacemakr/crypto.hpp>
 #include <cassert>
+#include <cstdlib>
 #include <thread>
 #include <algorithm>
 #include <random>
 #include <iostream>
 extern "C" {
   #include "../src/EVPHelper.h"
+  #include "test_helper.h"
 }
 
 void test_asymmetric(const std::string &msg, symmetric_cipher symm_cipher, asymmetric_cipher cipher, message_digest_algorithm digest) {
@@ -151,6 +153,31 @@ void test_deserialize(const uint8_t *data, size_t size) {
   peacemakr_deserialize(null_term_data, size + 1, &out_cfg);
 }
 
+void test_encrypt(peacemakr_key_t *key, random_device_t *rand, const uint8_t *data, size_t size) {
+  plaintext_t plain = {
+          .data = data,
+          .data_len = size,
+          .aad = nullptr,
+          .aad_len = 0,
+  };
+
+  plaintext_t out_pt = {};
+
+  ciphertext_blob_t *out = peacemakr_encrypt(key, &plain, rand);
+
+  size_t out_size = 0;
+  uint8_t *serialized = peacemakr_serialize(out, &out_size);
+
+  crypto_config_t out_cfg = {};
+  ciphertext_blob_t *deserialized = peacemakr_deserialize(serialized, out_size, &out_cfg);
+  peacemakr_decrypt(key, deserialized, &out_pt);
+
+  assert(memcmp(data, out_pt.data, out_pt.data_len) == 0);
+  // Free the decrypted data
+  free((void *)out_pt.data);
+  free((void *)serialized);
+}
+
 // Interesting problems exposed in keygen with fuzzing
 //int run(const uint8_t *data, size_t size) {
 //  for (int i = RSA_2048; i <= RSA_4096; ++i) {
@@ -172,7 +199,19 @@ void test_deserialize(const uint8_t *data, size_t size) {
 //  return 0;
 //}
 
+crypto_config_t global_cfg = {
+        .mode = SYMMETRIC,
+        .symm_cipher = AES_256_GCM,
+        .asymm_cipher = NONE,
+        .digest_algorithm = SHA3_512,
+};
+
+random_device_t global_rand = {.generator = &fill_rand, .err = &rand_err};
+
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
+//  peacemakr_key_t *key = PeacemakrKey_new(global_cfg, &global_rand);
+//  test_encrypt(key, &global_rand, Data, Size);
+//  PeacemakrKey_free(key);
   test_deserialize(Data, Size);
   return 0;
 }

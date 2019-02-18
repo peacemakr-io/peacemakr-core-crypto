@@ -9,16 +9,25 @@
 #ifndef PEACEMAKR_CORE_CRYPTO_LOGGING_H
 #define PEACEMAKR_CORE_CRYPTO_LOGGING_H
 
-typedef enum { LOG = 0, ERROR = 1 } level_t;
+#ifndef PEACEMAKR_LOG_LEVEL
+#define PEACEMAKR_LOG_LEVEL 0
+#endif
 
-void log_printf(const char *filename, int line, level_t level, const char *fmt,
-                ...);
+void log_printf(const char *filename, int line, const char *fmt, ...);
 
 void openssl_log(const char *filename, int line);
 
-#define PEACEMAKR_LOG(...) log_printf(__FUNCTION__, __LINE__, LOG, __VA_ARGS__)
+#define PEACEMAKR_LOG(...)                                                     \
+  if (PEACEMAKR_LOG_LEVEL != 0)                                                \
+    ;                                                                          \
+  else                                                                         \
+    log_printf(__FUNCTION__, __LINE__, __VA_ARGS__)
 #define PEACEMAKR_ERROR(...)                                                   \
-  log_printf(__FUNCTION__, __LINE__, ERROR, __VA_ARGS__)
+  if (PEACEMAKR_LOG_LEVEL > 1)                                                 \
+    ;                                                                          \
+  else                                                                         \
+    log_printf(__FUNCTION__, __LINE__, __VA_ARGS__)
+
 #define PEACEMAKR_OPENSSL_LOG openssl_log(__FUNCTION__, __LINE__)
 
 #define EXPECT_NOT_NULL_RET(ptr, ...)                                          \

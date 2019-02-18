@@ -62,6 +62,7 @@ buffer_t *Buffer_new(size_t size) {
   }
 
   buffer_t *ret = malloc(sizeof(buffer_t));
+  EXPECT_NOT_NULL_RET(ret, "Malloc failed!\n");
 
   ret->m_size_bytes_ = size;
 

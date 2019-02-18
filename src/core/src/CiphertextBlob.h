@@ -20,6 +20,11 @@ ciphertext_blob_t *CiphertextBlob_new(crypto_config_t cfg, size_t iv_len,
                                       size_t tag_len, size_t aad_len,
                                       size_t ciphertext_len, size_t digest_len);
 
+ciphertext_blob_t *
+CiphertextBlob_from_buffers(crypto_config_t cfg, buffer_t *encrypted_key,
+                            buffer_t *iv, buffer_t *tag, buffer_t *aad,
+                            buffer_t *ciphertext, buffer_t *signature);
+
 void CiphertextBlob_free(ciphertext_blob_t *ciphertext);
 
 void CiphertextBlob_set_version(ciphertext_blob_t *ciphertext,
