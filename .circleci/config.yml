@@ -6,25 +6,11 @@ jobs:
       - checkout
       - run: docker build -t corecrypto-dependencies:latest . -f docker/go-dependencies.Dockerfile --build-arg="CMAKE_BUILD_TYPE=RELEASE"
       - run: docker build -t corecrypto:latest . -f docker/go.Dockerfile
-
-  deploy:
-    machine: true
-    steps:
-      - checkout
-      - run: $(aws ecr get-login --no-include-email --region us-east-2)
-      - run: docker tag corecrypto-dependencies:latest 716293438869.dkr.ecr.us-east-2.amazonaws.com/corecrypto-dependencies:latest
-      - run: docker push 716293438869.dkr.ecr.us-east-2.amazonaws.com/corecrypto-dependencies:latest
-      - run: docker tag corecrypto:latest 716293438869.dkr.ecr.us-east-2.amazonaws.com/corecrypto:latest
-      - run: docker push 716293438869.dkr.ecr.us-east-2.amazonaws.com/corecrypto:latest
-
-workflows:
-  version: 2
-  build-and-deploy:
-    jobs:
-      - build
-      - deploy:
-          requires:
-            - build
-          filters:
-            branches:
-              only: master
+      - run: |
+          if [ "${CIRCLE_BRANCH}" = "master" ]; then
+            $(aws ecr get-login --no-include-email --region us-east-2)
+            docker tag corecrypto-dependencies:latest 716293438869.dkr.ecr.us-east-2.amazonaws.com/corecrypto-dependencies:latest
+            docker push 716293438869.dkr.ecr.us-east-2.amazonaws.com/corecrypto-dependencies:latest
+            docker tag corecrypto:latest 716293438869.dkr.ecr.us-east-2.amazonaws.com/corecrypto:latest
+            docker push 716293438869.dkr.ecr.us-east-2.amazonaws.com/corecrypto:latest
+          fi
