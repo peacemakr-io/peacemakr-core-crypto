@@ -47,7 +47,6 @@ typedef enum {
   NONE = 0,
   RSA_2048 = 1,
   RSA_4096 = 2,
-  //  EC25519,
 } asymmetric_cipher;
 
 /**
@@ -129,7 +128,7 @@ bool peacemakr_init();
  * The library calls this function with any log messages in order to pass
  * them up to the user.
  */
-typedef void (*peacemakr_log_cb)(char *);
+typedef void (*peacemakr_log_cb)(const char *);
 
 /**
  * Sets peacemakr logging utilities to use \p log_fn as a callback to return

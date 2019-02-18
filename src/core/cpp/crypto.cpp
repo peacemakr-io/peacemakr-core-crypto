@@ -84,7 +84,7 @@ void setContents(peacemakr::Plaintext &plain, plaintext_t &cstyle) {
 peacemakr::CryptoContext::CryptoContext(LogFunctionType logger)
     : m_log_(std::move(logger)) {
 
-  peacemakr_set_log_callback([](char *msg) { printf("%s", msg); });
+  peacemakr_set_log_callback([](const char *msg) { printf("%s", msg); });
 
   if (!peacemakr_init()) {
     m_log_("Unable to properly start the random device");
@@ -96,7 +96,9 @@ void log(const std::string &msg) { printf("%s", msg.c_str()); }
 } // namespace
 
 peacemakr::CryptoContext::CryptoContext() : m_log_(log) {
-  peacemakr_set_log_callback([](char *msg) { log({msg, msg + strlen(msg)}); });
+  peacemakr_set_log_callback([](const char *msg) {
+    log({msg, msg + strlen(msg)});
+  });
 
   if (!peacemakr_init()) {
     m_log_("Unable to properly start the random device");

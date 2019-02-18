@@ -54,7 +54,7 @@ struct Buffer {
 
 typedef struct Buffer buffer_t;
 
-buffer_t *Buffer_new(size_t size) {
+buffer_t *Buffer_new(const size_t size) {
   // Allocate nothing if size is <= 0
   if (size <= 0) {
     PEACEMAKR_LOG("size passed was <= 0\n");
@@ -97,7 +97,7 @@ void Buffer_init_rand(buffer_t *buf, random_device_t *rng) {
   EXPECT_TRUE_RET_NONE((rc == 0), "rng encountered error, %s\n", rng->err(rc));
 }
 
-void Buffer_set_bytes(buffer_t *buf, const void *mem, size_t size_bytes) {
+void Buffer_set_bytes(buffer_t *buf, const void *mem, const size_t size_bytes) {
   EXPECT_NOT_NULL_RET_NONE(buf, "buf was null\n");
   EXPECT_NOT_NULL_RET_NONE(mem, "mem was null\n");
 
@@ -140,11 +140,12 @@ const size_t Buffer_get_size(const buffer_t *buf) {
   return buf->m_size_bytes_;
 }
 
-void Buffer_set_size(buffer_t *buf, size_t size) {
+void Buffer_set_size(buffer_t *buf, const size_t size) {
   EXPECT_NOT_NULL_RET_NONE(buf, "buf was null\n");
   if (buf->m_size_bytes_ == size) {
     return;
   }
+
   buf->m_mem_ = realloc((void *)buf->m_mem_, size);
   EXPECT_NOT_NULL_RET_NONE(buf->m_mem_, "realloc failed\n");
   buf->m_size_bytes_ = size;
@@ -164,7 +165,7 @@ size_t Buffer_serialize(const buffer_t *buf, uint8_t *serialized) {
   return buf->m_size_bytes_ + sizeof(uint64_t);
 }
 
-buffer_t *Buffer_deserialize(uint8_t *serialized) {
+buffer_t *Buffer_deserialize(const uint8_t *serialized) {
   EXPECT_NOT_NULL_RET(serialized, "serialized was null\n");
 
   uint64_t buflen = ntohl(*((uint64_t *)serialized));

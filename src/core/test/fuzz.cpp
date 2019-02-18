@@ -15,6 +15,7 @@
 #include <iostream>
 extern "C" {
   #include "../src/EVPHelper.h"
+  #include "../src/Logging.h"
   #include "test_helper.h"
 }
 
@@ -178,6 +179,13 @@ void test_encrypt(peacemakr_key_t *key, random_device_t *rand, const uint8_t *da
   free((void *)serialized);
 }
 
+void test_log(const uint8_t *data, size_t size) {
+  char str[size + 1];
+  str[size] = '\0';
+  memcpy(str, data, size);
+  PEACEMAKR_ERROR("%s", str);
+}
+
 // Interesting problems exposed in keygen with fuzzing
 //int run(const uint8_t *data, size_t size) {
 //  for (int i = RSA_2048; i <= RSA_4096; ++i) {
@@ -207,11 +215,11 @@ crypto_config_t global_cfg = {
 };
 
 random_device_t global_rand = {.generator = &fill_rand, .err = &rand_err};
+peacemakr_key_t *key = PeacemakrKey_new(global_cfg, &global_rand);
 
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
-//  peacemakr_key_t *key = PeacemakrKey_new(global_cfg, &global_rand);
+//  test_log(Data, Size);
 //  test_encrypt(key, &global_rand, Data, Size);
-//  PeacemakrKey_free(key);
   test_deserialize(Data, Size);
   return 0;
 }

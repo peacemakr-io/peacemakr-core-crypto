@@ -16,12 +16,14 @@
 
 typedef struct CiphertextBlob ciphertext_blob_t;
 
-ciphertext_blob_t *CiphertextBlob_new(crypto_config_t cfg, size_t iv_len,
-                                      size_t tag_len, size_t aad_len,
-                                      size_t ciphertext_len, size_t digest_len);
+ciphertext_blob_t *CiphertextBlob_new(const crypto_config_t cfg,
+                                      const size_t iv_len, const size_t tag_len,
+                                      const size_t aad_len,
+                                      const size_t ciphertext_len,
+                                      const size_t digest_len);
 
 ciphertext_blob_t *
-CiphertextBlob_from_buffers(crypto_config_t cfg, buffer_t *encrypted_key,
+CiphertextBlob_from_buffers(const crypto_config_t cfg, buffer_t *encrypted_key,
                             buffer_t *iv, buffer_t *tag, buffer_t *aad,
                             buffer_t *ciphertext, buffer_t *signature);
 
