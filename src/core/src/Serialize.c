@@ -150,9 +150,6 @@ uint8_t *peacemakr_serialize(ciphertext_blob_t *cipher, size_t *b64_size) {
   uint64_t curr_pos = htonl(current_pos);
   memcpy(buf + sizeof(uint32_t), &curr_pos, sizeof(uint64_t));
 
-  // digest the message
-  buffer_t *message_digest = Buffer_new(digest_len);
-
   // get our hmac key
   peacemakr_key_t *hmac_key = get_hmac_key(CiphertextBlob_digest_algo(cipher));
 
@@ -167,6 +164,7 @@ uint8_t *peacemakr_serialize(ciphertext_blob_t *cipher, size_t *b64_size) {
                           "Computed HMAC was of the incorrect size\n");
 
   // Store it
+  buffer_t *message_digest = Buffer_new(digest_len);
   Buffer_set_bytes(message_digest, raw_digest, digest_out_size);
 
   // Clean up
@@ -177,10 +175,17 @@ uint8_t *peacemakr_serialize(ciphertext_blob_t *cipher, size_t *b64_size) {
   size_t digestlen = Buffer_serialize(message_digest, buf + current_pos);
   current_pos += digestlen;
 
+  // Clean up the buffer
+  Buffer_free(message_digest);
+
+  // Clean up the ciphertext blob
   CiphertextBlob_free(cipher);
   cipher = NULL;
 
+  // Return the b64 encoded version
   uint8_t *b64_buf = (uint8_t *)b64_encode(buf, current_pos, b64_size);
+
+  // Clean up the workspace
   free(buf);
 
   return b64_buf;
@@ -333,50 +338,12 @@ ciphertext_blob_t *peacemakr_deserialize(const uint8_t *b64_serialized_cipher,
   buffer_t *signature =
       Buffer_deserialize(serialized_cipher + current_position);
 
-  ciphertext_blob_t *out = CiphertextBlob_new(
-      *cfg, Buffer_get_size(iv), Buffer_get_size(tag), Buffer_get_size(aad),
-      Buffer_get_size(ciphertext), Buffer_get_size(signature));
+  // Ciphertext blob takes ownership of the buffers, so don't free the buffers
+  // at the end of the function
+  ciphertext_blob_t *out = CiphertextBlob_from_buffers(
+      *cfg, encrypted_key, iv, tag, aad, ciphertext, signature);
 
   CiphertextBlob_set_version(out, version);
-
-  if (Buffer_get_size(encrypted_key) != 0) {
-    Buffer_set_bytes(CiphertextBlob_mutable_encrypted_key(out),
-                     Buffer_get_bytes(encrypted_key, NULL),
-                     Buffer_get_size(encrypted_key));
-  }
-
-  if (iv != NULL) {
-    CiphertextBlob_set_iv(out, Buffer_get_bytes(iv, NULL), Buffer_get_size(iv));
-  }
-
-  if (tag != NULL) {
-    Buffer_set_bytes(CiphertextBlob_mutable_tag(out),
-                     Buffer_get_bytes(tag, NULL), Buffer_get_size(tag));
-  }
-
-  if (aad != NULL) {
-    Buffer_set_bytes(CiphertextBlob_mutable_aad(out),
-                     Buffer_get_bytes(aad, NULL), Buffer_get_size(aad));
-  }
-
-  if (ciphertext != NULL) {
-    Buffer_set_bytes(CiphertextBlob_mutable_ciphertext(out),
-                     Buffer_get_bytes(ciphertext, NULL),
-                     Buffer_get_size(ciphertext));
-  }
-
-  if (signature != NULL) {
-    Buffer_set_bytes(CiphertextBlob_mutable_signature(out),
-                     Buffer_get_bytes(signature, NULL),
-                     Buffer_get_size(signature));
-  }
-
-  Buffer_free(encrypted_key);
-  Buffer_free(iv);
-  Buffer_free(tag);
-  Buffer_free(aad);
-  Buffer_free(ciphertext);
-  Buffer_free(signature);
 
   free(serialized_cipher);
 

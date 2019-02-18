@@ -11,10 +11,6 @@
 #include <memory.h>
 #include <openssl/err.h>
 
-#ifndef PEACEMAKR_LOG_LEVEL
-#define PEACEMAKR_LOG_LEVEL 0
-#endif
-
 typedef void (*peacemakr_log_cb)(char *);
 static peacemakr_log_cb log_fn = NULL;
 
@@ -22,12 +18,7 @@ void peacemakr_set_log_callback(peacemakr_log_cb l) { log_fn = l; }
 
 static void log_to_stderr(char *msg) { fprintf(stderr, "%s", msg); }
 
-void log_printf(const char *function_name, int line, level_t level,
-                const char *fmt, ...) {
-
-  if (level < PEACEMAKR_LOG_LEVEL) {
-    return;
-  }
+void log_printf(const char *function_name, int line, const char *fmt, ...) {
 
   if (log_fn == NULL) {
     log_fn = &log_to_stderr;
