@@ -219,7 +219,7 @@ peacemakr_key_t *key = PeacemakrKey_new(global_cfg, &global_rand);
 
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
 //  test_log(Data, Size);
-//  test_encrypt(key, &global_rand, Data, Size);
-  test_deserialize(Data, Size);
+  test_encrypt(key, &global_rand, Data, Size);
+//  test_deserialize(Data, Size);
   return 0;
 }
