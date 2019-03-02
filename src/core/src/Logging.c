@@ -59,7 +59,7 @@ void openssl_log(const char *function_name, int line) {
   const size_t msg_len = strlen(function_name) + 2 // ": "
                          + num_digits + 3          // " - "
                          + 256                     // error str from openssl
-                         + 1;                      // null terminator
+                         + 1 + 1;                  // null terminator and newline
 
   char message[msg_len];
   char openssl_error[256];
@@ -67,7 +67,7 @@ void openssl_log(const char *function_name, int line) {
   unsigned long err_no = ERR_get_error();
   ERR_error_string_n(err_no, openssl_error, 256);
 
-  (void)snprintf(message, msg_len, "%s: %d - %s", function_name, line,
+  (void)snprintf(message, msg_len, "%s: %d - %s\n", function_name, line,
                  openssl_error);
   log_fn(message);
 }

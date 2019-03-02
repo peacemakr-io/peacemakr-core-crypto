@@ -469,9 +469,10 @@ ciphertext_blob_t *peacemakr_encrypt(const peacemakr_key_t *recipient_key,
   EXPECT_TRUE_RET((ciphertext_len != 0), "data had length: %d\n",
                   plain->data_len);
 
-  // Just initialize the buffer, it'll get resized later during sign/verify
+  // Just initialize the signature buffer, it'll get resized later during sign/verify
   ciphertext_blob_t *out =
       CiphertextBlob_new(cfg, iv_len, tag_len, aad_len, ciphertext_len, 1);
+  EXPECT_NOT_NULL_RET(out, "Creating the ciphertext blob failed\n")
 
   // always init the iv...worst case you seed the random state
   CiphertextBlob_init_iv(out, rand);
