@@ -10,6 +10,8 @@
 #include <arpa/inet.h>
 #include <memory.h>
 #include <stdlib.h>
+#include <sys/mman.h>
+#include <errno.h>
 
 #include "Buffer.h"
 #include "Logging.h"
@@ -66,9 +68,14 @@ buffer_t *Buffer_new(const size_t size) {
 
   ret->m_size_bytes_ = size;
 
-  ret->m_mem_ = calloc(size, sizeof(uint8_t));
+  ret->m_mem_ = calloc(ret->m_size_bytes_, sizeof(uint8_t));
   EXPECT_NOT_NULL_CLEANUP_RET(ret->m_mem_, free(ret),
                               "malloc returned nullptr\n");
+
+  if (mlock(ret->m_mem_, ret->m_size_bytes_) != 0) {
+    PEACEMAKR_LOG("mlock failed with %d\n", errno);
+    return NULL;
+  }
 
   return ret;
 }
@@ -81,6 +88,12 @@ void Buffer_free(buffer_t *buf) {
   int err = memset_s(buf->m_mem_, buf->m_size_bytes_, 0, buf->m_size_bytes_);
   EXPECT_TRUE_RET_NONE((err == 0),
                        "memset failed, aborting (memory NOT freed)\n");
+
+  // Don't unlock until the memory has been cleared
+  if (munlock(buf->m_mem_, buf->m_size_bytes_) != 0) {
+    PEACEMAKR_LOG("munlock failed with %d\n", errno);
+    return;
+  }
 
   free(buf->m_mem_);
   buf->m_mem_ = NULL;
