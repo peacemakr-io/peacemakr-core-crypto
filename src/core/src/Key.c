@@ -82,13 +82,6 @@ peacemakr_key_t *PeacemakrKey_new(crypto_config_t cfg, random_device_t *rand) {
       PeacemakrKey_free(out);
       return NULL;
     }
-      //    case EC25519: {
-      //      if (keygen_inner(NID_X25519, &out->m_evp_pkey_, 0) == false) {
-      //        PEACEMAKR_LOG("keygen failed\n");
-      //        return NULL;
-      //      }
-      //      break;
-      //    }
     case RSA_2048: {
       if (keygen_inner(EVP_PKEY_RSA, &out->m_contents_.asymm, 2048) == false) {
         PEACEMAKR_ERROR("keygen failed\n");

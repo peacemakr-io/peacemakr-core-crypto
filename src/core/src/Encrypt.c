@@ -226,11 +226,11 @@ static bool asymmetric_encrypt(const peacemakr_key_t *pub_key,
   EXPECT_NOT_NULL_RET_VALUE(ctx, false, "cipher_ctx_new failed\n");
 
   buffer_t *encrypted_key = CiphertextBlob_mutable_encrypted_key(out);
-  size_t keylen = Buffer_get_size(encrypted_key);
+  const size_t keylen = Buffer_get_size(encrypted_key);
   int encrypted_key_len = 0;
   unsigned char *encrypted_key_buf = alloca(keylen);
 
-  size_t ivlen = Buffer_get_size(CiphertextBlob_iv(out));
+  const size_t ivlen = Buffer_get_size(CiphertextBlob_iv(out));
   unsigned char *iv_buf = alloca(ivlen);
 
   buffer_t *mutable_ciphertext = CiphertextBlob_mutable_ciphertext(out);
@@ -444,8 +444,7 @@ ciphertext_blob_t *peacemakr_encrypt(const peacemakr_key_t *recipient_key,
                   "AAD was too big, needs to be broken up\n");
 
   if (plain->data == NULL && plain->data_len <= 0) {
-    // TODO: should be log or error?
-    PEACEMAKR_ERROR("No data to encrypt\n");
+    PEACEMAKR_LOG("No data to encrypt\n");
     return NULL;
   }
 
@@ -470,9 +469,10 @@ ciphertext_blob_t *peacemakr_encrypt(const peacemakr_key_t *recipient_key,
   EXPECT_TRUE_RET((ciphertext_len != 0), "data had length: %d\n",
                   plain->data_len);
 
-  // Just initialize the buffer, it'll get resized later during sign/verify
+  // Just initialize the signature buffer, it'll get resized later during sign/verify
   ciphertext_blob_t *out =
       CiphertextBlob_new(cfg, iv_len, tag_len, aad_len, ciphertext_len, 1);
+  EXPECT_NOT_NULL_RET(out, "Creating the ciphertext blob failed\n")
 
   // always init the iv...worst case you seed the random state
   CiphertextBlob_init_iv(out, rand);

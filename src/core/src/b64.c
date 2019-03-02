@@ -29,20 +29,18 @@ size_t b64_encoded_size(size_t inlen) {
   return ret;
 }
 
-char *b64_encode(const unsigned char *in, size_t len, size_t *enc_len) {
-  char *out;
-  size_t elen;
-  size_t i, j, v;
+char *b64_encode(const unsigned char *in, const size_t len, size_t *enc_len) {
+  size_t v;
 
   if (in == NULL || len == 0)
     return NULL;
 
-  elen = b64_encoded_size(len);
+  const size_t elen = b64_encoded_size(len);
   *enc_len = elen + 1;
-  out = calloc(elen + 1, sizeof(char));
+  char *out = calloc(elen + 1, sizeof(char));
   out[elen] = '\0';
 
-  for (i = 0, j = 0; i < len; i += 3, j += 4) {
+  for (size_t i = 0, j = 0; i < len; i += 3, j += 4) {
     v = in[i];
     v = i + 1 < len ? v << 8 | in[i + 1] : v << 8;
     v = i + 2 < len ? v << 8 | in[i + 2] : v << 8;
@@ -66,17 +64,15 @@ char *b64_encode(const unsigned char *in, size_t len, size_t *enc_len) {
 
 size_t b64_decoded_size(const char *in, size_t inlen) {
   size_t len = inlen;
-  size_t ret;
-  size_t i;
 
   if (in == NULL)
     return 0;
 
-  ret = len / 4 * 3;
+  size_t ret = len / 4 * 3;
 
-  for (i = len; i-- > 0;) {
+  for (size_t i = len; --i > 0;) {
     if (in[i] == '=') {
-      ret--;
+      --ret;
     } else {
       break;
     }
@@ -92,7 +88,7 @@ const int b64invs[] = {62, -1, -1, -1, 63, 52, 53, 54, 55, 56, 57, 58, 59, 60,
                        28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41,
                        42, 43, 44, 45, 46, 47, 48, 49, 50, 51};
 
-bool b64_isvalidchar(char c) {
+bool b64_isvalidchar(const char c) {
   if (c >= '0' && c <= '9')
     return true;
   if (c >= 'A' && c <= 'Z')
@@ -104,11 +100,9 @@ bool b64_isvalidchar(char c) {
   return false;
 }
 
-bool b64_decode(const char *in, size_t inlen, unsigned char *out,
-                size_t outlen) {
-  size_t len = inlen; // assume inlen does not contain a null terminator
-  size_t i = 0;
-  size_t j = 0;
+bool b64_decode(const char *in, const size_t inlen, unsigned char *out,
+                const size_t outlen) {
+  const size_t len = inlen; // assume inlen does not contain a null terminator
   int v = 0;
 
   if (in == NULL || out == NULL) {
@@ -122,14 +116,14 @@ bool b64_decode(const char *in, size_t inlen, unsigned char *out,
     return false;
   }
 
-  for (i = 0; i < len; i++) {
+  for (size_t i = 0; i < len; i++) {
     if (!b64_isvalidchar(in[i])) {
       PEACEMAKR_ERROR("invalid char encountered, %x at index %d\n", in[i], i);
       return false;
     }
   }
 
-  for (i = 0, j = 0; i < len; i += 4, j += 3) {
+  for (size_t i = 0, j = 0; i < len; i += 4, j += 3) {
     v = b64invs[in[i] - 43];
     v = (v * (1 << 6)) | b64invs[in[i + 1] - 43];
     v = in[i + 2] == '=' ? (v * (1 << 6))

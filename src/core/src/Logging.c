@@ -8,15 +8,16 @@
 
 #include "Logging.h"
 
+#include <assert.h>
 #include <memory.h>
 #include <openssl/err.h>
 
-typedef void (*peacemakr_log_cb)(char *);
+typedef void (*peacemakr_log_cb)(const char *);
 static peacemakr_log_cb log_fn = NULL;
 
 void peacemakr_set_log_callback(peacemakr_log_cb l) { log_fn = l; }
 
-static void log_to_stderr(char *msg) { fprintf(stderr, "%s", msg); }
+static void log_to_stderr(const char *msg) { fprintf(stderr, "%s", msg); }
 
 void log_printf(const char *function_name, int line, const char *fmt, ...) {
 
@@ -31,22 +32,19 @@ void log_printf(const char *function_name, int line, const char *fmt, ...) {
                          + num_digits + 3          // " - "
                          + strlen(fmt) + 1;        // null terminator
   char fmt_str[fmt_len];
-  memcpy(fmt_str, function_name, strlen(function_name));
-  memcpy(fmt_str + strlen(function_name), ": ", 2);
-  memcpy(fmt_str + strlen(function_name) + 2, linenum, num_digits);
-  memcpy(fmt_str + strlen(function_name) + 2 + num_digits, " - ", 3);
-  memcpy(fmt_str + strlen(function_name) + 2 + num_digits + 3, fmt,
-         strlen(fmt) + 1);
+  memset(fmt_str, 0, fmt_len);
 
-  char *message = calloc(2 * fmt_len, sizeof(char));
+  (void)snprintf(fmt_str, fmt_len, "%s: %d - %s", function_name, line, fmt);
+
+  const size_t max_message_len = 4 * fmt_len;
+  char message[max_message_len];
+  memset(message, 0, max_message_len);
 
   va_list argp;
   va_start(argp, fmt);
-  vsprintf(message, fmt_str, argp);
+  vsnprintf(message, max_message_len, fmt_str, argp);
   log_fn(message);
   va_end(argp);
-
-  free(message);
 }
 
 void openssl_log(const char *function_name, int line) {
@@ -58,26 +56,18 @@ void openssl_log(const char *function_name, int line) {
   char linenum[4];
   int num_digits = sprintf(linenum, "%d", line);
 
-  const size_t fmt_len = strlen(function_name) + 2 // ": "
+  const size_t msg_len = strlen(function_name) + 2 // ": "
                          + num_digits + 3          // " - "
-                         + 256;                    // error str from openssl
+                         + 256                     // error str from openssl
+                         + 1 + 1;                  // null terminator and newline
 
-  char fmt_str[fmt_len];
-  memcpy(fmt_str, function_name, strlen(function_name));
-  memcpy(fmt_str + strlen(function_name), ": ", 2);
-  memcpy(fmt_str + strlen(function_name) + 2, linenum, num_digits);
-  memcpy(fmt_str + strlen(function_name) + 2 + num_digits, " - ", 3);
-
+  char message[msg_len];
   char openssl_error[256];
   memset(openssl_error, 0, 256);
   unsigned long err_no = ERR_get_error();
   ERR_error_string_n(err_no, openssl_error, 256);
 
-  memcpy(fmt_str + strlen(function_name) + 2 + num_digits + 3, openssl_error,
-         strlen(openssl_error));
-
-  char *message = calloc(fmt_len + strlen(openssl_error), sizeof(char));
-  sprintf(message, "%s\n", fmt_str);
+  (void)snprintf(message, msg_len, "%s: %d - %s\n", function_name, line,
+                 openssl_error);
   log_fn(message);
-  free(message);
 }

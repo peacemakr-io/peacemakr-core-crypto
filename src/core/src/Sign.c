@@ -242,7 +242,7 @@ bool peacemakr_verify(const peacemakr_key_t *sender_key,
 
   bool success = false;
 
-  if (Buffer_get_size(CiphertextBlob_signature(cipher)) == 1) {
+  if (Buffer_get_size(CiphertextBlob_signature(cipher)) == 0) {
     PEACEMAKR_LOG("No signature to verify\n");
     CiphertextBlob_free(cipher);
     cipher = NULL;
