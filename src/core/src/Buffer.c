@@ -10,7 +10,6 @@
 #include <arpa/inet.h>
 #include <memory.h>
 #include <stdlib.h>
-#include <sys/mman.h>
 #include <errno.h>
 
 #include "Buffer.h"
