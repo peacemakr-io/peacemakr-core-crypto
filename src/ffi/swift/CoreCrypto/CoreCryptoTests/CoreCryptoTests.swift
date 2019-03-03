@@ -25,7 +25,7 @@ class CoreCryptoTests: XCTestCase {
     let cfg = CryptoConfig(mode: mode, symm_cipher: symm_cipher, asymm_cipher: asymm_cipher, digest: digest)
     let device = DefaultRandomDevice()
 
-    let plaintextIn = Plaintext(data: "Hello from swift!", aad: "And I'm AAD")
+    let plaintextIn = Plaintext(data: "Hello from swift!", aad: "And I'm AAD")!
     let context = CryptoContext()!
     let key = PeacemakrKey(config: cfg, rand: device)!
 

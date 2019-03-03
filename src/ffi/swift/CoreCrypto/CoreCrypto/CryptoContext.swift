@@ -33,37 +33,51 @@ public class CryptoContext {
     peacemakr_sign(senderKey.getInternal(), &innerPlaintext, ciphertext);
   }
 
-  public func Serialize(_ ciphertext_blob: Ciphertext) -> Result<[UInt8]> {
+  public func Serialize(_ ciphertext_blob: Ciphertext) -> Result<Data> {
     var out_size: size_t = 0
     let bytes = peacemakr_serialize(ciphertext_blob, &out_size)
     if bytes == nil {
       return .error(CoreCryptoError.serializationFailed)
     }
 
-    return .result(Array(UnsafeBufferPointer(start: bytes, count: out_size)))
+    return .result(Data(buffer: UnsafeBufferPointer(start: bytes, count: out_size)))
   }
 
-  public func ExtractUnverifiedAAD(_ serialized: [UInt8]) -> Result<Plaintext> {
-    var out_cfg_internal = crypto_config_t()
-    let ciphertext_blob = peacemakr_deserialize(UnsafePointer(serialized), serialized.count, &out_cfg_internal)
-    if ciphertext_blob == nil {
-      return .error(CoreCryptoError.deserializationFailed)
+  public func ExtractUnverifiedAAD(_ serialized: Data) -> Result<Plaintext> {
+    var out: Result<Plaintext> = .error(CoreCryptoError.deserializationFailed)
+    
+    serialized.withUnsafeBytes { (serializedBytes: UnsafePointer<UInt8>) -> Void in
+      var out_cfg_internal = crypto_config_t()
+      let ciphertext_blob = peacemakr_deserialize(serializedBytes, serialized.count, &out_cfg_internal)
+      if ciphertext_blob == nil {
+        out = .error(CoreCryptoError.deserializationFailed)
+      }
+      
+      var plaintextOut = plaintext_t(data: nil, data_len: 0, aad: nil, aad_len: 0)
+      if !peacemakr_get_unverified_aad(ciphertext_blob, &plaintextOut) {
+        out = .error(CoreCryptoError.decryptionFailed)
+      }
+      
+      out = .result(Plaintext(cstyle: plaintextOut))
+      
     }
-
-    var out = plaintext_t(data: nil, data_len: 0, aad: nil, aad_len: 0)
-    if !peacemakr_get_unverified_aad(ciphertext_blob, &out) {
-      return .error(CoreCryptoError.decryptionFailed)
-    }
-    return .result(Plaintext(cstyle: out))
+    
+    return out
   }
 
-  public func Deserialize(_ serialized: [UInt8]) -> Result<(Ciphertext, CryptoConfig)> {
-    var out_cfg_internal = crypto_config_t()
-    let ciphertext_blob = peacemakr_deserialize(UnsafePointer(serialized), serialized.count, &out_cfg_internal)
-    if ciphertext_blob == nil {
-      return .error(CoreCryptoError.deserializationFailed)
+  public func Deserialize(_ serialized: Data) -> Result<(Ciphertext, CryptoConfig)> {
+    var out: Result<(Ciphertext, CryptoConfig)> = .error(CoreCryptoError.deserializationFailed)
+    
+    serialized.withUnsafeBytes { (serializedBytes: UnsafePointer<UInt8>) -> Void in
+      var out_cfg_internal = crypto_config_t()
+      let ciphertext_blob = peacemakr_deserialize(serializedBytes, serialized.count, &out_cfg_internal)
+      if ciphertext_blob == nil {
+        out = .error(CoreCryptoError.deserializationFailed)
+      }
+      out = .result((ciphertext_blob!, CryptoConfig(cfg: out_cfg_internal)))
     }
-    return .result((ciphertext_blob!, CryptoConfig(cfg: out_cfg_internal)))
+    
+    return out
   }
 
   public func Decrypt(key: PeacemakrKey, ciphertext: Ciphertext) -> Result<(Plaintext, Bool)> {
@@ -91,12 +105,17 @@ public class CryptoContext {
     return .result(true)
   }
 
-  public func HMAC(digestAlgorithm: MessageDigestAlgorithm, key: PeacemakrKey, buf: [UInt8]) -> Result<[UInt8]> {
-    var outLen = 0
-    let outPtr = peacemakr_hmac(message_digest_algorithm(digestAlgorithm.rawValue), key.getInternal(), UnsafePointer(buf), buf.count, &outLen)
-    if outPtr == nil {
-      return .error(CoreCryptoError.HMACFailed)
+  public func HMAC(digestAlgorithm: MessageDigestAlgorithm, key: PeacemakrKey, buf: Data) -> Result<Data> {
+    var out: Result<Data> = .error(CoreCryptoError.HMACFailed)
+    buf.withUnsafeBytes { (bufBytes: UnsafePointer<UInt8>) -> Void in
+      var outLen = 0
+      let outPtr = peacemakr_hmac(message_digest_algorithm(digestAlgorithm.rawValue), key.getInternal(), bufBytes, buf.count, &outLen)
+      if outPtr == nil {
+        out = .error(CoreCryptoError.HMACFailed)
+      }
+      out = .result(Data(buffer: UnsafeBufferPointer(start: outPtr, count: outLen)))
     }
-    return .result(Array(UnsafeBufferPointer(start: outPtr, count: outLen)))
+    
+    return out
   }
 }

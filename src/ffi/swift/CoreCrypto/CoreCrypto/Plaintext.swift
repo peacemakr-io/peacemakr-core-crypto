@@ -11,33 +11,44 @@ import libCoreCrypto
  in Swift-land.
  */
 public class Plaintext {
-  private let data: [UInt8]
-  private let aad: [UInt8]
+  private let data: Data
+  private let aad: Data
 
-  public init(data: [UInt8], aad: [UInt8]) {
+  public init(data: Data, aad: Data) {
     self.data = data
     self.aad = aad
   }
 
-  public init(data: String, aad: String) {
-    self.data = Array(data.utf8)
-    self.aad = Array(aad.utf8)
+  public init?(data: String, aad: String) {
+    let dataD = data.data(using: .utf8)
+    let aadD = aad.data(using: .utf8)
+    
+    if dataD == nil || aadD == nil {
+      return nil
+    }
+    
+    self.data = dataD!
+    self.aad = aadD!
   }
   
-  public var EncryptableData: [UInt8] {
+  public var EncryptableData: Data {
     return self.data
   }
   
-  public var AuthenticatableData: [UInt8] {
+  public var AuthenticatableData: Data {
     return self.aad
   }
 
   init(cstyle: plaintext_t) {
-    data = Array(UnsafeBufferPointer(start: cstyle.data, count: cstyle.data_len))
-    aad = Array(UnsafeBufferPointer(start: cstyle.aad, count: cstyle.aad_len))
+    data = Data(buffer: UnsafeBufferPointer(start: cstyle.data, count: cstyle.data_len))
+    aad = Data(buffer: UnsafeBufferPointer(start: cstyle.aad, count: cstyle.aad_len))
   }
 
   func getInternal() -> plaintext_t {
-    return plaintext_t(data: UnsafePointer(data), data_len: data.count, aad: UnsafePointer(aad), aad_len: aad.count)
+    return self.data.withUnsafeBytes { (dataBytes: UnsafePointer<UInt8>) -> plaintext_t in
+      self.aad.withUnsafeBytes { (aadBytes: UnsafePointer<UInt8>) -> plaintext_t in
+        return plaintext_t(data: dataBytes, data_len: self.data.count, aad: aadBytes, aad_len: self.aad.count)
+      }
+    }
   }
 }
