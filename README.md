@@ -21,7 +21,9 @@ From the repository base directory,
 
 ## Integrate and release to your local peacemakr-api clone - Golang:
 `./bin/release-golang.sh /path/to/peacemakr-api release`
+
 For a debug build
+
 `./bin/release-golang.sh /path/to/peacemakr-api`
 
 ## Build - For iOS
