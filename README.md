@@ -13,10 +13,12 @@ From the repository base directory,
 
 ## Build Dependencies - Golang
 `docker build -t corecrypto-dependencies:latest . -f docker/go-dependencies.Dockerfile --build-arg="CMAKE_BUILD_TYPE=RELEASE"`
+
 `docker tag corecrypto-dependencies:latest 716293438869.dkr.ecr.us-east-2.amazonaws.com/corecrypto-dependencies:latest`
 
 ## Build - Golang
 `docker build -t corecrypto:latest . -f docker/go.Dockerfile --build-arg="CMAKE_BUILD_TYPE=RELEASE"`
+
 `docker tag corecrypto:latest 716293438869.dkr.ecr.us-east-2.amazonaws.com/corecrypto:latest`
 
 ## Integrate and release to your local peacemakr-api clone - Golang:
