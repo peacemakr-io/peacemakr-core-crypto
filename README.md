@@ -19,10 +19,10 @@ From the repository base directory,
 ## Build (release) - Golang
 `docker build -t corecrypto:latest . -f docker/go.Dockerfile --build-arg="CMAKE_BUILD_TYPE=RELEASE"`
 
-## Integrate and release - Golang:
+## Integrate and release to your local peacemakr-api clone - Golang:
 `./bin/release-golang.sh /path/to/peacemakr-api release`
 For a debug build
 `./bin/release-golang.sh /path/to/peacemakr-api`
 
-## Build - Swift
+## Build - For iOS
 `cd /path/to/peacemakr-core-crypto/bin && ./release-ios.sh /where/to/put/build/artifacts`
