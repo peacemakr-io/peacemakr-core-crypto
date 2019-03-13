@@ -107,7 +107,7 @@ const (
 	NONE     AsymmetricCipher = 0
 	RSA_2048 AsymmetricCipher = 1
 	RSA_4096 AsymmetricCipher = 2
-	//EC25519       AsymmetricCipher = 3
+	ECDH_ANSI_X9_62_P256 AsymmetricCipher = 3
 )
 
 type MessageDigestAlgorithm int
@@ -237,6 +237,12 @@ func NewPeacemakrKeyFromPrivPem(config CryptoConfig, contents []byte) PeacemakrK
 	defer C.free(unsafe.Pointer(cBytes))
 	return PeacemakrKey{
 		key: C.PeacemakrKey_new_pem_priv(configToInternal(config), cBytes, C.size_t(len(contents))),
+	}
+}
+
+func ECDHPeacemakrKeyGen(myKey *PeacemakrKey, peerKey *PeacemakrKey) PeacemakrKey {
+	return PeacemakrKey{
+		key: C.PeacemakrKey_dh_generate(myKey.key, peerKey.key),
 	}
 }
 

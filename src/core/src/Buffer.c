@@ -8,9 +8,9 @@
 
 #define __STDC_WANT_LIB_EXT1__ 1
 #include <arpa/inet.h>
+#include <errno.h>
 #include <memory.h>
 #include <stdlib.h>
-#include <errno.h>
 
 #include "Buffer.h"
 #include "Logging.h"

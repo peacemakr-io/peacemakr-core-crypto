@@ -65,7 +65,6 @@ ciphertext_blob_t *CiphertextBlob_new(const crypto_config_t cfg,
     switch (cfg.asymm_cipher) {
     case NONE:
       break;
-      //      case EC25519: out->m_encrypted_key_ = Buffer_new(1024); break;
     case RSA_2048:
       out->m_encrypted_key_ = Buffer_new(256);
       EXPECT_NOT_NULL_CLEANUP_RET(out->m_encrypted_key_,
@@ -77,6 +76,8 @@ ciphertext_blob_t *CiphertextBlob_new(const crypto_config_t cfg,
       EXPECT_NOT_NULL_CLEANUP_RET(out->m_encrypted_key_,
                                   CiphertextBlob_free(out),
                                   "creation of encrypted key buffer failed\n");
+      break;
+    default:
       break;
     }
     break;

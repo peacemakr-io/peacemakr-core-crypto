@@ -9,6 +9,8 @@
 #include "crypto.hpp"
 
 #include <cstring>
+#include <crypto.hpp>
+
 
 peacemakr::RandomDevice::RandomDevice(rng_buf generator, rng_err err_handler)
     : m_rand_{.generator = generator, .err = err_handler} {}
@@ -52,6 +54,10 @@ peacemakr::Key::Key(crypto_config_t cfg, const std::string &pem, bool priv) {
     m_key_ = PeacemakrKey_new_pem_priv(cfg, pem.c_str(), pem.size());
   else
     m_key_ = PeacemakrKey_new_pem_pub(cfg, pem.c_str(), pem.size());
+}
+
+peacemakr::Key::Key(const peacemakr::Key &my_key, const peacemakr::Key &peer) {
+  m_key_ = PeacemakrKey_dh_generate(my_key.m_key_, peer.m_key_);
 }
 
 peacemakr::Key::~Key() { PeacemakrKey_free(m_key_); }

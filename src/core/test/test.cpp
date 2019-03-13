@@ -267,6 +267,55 @@ void test_uninit_crash() {
          "symmetric encrypt-decrypt failed");
 }
 
+void test_dh_symmetric(symmetric_cipher symm_cipher,
+                       message_digest_algorithm digest) {
+  crypto_config_t cfg = {.mode = ASYMMETRIC,
+          .symm_cipher = symm_cipher,
+          .asymm_cipher = ECDH_ANSI_X9_62_P256,
+          .digest_algorithm = digest};
+
+  peacemakr::Plaintext plaintext_in;
+  plaintext_in.data = get_random_string();
+  plaintext_in.aad = get_random_string();
+
+  peacemakr::RandomDevice rand = peacemakr::RandomDevice::getDefault();
+
+  peacemakr::Key myKey(cfg, rand);
+  peacemakr::Key peerKey(cfg, rand);
+
+  peacemakr::Key sharedKey(myKey, peerKey);
+
+  peacemakr::CryptoContext ctx(log_fn);
+  peacemakr::Ciphertext *encrypted = ctx.Encrypt(sharedKey, plaintext_in, rand);
+  if (encrypted == nullptr && plaintext_in.data.empty()) {
+    return;
+  } else {
+    assert(encrypted != nullptr);
+  }
+  ctx.Sign(sharedKey, plaintext_in, encrypted);
+
+  std::string serialized = ctx.Serialize(encrypted);
+  assert(!serialized.empty());
+
+  if (!plaintext_in.aad.empty()) {
+    peacemakr::Plaintext unverified_aad = ctx.ExtractUnverifiedAAD(serialized);
+    assert(plaintext_in.aad == unverified_aad.aad);
+  }
+
+  crypto_config_t out_cfg;
+
+  peacemakr::Ciphertext *deserialized = ctx.Deserialize(serialized, &out_cfg);
+  bool needVerify = false;
+  peacemakr::Plaintext plaintext_out =
+          ctx.Decrypt(sharedKey, deserialized, needVerify);
+  assert(needVerify);
+  bool verified = ctx.Verify(sharedKey, plaintext_out, deserialized);
+  assert(verified);
+
+  assert(plaintext_in.data == plaintext_out.data);
+  assert(plaintext_in.aad == plaintext_out.aad);
+}
+
 int main() {
   std::vector<std::thread> runners;
   for (int i = RSA_2048; i <= RSA_4096; ++i) {
@@ -288,6 +337,8 @@ int main() {
       runners.emplace_back(test_symmetric, (symmetric_cipher)j,
                            (message_digest_algorithm)k);
       runners.emplace_back(test_sign_symmetric, (symmetric_cipher)j,
+                           (message_digest_algorithm)k);
+      runners.emplace_back(test_dh_symmetric, (symmetric_cipher)j,
                            (message_digest_algorithm)k);
     }
   }

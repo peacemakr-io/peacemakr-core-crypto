@@ -53,6 +53,16 @@ public class PeacemakrKey {
     internalRepr = key!
   }
 
+  public init?(myKey: PeacemakrKey, peerKey: PeacemakrKey) {
+    let key: OpaquePointer? = PeacemakrKey_dh_generate(myKey.internalRepr, peerKey.internalRepr)
+
+    if key == nil {
+      return nil
+    }
+
+    internalRepr = key!
+  }
+
   deinit {
     PeacemakrKey_free(internalRepr)
   }

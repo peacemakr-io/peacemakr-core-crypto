@@ -40,13 +40,15 @@ typedef enum {
 /**
  * @brief Peacemakr supported asymmetric cipher algorithms
  *
- * EC25519 causes failure during EVP_SealInit call for reasons unknown
- * so only the RSA_* algorithms are currently supported
+ * The two RSA modes can be used for actual asymmetric encrypt/decrypt
+ * operations The ECDH mode may only be used for performing ECDH key exchanges
+ * and encrypting with the derived key.
  */
 typedef enum {
   NONE = 0,
   RSA_2048 = 1,
   RSA_4096 = 2,
+  ECDH_ANSI_X9_62_P256 = 3,
 } asymmetric_cipher;
 
 /**
@@ -185,6 +187,9 @@ peacemakr_key_t *PeacemakrKey_new_pem_pub(crypto_config_t cfg, const char *buf,
  */
 peacemakr_key_t *PeacemakrKey_new_pem_priv(crypto_config_t cfg, const char *buf,
                                            size_t buflen);
+
+peacemakr_key_t *PeacemakrKey_dh_generate(peacemakr_key_t *my_key,
+                                          peacemakr_key_t *peer_key);
 
 /**
  * Gets the crypto_config_t used to create \p key from \p key.

@@ -15,7 +15,7 @@ if (UNIX AND NOT APPLE)
 endif()
 
 function(add_ctest test_name)
-    set(CMAKE_C_FLAGS "-fsanitize=address -g -Os -fPIC -fstack-protector-strong -fno-omit-frame-pointer -Wall")
+    set(CMAKE_C_FLAGS "-fsanitize=address -g -O0 -fPIC -fstack-protector-strong -fno-omit-frame-pointer -Wall")
 
     add_executable(test_${test_name} EXCLUDE_FROM_ALL ${CMAKE_CURRENT_SOURCE_DIR}/${test_name}.c)
     target_link_libraries(test_${test_name} PRIVATE peacemakr-core-crypto ${LIBBSD_LIBRARIES})
@@ -34,6 +34,8 @@ add_ctest(serialize)
 add_ctest(big_message)
 add_ctest(sign)
 add_ctest(garbage)
+add_ctest(dh_keygen)
+add_ctest(encrypt_dh_pem)
 
 enable_language(CXX)
 set(CMAKE_CXX_STANDARD 11)
