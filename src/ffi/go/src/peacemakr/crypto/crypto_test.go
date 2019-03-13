@@ -550,10 +550,16 @@ func TestECDHSerialize(t *testing.T) {
 				secKey := ECDHPeacemakrKeyGen(&myKey, &peerKey)
 				defer DestroyPeacemakrKey(secKey)
 
+				secKeyCfg, err := GetKeyConfig(&secKey)
+				if err != nil {
+					t.Fatalf("%v", err)
+				}
+
 				ciphertext, err := Encrypt(secKey, plaintextIn, randomDevice)
 				if err != nil && len(plaintextIn.Data) == 0 {
 					return
 				}
+
 				if err != nil {
 					t.Fatalf("%v", err)
 				}
@@ -578,7 +584,7 @@ func TestECDHSerialize(t *testing.T) {
 					t.Fatalf("%v", err)
 				}
 
-				if !reflect.DeepEqual(*deserializedConfig, cfg) {
+				if !reflect.DeepEqual(*deserializedConfig, secKeyCfg) {
 					t.Fatalf("did not deserialize the correct configuration")
 				}
 
