@@ -19,28 +19,28 @@ void test_symmetric_algo(symmetric_cipher symm_cipher, const char *pubkey_buf,
                          const size_t pubkey_len, const char *privkey_buf,
                          const size_t privkey_len) {
   crypto_config_t cfg = {.mode = ASYMMETRIC,
-          .asymm_cipher = ECDH_ANSI_X9_62_P256,
-          .symm_cipher = symm_cipher,
-          .digest_algorithm = SHA_512};
+                         .asymm_cipher = ECDH_ANSI_X9_62_P256,
+                         .symm_cipher = symm_cipher,
+                         .digest_algorithm = SHA_512};
 
   plaintext_t plaintext_in = {.data = (const unsigned char *)message,
-          .data_len = strlen(message) + 1,
-          .aad = (const unsigned char *)message_aad,
-          .aad_len = strlen(message_aad) + 1};
+                              .data_len = strlen(message) + 1,
+                              .aad = (const unsigned char *)message_aad,
+                              .aad_len = strlen(message_aad) + 1};
 
   plaintext_t plaintext_out;
 
   random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
 
   peacemakr_key_t *pubkey =
-          PeacemakrKey_new_pem_pub(cfg, pubkey_buf, pubkey_len);
+      PeacemakrKey_new_pem_pub(cfg, pubkey_buf, pubkey_len);
   peacemakr_key_t *privkey =
-          PeacemakrKey_new_pem_priv(cfg, privkey_buf, privkey_len);
+      PeacemakrKey_new_pem_priv(cfg, privkey_buf, privkey_len);
 
   peacemakr_key_t *sec_key = PeacemakrKey_dh_generate(privkey, pubkey);
 
   ciphertext_blob_t *ciphertext =
-          peacemakr_encrypt(sec_key, &plaintext_in, &rand);
+      peacemakr_encrypt(sec_key, &plaintext_in, &rand);
   assert(ciphertext != NULL);
 
   decrypt_code success = peacemakr_decrypt(sec_key, ciphertext, &plaintext_out);
@@ -64,9 +64,9 @@ int main() {
   }
 
   crypto_config_t cfg = {.mode = ASYMMETRIC,
-          .asymm_cipher = ECDH_ANSI_X9_62_P256,
-          .symm_cipher = CHACHA20_POLY1305,
-          .digest_algorithm = SHA_512};
+                         .asymm_cipher = ECDH_ANSI_X9_62_P256,
+                         .symm_cipher = CHACHA20_POLY1305,
+                         .digest_algorithm = SHA_512};
 
   random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
 

@@ -188,6 +188,11 @@ peacemakr_key_t *PeacemakrKey_new_pem_pub(crypto_config_t cfg, const char *buf,
 peacemakr_key_t *PeacemakrKey_new_pem_priv(crypto_config_t cfg, const char *buf,
                                            size_t buflen);
 
+/**
+ * Create a new symmetric peacemakr_key_t using a Diffie-Hellman exchange
+ * between \p my_key (which is a private key) and \p peer_key (which is a public
+ * key)
+ */
 peacemakr_key_t *PeacemakrKey_dh_generate(peacemakr_key_t *my_key,
                                           peacemakr_key_t *peer_key);
 

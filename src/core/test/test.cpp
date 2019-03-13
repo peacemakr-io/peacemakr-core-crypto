@@ -270,9 +270,9 @@ void test_uninit_crash() {
 void test_dh_symmetric(symmetric_cipher symm_cipher,
                        message_digest_algorithm digest) {
   crypto_config_t cfg = {.mode = ASYMMETRIC,
-          .symm_cipher = symm_cipher,
-          .asymm_cipher = ECDH_ANSI_X9_62_P256,
-          .digest_algorithm = digest};
+                         .symm_cipher = symm_cipher,
+                         .asymm_cipher = ECDH_ANSI_X9_62_P256,
+                         .digest_algorithm = digest};
 
   peacemakr::Plaintext plaintext_in;
   plaintext_in.data = get_random_string();
@@ -307,7 +307,7 @@ void test_dh_symmetric(symmetric_cipher symm_cipher,
   peacemakr::Ciphertext *deserialized = ctx.Deserialize(serialized, &out_cfg);
   bool needVerify = false;
   peacemakr::Plaintext plaintext_out =
-          ctx.Decrypt(sharedKey, deserialized, needVerify);
+      ctx.Decrypt(sharedKey, deserialized, needVerify);
   assert(needVerify);
   bool verified = ctx.Verify(sharedKey, plaintext_out, deserialized);
   assert(verified);
