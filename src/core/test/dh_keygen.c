@@ -15,16 +15,16 @@
 const char *message = "Hello, world! I'm testing encryption."; // 37 + 1
 const char *message_aad = "And I'm AAD";                       // 11 + 1
 
-void test_symmetric_algo(symmetric_cipher symm_cipher) {
+void test_symmetric_algo(symmetric_cipher symm_cipher, asymmetric_cipher curve) {
   crypto_config_t cfg = {.mode = ASYMMETRIC,
-                         .asymm_cipher = ECDH_ANSI_X9_62_P256,
-                         .symm_cipher = symm_cipher,
-                         .digest_algorithm = SHA_512};
+          .asymm_cipher = curve,
+          .symm_cipher = symm_cipher,
+          .digest_algorithm = SHA_512};
 
   plaintext_t plaintext_in = {.data = (const unsigned char *)message,
-                              .data_len = strlen(message) + 1,
-                              .aad = (const unsigned char *)message_aad,
-                              .aad_len = strlen(message_aad) + 1};
+          .data_len = strlen(message) + 1,
+          .aad = (const unsigned char *)message_aad,
+          .aad_len = strlen(message_aad) + 1};
 
   plaintext_t plaintext_out;
 
@@ -36,11 +36,11 @@ void test_symmetric_algo(symmetric_cipher symm_cipher) {
   peacemakr_key_t *symm_key = PeacemakrKey_dh_generate(my_key, peer_key);
 
   ciphertext_blob_t *ciphertext =
-      peacemakr_encrypt(symm_key, &plaintext_in, &rand);
+          peacemakr_encrypt(symm_key, &plaintext_in, &rand);
   assert(ciphertext != NULL);
 
   decrypt_code success =
-      peacemakr_decrypt(symm_key, ciphertext, &plaintext_out);
+          peacemakr_decrypt(symm_key, ciphertext, &plaintext_out);
 
   assert(success == DECRYPT_SUCCESS);
 
@@ -58,7 +58,9 @@ int main() {
   if (!peacemakr_init()) {
     return 1;
   }
-  for (int j = AES_128_GCM; j <= CHACHA20_POLY1305; ++j) {
-    test_symmetric_algo(j);
+  for (int curve = ECDH_P256; curve <= ECDH_P521; ++curve) {
+    for (int j = AES_128_GCM; j <= CHACHA20_POLY1305; ++j) {
+      test_symmetric_algo(j, curve);
+    }
   }
 }

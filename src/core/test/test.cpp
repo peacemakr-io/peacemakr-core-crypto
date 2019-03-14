@@ -271,7 +271,7 @@ void test_dh_symmetric(symmetric_cipher symm_cipher,
                        message_digest_algorithm digest) {
   crypto_config_t cfg = {.mode = ASYMMETRIC,
                          .symm_cipher = symm_cipher,
-                         .asymm_cipher = ECDH_ANSI_X9_62_P256,
+                         .asymm_cipher = ECDH_P256,
                          .digest_algorithm = digest};
 
   peacemakr::Plaintext plaintext_in;

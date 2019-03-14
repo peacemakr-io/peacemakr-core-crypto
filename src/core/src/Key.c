@@ -13,6 +13,7 @@
 #include <memory.h>
 
 #include <openssl/dh.h>
+#include <openssl/ecdh.h>
 #include <openssl/evp.h>
 #include <openssl/pem.h>
 #include <openssl/rsa.h>
@@ -49,7 +50,13 @@ static bool keygen_inner(int key_type, EVP_PKEY **pkey, int rsa_bits) {
   return true;
 }
 
-static bool dh_keygen_inner(EVP_PKEY **pkey) {
+typedef enum {
+  P256,
+  P384,
+  P521,
+} curve_t ;
+
+static bool dh_keygen_inner(EVP_PKEY **pkey, curve_t curve) {
   EVP_PKEY_CTX *pctx, *kctx;
   EVP_PKEY *params = NULL;
 
@@ -66,7 +73,23 @@ static bool dh_keygen_inner(EVP_PKEY **pkey) {
   }
 
   /* We're going to use the ANSI X9.62 Prime 256v1 curve */
-  if (1 != EVP_PKEY_CTX_set_ec_paramgen_curve_nid(pctx, NID_X9_62_prime256v1)) {
+  int rc = 0;
+  switch (curve) {
+    case P256: {
+      rc = EVP_PKEY_CTX_set_ec_paramgen_curve_nid(pctx, NID_X9_62_prime256v1);
+      break;
+    }
+    case P384: {
+      rc = EVP_PKEY_CTX_set_ec_paramgen_curve_nid(pctx, NID_secp384r1);
+      break;
+    }
+    case P521: {
+      rc = EVP_PKEY_CTX_set_ec_paramgen_curve_nid(pctx, NID_secp521r1);
+      break;
+    }
+  }
+
+  if (rc != 1) {
     PEACEMAKR_OPENSSL_LOG;
     return false;
   }
@@ -150,8 +173,24 @@ peacemakr_key_t *PeacemakrKey_new(crypto_config_t cfg, random_device_t *rand) {
       }
       break;
     }
-    case ECDH_ANSI_X9_62_P256: {
-      if (dh_keygen_inner(&out->m_contents_.asymm) == false) {
+    case ECDH_P256: {
+      if (dh_keygen_inner(&out->m_contents_.asymm, P256) == false) {
+        PEACEMAKR_ERROR("keygen failed\n");
+        PeacemakrKey_free(out);
+        return NULL;
+      }
+      break;
+    }
+    case ECDH_P384: {
+      if (dh_keygen_inner(&out->m_contents_.asymm, P384) == false) {
+        PEACEMAKR_ERROR("keygen failed\n");
+        PeacemakrKey_free(out);
+        return NULL;
+      }
+      break;
+    }
+    case ECDH_P521: {
+      if (dh_keygen_inner(&out->m_contents_.asymm, P521) == false) {
         PEACEMAKR_ERROR("keygen failed\n");
         PeacemakrKey_free(out);
         return NULL;
@@ -231,7 +270,7 @@ peacemakr_key_t *PeacemakrKey_new_pem(crypto_config_t cfg, const char *buf,
 
   BIO *bo = BIO_new_mem_buf(buf, (int)buflen);
 
-  if (cfg.asymm_cipher == ECDH_ANSI_X9_62_P256) {
+  if (cfg.asymm_cipher == ECDH_P256 || cfg.asymm_cipher == ECDH_P384 || cfg.asymm_cipher == ECDH_P521) {
     if (is_priv) {
       out->m_contents_.asymm = PEM_read_bio_PrivateKey(bo, NULL, NULL, NULL);
       EXPECT_NOT_NULL_CLEANUP_RET(out->m_contents_.asymm,

@@ -48,7 +48,9 @@ typedef enum {
   NONE = 0,
   RSA_2048 = 1,
   RSA_4096 = 2,
-  ECDH_ANSI_X9_62_P256 = 3,
+  ECDH_P256 = 3,
+  ECDH_P384 = 4,
+  ECDH_P521 = 5,
 } asymmetric_cipher;
 
 /**

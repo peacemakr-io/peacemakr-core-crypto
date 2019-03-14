@@ -450,7 +450,7 @@ ciphertext_blob_t *peacemakr_encrypt(const peacemakr_key_t *recipient_key,
 
   const crypto_config_t cfg = PeacemakrKey_get_config(recipient_key);
 
-  if (cfg.mode == ASYMMETRIC && cfg.asymm_cipher == ECDH_ANSI_X9_62_P256) {
+  if (cfg.mode == ASYMMETRIC && cfg.asymm_cipher >= ECDH_P256) {
     PEACEMAKR_ERROR("Improper usage of ECDH_ANSI_X9_62_P256 key detected, you "
                     "must derive a "
                     "shared secret first\n");
