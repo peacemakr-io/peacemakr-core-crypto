@@ -384,7 +384,8 @@ peacemakr_key_t *PeacemakrKey_dh_generate(peacemakr_key_t *my_key,
   crypto_config_t symm_key_cfg = {.mode = SYMMETRIC,
                                   .asymm_cipher = NONE,
                                   .symm_cipher = my_key->m_cfg_.symm_cipher,
-                                  .digest_algorithm = my_key->m_cfg_.digest_algorithm};
+                                  .digest_algorithm =
+                                      my_key->m_cfg_.digest_algorithm};
 
   uint8_t hash[SHA256_DIGEST_LENGTH];
 
@@ -502,5 +503,21 @@ bool PeacemakrKey_pub_to_pem(const peacemakr_key_t *key, char **buf,
   *buf = calloc(*bufsize, sizeof(char));
   memcpy(*buf, memdata, *bufsize);
   BIO_free(bio);
+  return true;
+}
+
+bool PeacemakrKey_get_bytes(const peacemakr_key_t *key, uint8_t **buf,
+                            size_t *bufsize) {
+  if (key->m_cfg_.mode != SYMMETRIC) {
+    PEACEMAKR_ERROR("Cannot export bytes of asymmetric key\n");
+    return false;
+  }
+
+  *bufsize = Buffer_get_size(key->m_contents_.symm);
+  *buf = calloc(*bufsize, sizeof(uint8_t));
+  EXPECT_NOT_NULL_RET_VALUE(*buf, false, "calloc failed\n");
+
+  memcpy(*buf, Buffer_get_bytes(key->m_contents_.symm, NULL), *bufsize);
+
   return true;
 }

@@ -389,7 +389,14 @@ func TestSymmetricEncrypt(t *testing.T) {
 			key = NewPeacemakrKeyFromMasterKey(cfg, masterKey, []byte("abcdefghijklmnopqrstuvwxyz"))
 			DestroyPeacemakrKey(masterKey)
 		} else {
-			key = NewPeacemakrKey(cfg, randomDevice)
+			origKey := NewPeacemakrKey(cfg, randomDevice)
+			b, err := GetBytes(&origKey)
+			if err != nil {
+				DestroyPeacemakrKey(origKey)
+				t.Fatalf("%v", err)
+			}
+
+			key = NewPeacemakrKeyFromBytes(cfg, b)
 		}
 
 		ciphertext, err := Encrypt(key, plaintextIn, randomDevice)
@@ -533,7 +540,7 @@ func TestECDHSerialize(t *testing.T) {
                 go func(j, k, curve int) {
                     cfg := CryptoConfig{
                         Mode:             ASYMMETRIC,
-                        AsymmetricCipher: curve,
+                        AsymmetricCipher: AsymmetricCipher(curve),
                         SymmetricCipher:  SymmetricCipher(j),
                         DigestAlgorithm:  MessageDigestAlgorithm(k),
                     }

@@ -28,7 +28,13 @@ void test_symmetric_algo(symmetric_cipher cipher) {
 
   random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
 
-  peacemakr_key_t *key = PeacemakrKey_new(cfg, &rand);
+  peacemakr_key_t *original_key = PeacemakrKey_new(cfg, &rand);
+
+  uint8_t *key_bytes = NULL;
+  size_t key_size = 0;
+  PeacemakrKey_get_bytes(original_key, &key_bytes, &key_size);
+
+  peacemakr_key_t *key = PeacemakrKey_new_bytes(cfg, key_bytes, key_size);
 
   ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, &plaintext_in, &rand);
   assert(ciphertext != NULL);
@@ -44,6 +50,7 @@ void test_symmetric_algo(symmetric_cipher cipher) {
                  (const char *)plaintext_in.aad, plaintext_in.aad_len) == 0);
   free((void *)plaintext_out.aad);
 
+  PeacemakrKey_free(original_key);
   PeacemakrKey_free(key);
 }
 

@@ -218,6 +218,13 @@ bool PeacemakrKey_pub_to_pem(const peacemakr_key_t *key, char **buf,
                              size_t *bufsize);
 
 /**
+ * Copies the bytes of \p key into \p buf and copies the size of \p buf into \p
+ * bufsize.
+ */
+bool PeacemakrKey_get_bytes(const peacemakr_key_t *key, uint8_t **buf,
+                            size_t *bufsize);
+
+/**
  * Free \p key. Attempts to securely clear all memory associated with \p key.
  */
 void PeacemakrKey_free(peacemakr_key_t *key);

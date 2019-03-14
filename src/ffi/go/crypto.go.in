@@ -256,6 +256,23 @@ func GetKeyConfig(key *PeacemakrKey) (CryptoConfig, error) {
 	return configFromInternal(keyConfig), nil
 }
 
+func GetBytes(key *PeacemakrKey) ([]byte, error) {
+    if !key.IsValid() {
+        return []byte{}, errors.New("invalid key passed to GetKeyConfig")
+    }
+
+	var buf *byte
+    defer C.free(unsafe.Pointer(buf))
+	var bufSize C.size_t
+
+	success := C.PeacemakrKey_get_bytes(key.key, (**C.uint8_t)(unsafe.Pointer(&buf)), (*C.size_t)(&bufSize))
+	if !success {
+		return []byte{}, errors.New("failed to get bytes from peacemakr key")
+	}
+
+	return C.GoBytes(unsafe.Pointer(buf), C.int(bufSize)), nil
+}
+
 func DestroyPeacemakrKey(key PeacemakrKey) error {
 	if !key.IsValid() {
 		return errors.New("invalid key passed to DestroyPeacemakrKey")
