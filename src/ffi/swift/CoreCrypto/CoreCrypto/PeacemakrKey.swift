@@ -22,35 +22,30 @@ public class PeacemakrKey {
     internalRepr = key!
   }
 
-  public init?(config: CryptoConfig, bytes: [UInt8]) {
-    let key = PeacemakrKey_new_bytes(config.getInternal(), UnsafePointer(bytes), bytes.count)
-    if key == nil {
-      return nil
+  public init?(config: CryptoConfig, bytes: Data) {
+    let key = bytes.withUnsafeBytes { (rawBytes: UnsafePointer<UInt8>) -> OpaquePointer in
+      return PeacemakrKey_new_bytes(config.getInternal(), rawBytes, bytes.count)
     }
-    internalRepr = key!
+    internalRepr = key
   }
 
-  public init?(config: CryptoConfig, master: PeacemakrKey, bytes: [UInt8]) {
-    let key = PeacemakrKey_new_from_master(config.getInternal(), master.internalRepr, UnsafePointer(bytes), bytes.count)
-    if key == nil {
-      return nil
+  public init?(config: CryptoConfig, master: PeacemakrKey, bytes: Data) {
+    let key = bytes.withUnsafeBytes { (rawBytes: UnsafePointer<UInt8>) -> OpaquePointer in
+      return PeacemakrKey_new_from_master(config.getInternal(), master.internalRepr, rawBytes, bytes.count)
     }
-    internalRepr = key!
+    internalRepr = key
   }
 
-  public init?(config: CryptoConfig, fileContents: [CChar], is_priv: Bool) {
-    var key: OpaquePointer? = nil
-    if is_priv {
-      key = PeacemakrKey_new_pem_priv(config.getInternal(), UnsafePointer(fileContents), fileContents.count)!
-    } else {
-      key = PeacemakrKey_new_pem_pub(config.getInternal(), UnsafePointer(fileContents), fileContents.count)!
+  public init?(config: CryptoConfig, fileContents: String, is_priv: Bool) {
+    let key = fileContents.withCString { (fileContentsPtr: UnsafePointer<CChar>) -> OpaquePointer in
+      if is_priv {
+        return PeacemakrKey_new_pem_priv(config.getInternal(), fileContentsPtr, fileContents.count)!
+      } else {
+        return PeacemakrKey_new_pem_pub(config.getInternal(), fileContentsPtr, fileContents.count)!
+      }
     }
     
-    if key == nil {
-      return nil
-    }
-    
-    internalRepr = key!
+    internalRepr = key
   }
 
   public init?(myKey: PeacemakrKey, peerKey: PeacemakrKey) {
@@ -75,8 +70,8 @@ public class PeacemakrKey {
     return internalRepr
   }
   
-  public func toPem(is_priv: Bool) -> Result<[Int8]> {
-    var out: UnsafeMutablePointer<Int8>?
+  public func toPem(is_priv: Bool) -> Result<Data> {
+    var out: UnsafeMutablePointer<CChar>?
     var outsize: CLong = 0
     if is_priv {
       if !PeacemakrKey_priv_to_pem(internalRepr, &out, &outsize) {
@@ -88,6 +83,23 @@ public class PeacemakrKey {
       }
     }
     
-    return .result(Array(UnsafeBufferPointer(start: out, count: outsize)))
+    let pemData = Data(buffer: UnsafeBufferPointer(start: out, count: outsize))
+    return .result(pemData)
+  }
+  
+  public func toPem(is_priv: Bool) -> Result<String> {
+    let pemData: Result<Data> = self.toPem(is_priv: is_priv)
+    switch (pemData) {
+    case let .error(e):
+      return .error(e)
+    case let .result(pem):
+      // We are assuming PEM is UTF8 compatible
+      let pemString = String(data: pem, encoding: .utf8)
+      if pemString == nil {
+        return .error(CoreCryptoError.keySerializationFailed)
+      }
+      
+      return .result(pemString!)
+    }
   }
 }
