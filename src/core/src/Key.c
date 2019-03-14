@@ -384,7 +384,7 @@ peacemakr_key_t *PeacemakrKey_dh_generate(peacemakr_key_t *my_key,
   crypto_config_t symm_key_cfg = {.mode = SYMMETRIC,
                                   .asymm_cipher = NONE,
                                   .symm_cipher = my_key->m_cfg_.symm_cipher,
-                                  .digest_algorithm = SHA3_512};
+                                  .digest_algorithm = my_key->m_cfg_.digest_algorithm};
 
   uint8_t hash[SHA256_DIGEST_LENGTH];
 
