@@ -15,30 +15,31 @@
 const char *message = "Hello, world! I'm testing encryption."; // 37 + 1
 const char *message_aad = "And I'm AAD";                       // 11 + 1
 
-ciphertext_blob_t *encrypt(symmetric_cipher symm_cipher, asymmetric_cipher curve, const char *pubkey_buf,
+ciphertext_blob_t *encrypt(symmetric_cipher symm_cipher,
+                           asymmetric_cipher curve, const char *pubkey_buf,
                            const size_t pubkey_len, const char *privkey_buf,
                            const size_t privkey_len) {
   crypto_config_t cfg = {.mode = ASYMMETRIC,
-          .asymm_cipher = curve,
-          .symm_cipher = symm_cipher,
-          .digest_algorithm = SHA_512};
+                         .asymm_cipher = curve,
+                         .symm_cipher = symm_cipher,
+                         .digest_algorithm = SHA_512};
 
   plaintext_t plaintext_in = {.data = (const unsigned char *)message,
-          .data_len = strlen(message) + 1,
-          .aad = (const unsigned char *)message_aad,
-          .aad_len = strlen(message_aad) + 1};
+                              .data_len = strlen(message) + 1,
+                              .aad = (const unsigned char *)message_aad,
+                              .aad_len = strlen(message_aad) + 1};
 
   random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
 
   peacemakr_key_t *pubkey =
-          PeacemakrKey_new_pem_pub(cfg, pubkey_buf, pubkey_len);
+      PeacemakrKey_new_pem_pub(cfg, pubkey_buf, pubkey_len);
   peacemakr_key_t *privkey =
-          PeacemakrKey_new_pem_priv(cfg, privkey_buf, privkey_len);
+      PeacemakrKey_new_pem_priv(cfg, privkey_buf, privkey_len);
 
   peacemakr_key_t *sec_key = PeacemakrKey_dh_generate(privkey, pubkey);
 
   ciphertext_blob_t *ciphertext =
-          peacemakr_encrypt(sec_key, &plaintext_in, &rand);
+      peacemakr_encrypt(sec_key, &plaintext_in, &rand);
   assert(ciphertext != NULL);
 
   PeacemakrKey_free(sec_key);
@@ -48,24 +49,25 @@ ciphertext_blob_t *encrypt(symmetric_cipher symm_cipher, asymmetric_cipher curve
   return ciphertext;
 }
 
-void decrypt(symmetric_cipher symm_cipher, asymmetric_cipher curve, const char *pubkey_buf,
-             const size_t pubkey_len, const char *privkey_buf,
-             const size_t privkey_len, ciphertext_blob_t *ciphertext) {
+void decrypt(symmetric_cipher symm_cipher, asymmetric_cipher curve,
+             const char *pubkey_buf, const size_t pubkey_len,
+             const char *privkey_buf, const size_t privkey_len,
+             ciphertext_blob_t *ciphertext) {
 
   crypto_config_t cfg = {.mode = ASYMMETRIC,
-          .asymm_cipher = curve,
-          .symm_cipher = symm_cipher,
-          .digest_algorithm = SHA_512};
+                         .asymm_cipher = curve,
+                         .symm_cipher = symm_cipher,
+                         .digest_algorithm = SHA_512};
 
   plaintext_t plaintext_in = {.data = (const unsigned char *)message,
-          .data_len = strlen(message) + 1,
-          .aad = (const unsigned char *)message_aad,
-          .aad_len = strlen(message_aad) + 1};
+                              .data_len = strlen(message) + 1,
+                              .aad = (const unsigned char *)message_aad,
+                              .aad_len = strlen(message_aad) + 1};
 
   peacemakr_key_t *pubkey =
-          PeacemakrKey_new_pem_pub(cfg, pubkey_buf, pubkey_len);
+      PeacemakrKey_new_pem_pub(cfg, pubkey_buf, pubkey_len);
   peacemakr_key_t *privkey =
-          PeacemakrKey_new_pem_priv(cfg, privkey_buf, privkey_len);
+      PeacemakrKey_new_pem_priv(cfg, privkey_buf, privkey_len);
 
   peacemakr_key_t *sec_key = PeacemakrKey_dh_generate(privkey, pubkey);
 
@@ -87,9 +89,9 @@ void decrypt(symmetric_cipher symm_cipher, asymmetric_cipher curve, const char *
   PeacemakrKey_free(privkey);
 }
 
-void test_symmetric_algo(symmetric_cipher symm_cipher, asymmetric_cipher curve, const char *pubkey_buf,
-                         const size_t pubkey_len, const char *privkey_buf,
-                         const size_t privkey_len) {
+void test_symmetric_algo(symmetric_cipher symm_cipher, asymmetric_cipher curve,
+                         const char *pubkey_buf, const size_t pubkey_len,
+                         const char *privkey_buf, const size_t privkey_len) {
   crypto_config_t cfg = {.mode = ASYMMETRIC,
                          .asymm_cipher = curve,
                          .symm_cipher = symm_cipher,
@@ -138,9 +140,9 @@ int main() {
 
   for (int curve = ECDH_P256; curve <= ECDH_P521; ++curve) {
     crypto_config_t cfg = {.mode = ASYMMETRIC,
-            .asymm_cipher = curve,
-            .symm_cipher = CHACHA20_POLY1305,
-            .digest_algorithm = SHA_512};
+                           .asymm_cipher = curve,
+                           .symm_cipher = CHACHA20_POLY1305,
+                           .digest_algorithm = SHA_512};
 
     random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
 
@@ -163,7 +165,8 @@ int main() {
     }
 
     for (int i = AES_128_GCM; i <= CHACHA20_POLY1305; ++i) {
-      ciphertext_blob_t *encrypted = encrypt(i, curve, peer_pubkey, pub_len, my_privkey, priv_len);
+      ciphertext_blob_t *encrypted =
+          encrypt(i, curve, peer_pubkey, pub_len, my_privkey, priv_len);
       decrypt(i, curve, my_pubkey, pub_len, peer_privkey, priv_len, encrypted);
     }
   }

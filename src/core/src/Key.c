@@ -54,7 +54,7 @@ typedef enum {
   P256,
   P384,
   P521,
-} curve_t ;
+} curve_t;
 
 static bool dh_keygen_inner(EVP_PKEY **pkey, curve_t curve) {
   EVP_PKEY_CTX *pctx, *kctx;
@@ -72,21 +72,20 @@ static bool dh_keygen_inner(EVP_PKEY **pkey, curve_t curve) {
     return false;
   }
 
-  /* We're going to use the ANSI X9.62 Prime 256v1 curve */
   int rc = 0;
   switch (curve) {
-    case P256: {
-      rc = EVP_PKEY_CTX_set_ec_paramgen_curve_nid(pctx, NID_X9_62_prime256v1);
-      break;
-    }
-    case P384: {
-      rc = EVP_PKEY_CTX_set_ec_paramgen_curve_nid(pctx, NID_secp384r1);
-      break;
-    }
-    case P521: {
-      rc = EVP_PKEY_CTX_set_ec_paramgen_curve_nid(pctx, NID_secp521r1);
-      break;
-    }
+  case P256: {
+    rc = EVP_PKEY_CTX_set_ec_paramgen_curve_nid(pctx, NID_X9_62_prime256v1);
+    break;
+  }
+  case P384: {
+    rc = EVP_PKEY_CTX_set_ec_paramgen_curve_nid(pctx, NID_secp384r1);
+    break;
+  }
+  case P521: {
+    rc = EVP_PKEY_CTX_set_ec_paramgen_curve_nid(pctx, NID_secp521r1);
+    break;
+  }
   }
 
   if (rc != 1) {
@@ -276,7 +275,8 @@ peacemakr_key_t *PeacemakrKey_new_pem(crypto_config_t cfg, const char *buf,
 
   BIO *bo = BIO_new_mem_buf(buf, (int)buflen);
 
-  if (cfg.asymm_cipher == ECDH_P256 || cfg.asymm_cipher == ECDH_P384 || cfg.asymm_cipher == ECDH_P521) {
+  if (cfg.asymm_cipher == ECDH_P256 || cfg.asymm_cipher == ECDH_P384 ||
+      cfg.asymm_cipher == ECDH_P521) {
     if (is_priv) {
       out->m_contents_.asymm = PEM_read_bio_PrivateKey(bo, NULL, NULL, NULL);
       EXPECT_NOT_NULL_CLEANUP_RET(out->m_contents_.asymm,
