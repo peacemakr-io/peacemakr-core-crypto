@@ -107,7 +107,9 @@ const (
 	NONE     AsymmetricCipher = 0
 	RSA_2048 AsymmetricCipher = 1
 	RSA_4096 AsymmetricCipher = 2
-	ECDH_ANSI_X9_62_P256 AsymmetricCipher = 3
+	ECDH_P256 AsymmetricCipher = 3
+	ECDH_P384 AsymmetricCipher = 4
+	ECDH_P521 AsymmetricCipher = 5
 )
 
 type MessageDigestAlgorithm int
