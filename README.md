@@ -14,6 +14,9 @@ From the repository base directory,
 ## Build Dependencies - Golang
 `docker build -t corecrypto-dependencies:latest . -f docker/go-dependencies.Dockerfile --build-arg="CMAKE_BUILD_TYPE=RELEASE"`
 
+Make sure to build with the `RELEASE` flag in docker as the address sanitizer enabled in debug mode does not play
+well with Alpine linux and works best when testing on the host. 
+
 ## Build - Golang
 `docker build -t corecrypto:latest . -f docker/go.Dockerfile`
 ## Build (release) - Golang

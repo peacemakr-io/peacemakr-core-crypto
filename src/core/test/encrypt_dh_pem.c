@@ -169,5 +169,13 @@ int main() {
           encrypt(i, curve, peer_pubkey, pub_len, my_privkey, priv_len);
       decrypt(i, curve, my_pubkey, pub_len, peer_privkey, priv_len, encrypted);
     }
+
+    free(my_privkey);
+    free(my_pubkey);
+    free(peer_privkey);
+    free(peer_pubkey);
+
+    PeacemakrKey_free(my_key);
+    PeacemakrKey_free(peer_key);
   }
 }

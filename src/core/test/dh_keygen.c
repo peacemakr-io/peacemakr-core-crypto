@@ -53,6 +53,8 @@ void test_symmetric_algo(symmetric_cipher symm_cipher,
   free((void *)plaintext_out.aad);
 
   PeacemakrKey_free(symm_key);
+  PeacemakrKey_free(my_key);
+  PeacemakrKey_free(peer_key);
 }
 
 int main() {

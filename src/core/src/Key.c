@@ -118,6 +118,7 @@ static bool dh_keygen_inner(EVP_PKEY **pkey, curve_t curve) {
 
   EVP_PKEY_CTX_free(pctx);
   EVP_PKEY_CTX_free(kctx);
+  EVP_PKEY_free(params);
   return true;
 }
 
@@ -391,6 +392,7 @@ peacemakr_key_t *PeacemakrKey_dh_generate(peacemakr_key_t *my_key,
 
   SHA256(skey, skeylen, hash);
 
+  EVP_PKEY_CTX_free(ctx);
   return PeacemakrKey_new_bytes(symm_key_cfg, hash, SHA256_DIGEST_LENGTH);
 }
 

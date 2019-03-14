@@ -230,6 +230,12 @@ bool PeacemakrKey_get_bytes(const peacemakr_key_t *key, uint8_t **buf,
 void PeacemakrKey_free(peacemakr_key_t *key);
 
 /**
+ * Free ciphertext blob objects. Will need to be called very rarely,
+ * the FFI should handle this.
+ */
+void CiphertextBlob_free(ciphertext_blob_t *ciphertext);
+
+/**
  * Performs the encryption operation using the configuration and the (symmetric
  * or asymmetric) key in \p recipient_key. The operation is
  * performed over \p plain and uses \p rand to generate the IV/nonce. Returns a

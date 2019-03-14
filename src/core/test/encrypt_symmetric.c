@@ -35,6 +35,7 @@ void test_symmetric_algo(symmetric_cipher cipher) {
   PeacemakrKey_get_bytes(original_key, &key_bytes, &key_size);
 
   peacemakr_key_t *key = PeacemakrKey_new_bytes(cfg, key_bytes, key_size);
+  free(key_bytes);
 
   ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, &plaintext_in, &rand);
   assert(ciphertext != NULL);
@@ -117,6 +118,8 @@ void test_uninit_crash() {
   ciphertext_blob_t *deserialized =
       peacemakr_deserialize(serialized, out_size, &out_cfg);
 
+  free(serialized);
+
   decrypt_code success = peacemakr_decrypt(key, deserialized, &plaintext_out);
 
   assert((out_cfg.mode == cfg.mode) &&
@@ -160,4 +163,6 @@ int main() {
   for (int i = AES_256_GCM; i <= CHACHA20_POLY1305; ++i) {
     test_master_key_symmetric_algo(master_key, i);
   }
+
+  PeacemakrKey_free(master_key);
 }

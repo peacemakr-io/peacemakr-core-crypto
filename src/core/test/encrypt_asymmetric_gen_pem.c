@@ -81,4 +81,9 @@ int main() {
   for (int i = AES_128_GCM; i <= CHACHA20_POLY1305; ++i) {
     test_symmetric_algo(i, pubkey, pub_len, privkey, priv_len);
   }
+
+  free(privkey);
+  free(pubkey);
+
+  PeacemakrKey_free(asym_key);
 }
