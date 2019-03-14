@@ -137,6 +137,8 @@ peacemakr_key_t *PeacemakrKey_new(crypto_config_t cfg, random_device_t *rand) {
       rand, "Cannot create a new key without a source of randomness\n");
 
   peacemakr_key_t *out = malloc(sizeof(peacemakr_key_t));
+  EXPECT_NOT_NULL_RET(out, "Malloc failed\n");
+
   out->m_cfg_ = cfg;
 
   switch (cfg.mode) {
@@ -218,6 +220,8 @@ peacemakr_key_t *PeacemakrKey_new_bytes(crypto_config_t cfg, const uint8_t *buf,
   EXPECT_TRUE_RET((bufsize >= keylen), "byte buffer was too small\n");
 
   peacemakr_key_t *out = malloc(sizeof(peacemakr_key_t));
+  EXPECT_NOT_NULL_RET(out, "Malloc failed!\n");
+
   out->m_cfg_ = cfg;
   out->m_contents_.symm = NULL;
 
@@ -265,6 +269,8 @@ peacemakr_key_t *PeacemakrKey_new_pem(crypto_config_t cfg, const char *buf,
                   "Can't set a new EVP_PKEY for symmetric crypto\n");
 
   peacemakr_key_t *out = malloc(sizeof(peacemakr_key_t));
+  EXPECT_NOT_NULL_RET(out, "Malloc failed!\n");
+
   out->m_cfg_ = cfg;
   out->m_contents_.asymm = NULL;
 
