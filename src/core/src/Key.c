@@ -12,6 +12,9 @@
 
 #include <memory.h>
 
+#include <openssl/dh.h>
+#include <openssl/ecdh.h>
+#include <openssl/evp.h>
 #include <openssl/pem.h>
 #include <openssl/rsa.h>
 
@@ -47,6 +50,78 @@ static bool keygen_inner(int key_type, EVP_PKEY **pkey, int rsa_bits) {
   return true;
 }
 
+typedef enum {
+  P256,
+  P384,
+  P521,
+} curve_t;
+
+static bool dh_keygen_inner(EVP_PKEY **pkey, curve_t curve) {
+  EVP_PKEY_CTX *pctx, *kctx;
+  EVP_PKEY *params = NULL;
+
+  /* Create the context for parameter generation */
+  if (NULL == (pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_EC, NULL))) {
+    PEACEMAKR_OPENSSL_LOG;
+    return false;
+  }
+
+  /* Initialise the parameter generation */
+  if (1 != EVP_PKEY_paramgen_init(pctx)) {
+    PEACEMAKR_OPENSSL_LOG;
+    return false;
+  }
+
+  int rc = 0;
+  switch (curve) {
+  case P256: {
+    rc = EVP_PKEY_CTX_set_ec_paramgen_curve_nid(pctx, NID_X9_62_prime256v1);
+    break;
+  }
+  case P384: {
+    rc = EVP_PKEY_CTX_set_ec_paramgen_curve_nid(pctx, NID_secp384r1);
+    break;
+  }
+  case P521: {
+    rc = EVP_PKEY_CTX_set_ec_paramgen_curve_nid(pctx, NID_secp521r1);
+    break;
+  }
+  }
+
+  if (rc != 1) {
+    PEACEMAKR_OPENSSL_LOG;
+    return false;
+  }
+
+  /* Create the parameter object params */
+  if (!EVP_PKEY_paramgen(pctx, &params)) {
+    PEACEMAKR_OPENSSL_LOG;
+    return false;
+  }
+
+  /* Create the context for the key generation */
+  if (NULL == (kctx = EVP_PKEY_CTX_new(params, NULL))) {
+    PEACEMAKR_OPENSSL_LOG;
+    return false;
+  }
+
+  /* Generate the key */
+  if (1 != EVP_PKEY_keygen_init(kctx)) {
+    PEACEMAKR_OPENSSL_LOG;
+    return false;
+  }
+
+  if (1 != EVP_PKEY_keygen(kctx, pkey)) {
+    PEACEMAKR_OPENSSL_LOG;
+    return false;
+  }
+
+  EVP_PKEY_CTX_free(pctx);
+  EVP_PKEY_CTX_free(kctx);
+  EVP_PKEY_free(params);
+  return true;
+}
+
 struct PeacemakrKey {
   crypto_config_t m_cfg_;
   union {
@@ -62,6 +137,8 @@ peacemakr_key_t *PeacemakrKey_new(crypto_config_t cfg, random_device_t *rand) {
       rand, "Cannot create a new key without a source of randomness\n");
 
   peacemakr_key_t *out = malloc(sizeof(peacemakr_key_t));
+  EXPECT_NOT_NULL_RET(out, "Malloc failed\n");
+
   out->m_cfg_ = cfg;
 
   switch (cfg.mode) {
@@ -98,6 +175,30 @@ peacemakr_key_t *PeacemakrKey_new(crypto_config_t cfg, random_device_t *rand) {
       }
       break;
     }
+    case ECDH_P256: {
+      if (dh_keygen_inner(&out->m_contents_.asymm, P256) == false) {
+        PEACEMAKR_ERROR("keygen failed\n");
+        PeacemakrKey_free(out);
+        return NULL;
+      }
+      break;
+    }
+    case ECDH_P384: {
+      if (dh_keygen_inner(&out->m_contents_.asymm, P384) == false) {
+        PEACEMAKR_ERROR("keygen failed\n");
+        PeacemakrKey_free(out);
+        return NULL;
+      }
+      break;
+    }
+    case ECDH_P521: {
+      if (dh_keygen_inner(&out->m_contents_.asymm, P521) == false) {
+        PEACEMAKR_ERROR("keygen failed\n");
+        PeacemakrKey_free(out);
+        return NULL;
+      }
+      break;
+    }
     }
     return out;
   }
@@ -119,6 +220,8 @@ peacemakr_key_t *PeacemakrKey_new_bytes(crypto_config_t cfg, const uint8_t *buf,
   EXPECT_TRUE_RET((bufsize >= keylen), "byte buffer was too small\n");
 
   peacemakr_key_t *out = malloc(sizeof(peacemakr_key_t));
+  EXPECT_NOT_NULL_RET(out, "Malloc failed!\n");
+
   out->m_cfg_ = cfg;
   out->m_contents_.symm = NULL;
 
@@ -166,42 +269,68 @@ peacemakr_key_t *PeacemakrKey_new_pem(crypto_config_t cfg, const char *buf,
                   "Can't set a new EVP_PKEY for symmetric crypto\n");
 
   peacemakr_key_t *out = malloc(sizeof(peacemakr_key_t));
+  EXPECT_NOT_NULL_RET(out, "Malloc failed!\n");
+
   out->m_cfg_ = cfg;
   out->m_contents_.asymm = NULL;
 
   BIO *bo = BIO_new_mem_buf(buf, (int)buflen);
-  RSA *rsaKey = NULL;
-  if (is_priv) {
-    out->m_contents_.asymm = PEM_read_bio_PrivateKey(bo, NULL, NULL, NULL);
-    EXPECT_NOT_NULL_CLEANUP_RET(out->m_contents_.asymm,
-                                {
-                                  BIO_free(bo);
-                                  PeacemakrKey_free(out);
-                                },
-                                "PEM_read_bio_PrivateKey failed\n");
-  } else {
-    if (!PEM_read_bio_RSA_PUBKEY(bo, &rsaKey, NULL, NULL)) {
-      PEACEMAKR_ERROR("PEM_read_bio_RSA_PUBKEY failed\n");
-      BIO_free(bo);
-      PeacemakrKey_free(out);
-      RSA_free(rsaKey);
-      return NULL;
+
+  if (cfg.asymm_cipher == ECDH_P256 || cfg.asymm_cipher == ECDH_P384 ||
+      cfg.asymm_cipher == ECDH_P521) {
+    if (is_priv) {
+      out->m_contents_.asymm = PEM_read_bio_PrivateKey(bo, NULL, NULL, NULL);
+      EXPECT_NOT_NULL_CLEANUP_RET(out->m_contents_.asymm,
+                                  {
+                                    BIO_free(bo);
+                                    PeacemakrKey_free(out);
+                                  },
+                                  "PEM_read_bio_ECPrivateKey failed\n");
+    } else {
+      out->m_contents_.asymm = PEM_read_bio_PUBKEY(bo, NULL, NULL, NULL);
+      EXPECT_NOT_NULL_CLEANUP_RET(out->m_contents_.asymm,
+                                  {
+                                    BIO_free(bo);
+                                    PeacemakrKey_free(out);
+                                  },
+                                  "PEM_read_bio_EC_PUBKEY failed\n");
     }
-    out->m_contents_.asymm = EVP_PKEY_new();
-    if (1 != EVP_PKEY_assign_RSA(out->m_contents_.asymm, rsaKey)) {
-      PEACEMAKR_ERROR("EVP_PKEY_assign_RSA failed\n");
-      BIO_free(bo);
-      RSA_free(rsaKey);
-      PeacemakrKey_free(out);
-      return NULL;
+
+  } else if (cfg.asymm_cipher == RSA_2048 || cfg.asymm_cipher == RSA_4096) {
+    RSA *rsaKey = NULL;
+    if (is_priv) {
+      out->m_contents_.asymm = PEM_read_bio_PrivateKey(bo, NULL, NULL, NULL);
+      EXPECT_NOT_NULL_CLEANUP_RET(out->m_contents_.asymm,
+                                  {
+                                    BIO_free(bo);
+                                    PeacemakrKey_free(out);
+                                  },
+                                  "PEM_read_bio_PrivateKey failed\n");
+    } else {
+      if (!PEM_read_bio_RSA_PUBKEY(bo, &rsaKey, NULL, NULL)) {
+        PEACEMAKR_ERROR("PEM_read_bio_RSA_PUBKEY failed\n");
+        BIO_free(bo);
+        PeacemakrKey_free(out);
+        RSA_free(rsaKey);
+        return NULL;
+      }
+
+      out->m_contents_.asymm = EVP_PKEY_new();
+      if (1 != EVP_PKEY_assign_RSA(out->m_contents_.asymm, rsaKey)) {
+        PEACEMAKR_ERROR("EVP_PKEY_assign_RSA failed\n");
+        BIO_free(bo);
+        RSA_free(rsaKey);
+        PeacemakrKey_free(out);
+        return NULL;
+      }
+      EXPECT_NOT_NULL_CLEANUP_RET(out->m_contents_.asymm,
+                                  {
+                                    BIO_free(bo);
+                                    PeacemakrKey_free(out);
+                                    RSA_free(rsaKey);
+                                  },
+                                  "PEM_read_bio_PUBKEY failed\n");
     }
-    EXPECT_NOT_NULL_CLEANUP_RET(out->m_contents_.asymm,
-                                {
-                                  BIO_free(bo);
-                                  PeacemakrKey_free(out);
-                                  RSA_free(rsaKey);
-                                },
-                                "PEM_read_bio_PUBKEY failed\n");
   }
 
   BIO_free(bo);
@@ -217,6 +346,54 @@ peacemakr_key_t *PeacemakrKey_new_pem_pub(crypto_config_t cfg, const char *buf,
 peacemakr_key_t *PeacemakrKey_new_pem_priv(crypto_config_t cfg, const char *buf,
                                            const size_t buflen) {
   return PeacemakrKey_new_pem(cfg, buf, buflen, true);
+}
+
+peacemakr_key_t *PeacemakrKey_dh_generate(peacemakr_key_t *my_key,
+                                          peacemakr_key_t *peer_key) {
+  EXPECT_NOT_NULL_RET(
+      my_key, "Neither input to PeacemakrKey_dh_generate may be NULL\n");
+  EXPECT_NOT_NULL_RET(
+      peer_key, "Neither input to PeacemakrKey_dh_generate may be NULL\n");
+
+  EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new(my_key->m_contents_.asymm, NULL);
+  EXPECT_NOT_NULL_RET(ctx, "Unable to initialize EVP_PKEY_CTX\n");
+
+  if (EVP_PKEY_derive_init(ctx) <= 0) {
+    PEACEMAKR_OPENSSL_LOG;
+    return NULL;
+  }
+
+  if (EVP_PKEY_derive_set_peer(ctx, peer_key->m_contents_.asymm) <= 0) {
+    PEACEMAKR_OPENSSL_LOG;
+    return NULL;
+  }
+
+  size_t skeylen = 0;
+
+  if (EVP_PKEY_derive(ctx, NULL, &skeylen) <= 0) {
+    PEACEMAKR_OPENSSL_LOG;
+    return NULL;
+  }
+
+  uint8_t skey[skeylen];
+
+  if (EVP_PKEY_derive(ctx, skey, &skeylen) <= 0) {
+    PEACEMAKR_OPENSSL_LOG;
+    return NULL;
+  }
+
+  crypto_config_t symm_key_cfg = {.mode = SYMMETRIC,
+                                  .asymm_cipher = NONE,
+                                  .symm_cipher = my_key->m_cfg_.symm_cipher,
+                                  .digest_algorithm =
+                                      my_key->m_cfg_.digest_algorithm};
+
+  uint8_t hash[SHA256_DIGEST_LENGTH];
+
+  SHA256(skey, skeylen, hash);
+
+  EVP_PKEY_CTX_free(ctx);
+  return PeacemakrKey_new_bytes(symm_key_cfg, hash, SHA256_DIGEST_LENGTH);
 }
 
 void PeacemakrKey_free(peacemakr_key_t *key) {
@@ -264,6 +441,11 @@ bool PeacemakrKey_priv_to_pem(const peacemakr_key_t *key, char **buf,
   EXPECT_NOT_NULL_RET_VALUE(bufsize, false,
                             "Cannot serialize into a NULL bufsize\n");
 
+  if (key->m_cfg_.mode != ASYMMETRIC) {
+    PEACEMAKR_ERROR("Cannot serialize a symmetric key to PEM\n");
+    return false;
+  }
+
   BIO *bio = BIO_new(BIO_s_secmem());
   if (!PEM_write_bio_PrivateKey(bio, key->m_contents_.asymm, NULL, NULL, 0,
                                 NULL, NULL)) {
@@ -271,6 +453,7 @@ bool PeacemakrKey_priv_to_pem(const peacemakr_key_t *key, char **buf,
     PEACEMAKR_ERROR("Failed to write the PrivateKey\n");
     return false;
   }
+
   if (BIO_eof(bio)) {
     PEACEMAKR_ERROR("No data stored in bio\n");
     return false;
@@ -296,12 +479,18 @@ bool PeacemakrKey_pub_to_pem(const peacemakr_key_t *key, char **buf,
   EXPECT_NOT_NULL_RET_VALUE(bufsize, false,
                             "Cannot serialize into a NULL bufsize\n");
 
+  if (key->m_cfg_.mode != ASYMMETRIC) {
+    PEACEMAKR_ERROR("Cannot serialize a symmetric key to PEM\n");
+    return false;
+  }
+
   BIO *bio = BIO_new(BIO_s_mem());
   if (!PEM_write_bio_PUBKEY(bio, key->m_contents_.asymm)) {
     PEACEMAKR_OPENSSL_LOG;
-    PEACEMAKR_ERROR("Failed to write the PrivateKey\n");
+    PEACEMAKR_ERROR("Failed to write the PublicKey\n");
     return false;
   }
+
   if (BIO_eof(bio)) {
     PEACEMAKR_ERROR("No data stored in bio\n");
     return false;
@@ -316,5 +505,21 @@ bool PeacemakrKey_pub_to_pem(const peacemakr_key_t *key, char **buf,
   *buf = calloc(*bufsize, sizeof(char));
   memcpy(*buf, memdata, *bufsize);
   BIO_free(bio);
+  return true;
+}
+
+bool PeacemakrKey_get_bytes(const peacemakr_key_t *key, uint8_t **buf,
+                            size_t *bufsize) {
+  if (key->m_cfg_.mode != SYMMETRIC) {
+    PEACEMAKR_ERROR("Cannot export bytes of asymmetric key\n");
+    return false;
+  }
+
+  *bufsize = Buffer_get_size(key->m_contents_.symm);
+  *buf = calloc(*bufsize, sizeof(uint8_t));
+  EXPECT_NOT_NULL_RET_VALUE(*buf, false, "calloc failed\n");
+
+  memcpy(*buf, Buffer_get_bytes(key->m_contents_.symm, NULL), *bufsize);
+
   return true;
 }

@@ -15,9 +15,13 @@ if (UNIX AND NOT APPLE)
 endif()
 
 function(add_ctest test_name)
-    set(CMAKE_C_FLAGS "-fsanitize=address -g -Os -fPIC -fstack-protector-strong -fno-omit-frame-pointer -Wall")
-
     add_executable(test_${test_name} EXCLUDE_FROM_ALL ${CMAKE_CURRENT_SOURCE_DIR}/${test_name}.c)
+
+    if((CMAKE_BUILD_TYPE MATCHES DEBUG) OR (CMAKE_BUILD_TYPE MATCHES Debug))
+        target_compile_options(test_${test_name} PUBLIC -fsanitize=address -g -Os -fPIC -fstack-protector-strong -fno-omit-frame-pointer -Wall)
+        target_link_libraries(test_${test_name} PRIVATE -fsanitize=address)
+    endif()
+
     target_link_libraries(test_${test_name} PRIVATE peacemakr-core-crypto ${LIBBSD_LIBRARIES})
     target_include_directories(test_${test_name} PRIVATE ${CMAKE_SOURCE_DIR}/src/core/include ${LIBBSD_INCLUDE_DIRS})
     set(ALL_C_SOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/${test_name}.c ${ALL_C_SOURCE_FILES} PARENT_SCOPE)
@@ -34,11 +38,19 @@ add_ctest(serialize)
 add_ctest(big_message)
 add_ctest(sign)
 add_ctest(garbage)
+add_ctest(dh_keygen)
+add_ctest(encrypt_dh_pem)
 
 enable_language(CXX)
 set(CMAKE_CXX_STANDARD 11)
 
 add_executable(test_cpp EXCLUDE_FROM_ALL ${CMAKE_CURRENT_SOURCE_DIR}/test.cpp)
+
+if((CMAKE_BUILD_TYPE MATCHES DEBUG) OR (CMAKE_BUILD_TYPE MATCHES Debug))
+    target_compile_options(test_cpp PUBLIC -fsanitize=address -g -Os -fPIC -fstack-protector-strong -fno-omit-frame-pointer -Wall)
+    target_link_libraries(test_cpp PRIVATE -fsanitize=address)
+endif()
+
 target_link_libraries(test_cpp PRIVATE peacemakr-core-crypto-cpp ${LIBBSD_LIBRARIES})
 target_include_directories(test_cpp PRIVATE ${CMAKE_SOURCE_DIR}/src/core/include ${LIBBSD_INCLUDE_DIRS})
 set(ALL_C_SOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/test.cpp ${ALL_C_SOURCE_FILES} PARENT_SCOPE)

@@ -59,7 +59,7 @@ void openssl_log(const char *function_name, int line) {
   const size_t msg_len = strlen(function_name) + 2 // ": "
                          + num_digits + 3          // " - "
                          + 256                     // error str from openssl
-                         + 1 + 1;                  // null terminator and newline
+                         + 1 + 1; // null terminator and newline
 
   char message[msg_len];
   char openssl_error[256];

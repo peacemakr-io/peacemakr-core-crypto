@@ -10,7 +10,7 @@
 #define PEACEMAKR_CORE_CRYPTO_LOGGING_H
 
 #ifndef PEACEMAKR_LOG_LEVEL
-#define PEACEMAKR_LOG_LEVEL 2
+#define PEACEMAKR_LOG_LEVEL 0
 #endif
 
 void log_printf(const char *filename, int line, const char *fmt, ...);

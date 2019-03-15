@@ -85,6 +85,7 @@ public:
   Key(crypto_config_t cfg, const Key &master,
       const std::vector<uint8_t> &bytes);
   Key(crypto_config_t cfg, const std::string &pem, bool priv);
+  Key(const Key &myKey, const Key &peer);
   //!\}
 
   /**

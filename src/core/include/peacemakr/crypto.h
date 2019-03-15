@@ -40,13 +40,17 @@ typedef enum {
 /**
  * @brief Peacemakr supported asymmetric cipher algorithms
  *
- * EC25519 causes failure during EVP_SealInit call for reasons unknown
- * so only the RSA_* algorithms are currently supported
+ * The two RSA modes can be used for actual asymmetric encrypt/decrypt
+ * operations The ECDH mode may only be used for performing ECDH key exchanges
+ * and encrypting with the derived key.
  */
 typedef enum {
   NONE = 0,
   RSA_2048 = 1,
   RSA_4096 = 2,
+  ECDH_P256 = 3,
+  ECDH_P384 = 4,
+  ECDH_P521 = 5,
 } asymmetric_cipher;
 
 /**
@@ -187,6 +191,14 @@ peacemakr_key_t *PeacemakrKey_new_pem_priv(crypto_config_t cfg, const char *buf,
                                            size_t buflen);
 
 /**
+ * Create a new symmetric peacemakr_key_t using a Diffie-Hellman exchange
+ * between \p my_key (which is a private key) and \p peer_key (which is a public
+ * key)
+ */
+peacemakr_key_t *PeacemakrKey_dh_generate(peacemakr_key_t *my_key,
+                                          peacemakr_key_t *peer_key);
+
+/**
  * Gets the crypto_config_t used to create \p key from \p key.
  */
 crypto_config_t PeacemakrKey_get_config(const peacemakr_key_t *key);
@@ -206,9 +218,22 @@ bool PeacemakrKey_pub_to_pem(const peacemakr_key_t *key, char **buf,
                              size_t *bufsize);
 
 /**
+ * Copies the bytes of \p key into \p buf and copies the size of \p buf into \p
+ * bufsize.
+ */
+bool PeacemakrKey_get_bytes(const peacemakr_key_t *key, uint8_t **buf,
+                            size_t *bufsize);
+
+/**
  * Free \p key. Attempts to securely clear all memory associated with \p key.
  */
 void PeacemakrKey_free(peacemakr_key_t *key);
+
+/**
+ * Free ciphertext blob objects. Will need to be called very rarely,
+ * the FFI should handle this.
+ */
+void CiphertextBlob_free(ciphertext_blob_t *ciphertext);
 
 /**
  * Performs the encryption operation using the configuration and the (symmetric

@@ -41,7 +41,7 @@ public enum SymmetricCipher: UInt32, CaseIterable {
  NONE is appropriate when the EncryptionMode is SYMMETRIC.
  */
 public enum AsymmetricCipher: UInt32, CaseIterable {
-  case NONE = 0, RSA_2048 = 1, RSA_4096 = 2
+  case NONE = 0, RSA_2048 = 1, RSA_4096 = 2, ECDH_P256 = 3, ECDH_P384 = 4, ECDH_P521 = 5
 }
 
 /**

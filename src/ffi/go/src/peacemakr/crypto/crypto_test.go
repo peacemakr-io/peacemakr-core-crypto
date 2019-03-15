@@ -389,7 +389,14 @@ func TestSymmetricEncrypt(t *testing.T) {
 			key = NewPeacemakrKeyFromMasterKey(cfg, masterKey, []byte("abcdefghijklmnopqrstuvwxyz"))
 			DestroyPeacemakrKey(masterKey)
 		} else {
-			key = NewPeacemakrKey(cfg, randomDevice)
+			origKey := NewPeacemakrKey(cfg, randomDevice)
+			b, err := GetBytes(&origKey)
+			if err != nil {
+				DestroyPeacemakrKey(origKey)
+				t.Fatalf("%v", err)
+			}
+
+			key = NewPeacemakrKeyFromBytes(cfg, b)
 		}
 
 		ciphertext, err := Encrypt(key, plaintextIn, randomDevice)
@@ -518,6 +525,91 @@ func TestSerialize(t *testing.T) {
 					}
 				}(int(i), int(j), int(k))
 			}
+		}
+	}
+}
+
+func TestECDHSerialize(t *testing.T) {
+	t.Parallel()
+	if !PeacemakrInit() {
+		t.Fatalf("Unable to successfully start and seed the CSPRNG")
+	}
+	for j := AES_128_GCM; j <= CHACHA20_POLY1305; j++ {
+		for k := SHA_224; k <= SHA_512; k++ {
+	        for curve := ECDH_P256; curve <= ECDH_P521; curve++ {
+                go func(j, k, curve int) {
+                    cfg := CryptoConfig{
+                        Mode:             ASYMMETRIC,
+                        AsymmetricCipher: AsymmetricCipher(curve),
+                        SymmetricCipher:  SymmetricCipher(j),
+                        DigestAlgorithm:  MessageDigestAlgorithm(k),
+                    }
+
+                    plaintextIn := SetUpPlaintext()
+
+                    randomDevice := NewRandomDevice()
+
+                    myKey := NewPeacemakrKey(cfg, randomDevice)
+                    defer DestroyPeacemakrKey(myKey)
+
+                    peerKey := NewPeacemakrKey(cfg, randomDevice)
+                    defer DestroyPeacemakrKey(peerKey)
+
+                    secKey := ECDHPeacemakrKeyGen(&myKey, &peerKey)
+                    defer DestroyPeacemakrKey(secKey)
+
+                    secKeyCfg, err := GetKeyConfig(&secKey)
+                    if err != nil {
+                        t.Fatalf("%v", err)
+                    }
+
+                    ciphertext, err := Encrypt(secKey, plaintextIn, randomDevice)
+                    if err != nil && len(plaintextIn.Data) == 0 {
+                        return
+                    }
+
+                    if err != nil {
+                        t.Fatalf("%v", err)
+                    }
+
+                    serialized, err := Serialize(ciphertext)
+                    if err != nil {
+                        t.Fatalf("%v", err)
+                    }
+
+                    if plaintextIn.Aad != nil {
+                        AAD, err := ExtractUnverifiedAAD(serialized)
+                        if err != nil {
+                            t.Fatalf("Extract failed")
+                        }
+                        if !bytes.Equal(plaintextIn.Aad, AAD) {
+                            t.Fatalf("extracted aad did not match")
+                        }
+                    }
+
+                    deserialized, deserializedConfig, err := Deserialize(serialized)
+                    if err != nil {
+                        t.Fatalf("%v", err)
+                    }
+
+                    if !reflect.DeepEqual(*deserializedConfig, secKeyCfg) {
+                        t.Fatalf("did not deserialize the correct configuration")
+                    }
+
+                    plaintextOut, _, err := Decrypt(secKey, deserialized)
+                    if err != nil {
+                        t.Fatalf("Decrypt failed")
+                    }
+
+                    if !bytes.Equal(plaintextIn.Data, plaintextOut.Data) {
+                        t.Fatalf("plaintext data did not match")
+                    }
+
+                    if !bytes.Equal(plaintextIn.Aad, plaintextOut.Aad) {
+                        t.Fatalf("plaintext data did not match")
+                    }
+                }(int(j), int(k), int(curve))
+            }
 		}
 	}
 }

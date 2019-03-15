@@ -450,6 +450,13 @@ ciphertext_blob_t *peacemakr_encrypt(const peacemakr_key_t *recipient_key,
 
   const crypto_config_t cfg = PeacemakrKey_get_config(recipient_key);
 
+  if (cfg.mode == ASYMMETRIC && cfg.asymm_cipher >= ECDH_P256) {
+    PEACEMAKR_ERROR("Improper usage of ECDH_ANSI_X9_62_P256 key detected, you "
+                    "must derive a "
+                    "shared secret first\n");
+    return NULL;
+  }
+
   const EVP_CIPHER *cipher = parse_cipher(cfg.symm_cipher);
   EXPECT_NOT_NULL_RET(cipher, "parsing openssl cipher failed\n");
 
@@ -469,7 +476,8 @@ ciphertext_blob_t *peacemakr_encrypt(const peacemakr_key_t *recipient_key,
   EXPECT_TRUE_RET((ciphertext_len != 0), "data had length: %d\n",
                   plain->data_len);
 
-  // Just initialize the signature buffer, it'll get resized later during sign/verify
+  // Just initialize the signature buffer, it'll get resized later during
+  // sign/verify
   ciphertext_blob_t *out =
       CiphertextBlob_new(cfg, iv_len, tag_len, aad_len, ciphertext_len, 1);
   EXPECT_NOT_NULL_RET(out, "Creating the ciphertext blob failed\n")

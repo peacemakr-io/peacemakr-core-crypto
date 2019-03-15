@@ -42,8 +42,13 @@ void test_symmetric_algo(symmetric_cipher cipher) {
 
   ciphertext_blob_t *deserialized =
       peacemakr_deserialize(serialized, out_size, &out_cfg);
-  bool success = peacemakr_decrypt(key, deserialized, &plaintext_out);
-  success &= peacemakr_verify(key, &plaintext_out, deserialized);
+
+  free(serialized);
+
+  decrypt_code success = peacemakr_decrypt(key, deserialized, &plaintext_out);
+  assert(success == DECRYPT_NEED_VERIFY);
+
+  assert(peacemakr_verify(key, &plaintext_out, deserialized));
 
   assert(out_cfg.mode == cfg.mode && out_cfg.asymm_cipher == cfg.asymm_cipher &&
          out_cfg.symm_cipher == cfg.symm_cipher &&
@@ -91,6 +96,9 @@ void test_asymmetric_algo(symmetric_cipher cipher,
 
   ciphertext_blob_t *deserialized =
       peacemakr_deserialize(serialized, out_size, &out_cfg);
+
+  free(serialized);
+
   decrypt_code success = peacemakr_decrypt(key, deserialized, &plaintext_out);
 
   assert((out_cfg.mode == cfg.mode) &&
@@ -145,15 +153,18 @@ void test_symmetric_algo_x_sign(symmetric_cipher cipher) {
 
   ciphertext_blob_t *deserialized =
       peacemakr_deserialize(serialized, out_size, &out_cfg);
-  bool success = peacemakr_decrypt(key, deserialized, &plaintext_out);
+
+  free(serialized);
+
+  decrypt_code success = peacemakr_decrypt(key, deserialized, &plaintext_out);
+  assert(success == DECRYPT_NEED_VERIFY);
+
   // Verify with that asymmetric key
-  success &= peacemakr_verify(sign_key, &plaintext_out, deserialized);
+  assert(peacemakr_verify(sign_key, &plaintext_out, deserialized));
 
   assert(out_cfg.mode == cfg.mode && out_cfg.asymm_cipher == cfg.asymm_cipher &&
          out_cfg.symm_cipher == cfg.symm_cipher &&
          out_cfg.digest_algorithm == cfg.digest_algorithm);
-
-  assert(success);
 
   assert(strncmp((const char *)plaintext_out.data,
                  (const char *)plaintext_in.data, plaintext_in.data_len) == 0);

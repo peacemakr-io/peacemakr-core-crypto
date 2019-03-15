@@ -54,6 +54,10 @@ peacemakr::Key::Key(crypto_config_t cfg, const std::string &pem, bool priv) {
     m_key_ = PeacemakrKey_new_pem_pub(cfg, pem.c_str(), pem.size());
 }
 
+peacemakr::Key::Key(const peacemakr::Key &my_key, const peacemakr::Key &peer) {
+  m_key_ = PeacemakrKey_dh_generate(my_key.m_key_, peer.m_key_);
+}
+
 peacemakr::Key::~Key() { PeacemakrKey_free(m_key_); }
 
 crypto_config_t peacemakr::Key::getConfig() const {
@@ -68,12 +72,14 @@ namespace {
 void setContents(peacemakr::Plaintext &plain, plaintext_t &cstyle) {
   if (cstyle.data != nullptr) {
     plain.data = std::string(cstyle.data, cstyle.data + cstyle.data_len);
+
     free((void *)cstyle.data);
     cstyle.data = nullptr;
     cstyle.data_len = 0;
   }
   if (cstyle.aad != nullptr) {
     plain.aad = std::string(cstyle.aad, cstyle.aad + cstyle.aad_len);
+
     free((void *)cstyle.aad);
     cstyle.aad = nullptr;
     cstyle.aad_len = 0;
@@ -151,7 +157,9 @@ void peacemakr::CryptoContext::Sign(const peacemakr::Key &senderKey,
 std::string peacemakr::CryptoContext::Serialize(ciphertext_blob_t *blob) {
   size_t out_size = 0;
   uint8_t *serialized = peacemakr_serialize(blob, &out_size);
-  return std::string(serialized, serialized + out_size);
+  std::string out{serialized, serialized + out_size};
+  free(serialized);
+  return out;
 }
 
 peacemakr::Plaintext
@@ -169,6 +177,8 @@ peacemakr::CryptoContext::ExtractUnverifiedAAD(const std::string &serialized) {
 
   plaintext_t out;
   bool success = peacemakr_get_unverified_aad(blob, &out);
+  CiphertextBlob_free(blob);
+
   if (!success) {
     m_log_("extract failed");
     return Plaintext{};

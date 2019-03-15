@@ -27,8 +27,6 @@ CiphertextBlob_from_buffers(const crypto_config_t cfg, buffer_t *encrypted_key,
                             buffer_t *iv, buffer_t *tag, buffer_t *aad,
                             buffer_t *ciphertext, buffer_t *signature);
 
-void CiphertextBlob_free(ciphertext_blob_t *ciphertext);
-
 void CiphertextBlob_set_version(ciphertext_blob_t *ciphertext,
                                 uint32_t version);
 const uint32_t CiphertextBlob_version(const ciphertext_blob_t *ciphertext);
