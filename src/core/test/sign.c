@@ -68,6 +68,7 @@ void test_symmetric_algo(symmetric_cipher cipher) {
 
 void test_asymmetric_algo(symmetric_cipher cipher,
                           asymmetric_cipher asymmcipher) {
+
   crypto_config_t cfg = {.mode = ASYMMETRIC,
                          .symm_cipher = cipher,
                          .asymm_cipher = asymmcipher,
@@ -82,11 +83,19 @@ void test_asymmetric_algo(symmetric_cipher cipher,
 
   random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
 
-  peacemakr_key_t *key = PeacemakrKey_new(cfg, &rand);
+  peacemakr_key_t *mykey = PeacemakrKey_new(cfg, &rand);
+  peacemakr_key_t *peerkey = PeacemakrKey_new(cfg, &rand);
+  // Set up the key
+  peacemakr_key_t *key = (asymmcipher >= ECDH_P256) ? PeacemakrKey_dh_generate(mykey, peerkey) : mykey;
+  cfg = PeacemakrKey_get_config(key);
 
   ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, &plaintext_in, &rand);
-  peacemakr_sign(key, &plaintext_in, ciphertext);
   assert(ciphertext != NULL);
+  if (asymmcipher >= ECDH_P256) {
+    peacemakr_sign(mykey, &plaintext_in, ciphertext);
+  } else {
+    peacemakr_sign(key, &plaintext_in, ciphertext);
+  }
 
   size_t out_size = 0;
   uint8_t *serialized = peacemakr_serialize(ciphertext, &out_size);
@@ -107,7 +116,11 @@ void test_asymmetric_algo(symmetric_cipher cipher,
          (out_cfg.digest_algorithm == cfg.digest_algorithm));
 
   assert(success == DECRYPT_NEED_VERIFY);
-  assert(peacemakr_verify(key, &plaintext_out, deserialized));
+  if (asymmcipher >= ECDH_P256) {
+    assert(peacemakr_verify(mykey, &plaintext_out, deserialized));
+  } else {
+    assert(peacemakr_verify(key, &plaintext_out, deserialized));
+  }
 
   assert(strncmp((const char *)plaintext_out.data,
                  (const char *)plaintext_in.data, plaintext_in.data_len) == 0);
@@ -116,7 +129,11 @@ void test_asymmetric_algo(symmetric_cipher cipher,
                  (const char *)plaintext_in.aad, plaintext_in.aad_len) == 0);
   free((void *)plaintext_out.aad);
 
-  PeacemakrKey_free(key);
+  PeacemakrKey_free(mykey);
+  PeacemakrKey_free(peerkey);
+  if (asymmcipher >= ECDH_P256) {
+    PeacemakrKey_free(key);
+  }
 }
 
 void test_symmetric_algo_x_sign(symmetric_cipher cipher) {
@@ -187,7 +204,7 @@ int main() {
     test_symmetric_algo_x_sign(i);
   }
 
-  for (int i = RSA_2048; i <= RSA_4096; ++i) {
+  for (int i = RSA_2048; i <= ECDH_P521; ++i) {
     for (int j = AES_128_GCM; j <= CHACHA20_POLY1305; ++j) {
       test_asymmetric_algo(j, i);
     }
