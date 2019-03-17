@@ -50,6 +50,38 @@ void test_asymmetric_algo(symmetric_cipher symm_cipher,
   PeacemakrKey_free(key);
 }
 
+void test_wrong_key(symmetric_cipher symm_cipher,
+                          asymmetric_cipher cipher) {
+  crypto_config_t cfg = {.mode = ASYMMETRIC,
+          .asymm_cipher = cipher,
+          .symm_cipher = symm_cipher,
+          .digest_algorithm = SHA_512};
+
+  plaintext_t plaintext_in = {.data = (const unsigned char *)message,
+          .data_len = strlen(message) + 1,
+          .aad = (const unsigned char *)message_aad,
+          .aad_len = strlen(message_aad) + 1};
+
+  plaintext_t plaintext_out;
+
+  random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
+
+  peacemakr_key_t *key = PeacemakrKey_new(cfg, &rand);
+
+  ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, &plaintext_in, &rand);
+  assert(ciphertext != NULL);
+
+  peacemakr_key_t *wrong_key = PeacemakrKey_new(cfg, &rand);
+
+  decrypt_code success = peacemakr_decrypt(wrong_key, ciphertext, &plaintext_out);
+
+  assert(success == DECRYPT_FAILED);
+
+  CiphertextBlob_free(ciphertext);
+  PeacemakrKey_free(wrong_key);
+  PeacemakrKey_free(key);
+}
+
 int main() {
   if (!peacemakr_init()) {
     return 1;
@@ -57,6 +89,7 @@ int main() {
   for (int i = RSA_2048; i <= RSA_4096; ++i) {
     for (int j = AES_128_GCM; j <= CHACHA20_POLY1305; ++j) {
       test_asymmetric_algo(j, i);
+      test_wrong_key(j, i);
     }
   }
 }
