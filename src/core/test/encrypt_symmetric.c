@@ -141,6 +141,41 @@ void test_uninit_crash() {
   PeacemakrKey_free(key);
 }
 
+void test_wrong_key(symmetric_cipher cipher) {
+  crypto_config_t cfg = {
+          .mode = SYMMETRIC, .symm_cipher = cipher, .digest_algorithm = SHA_512};
+
+  plaintext_t plaintext_in = {.data = (const unsigned char *)message,
+          .data_len = strlen(message) + 1,
+          .aad = (const unsigned char *)message_aad,
+          .aad_len = strlen(message_aad) + 1};
+
+  plaintext_t plaintext_out;
+
+  random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
+
+  peacemakr_key_t *original_key = PeacemakrKey_new(cfg, &rand);
+
+  ciphertext_blob_t *ciphertext = peacemakr_encrypt(original_key, &plaintext_in, &rand);
+  assert(ciphertext != NULL);
+
+  uint8_t *key_bytes = NULL;
+  size_t key_size = 0;
+  PeacemakrKey_get_bytes(original_key, &key_bytes, &key_size);
+  key_bytes[0] += 1;
+
+  peacemakr_key_t *key = PeacemakrKey_new_bytes(cfg, key_bytes, key_size);
+  free(key_bytes);
+
+  decrypt_code success = peacemakr_decrypt(key, ciphertext, &plaintext_out);
+
+  assert(success == DECRYPT_FAILED);
+
+  CiphertextBlob_free(ciphertext);
+  PeacemakrKey_free(original_key);
+  PeacemakrKey_free(key);
+}
+
 int main() {
   if (!peacemakr_init()) {
     return 1;
@@ -150,6 +185,7 @@ int main() {
 
   for (int i = AES_128_GCM; i <= CHACHA20_POLY1305; ++i) {
     test_symmetric_algo(i);
+    test_wrong_key(i);
   }
 
   crypto_config_t cfg = {.mode = SYMMETRIC,
