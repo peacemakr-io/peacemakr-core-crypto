@@ -245,7 +245,7 @@ peacemakr_key_t *PeacemakrKey_new_from_master(crypto_config_t cfg,
   switch (cfg.symm_cipher) {
   case AES_256_GCM:
   case CHACHA20_POLY1305:
-    keybytes = peacemakr_hmac(SHA3_256, master_key, key_id, key_id_len, NULL);
+    keybytes = peacemakr_hmac(SHA_256, master_key, key_id, key_id_len, NULL);
     break;
   default:
     PEACEMAKR_ERROR("Unsupported symmetric cipher for HMAC key generation\n");

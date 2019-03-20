@@ -50,17 +50,16 @@ void test_asymmetric_algo(symmetric_cipher symm_cipher,
   PeacemakrKey_free(key);
 }
 
-void test_wrong_key(symmetric_cipher symm_cipher,
-                          asymmetric_cipher cipher) {
+void test_wrong_key(symmetric_cipher symm_cipher, asymmetric_cipher cipher) {
   crypto_config_t cfg = {.mode = ASYMMETRIC,
-          .asymm_cipher = cipher,
-          .symm_cipher = symm_cipher,
-          .digest_algorithm = SHA_512};
+                         .asymm_cipher = cipher,
+                         .symm_cipher = symm_cipher,
+                         .digest_algorithm = SHA_512};
 
   plaintext_t plaintext_in = {.data = (const unsigned char *)message,
-          .data_len = strlen(message) + 1,
-          .aad = (const unsigned char *)message_aad,
-          .aad_len = strlen(message_aad) + 1};
+                              .data_len = strlen(message) + 1,
+                              .aad = (const unsigned char *)message_aad,
+                              .aad_len = strlen(message_aad) + 1};
 
   plaintext_t plaintext_out;
 
@@ -73,7 +72,8 @@ void test_wrong_key(symmetric_cipher symm_cipher,
 
   peacemakr_key_t *wrong_key = PeacemakrKey_new(cfg, &rand);
 
-  decrypt_code success = peacemakr_decrypt(wrong_key, ciphertext, &plaintext_out);
+  decrypt_code success =
+      peacemakr_decrypt(wrong_key, ciphertext, &plaintext_out);
 
   assert(success == DECRYPT_FAILED);
 

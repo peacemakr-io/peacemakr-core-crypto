@@ -119,10 +119,6 @@ const (
 	SHA_256  MessageDigestAlgorithm = 1
 	SHA_384  MessageDigestAlgorithm = 2
 	SHA_512  MessageDigestAlgorithm = 3
-	SHA3_224 MessageDigestAlgorithm = 4
-	SHA3_256 MessageDigestAlgorithm = 5
-	SHA3_384 MessageDigestAlgorithm = 6
-	SHA3_512 MessageDigestAlgorithm = 7
 )
 
 type EncryptionMode int

@@ -54,10 +54,6 @@ public enum MessageDigestAlgorithm: UInt32, CaseIterable {
   case SHA_256 = 1
   case SHA_384 = 2
   case SHA_512 = 3
-  case SHA3_224 = 4
-  case SHA3_256 = 5
-  case SHA3_384 = 6
-  case SHA3_512 = 7
 }
 
 public class CryptoConfig: Equatable {

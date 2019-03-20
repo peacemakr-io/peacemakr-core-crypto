@@ -65,10 +65,6 @@ typedef enum {
   SHA_256 = 1,
   SHA_384 = 2,
   SHA_512 = 3,
-  SHA3_224 = 4,
-  SHA3_256 = 5,
-  SHA3_384 = 6,
-  SHA3_512 = 7,
 } message_digest_algorithm;
 
 /**

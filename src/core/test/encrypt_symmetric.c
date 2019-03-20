@@ -143,12 +143,12 @@ void test_uninit_crash() {
 
 void test_wrong_key(symmetric_cipher cipher) {
   crypto_config_t cfg = {
-          .mode = SYMMETRIC, .symm_cipher = cipher, .digest_algorithm = SHA_512};
+      .mode = SYMMETRIC, .symm_cipher = cipher, .digest_algorithm = SHA_512};
 
   plaintext_t plaintext_in = {.data = (const unsigned char *)message,
-          .data_len = strlen(message) + 1,
-          .aad = (const unsigned char *)message_aad,
-          .aad_len = strlen(message_aad) + 1};
+                              .data_len = strlen(message) + 1,
+                              .aad = (const unsigned char *)message_aad,
+                              .aad_len = strlen(message_aad) + 1};
 
   plaintext_t plaintext_out;
 
@@ -156,7 +156,8 @@ void test_wrong_key(symmetric_cipher cipher) {
 
   peacemakr_key_t *original_key = PeacemakrKey_new(cfg, &rand);
 
-  ciphertext_blob_t *ciphertext = peacemakr_encrypt(original_key, &plaintext_in, &rand);
+  ciphertext_blob_t *ciphertext =
+      peacemakr_encrypt(original_key, &plaintext_in, &rand);
   assert(ciphertext != NULL);
 
   uint8_t *key_bytes = NULL;
