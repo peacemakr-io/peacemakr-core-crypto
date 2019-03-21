@@ -86,7 +86,9 @@ void test_asymmetric_algo(symmetric_cipher cipher,
   peacemakr_key_t *mykey = PeacemakrKey_new(cfg, &rand);
   peacemakr_key_t *peerkey = PeacemakrKey_new(cfg, &rand);
   // Set up the key
-  peacemakr_key_t *key = (asymmcipher >= ECDH_P256) ? PeacemakrKey_dh_generate(mykey, peerkey) : mykey;
+  peacemakr_key_t *key = (asymmcipher >= ECDH_P256)
+                             ? PeacemakrKey_dh_generate(mykey, peerkey)
+                             : mykey;
   cfg = PeacemakrKey_get_config(key);
 
   ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, &plaintext_in, &rand);

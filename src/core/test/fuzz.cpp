@@ -211,7 +211,7 @@ crypto_config_t global_cfg = {
         .mode = SYMMETRIC,
         .symm_cipher = AES_256_GCM,
         .asymm_cipher = NONE,
-        .digest_algorithm = SHA3_512,
+        .digest_algorithm = SHA_512,
 };
 
 random_device_t global_rand = {.generator = &fill_rand, .err = &rand_err};
