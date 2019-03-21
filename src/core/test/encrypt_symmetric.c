@@ -56,9 +56,10 @@ void test_symmetric_algo(symmetric_cipher cipher) {
 }
 
 void test_master_key_symmetric_algo(peacemakr_key_t *master_key,
-                                    symmetric_cipher cipher) {
+                                    symmetric_cipher cipher,
+                                    message_digest_algorithm digest) {
   crypto_config_t cfg = {
-      .mode = SYMMETRIC, .symm_cipher = cipher, .digest_algorithm = SHA_512};
+      .mode = SYMMETRIC, .symm_cipher = cipher, .digest_algorithm = digest};
 
   plaintext_t plaintext_in = {.data = (const unsigned char *)message,
                               .data_len = strlen(message) + 1,
@@ -197,8 +198,10 @@ int main() {
 
   peacemakr_key_t *master_key = PeacemakrKey_new(cfg, &rand);
 
-  for (int i = AES_256_GCM; i <= CHACHA20_POLY1305; ++i) {
-    test_master_key_symmetric_algo(master_key, i);
+  for (int i = AES_128_GCM; i <= CHACHA20_POLY1305; ++i) {
+    for (int j = SHA_224; j <= SHA_512; ++j) {
+      test_master_key_symmetric_algo(master_key, i, j);
+    }
   }
 
   PeacemakrKey_free(master_key);

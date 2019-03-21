@@ -6,6 +6,7 @@
 // Full license at peacemakr-core-crypto/LICENSE.txt
 //
 
+#include "Key.h"
 #include "Buffer.h"
 #include "EVPHelper.h"
 #include "Logging.h"
@@ -238,22 +239,53 @@ peacemakr_key_t *PeacemakrKey_new_from_master(crypto_config_t cfg,
   EXPECT_TRUE_RET((cfg.mode == SYMMETRIC),
                   "Can't set a raw bytes for asymmetric crypto\n");
 
-  const EVP_CIPHER *cipher = parse_cipher(cfg.symm_cipher);
-  size_t keylen = (size_t)EVP_CIPHER_key_length(cipher);
-  uint8_t *keybytes = NULL;
-  // Compute HMAC
-  switch (cfg.symm_cipher) {
-  case AES_256_GCM:
-  case CHACHA20_POLY1305:
-    keybytes = peacemakr_hmac(SHA_256, master_key, key_id, key_id_len, NULL);
-    break;
-  default:
-    PEACEMAKR_ERROR("Unsupported symmetric cipher for HMAC key generation\n");
+  // digest length in bytes
+  size_t digestbytes = get_digest_len(cfg.digest_algorithm);
+  // digestlen should be in bits
+  size_t digestbits = digestbytes * 8;
+
+  // Get the number of bits required for the key
+  int keybytes_int = EVP_CIPHER_key_length(parse_cipher(cfg.symm_cipher));
+  if (keybytes_int <= 0) {
+    PEACEMAKR_OPENSSL_LOG;
+    PEACEMAKR_ERROR("Cipher key length failed\n");
     return NULL;
   }
+  uint32_t keybytes = (uint32_t)keybytes_int;
+  uint32_t keybits = keybytes * 8;
 
-  peacemakr_key_t *out = PeacemakrKey_new_bytes(cfg, keybytes, keylen);
-  free(keybytes);
+  // Number of times to perform the HMAC operation
+  size_t rounds = keybits / digestbits + (keybits % digestbits != 0);
+
+  // The input to the HMAC
+  size_t input_bytes_len = sizeof(uint32_t) + key_id_len + sizeof(uint32_t);
+  uint8_t *input_bytes = alloca(input_bytes_len);
+
+  // Copy over the input data and the desired key bits (NIST SP 800-108)
+  memcpy(input_bytes + sizeof(uint32_t), key_id, key_id_len);
+  memcpy(input_bytes + sizeof(uint32_t) + key_id_len, &keybits,
+         sizeof(uint32_t));
+
+  // Get the data out of the master key for the HMAAC
+  const buffer_t *master_key_buf = PeacemakrKey_symmetric(master_key);
+  const size_t master_keylen = Buffer_get_size(master_key_buf);
+  const uint8_t *master_key_bytes = Buffer_get_bytes(master_key_buf, NULL);
+
+  // Allocate the correct amount of memory for the output bytes
+  uint8_t *output_bytes = alloca(rounds * digestbytes);
+  uint32_t result_len = 0;
+  for (size_t i = 0; i < rounds; ++i) {
+    // Copy over the count (NIST SP 800-108)
+    memcpy(input_bytes, &i, sizeof(uint32_t));
+
+    // Do the HMAC
+    HMAC(parse_digest(cfg.digest_algorithm), master_key_bytes,
+         (int)master_keylen, input_bytes, input_bytes_len,
+         output_bytes + (i * digestbytes), &result_len);
+  }
+
+  // Get the first keylen bytes and uses them for the key
+  peacemakr_key_t *out = PeacemakrKey_new_bytes(cfg, output_bytes, keybytes);
 
   return out;
 }
