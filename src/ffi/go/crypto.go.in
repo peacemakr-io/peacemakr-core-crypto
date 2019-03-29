@@ -213,6 +213,20 @@ func NewPeacemakrKeyFromBytes(config CryptoConfig, contents []byte) PeacemakrKey
 	}
 }
 
+func NewPeacemakrKeyFromPassword(config CryptoConfig, password []byte, salt []byte, iterationCount int) PeacemakrKey {
+	cBytes := (*C.uint8_t)(C.CBytes(password))
+	defer C.free(unsafe.Pointer(cBytes))
+	cNumBytes := (C.size_t)(len(password))
+
+	cSalt := (*C.uint8_t)(C.CBytes(salt))
+	defer C.free(unsafe.Pointer(cSalt))
+	cNumSalt := (C.size_t)(len(salt))
+
+	return PeacemakrKey {
+	    key: C.PeacemakrKey_new_from_password(configToInternal(config), cBytes, cNumBytes, cSalt, cNumSalt, (C.size_t)(iterationCount)),
+	}
+}
+
 func NewPeacemakrKeyFromMasterKey(config CryptoConfig, masterKey PeacemakrKey, keyID []byte) PeacemakrKey {
 	cBytes := (*C.uint8_t)(C.CBytes(keyID))
 	defer C.free(unsafe.Pointer(cBytes))

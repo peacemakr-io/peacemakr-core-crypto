@@ -55,6 +55,42 @@ void test_symmetric_algo(symmetric_cipher cipher) {
   PeacemakrKey_free(key);
 }
 
+void test_password_symmetric_algo(symmetric_cipher cipher,
+                                  message_digest_algorithm digest) {
+  crypto_config_t cfg = {
+      .mode = SYMMETRIC, .symm_cipher = cipher, .digest_algorithm = digest};
+
+  plaintext_t plaintext_in = {.data = (const unsigned char *)message,
+                              .data_len = strlen(message) + 1,
+                              .aad = (const unsigned char *)message_aad,
+                              .aad_len = strlen(message_aad) + 1};
+
+  plaintext_t plaintext_out;
+
+  random_device_t random_dev = {.generator = &fill_rand, .err = &rand_err};
+
+  peacemakr_key_t *key =
+      PeacemakrKey_new_from_password(cfg, (uint8_t *)"abcdefghijk", 11,
+                                     (uint8_t *)"123456789", 9, rand() % 128);
+
+  ciphertext_blob_t *ciphertext =
+      peacemakr_encrypt(key, &plaintext_in, &random_dev);
+  assert(ciphertext != NULL);
+
+  decrypt_code success = peacemakr_decrypt(key, ciphertext, &plaintext_out);
+
+  assert(success == DECRYPT_SUCCESS);
+
+  assert(strncmp((const char *)plaintext_out.data,
+                 (const char *)plaintext_in.data, plaintext_in.data_len) == 0);
+  free((void *)plaintext_out.data);
+  assert(strncmp((const char *)plaintext_out.aad,
+                 (const char *)plaintext_in.aad, plaintext_in.aad_len) == 0);
+  free((void *)plaintext_out.aad);
+
+  PeacemakrKey_free(key);
+}
+
 void test_master_key_symmetric_algo(peacemakr_key_t *master_key,
                                     symmetric_cipher cipher,
                                     message_digest_algorithm digest) {
@@ -201,6 +237,7 @@ int main() {
   for (int i = AES_128_GCM; i <= CHACHA20_POLY1305; ++i) {
     for (int j = SHA_224; j <= SHA_512; ++j) {
       test_master_key_symmetric_algo(master_key, i, j);
+      test_password_symmetric_algo(i, j);
     }
   }
 

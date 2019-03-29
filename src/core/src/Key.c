@@ -16,6 +16,7 @@
 #include <openssl/dh.h>
 #include <openssl/ecdh.h>
 #include <openssl/evp.h>
+#include <openssl/hmac.h>
 #include <openssl/pem.h>
 #include <openssl/rsa.h>
 
@@ -211,14 +212,14 @@ peacemakr_key_t *PeacemakrKey_new(crypto_config_t cfg, random_device_t *rand) {
 }
 
 peacemakr_key_t *PeacemakrKey_new_bytes(crypto_config_t cfg, const uint8_t *buf,
-                                        const size_t bufsize) {
+                                        const size_t buf_len) {
   EXPECT_TRUE_RET((cfg.mode == SYMMETRIC),
                   "Can't set a raw bytes for asymmetric crypto\n");
   EXPECT_NOT_NULL_RET(buf, "buffer is null\n");
 
   const EVP_CIPHER *cipher = parse_cipher(cfg.symm_cipher);
   size_t keylen = (size_t)EVP_CIPHER_key_length(cipher);
-  EXPECT_TRUE_RET((bufsize >= keylen), "byte buffer was too small\n");
+  EXPECT_TRUE_RET((buf_len >= keylen), "byte buffer was too small\n");
 
   peacemakr_key_t *out = malloc(sizeof(peacemakr_key_t));
   EXPECT_NOT_NULL_RET(out, "Malloc failed!\n");
@@ -230,6 +231,33 @@ peacemakr_key_t *PeacemakrKey_new_bytes(crypto_config_t cfg, const uint8_t *buf,
   Buffer_set_bytes(out->m_contents_.symm, buf, keylen);
 
   return out;
+}
+
+peacemakr_key_t *PeacemakrKey_new_from_password(
+    crypto_config_t cfg, const uint8_t *password, const size_t password_len,
+    const uint8_t *salt, const size_t salt_len, const size_t iteration_count) {
+  EXPECT_TRUE_RET((cfg.mode == SYMMETRIC),
+                  "Can't set a raw bytes for asymmetric crypto\n");
+  EXPECT_NOT_NULL_RET(password, "buffer is null\n");
+  EXPECT_TRUE_RET((password_len >= 0),
+                  "Password size cannot be less than or equal to zero\n");
+  EXPECT_NOT_NULL_RET(salt, "Random device cannot be null\n");
+  EXPECT_TRUE_RET((salt_len >= 0),
+                  "Salt size cannot be less than or equal to zero\n");
+  EXPECT_TRUE_RET((iteration_count >= 0),
+                  "Iteration count cannot be less than or equal to zero\n");
+
+  const EVP_CIPHER *cipher = parse_cipher(cfg.symm_cipher);
+  const EVP_MD *md = parse_digest(cfg.digest_algorithm);
+
+  const size_t keylen = EVP_CIPHER_key_length(cipher);
+  uint8_t *keybuf = alloca(keylen);
+
+  // Create the key
+  PKCS5_PBKDF2_HMAC((const char *)password, password_len, salt, salt_len,
+                    iteration_count, md, keylen, keybuf);
+
+  return PeacemakrKey_new_bytes(cfg, keybuf, keylen);
 }
 
 peacemakr_key_t *PeacemakrKey_new_from_master(crypto_config_t cfg,
@@ -312,32 +340,35 @@ peacemakr_key_t *PeacemakrKey_new_pem(crypto_config_t cfg, const char *buf,
       cfg.asymm_cipher == ECDH_P521) {
     if (is_priv) {
       out->m_contents_.asymm = PEM_read_bio_PrivateKey(bo, NULL, NULL, NULL);
-      EXPECT_NOT_NULL_CLEANUP_RET(out->m_contents_.asymm,
-                                  {
-                                    BIO_free(bo);
-                                    PeacemakrKey_free(out);
-                                  },
-                                  "PEM_read_bio_ECPrivateKey failed\n");
+      EXPECT_NOT_NULL_CLEANUP_RET(
+          out->m_contents_.asymm,
+          {
+            BIO_free(bo);
+            PeacemakrKey_free(out);
+          },
+          "PEM_read_bio_ECPrivateKey failed\n");
     } else {
       out->m_contents_.asymm = PEM_read_bio_PUBKEY(bo, NULL, NULL, NULL);
-      EXPECT_NOT_NULL_CLEANUP_RET(out->m_contents_.asymm,
-                                  {
-                                    BIO_free(bo);
-                                    PeacemakrKey_free(out);
-                                  },
-                                  "PEM_read_bio_EC_PUBKEY failed\n");
+      EXPECT_NOT_NULL_CLEANUP_RET(
+          out->m_contents_.asymm,
+          {
+            BIO_free(bo);
+            PeacemakrKey_free(out);
+          },
+          "PEM_read_bio_EC_PUBKEY failed\n");
     }
 
   } else if (cfg.asymm_cipher == RSA_2048 || cfg.asymm_cipher == RSA_4096) {
     RSA *rsaKey = NULL;
     if (is_priv) {
       out->m_contents_.asymm = PEM_read_bio_PrivateKey(bo, NULL, NULL, NULL);
-      EXPECT_NOT_NULL_CLEANUP_RET(out->m_contents_.asymm,
-                                  {
-                                    BIO_free(bo);
-                                    PeacemakrKey_free(out);
-                                  },
-                                  "PEM_read_bio_PrivateKey failed\n");
+      EXPECT_NOT_NULL_CLEANUP_RET(
+          out->m_contents_.asymm,
+          {
+            BIO_free(bo);
+            PeacemakrKey_free(out);
+          },
+          "PEM_read_bio_PrivateKey failed\n");
     } else {
       if (!PEM_read_bio_RSA_PUBKEY(bo, &rsaKey, NULL, NULL)) {
         PEACEMAKR_ERROR("PEM_read_bio_RSA_PUBKEY failed\n");
@@ -355,13 +386,14 @@ peacemakr_key_t *PeacemakrKey_new_pem(crypto_config_t cfg, const char *buf,
         PeacemakrKey_free(out);
         return NULL;
       }
-      EXPECT_NOT_NULL_CLEANUP_RET(out->m_contents_.asymm,
-                                  {
-                                    BIO_free(bo);
-                                    PeacemakrKey_free(out);
-                                    RSA_free(rsaKey);
-                                  },
-                                  "PEM_read_bio_PUBKEY failed\n");
+      EXPECT_NOT_NULL_CLEANUP_RET(
+          out->m_contents_.asymm,
+          {
+            BIO_free(bo);
+            PeacemakrKey_free(out);
+            RSA_free(rsaKey);
+          },
+          "PEM_read_bio_PUBKEY failed\n");
     }
   }
 

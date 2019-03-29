@@ -456,6 +456,90 @@ func TestSymmetricEncrypt(t *testing.T) {
 	}
 }
 
+func TestSymmetricEncryptPassword(t *testing.T) {
+	t.Parallel()
+	if !PeacemakrInit() {
+		t.Fatalf("Unable to successfully start and seed the CSPRNG")
+	}
+	for j := AES_128_GCM; j <= CHACHA20_POLY1305; j++ {
+		cfg := CryptoConfig{
+			Mode:             SYMMETRIC,
+			AsymmetricCipher: NONE,
+			SymmetricCipher:  j,
+			DigestAlgorithm:  SHA_512,
+		}
+
+		plaintextIn := SetUpPlaintext()
+
+		randomDevice := NewRandomDevice()
+
+        numIters := mrand.Int() % 128
+		key := NewPeacemakrKeyFromPassword(cfg, []byte("abcdefghijklmnopqrstuvwxyz"), []byte("123456789"), numIters)
+		key2 := NewPeacemakrKeyFromPassword(cfg, []byte("abcdefghijklmnopqrstuvwxyz"), []byte("123456789"), numIters)
+
+		keyBytes, err := GetBytes(&key)
+		key2Bytes, err := GetBytes(&key2)
+		if bytes.Compare(keyBytes, key2Bytes) != 0 || err != nil {
+			t.Fatalf("Keys didn't compare equal, or err was %v", err)
+		}
+
+		ciphertext, err := Encrypt(key, plaintextIn, randomDevice)
+		if err != nil && len(plaintextIn.Data) == 0 {
+			return
+		}
+		if err != nil {
+			DestroyPeacemakrKey(key)
+			t.Fatalf("%v", err)
+		}
+
+		serialized, err := Serialize(ciphertext)
+		if err != nil {
+			DestroyPeacemakrKey(key)
+			t.Fatalf("%v", err)
+		}
+
+		if plaintextIn.Aad != nil {
+			AAD, err := ExtractUnverifiedAAD(serialized)
+			if err != nil {
+				DestroyPeacemakrKey(key)
+				t.Fatalf("Extract failed")
+			}
+			if !bytes.Equal(plaintextIn.Aad, AAD) {
+				DestroyPeacemakrKey(key)
+				t.Fatalf("extracted aad did not match")
+			}
+		}
+
+		deserialized, deserializedConfig, err := Deserialize(serialized)
+		if err != nil {
+			DestroyPeacemakrKey(key)
+			t.Fatalf("%v", err)
+		}
+
+		if !reflect.DeepEqual(*deserializedConfig, cfg) {
+			DestroyPeacemakrKey(key)
+			t.Fatalf("did not deserialize the correct configuration, %v vs %v", *deserializedConfig, cfg)
+		}
+
+		plaintextOut, _, err := Decrypt(key, deserialized)
+		if err != nil {
+			DestroyPeacemakrKey(key)
+			t.Fatalf("Decrypt failed")
+		}
+
+		if !bytes.Equal(plaintextIn.Data, plaintextOut.Data) {
+			DestroyPeacemakrKey(key)
+			t.Fatalf("plaintext data did not match")
+		}
+
+		if !bytes.Equal(plaintextIn.Aad, plaintextOut.Aad) {
+			DestroyPeacemakrKey(key)
+			t.Fatalf("plaintext data did not match")
+		}
+		DestroyPeacemakrKey(key)
+	}
+}
+
 func TestSerialize(t *testing.T) {
 	t.Parallel()
 	if !PeacemakrInit() {
