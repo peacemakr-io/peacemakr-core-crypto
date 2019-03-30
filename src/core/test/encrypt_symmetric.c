@@ -55,6 +55,47 @@ void test_symmetric_algo(symmetric_cipher cipher) {
   PeacemakrKey_free(key);
 }
 
+void test_password_symmetric_algo(symmetric_cipher cipher,
+                                  message_digest_algorithm digest) {
+  crypto_config_t cfg = {
+      .mode = SYMMETRIC, .symm_cipher = cipher, .digest_algorithm = digest};
+
+  size_t num_iters = rand() % 128;
+
+  peacemakr_key_t *key = PeacemakrKey_new_from_password(
+      cfg, (uint8_t *)"abcdefghijk", 11, (uint8_t *)"123456789", 9, num_iters);
+
+  peacemakr_key_t *key_dup = PeacemakrKey_new_from_password(
+      cfg, (uint8_t *)"abcdefghijk", 11, (uint8_t *)"123456789", 9, num_iters);
+
+  peacemakr_key_t *key2 = PeacemakrKey_new_from_password(
+      cfg, (uint8_t *)"abcdefghijl", 11, (uint8_t *)"123456789", 9, num_iters);
+
+  uint8_t *key_buf = NULL;
+  size_t key_buf_len = 0;
+  assert(PeacemakrKey_get_bytes(key, &key_buf, &key_buf_len));
+
+  uint8_t *key_dup_buf = NULL;
+  size_t key_dup_buf_len = 0;
+  assert(PeacemakrKey_get_bytes(key_dup, &key_dup_buf, &key_dup_buf_len));
+
+  uint8_t *key2_buf = NULL;
+  size_t key2_buf_len = 0;
+  assert(PeacemakrKey_get_bytes(key2, &key2_buf, &key2_buf_len));
+
+  assert(key_buf_len == key_dup_buf_len);
+  assert(key_buf_len == key2_buf_len);
+  assert(memcmp(key_buf, key_dup_buf, key_buf_len) == 0);
+  assert(memcmp(key_buf, key2_buf, key_buf_len) != 0);
+
+  PeacemakrKey_free(key);
+  free(key_buf);
+  PeacemakrKey_free(key_dup);
+  free(key_dup_buf);
+  PeacemakrKey_free(key2);
+  free(key2_buf);
+}
+
 void test_master_key_symmetric_algo(peacemakr_key_t *master_key,
                                     symmetric_cipher cipher,
                                     message_digest_algorithm digest) {
@@ -201,6 +242,7 @@ int main() {
   for (int i = AES_128_GCM; i <= CHACHA20_POLY1305; ++i) {
     for (int j = SHA_224; j <= SHA_512; ++j) {
       test_master_key_symmetric_algo(master_key, i, j);
+      test_password_symmetric_algo(i, j);
     }
   }
 

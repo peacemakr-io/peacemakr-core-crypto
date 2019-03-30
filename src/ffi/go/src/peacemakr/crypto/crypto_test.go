@@ -456,6 +456,68 @@ func TestSymmetricEncrypt(t *testing.T) {
 	}
 }
 
+func TestSymmetricEncryptPassword(t *testing.T) {
+	t.Parallel()
+	if !PeacemakrInit() {
+		t.Fatalf("Unable to successfully start and seed the CSPRNG")
+	}
+	for j := AES_128_GCM; j <= CHACHA20_POLY1305; j++ {
+		cfg := CryptoConfig{
+			Mode:             SYMMETRIC,
+			AsymmetricCipher: NONE,
+			SymmetricCipher:  j,
+			DigestAlgorithm:  SHA_512,
+		}
+
+        numIters := mrand.Int() % 128
+		key := NewPeacemakrKeyFromPassword(cfg, []byte("abcdefghijklmnopqrstuvwxyz"), []byte("123456789"), numIters)
+		key2 := NewPeacemakrKeyFromPassword(cfg, []byte("abcdefghijklmnopqrstuvwxyz"), []byte("123456789"), numIters)
+		key3 := NewPeacemakrKeyFromPassword(cfg, []byte("abcdefghijklmnopqrstuvwxyy"), []byte("123456789"), numIters)
+
+		keyBytes, err := GetBytes(&key)
+		if err != nil {
+		    DestroyPeacemakrKey(key)
+            DestroyPeacemakrKey(key2)
+            DestroyPeacemakrKey(key3)
+		    t.Fatalf("%v", err)
+		}
+
+		key2Bytes, err := GetBytes(&key2)
+		if err != nil {
+            DestroyPeacemakrKey(key)
+            DestroyPeacemakrKey(key2)
+            DestroyPeacemakrKey(key3)
+            t.Fatalf("%v", err)
+		}
+
+		key3Bytes, err := GetBytes(&key3)
+        if err != nil {
+            DestroyPeacemakrKey(key)
+            DestroyPeacemakrKey(key2)
+            DestroyPeacemakrKey(key3)
+            t.Fatalf("%v", err)
+        }
+
+		if bytes.Compare(keyBytes, key2Bytes) != 0 {
+			DestroyPeacemakrKey(key)
+			DestroyPeacemakrKey(key2)
+			DestroyPeacemakrKey(key3)
+			t.Fatalf("Keys 1 and 2 didn't compare equal")
+		}
+
+		if bytes.Compare(keyBytes, key3Bytes) == 0 {
+            DestroyPeacemakrKey(key)
+            DestroyPeacemakrKey(key2)
+            DestroyPeacemakrKey(key3)
+            t.Fatalf("Keys 1 and 3 did compare equal")
+        }
+
+        DestroyPeacemakrKey(key)
+        DestroyPeacemakrKey(key2)
+        DestroyPeacemakrKey(key3)
+	}
+}
+
 func TestSerialize(t *testing.T) {
 	t.Parallel()
 	if !PeacemakrInit() {
