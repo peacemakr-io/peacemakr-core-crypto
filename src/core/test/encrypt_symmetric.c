@@ -60,35 +60,40 @@ void test_password_symmetric_algo(symmetric_cipher cipher,
   crypto_config_t cfg = {
       .mode = SYMMETRIC, .symm_cipher = cipher, .digest_algorithm = digest};
 
-  plaintext_t plaintext_in = {.data = (const unsigned char *)message,
-                              .data_len = strlen(message) + 1,
-                              .aad = (const unsigned char *)message_aad,
-                              .aad_len = strlen(message_aad) + 1};
+  size_t num_iters = rand() % 128;
 
-  plaintext_t plaintext_out;
+  peacemakr_key_t *key = PeacemakrKey_new_from_password(
+      cfg, (uint8_t *)"abcdefghijk", 11, (uint8_t *)"123456789", 9, num_iters);
 
-  random_device_t random_dev = {.generator = &fill_rand, .err = &rand_err};
+  peacemakr_key_t *key_dup = PeacemakrKey_new_from_password(
+      cfg, (uint8_t *)"abcdefghijk", 11, (uint8_t *)"123456789", 9, num_iters);
 
-  peacemakr_key_t *key =
-      PeacemakrKey_new_from_password(cfg, (uint8_t *)"abcdefghijk", 11,
-                                     (uint8_t *)"123456789", 9, rand() % 128);
+  peacemakr_key_t *key2 = PeacemakrKey_new_from_password(
+      cfg, (uint8_t *)"abcdefghijl", 11, (uint8_t *)"123456789", 9, num_iters);
 
-  ciphertext_blob_t *ciphertext =
-      peacemakr_encrypt(key, &plaintext_in, &random_dev);
-  assert(ciphertext != NULL);
+  uint8_t *key_buf = NULL;
+  size_t key_buf_len = 0;
+  assert(PeacemakrKey_get_bytes(key, &key_buf, &key_buf_len));
 
-  decrypt_code success = peacemakr_decrypt(key, ciphertext, &plaintext_out);
+  uint8_t *key_dup_buf = NULL;
+  size_t key_dup_buf_len = 0;
+  assert(PeacemakrKey_get_bytes(key_dup, &key_dup_buf, &key_dup_buf_len));
 
-  assert(success == DECRYPT_SUCCESS);
+  uint8_t *key2_buf = NULL;
+  size_t key2_buf_len = 0;
+  assert(PeacemakrKey_get_bytes(key2, &key2_buf, &key2_buf_len));
 
-  assert(strncmp((const char *)plaintext_out.data,
-                 (const char *)plaintext_in.data, plaintext_in.data_len) == 0);
-  free((void *)plaintext_out.data);
-  assert(strncmp((const char *)plaintext_out.aad,
-                 (const char *)plaintext_in.aad, plaintext_in.aad_len) == 0);
-  free((void *)plaintext_out.aad);
+  assert(key_buf_len == key_dup_buf_len);
+  assert(key_buf_len == key2_buf_len);
+  assert(memcmp(key_buf, key_dup_buf, key_buf_len) == 0);
+  assert(memcmp(key_buf, key2_buf, key_buf_len) != 0);
 
   PeacemakrKey_free(key);
+  free(key_buf);
+  PeacemakrKey_free(key_dup);
+  free(key_dup_buf);
+  PeacemakrKey_free(key2);
+  free(key2_buf);
 }
 
 void test_master_key_symmetric_algo(peacemakr_key_t *master_key,

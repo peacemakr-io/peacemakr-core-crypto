@@ -237,7 +237,7 @@ peacemakr_key_t *PeacemakrKey_new_from_password(
     crypto_config_t cfg, const uint8_t *password, const size_t password_len,
     const uint8_t *salt, const size_t salt_len, const size_t iteration_count) {
   EXPECT_TRUE_RET((cfg.mode == SYMMETRIC),
-                  "Can't set a raw bytes for asymmetric crypto\n");
+                  "Can't derive an asymmetric key from a password\n");
   EXPECT_NOT_NULL_RET(password, "buffer is null\n");
   EXPECT_TRUE_RET((password_len >= 0),
                   "Password size cannot be less than or equal to zero\n");
@@ -254,8 +254,11 @@ peacemakr_key_t *PeacemakrKey_new_from_password(
   uint8_t *keybuf = alloca(keylen);
 
   // Create the key
-  PKCS5_PBKDF2_HMAC((const char *)password, password_len, salt, salt_len,
-                    iteration_count, md, keylen, keybuf);
+  if (1 != PKCS5_PBKDF2_HMAC((const char *)password, password_len, salt,
+                             salt_len, iteration_count, md, keylen, keybuf)) {
+    PEACEMAKR_OPENSSL_LOG;
+    return NULL;
+  }
 
   return PeacemakrKey_new_bytes(cfg, keybuf, keylen);
 }
