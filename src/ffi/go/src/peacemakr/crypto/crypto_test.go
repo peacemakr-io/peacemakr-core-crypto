@@ -160,7 +160,7 @@ func TestAsymmetricEncrypt(t *testing.T) {
 				randomDevice := NewRandomDevice()
 
 				key := NewPeacemakrKey(cfg, randomDevice)
-				defer DestroyPeacemakrKey(key)
+				defer key.Destroy()
 
 				ciphertext, err := Encrypt(key, plaintextIn, randomDevice)
 				if err != nil && len(plaintextIn.Data) == 0 {
@@ -231,7 +231,7 @@ func TestAsymmetricEncryptFromPem(t *testing.T) {
 			randomDevice := NewRandomDevice()
 
 			pubkey := NewPeacemakrKeyFromPubPem(cfg, GetPubKey())
-			defer DestroyPeacemakrKey(pubkey)
+			defer pubkey.Destroy()
 
 			ciphertext, err := Encrypt(pubkey, plaintextIn, randomDevice)
 			if err != nil && len(plaintextIn.Data) == 0 {
@@ -267,7 +267,7 @@ func TestAsymmetricEncryptFromPem(t *testing.T) {
 			}
 
 			privkey := NewPeacemakrKeyFromPrivPem(cfg, GetPrivKey())
-			defer DestroyPeacemakrKey(privkey)
+			defer privkey.Destroy()
 
 			plaintextOut, _, err := Decrypt(privkey, deserialized)
 			if err != nil {
@@ -313,9 +313,9 @@ func TestAsymmetricEncryptFromRandomPem(t *testing.T) {
 				}
 
 				privkey := NewPeacemakrKeyFromPrivPem(cfg, priv)
-				defer DestroyPeacemakrKey(privkey)
+				defer privkey.Destroy()
 				pubkey := NewPeacemakrKeyFromPubPem(cfg, pub)
-				defer DestroyPeacemakrKey(pubkey)
+				defer pubkey.Destroy()
 
 				ciphertext, err := Encrypt(pubkey, plaintextIn, randomDevice)
 				if err != nil && len(plaintextIn.Data) == 0 {
@@ -383,16 +383,21 @@ func TestSymmetricEncrypt(t *testing.T) {
 
 		randomDevice := NewRandomDevice()
 
-		var key PeacemakrKey
+		var key *PeacemakrKey
+		var err error
 		if j == AES_256_GCM || j == CHACHA20_POLY1305 {
 			masterKey := NewPeacemakrKey(cfg, randomDevice)
-			key = NewPeacemakrKeyFromMasterKey(cfg, masterKey, []byte("abcdefghijklmnopqrstuvwxyz"))
-			DestroyPeacemakrKey(masterKey)
+			key, err = NewPeacemakrKeyFromMasterKey(cfg, masterKey, []byte("abcdefghijklmnopqrstuvwxyz"))
+			if err != nil {
+				t.Fatalf("%v", err)
+			}
+
+			masterKey.Destroy()
 		} else {
 			origKey := NewPeacemakrKey(cfg, randomDevice)
-			b, err := GetBytes(&origKey)
+			b, err := origKey.Bytes()
 			if err != nil {
-				DestroyPeacemakrKey(origKey)
+				origKey.Destroy()
 				t.Fatalf("%v", err)
 			}
 
@@ -404,55 +409,70 @@ func TestSymmetricEncrypt(t *testing.T) {
 			return
 		}
 		if err != nil {
-			DestroyPeacemakrKey(key)
+			key.Destroy()
 			t.Fatalf("%v", err)
 		}
 
 		serialized, err := Serialize(ciphertext)
 		if err != nil {
-			DestroyPeacemakrKey(key)
+			key.Destroy()
 			t.Fatalf("%v", err)
 		}
 
 		if plaintextIn.Aad != nil {
 			AAD, err := ExtractUnverifiedAAD(serialized)
 			if err != nil {
-				DestroyPeacemakrKey(key)
+				key.Destroy()
 				t.Fatalf("Extract failed")
 			}
 			if !bytes.Equal(plaintextIn.Aad, AAD) {
-				DestroyPeacemakrKey(key)
+				key.Destroy()
 				t.Fatalf("extracted aad did not match")
 			}
 		}
 
 		deserialized, deserializedConfig, err := Deserialize(serialized)
 		if err != nil {
-			DestroyPeacemakrKey(key)
+			key.Destroy()
 			t.Fatalf("%v", err)
 		}
 
 		if !reflect.DeepEqual(*deserializedConfig, cfg) {
-			DestroyPeacemakrKey(key)
+			key.Destroy()
 			t.Fatalf("did not deserialize the correct configuration, %v vs %v", *deserializedConfig, cfg)
 		}
 
 		plaintextOut, _, err := Decrypt(key, deserialized)
 		if err != nil {
-			DestroyPeacemakrKey(key)
+			key.Destroy()
 			t.Fatalf("Decrypt failed")
 		}
 
 		if !bytes.Equal(plaintextIn.Data, plaintextOut.Data) {
-			DestroyPeacemakrKey(key)
+			key.Destroy()
 			t.Fatalf("plaintext data did not match")
 		}
 
 		if !bytes.Equal(plaintextIn.Aad, plaintextOut.Aad) {
-			DestroyPeacemakrKey(key)
+			key.Destroy()
 			t.Fatalf("plaintext data did not match")
 		}
-		DestroyPeacemakrKey(key)
+		key.Destroy()
+	}
+}
+
+func parseKeyBits(cipher SymmetricCipher) int {
+	switch cipher {
+	case AES_128_GCM:
+		return 128
+	case AES_192_GCM:
+		return 192
+	case AES_256_GCM:
+		return 256
+	case CHACHA20_POLY1305:
+		return 256
+	default:
+		return 0
 	}
 }
 
@@ -462,59 +482,64 @@ func TestSymmetricEncryptPassword(t *testing.T) {
 		t.Fatalf("Unable to successfully start and seed the CSPRNG")
 	}
 	for j := AES_128_GCM; j <= CHACHA20_POLY1305; j++ {
-		cfg := CryptoConfig{
-			Mode:             SYMMETRIC,
-			AsymmetricCipher: NONE,
-			SymmetricCipher:  j,
-			DigestAlgorithm:  SHA_512,
-		}
 
-        numIters := mrand.Int() % 128
-		key := NewPeacemakrKeyFromPassword(cfg, []byte("abcdefghijklmnopqrstuvwxyz"), []byte("123456789"), numIters)
-		key2 := NewPeacemakrKeyFromPassword(cfg, []byte("abcdefghijklmnopqrstuvwxyz"), []byte("123456789"), numIters)
-		key3 := NewPeacemakrKeyFromPassword(cfg, []byte("abcdefghijklmnopqrstuvwxyy"), []byte("123456789"), numIters)
-
-		keyBytes, err := GetBytes(&key)
+		numIters := 10000
+		key, salt, err := NewSymmetricKeyFromPassword(parseKeyBits(j), "abcdefghijklmnopqrstuvwxyz", numIters)
 		if err != nil {
-		    DestroyPeacemakrKey(key)
-            DestroyPeacemakrKey(key2)
-            DestroyPeacemakrKey(key3)
-		    t.Fatalf("%v", err)
+			t.Fatal(err)
 		}
 
-		key2Bytes, err := GetBytes(&key2)
+		key2, err := SymmetricKeyFromPasswordAndSalt(parseKeyBits(j), "abcdefghijklmnopqrstuvwxyz", salt, numIters)
 		if err != nil {
-            DestroyPeacemakrKey(key)
-            DestroyPeacemakrKey(key2)
-            DestroyPeacemakrKey(key3)
-            t.Fatalf("%v", err)
+			t.Fatal(err)
 		}
 
-		key3Bytes, err := GetBytes(&key3)
-        if err != nil {
-            DestroyPeacemakrKey(key)
-            DestroyPeacemakrKey(key2)
-            DestroyPeacemakrKey(key3)
-            t.Fatalf("%v", err)
-        }
+		key3, _, err := NewSymmetricKeyFromPassword(parseKeyBits(j), "abcdefghijklmnopqrstuvwxyy", numIters)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		keyBytes, err := key.Bytes()
+		if err != nil {
+			key.Destroy()
+			key2.Destroy()
+			key3.Destroy()
+			t.Fatalf("%v", err)
+		}
+
+		key2Bytes, err := key2.Bytes()
+		if err != nil {
+			key.Destroy()
+			key2.Destroy()
+			key3.Destroy()
+			t.Fatalf("%v", err)
+		}
+
+		key3Bytes, err := key3.Bytes()
+		if err != nil {
+			key.Destroy()
+			key2.Destroy()
+			key3.Destroy()
+			t.Fatalf("%v", err)
+		}
 
 		if bytes.Compare(keyBytes, key2Bytes) != 0 {
-			DestroyPeacemakrKey(key)
-			DestroyPeacemakrKey(key2)
-			DestroyPeacemakrKey(key3)
+			key.Destroy()
+			key2.Destroy()
+			key3.Destroy()
 			t.Fatalf("Keys 1 and 2 didn't compare equal")
 		}
 
 		if bytes.Compare(keyBytes, key3Bytes) == 0 {
-            DestroyPeacemakrKey(key)
-            DestroyPeacemakrKey(key2)
-            DestroyPeacemakrKey(key3)
-            t.Fatalf("Keys 1 and 3 did compare equal")
-        }
+			key.Destroy()
+			key2.Destroy()
+			key3.Destroy()
+			t.Fatalf("Keys 1 and 3 did compare equal")
+		}
 
-        DestroyPeacemakrKey(key)
-        DestroyPeacemakrKey(key2)
-        DestroyPeacemakrKey(key3)
+		key.Destroy()
+		key2.Destroy()
+		key3.Destroy()
 	}
 }
 
@@ -539,7 +564,7 @@ func TestSerialize(t *testing.T) {
 					randomDevice := NewRandomDevice()
 
 					key := NewPeacemakrKey(cfg, randomDevice)
-					defer DestroyPeacemakrKey(key)
+					defer key.Destroy()
 
 					ciphertext, err := Encrypt(key, plaintextIn, randomDevice)
 					if err != nil && len(plaintextIn.Data) == 0 {
@@ -598,80 +623,80 @@ func TestECDHSerialize(t *testing.T) {
 	}
 	for j := AES_128_GCM; j <= CHACHA20_POLY1305; j++ {
 		for k := SHA_224; k <= SHA_512; k++ {
-	        for curve := ECDH_P256; curve <= ECDH_P521; curve++ {
-                go func(j, k, curve int) {
-                    cfg := CryptoConfig{
-                        Mode:             ASYMMETRIC,
-                        AsymmetricCipher: AsymmetricCipher(curve),
-                        SymmetricCipher:  SymmetricCipher(j),
-                        DigestAlgorithm:  MessageDigestAlgorithm(k),
-                    }
+			for curve := ECDH_P256; curve <= ECDH_P521; curve++ {
+				go func(j, k, curve int) {
+					cfg := CryptoConfig{
+						Mode:             ASYMMETRIC,
+						AsymmetricCipher: AsymmetricCipher(curve),
+						SymmetricCipher:  SymmetricCipher(j),
+						DigestAlgorithm:  MessageDigestAlgorithm(k),
+					}
 
-                    plaintextIn := SetUpPlaintext()
+					plaintextIn := SetUpPlaintext()
 
-                    randomDevice := NewRandomDevice()
+					randomDevice := NewRandomDevice()
 
-                    myKey := NewPeacemakrKey(cfg, randomDevice)
-                    defer DestroyPeacemakrKey(myKey)
+					myKey := NewPeacemakrKey(cfg, randomDevice)
+					defer myKey.Destroy()
 
-                    peerKey := NewPeacemakrKey(cfg, randomDevice)
-                    defer DestroyPeacemakrKey(peerKey)
+					peerKey := NewPeacemakrKey(cfg, randomDevice)
+					defer peerKey.Destroy()
 
-                    secKey := ECDHPeacemakrKeyGen(&myKey, &peerKey)
-                    defer DestroyPeacemakrKey(secKey)
+					secKey := myKey.ECDHKeygen(peerKey)
+					defer secKey.Destroy()
 
-                    secKeyCfg, err := GetKeyConfig(&secKey)
-                    if err != nil {
-                        t.Fatalf("%v", err)
-                    }
+					secKeyCfg, err := secKey.Config()
+					if err != nil {
+						t.Fatalf("%v", err)
+					}
 
-                    ciphertext, err := Encrypt(secKey, plaintextIn, randomDevice)
-                    if err != nil && len(plaintextIn.Data) == 0 {
-                        return
-                    }
+					ciphertext, err := Encrypt(secKey, plaintextIn, randomDevice)
+					if err != nil && len(plaintextIn.Data) == 0 {
+						return
+					}
 
-                    if err != nil {
-                        t.Fatalf("%v", err)
-                    }
+					if err != nil {
+						t.Fatalf("%v", err)
+					}
 
-                    serialized, err := Serialize(ciphertext)
-                    if err != nil {
-                        t.Fatalf("%v", err)
-                    }
+					serialized, err := Serialize(ciphertext)
+					if err != nil {
+						t.Fatalf("%v", err)
+					}
 
-                    if plaintextIn.Aad != nil {
-                        AAD, err := ExtractUnverifiedAAD(serialized)
-                        if err != nil {
-                            t.Fatalf("Extract failed")
-                        }
-                        if !bytes.Equal(plaintextIn.Aad, AAD) {
-                            t.Fatalf("extracted aad did not match")
-                        }
-                    }
+					if plaintextIn.Aad != nil {
+						AAD, err := ExtractUnverifiedAAD(serialized)
+						if err != nil {
+							t.Fatalf("Extract failed")
+						}
+						if !bytes.Equal(plaintextIn.Aad, AAD) {
+							t.Fatalf("extracted aad did not match")
+						}
+					}
 
-                    deserialized, deserializedConfig, err := Deserialize(serialized)
-                    if err != nil {
-                        t.Fatalf("%v", err)
-                    }
+					deserialized, deserializedConfig, err := Deserialize(serialized)
+					if err != nil {
+						t.Fatalf("%v", err)
+					}
 
-                    if !reflect.DeepEqual(*deserializedConfig, secKeyCfg) {
-                        t.Fatalf("did not deserialize the correct configuration")
-                    }
+					if !reflect.DeepEqual(*deserializedConfig, secKeyCfg) {
+						t.Fatalf("did not deserialize the correct configuration")
+					}
 
-                    plaintextOut, _, err := Decrypt(secKey, deserialized)
-                    if err != nil {
-                        t.Fatalf("Decrypt failed")
-                    }
+					plaintextOut, _, err := Decrypt(secKey, deserialized)
+					if err != nil {
+						t.Fatalf("Decrypt failed")
+					}
 
-                    if !bytes.Equal(plaintextIn.Data, plaintextOut.Data) {
-                        t.Fatalf("plaintext data did not match")
-                    }
+					if !bytes.Equal(plaintextIn.Data, plaintextOut.Data) {
+						t.Fatalf("plaintext data did not match")
+					}
 
-                    if !bytes.Equal(plaintextIn.Aad, plaintextOut.Aad) {
-                        t.Fatalf("plaintext data did not match")
-                    }
-                }(int(j), int(k), int(curve))
-            }
+					if !bytes.Equal(plaintextIn.Aad, plaintextOut.Aad) {
+						t.Fatalf("plaintext data did not match")
+					}
+				}(int(j), int(k), int(curve))
+			}
 		}
 	}
 }
@@ -697,7 +722,7 @@ func TestSignatures(t *testing.T) {
 					randomDevice := NewRandomDevice()
 
 					key := NewPeacemakrKey(cfg, randomDevice)
-					defer DestroyPeacemakrKey(key)
+					defer key.Destroy()
 
 					ciphertext, err := Encrypt(key, plaintextIn, randomDevice)
 					if err != nil && len(plaintextIn.Data) == 0 {
