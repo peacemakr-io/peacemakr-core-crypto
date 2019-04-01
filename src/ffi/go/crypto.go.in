@@ -372,6 +372,7 @@ func GetConfigFromPubKey(pubKey string) (CryptoConfig, error) {
 	cfg := CryptoConfig{
 		Mode:             ASYMMETRIC,
 		AsymmetricCipher: asymKeyLen,
+		// TODO: is this OK to assume?
 		SymmetricCipher:  AES_256_GCM,
 		DigestAlgorithm:  SHA_512,
 	}
@@ -399,6 +400,7 @@ func GetConfigFromPrivKey(privKey string) (CryptoConfig, error) {
 	cfg := CryptoConfig{
 		Mode:             ASYMMETRIC,
 		AsymmetricCipher: asymKeyLen,
+		// TODO: is this OK to assume?
 		SymmetricCipher:  AES_256_GCM,
 		DigestAlgorithm:  SHA_512,
 	}
