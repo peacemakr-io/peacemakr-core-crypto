@@ -38,7 +38,12 @@ package crypto
 */
 import "C"
 import (
+	"crypto/ecdsa"
+	"crypto/elliptic"
 	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
+	"encoding/pem"
 	"errors"
 	"log"
 	"unsafe"
@@ -216,7 +221,7 @@ func NewPeacemakrKeyFromBytes(config CryptoConfig, contents []byte) *PeacemakrKe
 	}
 }
 
-func NewPeacemakrKeyFromPassword(config CryptoConfig, passwordStr string, salt []byte, iterationCount int) *PeacemakrKey {
+func newPeacemakrKeyFromPassword(config CryptoConfig, passwordStr string, salt []byte, iterationCount int) *PeacemakrKey {
 	password := []byte(passwordStr)
 	cBytes := (*C.uint8_t)(C.CBytes(password))
 	defer C.free(unsafe.Pointer(cBytes))
@@ -231,20 +236,7 @@ func NewPeacemakrKeyFromPassword(config CryptoConfig, passwordStr string, salt [
 	}
 }
 
-func NewPeacemakrKeyFromMasterKey(config CryptoConfig, masterKey *PeacemakrKey, keyID []byte) (*PeacemakrKey, error) {
-	if !masterKey.IsValid() {
-		return nil, errors.New("invalid master key")
-	}
-
-	cBytes := (*C.uint8_t)(C.CBytes(keyID))
-	defer C.free(unsafe.Pointer(cBytes))
-	cNumBytes := (C.size_t)(len(keyID))
-	return &PeacemakrKey{
-		key: C.PeacemakrKey_new_from_master(configToInternal(config), masterKey.key, cBytes, cNumBytes),
-	}, nil
-}
-
-func NewPeacemakrKeyFromPubPem(config CryptoConfig, contents []byte) *PeacemakrKey {
+func newPeacemakrKeyFromPubPem(config CryptoConfig, contents []byte) *PeacemakrKey {
 	cBytes := (*C.char)(C.CBytes(contents))
 	defer C.free(unsafe.Pointer(cBytes))
 	return &PeacemakrKey{
@@ -252,12 +244,166 @@ func NewPeacemakrKeyFromPubPem(config CryptoConfig, contents []byte) *PeacemakrK
 	}
 }
 
-func NewPeacemakrKeyFromPrivPem(config CryptoConfig, contents []byte) *PeacemakrKey {
+func newPeacemakrKeyFromPrivPem(config CryptoConfig, contents []byte) *PeacemakrKey {
 	cBytes := (*C.char)(C.CBytes(contents))
 	defer C.free(unsafe.Pointer(cBytes))
 	return &PeacemakrKey{
 		key: C.PeacemakrKey_new_pem_priv(configToInternal(config), cBytes, C.size_t(len(contents))),
 	}
+}
+
+// ========================= Internal helpers for wrappers =========================
+
+func GetECKeyTypeFromPubPemStr(pubPEM string) (AsymmetricCipher, error) {
+	block, _ := pem.Decode([]byte(pubPEM))
+	if block == nil {
+		return NONE, errors.New("failed to parse PEM block containing the key")
+	}
+
+	pub, err := x509.ParsePKIXPublicKey(block.Bytes)
+	if err != nil {
+		return NONE, err
+	}
+
+	switch pub := pub.(type) {
+	case *ecdsa.PublicKey:
+		if pub.Curve == elliptic.P256() {
+			return ECDH_P256, nil
+		} else if pub.Curve == elliptic.P384() {
+			return ECDH_P384, nil
+		} else if pub.Curve == elliptic.P521() {
+			return ECDH_P521, nil
+		}
+	default:
+		break // fall through
+	}
+	return NONE, errors.New("key type is not EC")
+}
+
+func GetECKeyTypeFromPrivPemStr(pubPEM string) (AsymmetricCipher, error) {
+	block, _ := pem.Decode([]byte(pubPEM))
+	if block == nil {
+		return NONE, errors.New("failed to parse PEM block containing the key")
+	}
+
+	priv, err := x509.ParseECPrivateKey(block.Bytes)
+	if err != nil {
+		return NONE, err
+	}
+
+	if priv.Curve == elliptic.P256() {
+		return ECDH_P256, nil
+	} else if priv.Curve == elliptic.P384() {
+		return ECDH_P384, nil
+	} else if priv.Curve == elliptic.P521() {
+		return ECDH_P521, nil
+	}
+
+	return NONE, errors.New("key type is not EC")
+}
+
+func ParseRsaPublicKeyFromPemStr(pubPEM string) (*rsa.PublicKey, error) {
+	block, _ := pem.Decode([]byte(pubPEM))
+	if block == nil {
+		return nil, errors.New("failed to parse PEM block containing the key")
+	}
+
+	pub, err := x509.ParsePKIXPublicKey(block.Bytes)
+	if err != nil {
+		return nil, err
+	}
+
+	switch pub := pub.(type) {
+	case *rsa.PublicKey:
+		return pub, nil
+	default:
+		break // fall through
+	}
+	return nil, errors.New("Key type is not RSA")
+}
+
+func ParseRsaPrivateKeyFromPemStr(privPEM string) (*rsa.PrivateKey, error) {
+	block, _ := pem.Decode([]byte(privPEM))
+	if block == nil {
+		return nil, errors.New("failed to parse PEM block containing the key")
+	}
+
+	priv, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+	if err != nil {
+		return nil, err
+	}
+
+	return priv, nil
+}
+
+func getBitLenFromRsaPubPemStr(pubRSA string) (int, error) {
+	rsaKey, err := ParseRsaPublicKeyFromPemStr(pubRSA)
+	if err != nil {
+		return 0, err
+	}
+	return rsaKey.N.BitLen(), nil
+}
+
+func getBitLenFromRsaPrivPemStr(privRSA string) (int, error) {
+	rsaKey, err := ParseRsaPrivateKeyFromPemStr(privRSA)
+	if err != nil {
+		return 0, err
+	}
+	return rsaKey.N.BitLen(), nil
+}
+
+func GetConfigFromPubKey(pubKey string) (CryptoConfig, error) {
+	// First try to get it as an EC key
+	asymKeyLen, err := GetECKeyTypeFromPubPemStr(pubKey)
+	if err != nil { // It's not an EC key
+		bitLength, err := getBitLenFromRsaPubPemStr(string(pubKey))
+		if err != nil {
+			return CryptoConfig{}, errors.New("failed to get bit length from public rsa key")
+		}
+		if bitLength == 4096 {
+			asymKeyLen = RSA_4096
+		} else if bitLength == 2048 {
+			asymKeyLen = RSA_2048
+		} else {
+			return CryptoConfig{}, errors.New("unknown bitlength for RSA key")
+		}
+	}
+
+	cfg := CryptoConfig{
+		Mode:             ASYMMETRIC,
+		AsymmetricCipher: asymKeyLen,
+		SymmetricCipher:  AES_256_GCM,
+		DigestAlgorithm:  SHA_512,
+	}
+
+	return cfg, nil
+}
+
+func GetConfigFromPrivKey(privKey string) (CryptoConfig, error) {
+	// First try to get it as an EC key
+	asymKeyLen, err := GetECKeyTypeFromPrivPemStr(privKey)
+	if err != nil { // It's not an EC key
+		bitLength, err := getBitLenFromRsaPrivPemStr(privKey)
+		if err != nil {
+			return CryptoConfig{}, errors.New("failed to get bit length from public rsa key")
+		}
+		if bitLength == 4096 {
+			asymKeyLen = RSA_4096
+		} else if bitLength == 2048 {
+			asymKeyLen = RSA_2048
+		} else {
+			return CryptoConfig{}, errors.New("unknown bitlength for RSA key")
+		}
+	}
+
+	cfg := CryptoConfig{
+		Mode:             ASYMMETRIC,
+		AsymmetricCipher: asymKeyLen,
+		SymmetricCipher:  AES_256_GCM,
+		DigestAlgorithm:  SHA_512,
+	}
+
+	return cfg, nil
 }
 
 // ========================= Wrapped key creation =========================
@@ -307,7 +453,7 @@ func NewSymmetricKeyFromPassword(keylenBits int, passwordStr string, iterationCo
 		return nil, nil, errors.New("unable to read salt from random string")
 	}
 
-	outKey := NewPeacemakrKeyFromPassword(cfg, passwordStr, salt, iterationCount)
+	outKey := newPeacemakrKeyFromPassword(cfg, passwordStr, salt, iterationCount)
 	return outKey, salt, nil
 }
 
@@ -329,8 +475,26 @@ func SymmetricKeyFromPasswordAndSalt(keylenBits int, passwordStr string, salt []
 		return nil, errors.New("unknown length for keylenBits, acceptable values are 128, 192, 256")
 	}
 
-	outKey := NewPeacemakrKeyFromPassword(cfg, passwordStr, salt, iterationCount)
+	outKey := newPeacemakrKeyFromPassword(cfg, passwordStr, salt, iterationCount)
 	return outKey, nil
+}
+
+func NewPublicKeyFromPEM(contents string) (*PeacemakrKey, error) {
+	cfg, err := GetConfigFromPubKey(contents)
+	if err != nil {
+		return nil, err
+	}
+
+	return newPeacemakrKeyFromPubPem(cfg, []byte(contents)), nil
+}
+
+func NewPrivateKeyFromPEM(contents string) (*PeacemakrKey, error) {
+	cfg, err := GetConfigFromPrivKey(contents)
+	if err != nil {
+		return nil, err
+	}
+
+	return newPeacemakrKeyFromPrivPem(cfg, []byte(contents)), nil
 }
 
 // ========================= Operations to do on keys =========================
@@ -343,6 +507,19 @@ func (k *PeacemakrKey) ECDHKeygen(peerKey *PeacemakrKey) *PeacemakrKey {
 	return &PeacemakrKey{
 		key: C.PeacemakrKey_dh_generate(k.key, peerKey.key),
 	}
+}
+
+func (k *PeacemakrKey) HKDFKeygen(config CryptoConfig, keyID []byte) (*PeacemakrKey, error) {
+	if !k.IsValid() {
+		return nil, errors.New("invalid master key")
+	}
+
+	cBytes := (*C.uint8_t)(C.CBytes(keyID))
+	defer C.free(unsafe.Pointer(cBytes))
+	cNumBytes := (C.size_t)(len(keyID))
+	return &PeacemakrKey{
+		key: C.PeacemakrKey_new_from_master(configToInternal(config), k.key, cBytes, cNumBytes),
+	}, nil
 }
 
 func (k *PeacemakrKey) Config() (CryptoConfig, error) {
@@ -508,7 +685,6 @@ func Verify(senderKey *PeacemakrKey, plaintext *Plaintext, ciphertext *Ciphertex
 
 func HMAC(algo MessageDigestAlgorithm, key *PeacemakrKey, buf []byte) ([]byte, error) {
     if !key.IsValid() {
-        log.Printf("invalid key passed to HMAC")
         return nil, errors.New("invalid key")
     }
 
