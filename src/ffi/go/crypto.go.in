@@ -481,22 +481,34 @@ func SymmetricKeyFromPasswordAndSalt(keylenBits int, passwordStr string, salt []
 	return outKey, nil
 }
 
-func NewPublicKeyFromPEM(contents string) (*PeacemakrKey, error) {
-	cfg, err := GetConfigFromPubKey(contents)
-	if err != nil {
-		return nil, err
-	}
+func NewPublicKeyFromPEM(contents string, cfg *CryptoConfig) (*PeacemakrKey, error) {
+    var keyCfg CryptoConfig
+    if cfg == nil {
+        var err error
+        keyCfg, err = GetConfigFromPubKey(contents)
+        if err != nil {
+            return nil, err
+        }
+    } else {
+        keyCfg = *cfg
+    }
 
-	return newPeacemakrKeyFromPubPem(cfg, []byte(contents)), nil
+	return newPeacemakrKeyFromPubPem(keyCfg, []byte(contents)), nil
 }
 
-func NewPrivateKeyFromPEM(contents string) (*PeacemakrKey, error) {
-	cfg, err := GetConfigFromPrivKey(contents)
-	if err != nil {
-		return nil, err
-	}
+func NewPrivateKeyFromPEM(contents string, cfg *CryptoConfig) (*PeacemakrKey, error) {
+    var keyCfg CryptoConfig
+    if cfg == nil {
+        var err error
+        keyCfg, err = GetConfigFromPrivKey(contents)
+        if err != nil {
+            return nil, err
+        }
+    } else {
+        keyCfg = *cfg
+    }
 
-	return newPeacemakrKeyFromPrivPem(cfg, []byte(contents)), nil
+	return newPeacemakrKeyFromPrivPem(keyCfg, []byte(contents)), nil
 }
 
 // ========================= Operations to do on keys =========================
