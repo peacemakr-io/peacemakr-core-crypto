@@ -6,7 +6,7 @@
 // Full license at peacemakr_core_crypto/LICENSE.txt
 //
 
-#include "crypto.hpp"
+#include "peacemakr/crypto.hpp"
 
 #include <cstring>
 
