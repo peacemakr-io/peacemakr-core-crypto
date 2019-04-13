@@ -11,8 +11,6 @@ if((CMAKE_BUILD_TYPE MATCHES RELEASE) OR (CMAKE_BUILD_TYPE MATCHES Release))
     add_definitions(-DPEACEMAKR_LOG_LEVEL=1)
 endif()
 
-option(PEACEMAKR_BUILD_CPP "Whether to build the C++ bindings" ON)
-
 include(CheckFunctionExists)
 check_function_exists(memset_s HAS_MEMSET_S)
 if (NOT HAS_MEMSET_S)
@@ -41,10 +39,6 @@ endif()
 set_target_properties(peacemakr-core-crypto PROPERTIES
         PUBLIC_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/include/peacemakr/crypto.h;${CMAKE_CURRENT_SOURCE_DIR}/include/peacemakr/random.h"
 )
-
-if (PEACEMAKR_BUILD_CPP)
-    add_subdirectory(cpp)
-endif (PEACEMAKR_BUILD_CPP)
 
 install(TARGETS peacemakr-core-crypto
         EXPORT peacemakr-core-crypto-targets

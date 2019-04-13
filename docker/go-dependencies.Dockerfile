@@ -14,6 +14,7 @@ WORKDIR /opt
 ADD CMakeLists.txt /opt/CMakeLists.txt
 ADD src/core /opt/src/core
 ADD src/ffi/go /opt/src/ffi/go
+ADD src/ffi/cpp /opt/src/ffi/cpp
 ADD src/ffi/CMakeLists.txt /opt/src/ffi/CMakeLists.txt
 ADD cmake /opt/cmake
 

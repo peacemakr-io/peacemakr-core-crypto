@@ -42,3 +42,9 @@ if (PEACEMAKR_BUILD_IOS)
     configure_file(${CMAKE_SOURCE_DIR}/src/ffi/swift/module.map.in ${CMAKE_SOURCE_DIR}/src/ffi/swift/CoreCrypto/CoreCrypto/module.map @ONLY)
     ")
 endif(PEACEMAKR_BUILD_IOS)
+
+option(PEACEMAKR_BUILD_CPP "Whether to build the C++ bindings" ON)
+
+if (PEACEMAKR_BUILD_CPP)
+    add_subdirectory(cpp)
+endif(PEACEMAKR_BUILD_CPP)
