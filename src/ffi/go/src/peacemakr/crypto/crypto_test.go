@@ -229,7 +229,7 @@ func TestAsymmetricEncryptFromPem(t *testing.T) {
 
 	randomDevice := NewRandomDevice()
 
-	pubkey, err := NewPublicKeyFromPEM(GetPubKey(), nil)
+	pubkey, err := NewPublicKeyFromPEM(GetPubKey())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -268,7 +268,7 @@ func TestAsymmetricEncryptFromPem(t *testing.T) {
 		t.Fatalf("did not deserialize the correct configuration")
 	}
 
-	privkey, err := NewPrivateKeyFromPEM(GetPrivKey(), nil)
+	privkey, err := NewPrivateKeyFromPEM(GetPrivKey())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -313,13 +313,13 @@ func TestAsymmetricEncryptFromRandomPem(t *testing.T) {
 			priv, pub = GetNewRSAKey(4096)
 		}
 
-		privkey, err := NewPrivateKeyFromPEM(priv, nil)
+		privkey, err := NewPrivateKeyFromPEM(priv)
 		if err != nil {
 			t.Fatal(err)
 		}
 		defer privkey.Destroy()
 
-		pubkey, err := NewPublicKeyFromPEM(pub, nil)
+		pubkey, err := NewPublicKeyFromPEM(pub)
 		if err != nil {
 			t.Fatal(err)
 		}

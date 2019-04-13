@@ -481,34 +481,22 @@ func SymmetricKeyFromPasswordAndSalt(keylenBits int, passwordStr string, salt []
 	return outKey, nil
 }
 
-func NewPublicKeyFromPEM(contents string, cfg *CryptoConfig) (*PeacemakrKey, error) {
-    keyCfg, err := GetConfigFromPubKey(contents)
-    if err != nil {
-        return nil, err
-    }
+func NewPublicKeyFromPEM(contents string) (*PeacemakrKey, error) {
+	cfg, err := GetConfigFromPubKey(contents)
+	if err != nil {
+		return nil, err
+	}
 
-    if cfg != nil {
-        keyCfg.Mode = cfg.Mode
-        keyCfg.SymmetricCipher = cfg.SymmetricCipher
-        keyCfg.DigestAlgorithm = cfg.DigestAlgorithm
-    }
-
-	return newPeacemakrKeyFromPubPem(keyCfg, []byte(contents)), nil
+	return newPeacemakrKeyFromPubPem(cfg, []byte(contents)), nil
 }
 
-func NewPrivateKeyFromPEM(contents string, cfg *CryptoConfig) (*PeacemakrKey, error) {
-    keyCfg, err := GetConfigFromPrivKey(contents)
-    if err != nil {
-        return nil, err
-    }
+func NewPrivateKeyFromPEM(contents string) (*PeacemakrKey, error) {
+	cfg, err := GetConfigFromPrivKey(contents)
+	if err != nil {
+		return nil, err
+	}
 
-    if cfg != nil {
-        keyCfg.Mode = cfg.Mode
-        keyCfg.SymmetricCipher = cfg.SymmetricCipher
-        keyCfg.DigestAlgorithm = cfg.DigestAlgorithm
-    }
-
-	return newPeacemakrKeyFromPrivPem(keyCfg, []byte(contents)), nil
+	return newPeacemakrKeyFromPrivPem(cfg, []byte(contents)), nil
 }
 
 // ========================= Operations to do on keys =========================
