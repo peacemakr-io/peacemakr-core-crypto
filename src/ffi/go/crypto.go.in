@@ -497,7 +497,7 @@ func NewPublicKeyFromPEM(contents string, cfg *CryptoConfig) (*PeacemakrKey, err
 }
 
 func NewPrivateKeyFromPEM(contents string, cfg *CryptoConfig) (*PeacemakrKey, error) {
-    keyCfg, err := GetConfigFromPubKey(contents)
+    keyCfg, err := GetConfigFromPrivKey(contents)
     if err != nil {
         return nil, err
     }
