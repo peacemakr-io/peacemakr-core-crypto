@@ -31,7 +31,7 @@
 
 typedef struct PeacemakrKey peacemakr_key_t;
 
-const buffer_t *PeacemakrKey_symmetric(const peacemakr_key_t *key);
-EVP_PKEY *PeacemakrKey_asymmetric(const peacemakr_key_t *key);
+const buffer_t *peacemakr_key_symmetric(const peacemakr_key_t *key);
+EVP_PKEY *peacemakr_key_asymmetric(const peacemakr_key_t *key);
 
 #endif // PEACEMAKR_CORE_CRYPTO_KEY_H

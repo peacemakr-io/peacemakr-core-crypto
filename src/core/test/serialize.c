@@ -31,7 +31,7 @@ void test_serialize(symmetric_cipher symm_cipher, asymmetric_cipher cipher,
 
   random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
 
-  peacemakr_key_t *key = PeacemakrKey_new(cfg, &rand);
+  peacemakr_key_t *key = peacemakr_key_new(cfg, &rand);
 
   ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, &plaintext_in, &rand);
   assert(ciphertext != NULL);
@@ -61,7 +61,7 @@ void test_serialize(symmetric_cipher symm_cipher, asymmetric_cipher cipher,
                  (const char *)plaintext_in.aad, plaintext_in.data_len) == 0);
   free((void *)plaintext_out.aad);
 
-  PeacemakrKey_free(key);
+  peacemakr_key_free(key);
 }
 
 int main() {

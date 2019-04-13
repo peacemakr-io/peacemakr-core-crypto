@@ -31,7 +31,7 @@ void test_asymmetric_algo(symmetric_cipher symm_cipher,
 
   random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
 
-  peacemakr_key_t *key = PeacemakrKey_new(cfg, &rand);
+  peacemakr_key_t *key = peacemakr_key_new(cfg, &rand);
 
   ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, &plaintext_in, &rand);
   assert(ciphertext != NULL);
@@ -47,7 +47,7 @@ void test_asymmetric_algo(symmetric_cipher symm_cipher,
                  (const char *)plaintext_in.aad, plaintext_in.aad_len) == 0);
   free((void *)plaintext_out.aad);
 
-  PeacemakrKey_free(key);
+  peacemakr_key_free(key);
 }
 
 void test_wrong_key(symmetric_cipher symm_cipher, asymmetric_cipher cipher) {
@@ -65,21 +65,21 @@ void test_wrong_key(symmetric_cipher symm_cipher, asymmetric_cipher cipher) {
 
   random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
 
-  peacemakr_key_t *key = PeacemakrKey_new(cfg, &rand);
+  peacemakr_key_t *key = peacemakr_key_new(cfg, &rand);
 
   ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, &plaintext_in, &rand);
   assert(ciphertext != NULL);
 
-  peacemakr_key_t *wrong_key = PeacemakrKey_new(cfg, &rand);
+  peacemakr_key_t *wrong_key = peacemakr_key_new(cfg, &rand);
 
   decrypt_code success =
       peacemakr_decrypt(wrong_key, ciphertext, &plaintext_out);
 
   assert(success == DECRYPT_FAILED);
 
-  CiphertextBlob_free(ciphertext);
-  PeacemakrKey_free(wrong_key);
-  PeacemakrKey_free(key);
+  ciphertext_blob_free(ciphertext);
+  peacemakr_key_free(wrong_key);
+  peacemakr_key_free(key);
 }
 
 int main() {

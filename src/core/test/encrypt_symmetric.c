@@ -28,13 +28,13 @@ void test_symmetric_algo(symmetric_cipher cipher) {
 
   random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
 
-  peacemakr_key_t *original_key = PeacemakrKey_new(cfg, &rand);
+  peacemakr_key_t *original_key = peacemakr_key_new(cfg, &rand);
 
   uint8_t *key_bytes = NULL;
   size_t key_size = 0;
-  PeacemakrKey_get_bytes(original_key, &key_bytes, &key_size);
+  peacemakr_key_get_bytes(original_key, &key_bytes, &key_size);
 
-  peacemakr_key_t *key = PeacemakrKey_new_bytes(cfg, key_bytes, key_size);
+  peacemakr_key_t *key = peacemakr_key_new_bytes(cfg, key_bytes, key_size);
   free(key_bytes);
 
   ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, &plaintext_in, &rand);
@@ -51,8 +51,8 @@ void test_symmetric_algo(symmetric_cipher cipher) {
                  (const char *)plaintext_in.aad, plaintext_in.aad_len) == 0);
   free((void *)plaintext_out.aad);
 
-  PeacemakrKey_free(original_key);
-  PeacemakrKey_free(key);
+  peacemakr_key_free(original_key);
+  peacemakr_key_free(key);
 }
 
 void test_password_symmetric_algo(symmetric_cipher cipher,
@@ -62,37 +62,37 @@ void test_password_symmetric_algo(symmetric_cipher cipher,
 
   size_t num_iters = rand() % 128;
 
-  peacemakr_key_t *key = PeacemakrKey_new_from_password(
+  peacemakr_key_t *key = peacemakr_key_new_from_password(
       cfg, (uint8_t *)"abcdefghijk", 11, (uint8_t *)"123456789", 9, num_iters);
 
-  peacemakr_key_t *key_dup = PeacemakrKey_new_from_password(
+  peacemakr_key_t *key_dup = peacemakr_key_new_from_password(
       cfg, (uint8_t *)"abcdefghijk", 11, (uint8_t *)"123456789", 9, num_iters);
 
-  peacemakr_key_t *key2 = PeacemakrKey_new_from_password(
+  peacemakr_key_t *key2 = peacemakr_key_new_from_password(
       cfg, (uint8_t *)"abcdefghijl", 11, (uint8_t *)"123456789", 9, num_iters);
 
   uint8_t *key_buf = NULL;
   size_t key_buf_len = 0;
-  assert(PeacemakrKey_get_bytes(key, &key_buf, &key_buf_len));
+  assert(peacemakr_key_get_bytes(key, &key_buf, &key_buf_len));
 
   uint8_t *key_dup_buf = NULL;
   size_t key_dup_buf_len = 0;
-  assert(PeacemakrKey_get_bytes(key_dup, &key_dup_buf, &key_dup_buf_len));
+  assert(peacemakr_key_get_bytes(key_dup, &key_dup_buf, &key_dup_buf_len));
 
   uint8_t *key2_buf = NULL;
   size_t key2_buf_len = 0;
-  assert(PeacemakrKey_get_bytes(key2, &key2_buf, &key2_buf_len));
+  assert(peacemakr_key_get_bytes(key2, &key2_buf, &key2_buf_len));
 
   assert(key_buf_len == key_dup_buf_len);
   assert(key_buf_len == key2_buf_len);
   assert(memcmp(key_buf, key_dup_buf, key_buf_len) == 0);
   assert(memcmp(key_buf, key2_buf, key_buf_len) != 0);
 
-  PeacemakrKey_free(key);
+  peacemakr_key_free(key);
   free(key_buf);
-  PeacemakrKey_free(key_dup);
+  peacemakr_key_free(key_dup);
   free(key_dup_buf);
-  PeacemakrKey_free(key2);
+  peacemakr_key_free(key2);
   free(key2_buf);
 }
 
@@ -111,7 +111,7 @@ void test_master_key_symmetric_algo(peacemakr_key_t *master_key,
 
   random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
 
-  peacemakr_key_t *key = PeacemakrKey_new_from_master(
+  peacemakr_key_t *key = peacemakr_key_new_from_master(
       cfg, master_key, (uint8_t *)"abcdefghijk", 11);
 
   ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, &plaintext_in, &rand);
@@ -128,7 +128,7 @@ void test_master_key_symmetric_algo(peacemakr_key_t *master_key,
                  (const char *)plaintext_in.aad, plaintext_in.aad_len) == 0);
   free((void *)plaintext_out.aad);
 
-  PeacemakrKey_free(key);
+  peacemakr_key_free(key);
 }
 
 void test_uninit_crash() {
@@ -146,7 +146,7 @@ void test_uninit_crash() {
 
   random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
 
-  peacemakr_key_t *key = PeacemakrKey_new(cfg, &rand);
+  peacemakr_key_t *key = peacemakr_key_new(cfg, &rand);
 
   ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, &plaintext_in, &rand);
   assert(ciphertext != NULL);
@@ -180,7 +180,7 @@ void test_uninit_crash() {
     free((void *)plaintext_out.aad);
   }
 
-  PeacemakrKey_free(key);
+  peacemakr_key_free(key);
 }
 
 void test_wrong_key(symmetric_cipher cipher) {
@@ -196,7 +196,7 @@ void test_wrong_key(symmetric_cipher cipher) {
 
   random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
 
-  peacemakr_key_t *original_key = PeacemakrKey_new(cfg, &rand);
+  peacemakr_key_t *original_key = peacemakr_key_new(cfg, &rand);
 
   ciphertext_blob_t *ciphertext =
       peacemakr_encrypt(original_key, &plaintext_in, &rand);
@@ -204,19 +204,19 @@ void test_wrong_key(symmetric_cipher cipher) {
 
   uint8_t *key_bytes = NULL;
   size_t key_size = 0;
-  PeacemakrKey_get_bytes(original_key, &key_bytes, &key_size);
+  peacemakr_key_get_bytes(original_key, &key_bytes, &key_size);
   key_bytes[0] += 1;
 
-  peacemakr_key_t *key = PeacemakrKey_new_bytes(cfg, key_bytes, key_size);
+  peacemakr_key_t *key = peacemakr_key_new_bytes(cfg, key_bytes, key_size);
   free(key_bytes);
 
   decrypt_code success = peacemakr_decrypt(key, ciphertext, &plaintext_out);
 
   assert(success == DECRYPT_FAILED);
 
-  CiphertextBlob_free(ciphertext);
-  PeacemakrKey_free(original_key);
-  PeacemakrKey_free(key);
+  ciphertext_blob_free(ciphertext);
+  peacemakr_key_free(original_key);
+  peacemakr_key_free(key);
 }
 
 int main() {
@@ -237,7 +237,7 @@ int main() {
 
   random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
 
-  peacemakr_key_t *master_key = PeacemakrKey_new(cfg, &rand);
+  peacemakr_key_t *master_key = peacemakr_key_new(cfg, &rand);
 
   for (int i = AES_128_GCM; i <= CHACHA20_POLY1305; ++i) {
     for (int j = SHA_224; j <= SHA_512; ++j) {
@@ -246,5 +246,5 @@ int main() {
     }
   }
 
-  PeacemakrKey_free(master_key);
+  peacemakr_key_free(master_key);
 }

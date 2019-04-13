@@ -88,16 +88,16 @@ int main() {
 
   random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
 
-  peacemakr_key_t *asymm_key = PeacemakrKey_new(asymm_cfg, &rand);
+  peacemakr_key_t *asymm_key = peacemakr_key_new(asymm_cfg, &rand);
 
   test_algo(plaintext_in, asymm_key);
 
-  peacemakr_key_t *symm_key = PeacemakrKey_new(symm_cfg, &rand);
+  peacemakr_key_t *symm_key = peacemakr_key_new(symm_cfg, &rand);
 
   test_algo(plaintext_in, symm_key);
 
-  PeacemakrKey_free(asymm_key);
-  PeacemakrKey_free(symm_key);
+  peacemakr_key_free(asymm_key);
+  peacemakr_key_free(symm_key);
 
   free(message);
   free(aad);

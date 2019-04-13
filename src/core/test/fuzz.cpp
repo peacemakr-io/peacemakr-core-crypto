@@ -215,7 +215,7 @@ crypto_config_t global_cfg = {
 };
 
 random_device_t global_rand = {.generator = &fill_rand, .err = &rand_err};
-peacemakr_key_t *key = PeacemakrKey_new(global_cfg, &global_rand);
+peacemakr_key_t *key = peacemakr_key_new(global_cfg, &global_rand);
 
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
 //  test_log(Data, Size);

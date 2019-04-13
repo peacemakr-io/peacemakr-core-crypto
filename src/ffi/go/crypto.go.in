@@ -208,7 +208,7 @@ type PeacemakrKey struct {
 
 func NewPeacemakrKey(config CryptoConfig, rand RandomDevice) *PeacemakrKey {
 	return &PeacemakrKey{
-		key: C.PeacemakrKey_new(configToInternal(config), (*C.random_device_t)(unsafe.Pointer(&rand.randomDevice))),
+		key: C.peacemakr_key_new(configToInternal(config), (*C.random_device_t)(unsafe.Pointer(&rand.randomDevice))),
 	}
 }
 
@@ -217,7 +217,7 @@ func NewPeacemakrKeyFromBytes(config CryptoConfig, contents []byte) *PeacemakrKe
 	defer C.free(unsafe.Pointer(cBytes))
 	cNumBytes := (C.size_t)(len(contents))
 	return &PeacemakrKey{
-		key: C.PeacemakrKey_new_bytes(configToInternal(config), cBytes, cNumBytes),
+		key: C.peacemakr_key_new_bytes(configToInternal(config), cBytes, cNumBytes),
 	}
 }
 
@@ -232,7 +232,7 @@ func newPeacemakrKeyFromPassword(config CryptoConfig, passwordStr string, salt [
 	cNumSalt := (C.size_t)(len(salt))
 
 	return &PeacemakrKey {
-	    key: C.PeacemakrKey_new_from_password(configToInternal(config), cBytes, cNumBytes, cSalt, cNumSalt, (C.size_t)(iterationCount)),
+	    key: C.peacemakr_key_new_from_password(configToInternal(config), cBytes, cNumBytes, cSalt, cNumSalt, (C.size_t)(iterationCount)),
 	}
 }
 
@@ -240,7 +240,7 @@ func newPeacemakrKeyFromPubPem(config CryptoConfig, contents []byte) *PeacemakrK
 	cBytes := (*C.char)(C.CBytes(contents))
 	defer C.free(unsafe.Pointer(cBytes))
 	return &PeacemakrKey{
-		key: C.PeacemakrKey_new_pem_pub(configToInternal(config), cBytes, C.size_t(len(contents))),
+		key: C.peacemakr_key_new_pem_pub(configToInternal(config), cBytes, C.size_t(len(contents))),
 	}
 }
 
@@ -248,7 +248,7 @@ func newPeacemakrKeyFromPrivPem(config CryptoConfig, contents []byte) *Peacemakr
 	cBytes := (*C.char)(C.CBytes(contents))
 	defer C.free(unsafe.Pointer(cBytes))
 	return &PeacemakrKey{
-		key: C.PeacemakrKey_new_pem_priv(configToInternal(config), cBytes, C.size_t(len(contents))),
+		key: C.peacemakr_key_new_pem_priv(configToInternal(config), cBytes, C.size_t(len(contents))),
 	}
 }
 
@@ -507,7 +507,7 @@ func (k *PeacemakrKey) IsValid() bool {
 
 func (k *PeacemakrKey) ECDHKeygen(peerKey *PeacemakrKey) *PeacemakrKey {
 	return &PeacemakrKey{
-		key: C.PeacemakrKey_dh_generate(k.key, peerKey.key),
+		key: C.peacemakr_key_dh_generate(k.key, peerKey.key),
 	}
 }
 
@@ -520,7 +520,7 @@ func (k *PeacemakrKey) HKDFKeygen(config CryptoConfig, keyID []byte) (*Peacemakr
 	defer C.free(unsafe.Pointer(cBytes))
 	cNumBytes := (C.size_t)(len(keyID))
 	return &PeacemakrKey{
-		key: C.PeacemakrKey_new_from_master(configToInternal(config), k.key, cBytes, cNumBytes),
+		key: C.peacemakr_key_new_from_master(configToInternal(config), k.key, cBytes, cNumBytes),
 	}, nil
 }
 
@@ -529,7 +529,7 @@ func (k *PeacemakrKey) Config() (CryptoConfig, error) {
 		return CryptoConfig{}, errors.New("invalid key passed to GetKeyConfig")
 	}
 
-	keyConfig := C.PeacemakrKey_get_config(k.key)
+	keyConfig := C.peacemakr_key_get_config(k.key)
 	return configFromInternal(keyConfig), nil
 }
 
@@ -542,7 +542,7 @@ func (k *PeacemakrKey) Bytes() ([]byte, error) {
     defer C.free(unsafe.Pointer(buf))
 	var bufSize C.size_t
 
-	success := C.PeacemakrKey_get_bytes(k.key, (**C.uint8_t)(unsafe.Pointer(&buf)), (*C.size_t)(&bufSize))
+	success := C.peacemakr_key_get_bytes(k.key, (**C.uint8_t)(unsafe.Pointer(&buf)), (*C.size_t)(&bufSize))
 	if !success {
 		return []byte{}, errors.New("failed to get bytes from peacemakr key")
 	}
@@ -554,7 +554,7 @@ func (k *PeacemakrKey) Destroy() {
 	if !k.IsValid() {
 		return
 	}
-	C.PeacemakrKey_free((*C.peacemakr_key_t)(k.key))
+	C.peacemakr_key_free((*C.peacemakr_key_t)(k.key))
 }
 
 // ========================= Core APIs =========================

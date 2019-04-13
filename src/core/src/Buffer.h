@@ -17,21 +17,21 @@
 typedef struct Buffer buffer_t;
 
 // Allocates a buffer of zeros - also doesn't allocate anything if size <= 0
-buffer_t *Buffer_new(const size_t size);
+buffer_t *buffer_new(const size_t size);
 // no-op if buf == NULL
-void Buffer_free(buffer_t *buf);
+void buffer_free(buffer_t *buf);
 
-void Buffer_init_rand(buffer_t *buf, random_device_t *rng);
+void buffer_init_rand(buffer_t *buf, random_device_t *rng);
 
-void Buffer_set_bytes(buffer_t *buf, const void *mem, const size_t size_bytes);
-const uint8_t *Buffer_get_bytes(const buffer_t *buf, size_t *out_size);
-uint8_t *Buffer_mutable_bytes(buffer_t *buf);
+void buffer_set_bytes(buffer_t *buf, const void *mem, const size_t size_bytes);
+const uint8_t *buffer_get_bytes(const buffer_t *buf, size_t *out_size);
+uint8_t *buffer_mutable_bytes(buffer_t *buf);
 
-const size_t Buffer_get_size(const buffer_t *buf);
-void Buffer_set_size(buffer_t *buf, const size_t size);
+const size_t buffer_get_size(const buffer_t *buf);
+void buffer_set_size(buffer_t *buf, const size_t size);
 
-size_t Buffer_serialize(const buffer_t *buf, uint8_t *serialized);
-buffer_t *Buffer_deserialize(const uint8_t *serialized);
-size_t Buffer_get_serialized_size(const buffer_t *buf);
+size_t buffer_serialize(const buffer_t *buf, uint8_t *serialized);
+buffer_t *buffer_deserialize(const uint8_t *serialized);
+size_t buffer_get_serialized_size(const buffer_t *buf);
 
 #endif // PEACEMAKR_CORE_CRYPTO_MEMORY_H

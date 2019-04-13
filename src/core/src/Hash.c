@@ -20,8 +20,8 @@ uint8_t *peacemakr_hmac(const message_digest_algorithm digest_algorithm,
                         const size_t buf_len, size_t *out_bytes) {
 
   EXPECT_NOT_NULL_RET(master_key, "Master key was NULL\n");
-  const buffer_t *master_key_buf = PeacemakrKey_symmetric(master_key);
-  const size_t master_keylen = Buffer_get_size(master_key_buf);
+  const buffer_t *master_key_buf = peacemakr_key_symmetric(master_key);
+  const size_t master_keylen = buffer_get_size(master_key_buf);
   EXPECT_TRUE_RET((master_keylen <= INT_MAX),
                   "Length of passed master key is greater than INT_MAX\n");
   EXPECT_TRUE_RET((buf != NULL && buf_len > 0),
@@ -32,7 +32,7 @@ uint8_t *peacemakr_hmac(const message_digest_algorithm digest_algorithm,
                            sizeof(uint8_t));
   uint32_t result_len = 0;
 
-  const uint8_t *master_key_bytes = Buffer_get_bytes(master_key_buf, NULL);
+  const uint8_t *master_key_bytes = buffer_get_bytes(master_key_buf, NULL);
 
   HMAC(parse_digest(digest_algorithm), master_key_bytes, (int)master_keylen,
        buf, buf_len, result, &result_len);

@@ -24,44 +24,44 @@ peacemakr::RandomDevice peacemakr::RandomDevice::getDefault() {
 random_device_t &peacemakr::RandomDevice::getContents() { return m_rand_; }
 
 peacemakr::Key::Key(crypto_config_t cfg, peacemakr::RandomDevice &rand) {
-  m_key_ = PeacemakrKey_new(cfg, &rand.getContents());
+  m_key_ = peacemakr_key_new(cfg, &rand.getContents());
 }
 
 peacemakr::Key::Key(crypto_config_t cfg, const uint8_t *bytes,
                     const size_t num) {
-  m_key_ = PeacemakrKey_new_bytes(cfg, bytes, num);
+  m_key_ = peacemakr_key_new_bytes(cfg, bytes, num);
 }
 
 peacemakr::Key::Key(crypto_config_t cfg, const std::vector<uint8_t> &bytes) {
-  m_key_ = PeacemakrKey_new_bytes(cfg, bytes.data(), bytes.size());
+  m_key_ = peacemakr_key_new_bytes(cfg, bytes.data(), bytes.size());
 }
 
 peacemakr::Key::Key(crypto_config_t cfg, const peacemakr::Key &master,
                     const uint8_t *bytes, const size_t num) {
-  m_key_ = PeacemakrKey_new_from_master(cfg, master.m_key_, bytes, num);
+  m_key_ = peacemakr_key_new_from_master(cfg, master.m_key_, bytes, num);
 }
 
 peacemakr::Key::Key(crypto_config_t cfg, const peacemakr::Key &master,
                     const std::vector<uint8_t> &bytes) {
-  m_key_ = PeacemakrKey_new_from_master(cfg, master.m_key_, bytes.data(),
-                                        bytes.size());
+  m_key_ = peacemakr_key_new_from_master(cfg, master.m_key_, bytes.data(),
+                                         bytes.size());
 }
 
 peacemakr::Key::Key(crypto_config_t cfg, const std::string &pem, bool priv) {
   if (priv)
-    m_key_ = PeacemakrKey_new_pem_priv(cfg, pem.c_str(), pem.size());
+    m_key_ = peacemakr_key_new_pem_priv(cfg, pem.c_str(), pem.size());
   else
-    m_key_ = PeacemakrKey_new_pem_pub(cfg, pem.c_str(), pem.size());
+    m_key_ = peacemakr_key_new_pem_pub(cfg, pem.c_str(), pem.size());
 }
 
 peacemakr::Key::Key(const peacemakr::Key &my_key, const peacemakr::Key &peer) {
-  m_key_ = PeacemakrKey_dh_generate(my_key.m_key_, peer.m_key_);
+  m_key_ = peacemakr_key_dh_generate(my_key.m_key_, peer.m_key_);
 }
 
-peacemakr::Key::~Key() { PeacemakrKey_free(m_key_); }
+peacemakr::Key::~Key() { peacemakr_key_free(m_key_); }
 
 crypto_config_t peacemakr::Key::getConfig() const {
-  return PeacemakrKey_get_config(m_key_);
+  return peacemakr_key_get_config(m_key_);
 }
 
 const peacemakr_key_t *peacemakr::Key::getKey() const { return m_key_; }
@@ -177,7 +177,7 @@ peacemakr::CryptoContext::ExtractUnverifiedAAD(const std::string &serialized) {
 
   plaintext_t out;
   bool success = peacemakr_get_unverified_aad(blob, &out);
-  CiphertextBlob_free(blob);
+  ciphertext_blob_free(blob);
 
   if (!success) {
     m_log_("extract failed");

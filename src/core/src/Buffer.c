@@ -55,7 +55,7 @@ struct Buffer {
 
 typedef struct Buffer buffer_t;
 
-buffer_t *Buffer_new(const size_t size) {
+buffer_t *buffer_new(const size_t size) {
   // Allocate nothing if size is <= 0
   if (size <= 0) {
     PEACEMAKR_LOG("size passed was <= 0\n");
@@ -74,7 +74,7 @@ buffer_t *Buffer_new(const size_t size) {
   return ret;
 }
 
-void Buffer_free(buffer_t *buf) {
+void buffer_free(buffer_t *buf) {
   if (buf == NULL) {
     return;
   }
@@ -90,7 +90,7 @@ void Buffer_free(buffer_t *buf) {
   buf = NULL;
 }
 
-void Buffer_init_rand(buffer_t *buf, random_device_t *rng) {
+void buffer_init_rand(buffer_t *buf, random_device_t *rng) {
   EXPECT_NOT_NULL_RET_NONE(buf, "buf was null\n");
   EXPECT_NOT_NULL_RET_NONE(rng, "rng was null\n");
 
@@ -98,7 +98,7 @@ void Buffer_init_rand(buffer_t *buf, random_device_t *rng) {
   EXPECT_TRUE_RET_NONE((rc == 0), "rng encountered error, %s\n", rng->err(rc));
 }
 
-void Buffer_set_bytes(buffer_t *buf, const void *mem, const size_t size_bytes) {
+void buffer_set_bytes(buffer_t *buf, const void *mem, const size_t size_bytes) {
   EXPECT_NOT_NULL_RET_NONE(buf, "buf was null\n");
   EXPECT_NOT_NULL_RET_NONE(mem, "mem was null\n");
 
@@ -109,7 +109,7 @@ void Buffer_set_bytes(buffer_t *buf, const void *mem, const size_t size_bytes) {
   memcpy((void *)buf->m_mem_, mem, buf->m_size_bytes_);
 }
 
-const uint8_t *Buffer_get_bytes(const buffer_t *buf, size_t *out_size) {
+const uint8_t *buffer_get_bytes(const buffer_t *buf, size_t *out_size) {
   // If buf is NULL, return NULL
   if (buf == NULL) {
     PEACEMAKR_LOG("buf was NULL\n");
@@ -123,7 +123,7 @@ const uint8_t *Buffer_get_bytes(const buffer_t *buf, size_t *out_size) {
   return buf->m_mem_;
 }
 
-uint8_t *Buffer_mutable_bytes(buffer_t *buf) {
+uint8_t *buffer_mutable_bytes(buffer_t *buf) {
   if (buf == NULL) {
     PEACEMAKR_LOG("buf was NULL\n");
     return NULL;
@@ -131,7 +131,7 @@ uint8_t *Buffer_mutable_bytes(buffer_t *buf) {
   return buf->m_mem_;
 }
 
-const size_t Buffer_get_size(const buffer_t *buf) {
+const size_t buffer_get_size(const buffer_t *buf) {
   // If buf is NULL then return 0
   if (buf == NULL) {
     PEACEMAKR_LOG("buf was NULL\n");
@@ -141,7 +141,7 @@ const size_t Buffer_get_size(const buffer_t *buf) {
   return buf->m_size_bytes_;
 }
 
-void Buffer_set_size(buffer_t *buf, const size_t size) {
+void buffer_set_size(buffer_t *buf, const size_t size) {
   EXPECT_NOT_NULL_RET_NONE(buf, "buf was null\n");
   if (buf->m_size_bytes_ == size) {
     return;
@@ -152,7 +152,7 @@ void Buffer_set_size(buffer_t *buf, const size_t size) {
   buf->m_size_bytes_ = size;
 }
 
-size_t Buffer_serialize(const buffer_t *buf, uint8_t *serialized) {
+size_t buffer_serialize(const buffer_t *buf, uint8_t *serialized) {
   EXPECT_NOT_NULL_RET_VALUE(serialized, 0, "serialized was null\n");
 
   if (buf == NULL) {
@@ -166,18 +166,18 @@ size_t Buffer_serialize(const buffer_t *buf, uint8_t *serialized) {
   return buf->m_size_bytes_ + sizeof(uint64_t);
 }
 
-buffer_t *Buffer_deserialize(const uint8_t *serialized) {
+buffer_t *buffer_deserialize(const uint8_t *serialized) {
   EXPECT_NOT_NULL_RET(serialized, "serialized was null\n");
 
   uint64_t buflen = ntohl(*((uint64_t *)serialized));
-  buffer_t *out = Buffer_new(buflen);
+  buffer_t *out = buffer_new(buflen);
   if (out != NULL) {
-    Buffer_set_bytes(out, serialized + sizeof(uint64_t), buflen);
+    buffer_set_bytes(out, serialized + sizeof(uint64_t), buflen);
   }
   return out;
 }
 
-size_t Buffer_get_serialized_size(const buffer_t *buf) {
+size_t buffer_get_serialized_size(const buffer_t *buf) {
   if (buf == NULL) {
     return sizeof(uint64_t); // we will serialize to zero
   }

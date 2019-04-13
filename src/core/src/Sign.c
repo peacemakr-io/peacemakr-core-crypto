@@ -23,11 +23,11 @@ static void asymmetric_sign(const peacemakr_key_t *sender_key,
                             const size_t aad_len, ciphertext_blob_t *cipher) {
 
   EVP_MD_CTX *md_ctx;
-  EVP_PKEY *sign_key = PeacemakrKey_asymmetric(sender_key);
+  EVP_PKEY *sign_key = peacemakr_key_asymmetric(sender_key);
   EXPECT_NOT_NULL_RET_NONE(
       sign_key, "can't sign the message with a NULL asymmetric key\n");
 
-  const EVP_MD *digest_algo = parse_digest(CiphertextBlob_digest_algo(cipher));
+  const EVP_MD *digest_algo = parse_digest(ciphertext_blob_digest_algo(cipher));
 
   md_ctx = EVP_MD_CTX_new();
   EXPECT_NOT_NULL_RET_NONE(md_ctx, "md_ctx_new failed\n");
@@ -68,16 +68,16 @@ static void asymmetric_sign(const peacemakr_key_t *sender_key,
     return;
   }
   // Realloc if necessary and sign
-  buffer_t *digest_buf = CiphertextBlob_mutable_signature(cipher);
-  Buffer_set_size(digest_buf, signature_len);
-  unsigned char *digest_bytes = Buffer_mutable_bytes(digest_buf);
+  buffer_t *digest_buf = ciphertext_blob_mutable_signature(cipher);
+  buffer_set_size(digest_buf, signature_len);
+  unsigned char *digest_bytes = buffer_mutable_bytes(digest_buf);
   if (1 != EVP_DigestSignFinal(md_ctx, digest_bytes, &signature_len)) {
     PEACEMAKR_OPENSSL_LOG;
     PEACEMAKR_ERROR("DigestSignFinal failed\n");
     EVP_MD_CTX_free(md_ctx);
     return;
   }
-  Buffer_set_size(digest_buf, signature_len);
+  buffer_set_size(digest_buf, signature_len);
 
   EVP_MD_CTX_free(md_ctx);
 }
@@ -97,12 +97,12 @@ void symmetric_sign(const peacemakr_key_t *key, const uint8_t *plaintext,
 
   size_t out_size = 0;
   uint8_t *hmac =
-      peacemakr_hmac(PeacemakrKey_get_config(key).digest_algorithm, key,
+      peacemakr_hmac(peacemakr_key_get_config(key).digest_algorithm, key,
                      concat_buf, plaintext_len + aad_len, &out_size);
 
-  buffer_t *digest_buf = CiphertextBlob_mutable_signature(cipher);
-  Buffer_set_size(digest_buf, out_size);
-  Buffer_set_bytes(digest_buf, hmac, out_size);
+  buffer_t *digest_buf = ciphertext_blob_mutable_signature(cipher);
+  buffer_set_size(digest_buf, out_size);
+  buffer_set_bytes(digest_buf, hmac, out_size);
 
   free(concat_buf);
   free(hmac);
@@ -117,7 +117,7 @@ void peacemakr_sign(const peacemakr_key_t *sender_key, const plaintext_t *plain,
                            "Cannot verify with nothing to compare against\n");
   EXPECT_NOT_NULL_RET_NONE(plain, false, "Cannot verify an empty plaintext\n");
 
-  switch (PeacemakrKey_get_config(sender_key).mode) {
+  switch (peacemakr_key_get_config(sender_key).mode) {
   case SYMMETRIC:
     return symmetric_sign(sender_key, plain->data, plain->data_len, plain->aad,
                           plain->aad_len, cipher);
@@ -133,21 +133,21 @@ static bool asymmetric_verify(const peacemakr_key_t *sender_key,
                               const size_t aad_len,
                               const ciphertext_blob_t *cipher) {
   EVP_MD_CTX *md_ctx;
-  EVP_PKEY *verif_key = PeacemakrKey_asymmetric(sender_key);
+  EVP_PKEY *verif_key = peacemakr_key_asymmetric(sender_key);
   EXPECT_NOT_NULL_RET_VALUE(
       verif_key, false,
       "can't verify the message with a NULL asymmetric key\n");
 
-  const EVP_MD *digest_algo = parse_digest(CiphertextBlob_digest_algo(cipher));
+  const EVP_MD *digest_algo = parse_digest(ciphertext_blob_digest_algo(cipher));
 
   md_ctx = EVP_MD_CTX_new();
   EXPECT_NOT_NULL_RET_VALUE(md_ctx, false, "md_ctx_new failed\n");
 
-  const buffer_t *stored_digest = CiphertextBlob_signature(cipher);
+  const buffer_t *stored_digest = ciphertext_blob_signature(cipher);
   size_t digestlen = 0;
   unsigned char *digest_buf = NULL;
   if (stored_digest != NULL) {
-    digest_buf = (unsigned char *)Buffer_get_bytes(stored_digest, &digestlen);
+    digest_buf = (unsigned char *)buffer_get_bytes(stored_digest, &digestlen);
   }
 
   if (1 != EVP_DigestVerifyInit(md_ctx, NULL, digest_algo, NULL, verif_key)) {
@@ -206,12 +206,12 @@ static bool symmetric_verify(const peacemakr_key_t *key,
 
   size_t out_size = 0;
   uint8_t *hmac =
-      peacemakr_hmac(PeacemakrKey_get_config(key).digest_algorithm, key,
+      peacemakr_hmac(peacemakr_key_get_config(key).digest_algorithm, key,
                      concat_buf, plaintext_len + aad_len, &out_size);
 
-  const buffer_t *digest_buf = CiphertextBlob_signature(cipher);
+  const buffer_t *digest_buf = ciphertext_blob_signature(cipher);
   size_t stored_size = 0;
-  const uint8_t *stored_hmac = Buffer_get_bytes(digest_buf, &stored_size);
+  const uint8_t *stored_hmac = buffer_get_bytes(digest_buf, &stored_size);
 
   if (stored_size != out_size) {
     free(concat_buf);
@@ -242,14 +242,14 @@ bool peacemakr_verify(const peacemakr_key_t *sender_key,
 
   bool success = false;
 
-  if (Buffer_get_size(CiphertextBlob_signature(cipher)) == 0) {
+  if (buffer_get_size(ciphertext_blob_signature(cipher)) == 0) {
     PEACEMAKR_LOG("No signature to verify\n");
-    CiphertextBlob_free(cipher);
+    ciphertext_blob_free(cipher);
     cipher = NULL;
     return true;
   }
 
-  switch (PeacemakrKey_get_config(sender_key).mode) {
+  switch (peacemakr_key_get_config(sender_key).mode) {
   case SYMMETRIC:
     success = symmetric_verify(sender_key, plain->data, plain->data_len,
                                plain->aad, plain->aad_len, cipher);
@@ -260,7 +260,7 @@ bool peacemakr_verify(const peacemakr_key_t *sender_key,
     break;
   }
 
-  CiphertextBlob_free(cipher);
+  ciphertext_blob_free(cipher);
   cipher = NULL;
 
   return success;
