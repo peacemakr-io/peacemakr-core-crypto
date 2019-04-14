@@ -28,7 +28,7 @@ void test_symmetric_algo(symmetric_cipher cipher) {
 
   random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
 
-  peacemakr_key_t *key = PeacemakrKey_new(cfg, &rand);
+  peacemakr_key_t *key = peacemakr_key_new(cfg, &rand);
 
   ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, &plaintext_in, &rand);
   peacemakr_sign(key, &plaintext_in, ciphertext);
@@ -63,7 +63,7 @@ void test_symmetric_algo(symmetric_cipher cipher) {
                  (const char *)plaintext_in.aad, plaintext_in.aad_len) == 0);
   free((void *)plaintext_out.aad);
 
-  PeacemakrKey_free(key);
+  peacemakr_key_free(key);
 }
 
 void test_asymmetric_algo(symmetric_cipher cipher,
@@ -83,13 +83,13 @@ void test_asymmetric_algo(symmetric_cipher cipher,
 
   random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
 
-  peacemakr_key_t *mykey = PeacemakrKey_new(cfg, &rand);
-  peacemakr_key_t *peerkey = PeacemakrKey_new(cfg, &rand);
+  peacemakr_key_t *mykey = peacemakr_key_new(cfg, &rand);
+  peacemakr_key_t *peerkey = peacemakr_key_new(cfg, &rand);
   // Set up the key
   peacemakr_key_t *key = (asymmcipher >= ECDH_P256)
-                             ? PeacemakrKey_dh_generate(mykey, peerkey)
+                             ? peacemakr_key_dh_generate(mykey, peerkey)
                              : mykey;
-  cfg = PeacemakrKey_get_config(key);
+  cfg = peacemakr_key_get_config(key);
 
   ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, &plaintext_in, &rand);
   assert(ciphertext != NULL);
@@ -131,10 +131,10 @@ void test_asymmetric_algo(symmetric_cipher cipher,
                  (const char *)plaintext_in.aad, plaintext_in.aad_len) == 0);
   free((void *)plaintext_out.aad);
 
-  PeacemakrKey_free(mykey);
-  PeacemakrKey_free(peerkey);
+  peacemakr_key_free(mykey);
+  peacemakr_key_free(peerkey);
   if (asymmcipher >= ECDH_P256) {
-    PeacemakrKey_free(key);
+    peacemakr_key_free(key);
   }
 }
 
@@ -156,8 +156,8 @@ void test_symmetric_algo_x_sign(symmetric_cipher cipher) {
 
   random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
 
-  peacemakr_key_t *key = PeacemakrKey_new(cfg, &rand);
-  peacemakr_key_t *sign_key = PeacemakrKey_new(asymm_cfg, &rand);
+  peacemakr_key_t *key = peacemakr_key_new(cfg, &rand);
+  peacemakr_key_t *sign_key = peacemakr_key_new(asymm_cfg, &rand);
 
   ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, &plaintext_in, &rand);
   // Sign with asymmetric key
@@ -192,8 +192,8 @@ void test_symmetric_algo_x_sign(symmetric_cipher cipher) {
                  (const char *)plaintext_in.aad, plaintext_in.aad_len) == 0);
   free((void *)plaintext_out.aad);
 
-  PeacemakrKey_free(key);
-  PeacemakrKey_free(sign_key);
+  peacemakr_key_free(key);
+  peacemakr_key_free(sign_key);
 }
 
 int main() {

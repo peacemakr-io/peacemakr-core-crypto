@@ -32,19 +32,19 @@ ciphertext_blob_t *encrypt(symmetric_cipher symm_cipher,
   random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
 
   peacemakr_key_t *pubkey =
-      PeacemakrKey_new_pem_pub(cfg, pubkey_buf, pubkey_len);
+      peacemakr_key_new_pem_pub(cfg, pubkey_buf, pubkey_len);
   peacemakr_key_t *privkey =
-      PeacemakrKey_new_pem_priv(cfg, privkey_buf, privkey_len);
+      peacemakr_key_new_pem_priv(cfg, privkey_buf, privkey_len);
 
-  peacemakr_key_t *sec_key = PeacemakrKey_dh_generate(privkey, pubkey);
+  peacemakr_key_t *sec_key = peacemakr_key_dh_generate(privkey, pubkey);
 
   ciphertext_blob_t *ciphertext =
       peacemakr_encrypt(sec_key, &plaintext_in, &rand);
   assert(ciphertext != NULL);
 
-  PeacemakrKey_free(sec_key);
-  PeacemakrKey_free(pubkey);
-  PeacemakrKey_free(privkey);
+  peacemakr_key_free(sec_key);
+  peacemakr_key_free(pubkey);
+  peacemakr_key_free(privkey);
 
   return ciphertext;
 }
@@ -65,11 +65,11 @@ void decrypt(symmetric_cipher symm_cipher, asymmetric_cipher curve,
                               .aad_len = strlen(message_aad) + 1};
 
   peacemakr_key_t *pubkey =
-      PeacemakrKey_new_pem_pub(cfg, pubkey_buf, pubkey_len);
+      peacemakr_key_new_pem_pub(cfg, pubkey_buf, pubkey_len);
   peacemakr_key_t *privkey =
-      PeacemakrKey_new_pem_priv(cfg, privkey_buf, privkey_len);
+      peacemakr_key_new_pem_priv(cfg, privkey_buf, privkey_len);
 
-  peacemakr_key_t *sec_key = PeacemakrKey_dh_generate(privkey, pubkey);
+  peacemakr_key_t *sec_key = peacemakr_key_dh_generate(privkey, pubkey);
 
   plaintext_t plaintext_out;
 
@@ -84,9 +84,9 @@ void decrypt(symmetric_cipher symm_cipher, asymmetric_cipher curve,
                  (const char *)plaintext_in.aad, plaintext_in.aad_len) == 0);
   free((void *)plaintext_out.aad);
 
-  PeacemakrKey_free(sec_key);
-  PeacemakrKey_free(pubkey);
-  PeacemakrKey_free(privkey);
+  peacemakr_key_free(sec_key);
+  peacemakr_key_free(pubkey);
+  peacemakr_key_free(privkey);
 }
 
 void test_symmetric_algo(symmetric_cipher symm_cipher, asymmetric_cipher curve,
@@ -107,11 +107,11 @@ void test_symmetric_algo(symmetric_cipher symm_cipher, asymmetric_cipher curve,
   random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
 
   peacemakr_key_t *pubkey =
-      PeacemakrKey_new_pem_pub(cfg, pubkey_buf, pubkey_len);
+      peacemakr_key_new_pem_pub(cfg, pubkey_buf, pubkey_len);
   peacemakr_key_t *privkey =
-      PeacemakrKey_new_pem_priv(cfg, privkey_buf, privkey_len);
+      peacemakr_key_new_pem_priv(cfg, privkey_buf, privkey_len);
 
-  peacemakr_key_t *sec_key = PeacemakrKey_dh_generate(privkey, pubkey);
+  peacemakr_key_t *sec_key = peacemakr_key_dh_generate(privkey, pubkey);
 
   ciphertext_blob_t *ciphertext =
       peacemakr_encrypt(sec_key, &plaintext_in, &rand);
@@ -128,9 +128,9 @@ void test_symmetric_algo(symmetric_cipher symm_cipher, asymmetric_cipher curve,
                  (const char *)plaintext_in.aad, plaintext_in.aad_len) == 0);
   free((void *)plaintext_out.aad);
 
-  PeacemakrKey_free(sec_key);
-  PeacemakrKey_free(pubkey);
-  PeacemakrKey_free(privkey);
+  peacemakr_key_free(sec_key);
+  peacemakr_key_free(pubkey);
+  peacemakr_key_free(privkey);
 }
 
 int main() {
@@ -151,14 +151,14 @@ int main() {
 
     size_t priv_len = 0, pub_len = 0;
 
-    peacemakr_key_t *my_key = PeacemakrKey_new(cfg, &rand);
-    peacemakr_key_t *peer_key = PeacemakrKey_new(cfg, &rand);
+    peacemakr_key_t *my_key = peacemakr_key_new(cfg, &rand);
+    peacemakr_key_t *peer_key = peacemakr_key_new(cfg, &rand);
 
-    PeacemakrKey_priv_to_pem(my_key, &my_privkey, &priv_len);
-    PeacemakrKey_pub_to_pem(peer_key, &peer_pubkey, &pub_len);
+    peacemakr_key_priv_to_pem(my_key, &my_privkey, &priv_len);
+    peacemakr_key_pub_to_pem(peer_key, &peer_pubkey, &pub_len);
 
-    PeacemakrKey_priv_to_pem(peer_key, &peer_privkey, &priv_len);
-    PeacemakrKey_pub_to_pem(my_key, &my_pubkey, &pub_len);
+    peacemakr_key_priv_to_pem(peer_key, &peer_privkey, &priv_len);
+    peacemakr_key_pub_to_pem(my_key, &my_pubkey, &pub_len);
 
     for (int i = AES_128_GCM; i <= CHACHA20_POLY1305; ++i) {
       test_symmetric_algo(i, curve, peer_pubkey, pub_len, my_privkey, priv_len);
@@ -175,7 +175,7 @@ int main() {
     free(peer_privkey);
     free(peer_pubkey);
 
-    PeacemakrKey_free(my_key);
-    PeacemakrKey_free(peer_key);
+    peacemakr_key_free(my_key);
+    peacemakr_key_free(peer_key);
   }
 }

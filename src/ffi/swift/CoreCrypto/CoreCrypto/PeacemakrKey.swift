@@ -15,7 +15,7 @@ public class PeacemakrKey {
     
   public init?(config: CryptoConfig, rand: RandomDevice) {
     var randInternal = rand.getInternal()
-    let key = PeacemakrKey_new(config.getInternal(), &randInternal)
+    let key = peacemakr_key_new(config.getInternal(), &randInternal)
     if key == nil {
       return nil
     }
@@ -24,14 +24,14 @@ public class PeacemakrKey {
 
   public init?(config: CryptoConfig, bytes: Data) {
     let key = bytes.withUnsafeBytes { (rawBytes: UnsafePointer<UInt8>) -> OpaquePointer in
-      return PeacemakrKey_new_bytes(config.getInternal(), rawBytes, bytes.count)
+      return peacemakr_key_new_bytes(config.getInternal(), rawBytes, bytes.count)
     }
     internalRepr = key
   }
 
   public init?(config: CryptoConfig, master: PeacemakrKey, bytes: Data) {
     let key = bytes.withUnsafeBytes { (rawBytes: UnsafePointer<UInt8>) -> OpaquePointer in
-      return PeacemakrKey_new_from_master(config.getInternal(), master.internalRepr, rawBytes, bytes.count)
+      return peacemakr_key_new_from_master(config.getInternal(), master.internalRepr, rawBytes, bytes.count)
     }
     internalRepr = key
   }
@@ -39,9 +39,9 @@ public class PeacemakrKey {
   public init?(config: CryptoConfig, fileContents: String, is_priv: Bool) {
     let key = fileContents.withCString { (fileContentsPtr: UnsafePointer<CChar>) -> OpaquePointer in
       if is_priv {
-        return PeacemakrKey_new_pem_priv(config.getInternal(), fileContentsPtr, fileContents.count)!
+        return peacemakr_key_new_pem_priv(config.getInternal(), fileContentsPtr, fileContents.count)!
       } else {
-        return PeacemakrKey_new_pem_pub(config.getInternal(), fileContentsPtr, fileContents.count)!
+        return peacemakr_key_new_pem_pub(config.getInternal(), fileContentsPtr, fileContents.count)!
       }
     }
     
@@ -49,7 +49,7 @@ public class PeacemakrKey {
   }
 
   public init?(myKey: PeacemakrKey, peerKey: PeacemakrKey) {
-    let key: OpaquePointer? = PeacemakrKey_dh_generate(myKey.internalRepr, peerKey.internalRepr)
+    let key: OpaquePointer? = peacemakr_key_dh_generate(myKey.internalRepr, peerKey.internalRepr)
 
     if key == nil {
       return nil
@@ -59,11 +59,11 @@ public class PeacemakrKey {
   }
 
   deinit {
-    PeacemakrKey_free(internalRepr)
+    peacemakr_key_free(internalRepr)
   }
 
   func getConfig() -> CryptoConfig {
-    return CryptoConfig(cfg: PeacemakrKey_get_config(internalRepr))
+    return CryptoConfig(cfg: peacemakr_key_get_config(internalRepr))
   }
 
   func getInternal() -> OpaquePointer {
@@ -74,11 +74,11 @@ public class PeacemakrKey {
     var out: UnsafeMutablePointer<CChar>?
     var outsize: CLong = 0
     if is_priv {
-      if !PeacemakrKey_priv_to_pem(internalRepr, &out, &outsize) {
+      if !peacemakr_key_priv_to_pem(internalRepr, &out, &outsize) {
         return .error(CoreCryptoError.serializationFailed)
       }
     } else {
-      if !PeacemakrKey_pub_to_pem(internalRepr, &out, &outsize) {
+      if !peacemakr_key_pub_to_pem(internalRepr, &out, &outsize) {
         return .error(CoreCryptoError.serializationFailed)
       }
     }

@@ -93,7 +93,7 @@ typedef struct {
 } crypto_config_t;
 
 /**
- * @brief Convenience datastructure for holding plaintext and AAD
+ * @brief Convenience data structure for holding plaintext and AAD
  *
  * Holds simple strings that are the plaintext data and AAD to be encrypted. The
  * library also decrypts into this struct for uniformity.
@@ -144,7 +144,7 @@ void peacemakr_set_log_callback(peacemakr_log_cb log_fn);
  * /dev/urandom or similar. \returns A newly created peacemakr key for use in
  * other library calls.
  */
-peacemakr_key_t *PeacemakrKey_new(crypto_config_t cfg, random_device_t *rand);
+peacemakr_key_t *peacemakr_key_new(crypto_config_t cfg, random_device_t *rand);
 
 /**
  * Create a new peacemakr_key_t from bytes generated externally. This
@@ -154,15 +154,16 @@ peacemakr_key_t *PeacemakrKey_new(crypto_config_t cfg, random_device_t *rand);
  * similar. \returns A newly created peacemakr key for use in other library
  * calls.
  */
-peacemakr_key_t *PeacemakrKey_new_bytes(crypto_config_t cfg, const uint8_t *buf,
-                                        const size_t buf_len);
+peacemakr_key_t *peacemakr_key_new_bytes(crypto_config_t cfg,
+                                         const uint8_t *buf,
+                                         const size_t buf_len);
 
 /**
  * Computes a symmetric key specified by \p cfg according to PKCS5. We
  * use a PBKDF2_HMAC construction from OpenSSL that operates on \p password
  * for \p iteration_count times, using \p salt.
  */
-peacemakr_key_t *PeacemakrKey_new_from_password(
+peacemakr_key_t *peacemakr_key_new_from_password(
     crypto_config_t cfg, const uint8_t *password, const size_t password_len,
     const uint8_t *salt, const size_t salt_len, const size_t iteration_count);
 
@@ -172,10 +173,10 @@ peacemakr_key_t *PeacemakrKey_new_from_password(
  * NIST SP 800-180 with \p key_id on \p master_key to create a new key that can
  * be used in further cryptographic endeavors.
  */
-peacemakr_key_t *PeacemakrKey_new_from_master(crypto_config_t cfg,
-                                              const peacemakr_key_t *master_key,
-                                              const uint8_t *key_id,
-                                              const size_t key_id_len);
+peacemakr_key_t *
+peacemakr_key_new_from_master(crypto_config_t cfg,
+                              const peacemakr_key_t *master_key,
+                              const uint8_t *key_id, const size_t key_id_len);
 
 /**
  * Create a new peacemakr_key_t from a pem file generated externally. This
@@ -184,8 +185,8 @@ peacemakr_key_t *PeacemakrKey_new_from_master(crypto_config_t cfg,
  * the key being created. \returns A newly created peacemakr key for use
  * in other library calls.
  */
-peacemakr_key_t *PeacemakrKey_new_pem_pub(crypto_config_t cfg, const char *buf,
-                                          size_t buflen);
+peacemakr_key_t *peacemakr_key_new_pem_pub(crypto_config_t cfg, const char *buf,
+                                           size_t buflen);
 
 /**
  * Create a new peacemakr_key_t from a pem file generated externally. This
@@ -194,53 +195,53 @@ peacemakr_key_t *PeacemakrKey_new_pem_pub(crypto_config_t cfg, const char *buf,
  * the key being created. \returns A newly created peacemakr key for use
  * in other library calls.
  */
-peacemakr_key_t *PeacemakrKey_new_pem_priv(crypto_config_t cfg, const char *buf,
-                                           size_t buflen);
+peacemakr_key_t *peacemakr_key_new_pem_priv(crypto_config_t cfg,
+                                            const char *buf, size_t buflen);
 
 /**
  * Create a new symmetric peacemakr_key_t using a Diffie-Hellman exchange
  * between \p my_key (which is a private key) and \p peer_key (which is a public
  * key)
  */
-peacemakr_key_t *PeacemakrKey_dh_generate(peacemakr_key_t *my_key,
-                                          peacemakr_key_t *peer_key);
+peacemakr_key_t *peacemakr_key_dh_generate(peacemakr_key_t *my_key,
+                                           peacemakr_key_t *peer_key);
 
 /**
  * Gets the crypto_config_t used to create \p key from \p key.
  */
-crypto_config_t PeacemakrKey_get_config(const peacemakr_key_t *key);
+crypto_config_t peacemakr_key_get_config(const peacemakr_key_t *key);
 
 /**
  * Serializes private key \p key into \p buf in PEM format and places its size
  * into \p bufsize. The caller is responsible for memory returned from this
  * function via \p buf.
  */
-bool PeacemakrKey_priv_to_pem(const peacemakr_key_t *key, char **buf,
-                              size_t *bufsize);
+bool peacemakr_key_priv_to_pem(const peacemakr_key_t *key, char **buf,
+                               size_t *bufsize);
 
 /**
  * @copydoc PeacemakrKey_priv_to_pem
  */
-bool PeacemakrKey_pub_to_pem(const peacemakr_key_t *key, char **buf,
-                             size_t *bufsize);
+bool peacemakr_key_pub_to_pem(const peacemakr_key_t *key, char **buf,
+                              size_t *bufsize);
 
 /**
  * Copies the bytes of \p key into \p buf and copies the size of \p buf into \p
  * bufsize.
  */
-bool PeacemakrKey_get_bytes(const peacemakr_key_t *key, uint8_t **buf,
-                            size_t *bufsize);
+bool peacemakr_key_get_bytes(const peacemakr_key_t *key, uint8_t **buf,
+                             size_t *bufsize);
 
 /**
  * Free \p key. Attempts to securely clear all memory associated with \p key.
  */
-void PeacemakrKey_free(peacemakr_key_t *key);
+void peacemakr_key_free(peacemakr_key_t *key);
 
 /**
  * Free ciphertext blob objects. Will need to be called very rarely,
  * the FFI should handle this.
  */
-void CiphertextBlob_free(ciphertext_blob_t *ciphertext);
+void ciphertext_blob_free(ciphertext_blob_t *ciphertext);
 
 /**
  * Performs the encryption operation using the configuration and the (symmetric

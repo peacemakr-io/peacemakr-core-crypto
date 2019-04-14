@@ -31,10 +31,10 @@ void test_symmetric_algo(symmetric_cipher symm_cipher,
 
   random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
 
-  peacemakr_key_t *my_key = PeacemakrKey_new(cfg, &rand);
-  peacemakr_key_t *peer_key = PeacemakrKey_new(cfg, &rand);
+  peacemakr_key_t *my_key = peacemakr_key_new(cfg, &rand);
+  peacemakr_key_t *peer_key = peacemakr_key_new(cfg, &rand);
 
-  peacemakr_key_t *symm_key = PeacemakrKey_dh_generate(my_key, peer_key);
+  peacemakr_key_t *symm_key = peacemakr_key_dh_generate(my_key, peer_key);
 
   ciphertext_blob_t *ciphertext =
       peacemakr_encrypt(symm_key, &plaintext_in, &rand);
@@ -52,9 +52,9 @@ void test_symmetric_algo(symmetric_cipher symm_cipher,
                  (const char *)plaintext_in.aad, plaintext_in.aad_len) == 0);
   free((void *)plaintext_out.aad);
 
-  PeacemakrKey_free(symm_key);
-  PeacemakrKey_free(my_key);
-  PeacemakrKey_free(peer_key);
+  peacemakr_key_free(symm_key);
+  peacemakr_key_free(my_key);
+  peacemakr_key_free(peer_key);
 }
 
 int main() {

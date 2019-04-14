@@ -28,7 +28,7 @@ static peacemakr_key_t *get_hmac_key(message_digest_algorithm digest_algo) {
                               .asymm_cipher = NONE,
                               .digest_algorithm = digest_algo};
   peacemakr_key_t *hmac_key =
-      PeacemakrKey_new_bytes(hmac_cfg, PEACEMAKR_MAGIC_KEY, 32);
+      peacemakr_key_new_bytes(hmac_cfg, PEACEMAKR_MAGIC_KEY, 32);
   return hmac_key;
 }
 
@@ -62,27 +62,27 @@ uint8_t *peacemakr_serialize(ciphertext_blob_t *cipher, size_t *b64_size) {
   // encryption mode, symm_cipher, asymm_cipher
   buffer_len += sizeof(uint8_t) * 3;
 
-  const buffer_t *encrypted_key = CiphertextBlob_encrypted_key(cipher);
-  buffer_len += Buffer_get_serialized_size(encrypted_key);
+  const buffer_t *encrypted_key = ciphertext_blob_encrypted_key(cipher);
+  buffer_len += buffer_get_serialized_size(encrypted_key);
 
-  const buffer_t *iv = CiphertextBlob_iv(cipher);
-  buffer_len += Buffer_get_serialized_size(iv);
+  const buffer_t *iv = ciphertext_blob_iv(cipher);
+  buffer_len += buffer_get_serialized_size(iv);
 
-  const buffer_t *tag = CiphertextBlob_tag(cipher);
-  buffer_len += Buffer_get_serialized_size(tag);
+  const buffer_t *tag = ciphertext_blob_tag(cipher);
+  buffer_len += buffer_get_serialized_size(tag);
 
-  const buffer_t *aad = CiphertextBlob_aad(cipher);
-  buffer_len += Buffer_get_serialized_size(aad);
+  const buffer_t *aad = ciphertext_blob_aad(cipher);
+  buffer_len += buffer_get_serialized_size(aad);
 
-  const buffer_t *ciphertext = CiphertextBlob_ciphertext(cipher);
-  buffer_len += Buffer_get_serialized_size(ciphertext);
+  const buffer_t *ciphertext = ciphertext_blob_ciphertext(cipher);
+  buffer_len += buffer_get_serialized_size(ciphertext);
 
-  const buffer_t *signature = CiphertextBlob_signature(cipher);
-  buffer_len += Buffer_get_serialized_size(signature);
+  const buffer_t *signature = ciphertext_blob_signature(cipher);
+  buffer_len += buffer_get_serialized_size(signature);
 
   // We will digest the message and set it at the end
   buffer_len += sizeof(uint64_t);
-  size_t digest_len = get_digest_len(CiphertextBlob_digest_algo(cipher));
+  size_t digest_len = get_digest_len(ciphertext_blob_digest_algo(cipher));
   buffer_len += digest_len;
 
   uint8_t *buf = calloc(buffer_len, sizeof(uint8_t));
@@ -98,52 +98,52 @@ uint8_t *peacemakr_serialize(ciphertext_blob_t *cipher, size_t *b64_size) {
   current_pos += sizeof(uint64_t);
 
   // digest algo
-  uint8_t digest_algo = CiphertextBlob_digest_algo(cipher);
+  uint8_t digest_algo = ciphertext_blob_digest_algo(cipher);
   *(buf + current_pos) = digest_algo;
   current_pos += sizeof(uint8_t);
 
   // version
-  uint32_t version = htonl(CiphertextBlob_version(cipher));
+  uint32_t version = htonl(ciphertext_blob_version(cipher));
   memcpy(buf + current_pos, &version, sizeof(uint32_t));
   current_pos += sizeof(uint32_t);
 
   // encryption mode
-  uint8_t encryption_mode = CiphertextBlob_encryption_mode(cipher);
+  uint8_t encryption_mode = ciphertext_blob_encryption_mode(cipher);
   *(buf + current_pos) = encryption_mode;
   current_pos += sizeof(uint8_t);
 
   // symm cipher
-  uint8_t symm_cipher = CiphertextBlob_symm_cipher(cipher);
+  uint8_t symm_cipher = ciphertext_blob_symm_cipher(cipher);
   *(buf + current_pos) = symm_cipher;
   current_pos += sizeof(uint8_t);
 
   // asymm cipher
-  uint8_t asymm_cipher = CiphertextBlob_asymm_cipher(cipher);
+  uint8_t asymm_cipher = ciphertext_blob_asymm_cipher(cipher);
   *(buf + current_pos) = asymm_cipher;
   current_pos += sizeof(uint8_t);
 
   // encrypted key
-  size_t ekey_len = Buffer_serialize(encrypted_key, buf + current_pos);
+  size_t ekey_len = buffer_serialize(encrypted_key, buf + current_pos);
   current_pos += ekey_len;
 
   // iv
-  size_t ivlen = Buffer_serialize(iv, buf + current_pos);
+  size_t ivlen = buffer_serialize(iv, buf + current_pos);
   current_pos += ivlen;
 
   // tag
-  size_t taglen = Buffer_serialize(tag, buf + current_pos);
+  size_t taglen = buffer_serialize(tag, buf + current_pos);
   current_pos += taglen;
 
   // aad
-  size_t aadlen = Buffer_serialize(aad, buf + current_pos);
+  size_t aadlen = buffer_serialize(aad, buf + current_pos);
   current_pos += aadlen;
 
   // ciphertext
-  size_t ciphertextlen = Buffer_serialize(ciphertext, buf + current_pos);
+  size_t ciphertextlen = buffer_serialize(ciphertext, buf + current_pos);
   current_pos += ciphertextlen;
 
   // signature
-  size_t signaturelen = Buffer_serialize(signature, buf + current_pos);
+  size_t signaturelen = buffer_serialize(signature, buf + current_pos);
   current_pos += signaturelen;
 
   // set the size of the buffer until the digest (at offset sizeof(uint32_t))
@@ -151,12 +151,12 @@ uint8_t *peacemakr_serialize(ciphertext_blob_t *cipher, size_t *b64_size) {
   memcpy(buf + sizeof(uint32_t), &curr_pos, sizeof(uint64_t));
 
   // get our hmac key
-  peacemakr_key_t *hmac_key = get_hmac_key(CiphertextBlob_digest_algo(cipher));
+  peacemakr_key_t *hmac_key = get_hmac_key(ciphertext_blob_digest_algo(cipher));
 
   // Digest the message
   size_t digest_out_size = 0;
   uint8_t *raw_digest =
-      peacemakr_hmac(CiphertextBlob_digest_algo(cipher), hmac_key, buf,
+      peacemakr_hmac(ciphertext_blob_digest_algo(cipher), hmac_key, buf,
                      current_pos, &digest_out_size);
 
   // Make sure we didn't do a stupid
@@ -164,22 +164,22 @@ uint8_t *peacemakr_serialize(ciphertext_blob_t *cipher, size_t *b64_size) {
                           "Computed HMAC was of the incorrect size\n");
 
   // Store it
-  buffer_t *message_digest = Buffer_new(digest_len);
-  Buffer_set_bytes(message_digest, raw_digest, digest_out_size);
+  buffer_t *message_digest = buffer_new(digest_len);
+  buffer_set_bytes(message_digest, raw_digest, digest_out_size);
 
   // Clean up
   free(raw_digest);
-  PeacemakrKey_free(hmac_key);
+  peacemakr_key_free(hmac_key);
 
   // Append the digest
-  size_t digestlen = Buffer_serialize(message_digest, buf + current_pos);
+  size_t digestlen = buffer_serialize(message_digest, buf + current_pos);
   current_pos += digestlen;
 
   // Clean up the buffer
-  Buffer_free(message_digest);
+  buffer_free(message_digest);
 
   // Clean up the ciphertext blob
-  CiphertextBlob_free(cipher);
+  ciphertext_blob_free(cipher);
   cipher = NULL;
 
   // Return the b64 encoded version
@@ -255,10 +255,10 @@ ciphertext_blob_t *peacemakr_deserialize(const uint8_t *b64_serialized_cipher,
                             free(serialized_cipher),
                             "corrupted digest length in message, aborting\n");
     buffer_t *serialized_digest =
-        Buffer_deserialize(serialized_cipher + len_before_digest);
+        buffer_deserialize(serialized_cipher + len_before_digest);
 
     EXPECT_TRUE_CLEANUP_RET(
-        (Buffer_get_size(serialized_digest) == digestlen),
+        (buffer_get_size(serialized_digest) == digestlen),
         free(serialized_cipher),
         "serialized digest is not of the correct length, aborting\n");
 
@@ -274,13 +274,13 @@ ciphertext_blob_t *peacemakr_deserialize(const uint8_t *b64_serialized_cipher,
                        len_before_digest, &computed_digest_out_size);
 
     // Clean up
-    PeacemakrKey_free(hmac_key);
+    peacemakr_key_free(hmac_key);
     int memcmp_ret =
         CRYPTO_memcmp(computed_raw_digest,
-                      Buffer_get_bytes(serialized_digest, NULL), digestlen);
+                      buffer_get_bytes(serialized_digest, NULL), digestlen);
 
     free(computed_raw_digest);
-    Buffer_free(serialized_digest);
+    buffer_free(serialized_digest);
 
     // Compare the HMACs
     EXPECT_TRUE_CLEANUP_RET((memcmp_ret == 0), free(serialized_cipher),
@@ -314,36 +314,36 @@ ciphertext_blob_t *peacemakr_deserialize(const uint8_t *b64_serialized_cipher,
 
   // encrypted key
   buffer_t *encrypted_key =
-      Buffer_deserialize(serialized_cipher + current_position);
-  current_position += Buffer_get_serialized_size(encrypted_key);
+      buffer_deserialize(serialized_cipher + current_position);
+  current_position += buffer_get_serialized_size(encrypted_key);
 
   // iv
-  buffer_t *iv = Buffer_deserialize(serialized_cipher + current_position);
-  current_position += Buffer_get_serialized_size(iv);
+  buffer_t *iv = buffer_deserialize(serialized_cipher + current_position);
+  current_position += buffer_get_serialized_size(iv);
 
   // tag
-  buffer_t *tag = Buffer_deserialize(serialized_cipher + current_position);
-  current_position += Buffer_get_serialized_size(tag);
+  buffer_t *tag = buffer_deserialize(serialized_cipher + current_position);
+  current_position += buffer_get_serialized_size(tag);
 
   // aad
-  buffer_t *aad = Buffer_deserialize(serialized_cipher + current_position);
-  current_position += Buffer_get_serialized_size(aad);
+  buffer_t *aad = buffer_deserialize(serialized_cipher + current_position);
+  current_position += buffer_get_serialized_size(aad);
 
   // ciphertext
   buffer_t *ciphertext =
-      Buffer_deserialize(serialized_cipher + current_position);
-  current_position += Buffer_get_serialized_size(ciphertext);
+      buffer_deserialize(serialized_cipher + current_position);
+  current_position += buffer_get_serialized_size(ciphertext);
 
   // signature
   buffer_t *signature =
-      Buffer_deserialize(serialized_cipher + current_position);
+      buffer_deserialize(serialized_cipher + current_position);
 
   // Ciphertext blob takes ownership of the buffers, so don't free the buffers
   // at the end of the function
-  ciphertext_blob_t *out = CiphertextBlob_from_buffers(
+  ciphertext_blob_t *out = ciphertext_blob_from_buffers(
       *cfg, encrypted_key, iv, tag, aad, ciphertext, signature);
 
-  CiphertextBlob_set_version(out, version);
+  ciphertext_blob_set_version(out, version);
 
   free(serialized_cipher);
 
