@@ -46,9 +46,13 @@ static peacemakr_key_t *get_hmac_key() {
  * (12) Message HMAC (224, 256, 384, or 512 bits)
  */
 
-uint8_t *peacemakr_serialize(ciphertext_blob_t *cipher, size_t *b64_size) {
+uint8_t *peacemakr_serialize(message_digest_algorithm digest, ciphertext_blob_t *cipher, size_t *b64_size) {
   EXPECT_TRUE_RET((cipher != NULL && b64_size != NULL),
                   "cipher or b64_size was null in call to serialize\n")
+
+  if (ciphertext_blob_digest_algo(cipher) == DIGEST_UNSPECIFIED) {
+    ciphertext_blob_set_digest_algo(cipher, digest);
+  }
 
   size_t buffer_len = sizeof(uint32_t); // magic number
   buffer_len += sizeof(uint64_t);       // size of message up until digest
@@ -208,8 +212,7 @@ ciphertext_blob_t *peacemakr_deserialize(const uint8_t *b64_serialized_cipher,
   EXPECT_TRUE_RET((serialized_len < b64_serialized_len),
                   "Unexpected condition in computing b64 decoded length\n")
   uint8_t *serialized_cipher = calloc(serialized_len, sizeof(uint8_t));
-  EXPECT_NOT_NULL_RET(serialized_cipher,
-                      "failed to allocate serialized_cipher")
+  EXPECT_NOT_NULL_RET(serialized_cipher, "failed to allocate serialized_cipher")
 
   // Don't free the b64 cipher because we don't own that memory
   bool decoded =

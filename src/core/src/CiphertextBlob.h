@@ -58,6 +58,8 @@ ciphertext_blob_digest_algo(const ciphertext_blob_t *ciphertext);
 const encryption_mode
 ciphertext_blob_encryption_mode(const ciphertext_blob_t *ciphertext);
 
+void ciphertext_blob_set_digest_algo(ciphertext_blob_t *ciphertext, message_digest_algorithm digest);
+
 bool ciphertext_blob_compare(const ciphertext_blob_t *lhs,
                              const ciphertext_blob_t *rhs);
 

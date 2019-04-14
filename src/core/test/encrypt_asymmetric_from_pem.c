@@ -30,8 +30,10 @@ void test_symmetric_algo(symmetric_cipher symm_cipher, const char *pubkey_buf,
 
   peacemakr_key_t *pubkey =
       peacemakr_key_new_pem_pub(RSA_4096, pubkey_buf, pubkey_len);
+  peacemakr_key_set_symmetric_cipher(pubkey, symm_cipher);
   peacemakr_key_t *privkey =
       peacemakr_key_new_pem_priv(RSA_4096, privkey_buf, privkey_len);
+  peacemakr_key_set_symmetric_cipher(privkey, symm_cipher);
 
   ciphertext_blob_t *ciphertext =
       peacemakr_encrypt(pubkey, &plaintext_in, &rand);

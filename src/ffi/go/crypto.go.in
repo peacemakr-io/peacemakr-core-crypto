@@ -440,7 +440,7 @@ func NewSymmetricKeyFromPassword(keylenBits int, passwordStr string, iterationCo
 		return nil, nil, errors.New("unable to read salt from random string")
 	}
 
-	outKey := newPeacemakrKeyFromPassword(cipher, MessageDigestAlgorithm(C.peacemakr_get_default_digest_algorithm()), passwordStr, salt, iterationCount)
+	outKey := newPeacemakrKeyFromPassword(cipher, SHA_256, passwordStr, salt, iterationCount)
 	return outKey, salt, nil
 }
 
@@ -458,7 +458,7 @@ func SymmetricKeyFromPasswordAndSalt(keylenBits int, passwordStr string, salt []
 		return nil, errors.New("unknown length for keylenBits, acceptable values are 128, 192, 256")
 	}
 
-	outKey := newPeacemakrKeyFromPassword(cipher, MessageDigestAlgorithm(C.peacemakr_get_default_digest_algorithm()), passwordStr, salt, iterationCount)
+	outKey := newPeacemakrKeyFromPassword(cipher, SHA_256, passwordStr, salt, iterationCount)
 	return outKey, nil
 }
 
@@ -514,12 +514,8 @@ func (k *PeacemakrKey) Config() (CryptoConfig, error) {
 	return configFromInternal(keyConfig), nil
 }
 
-func (k *PeacemakrKey) SetSymmetricCipher(cipher SymmetricCipher) {
-	C.peacemakr_key_set_symmetric_cipher(k.key, (C.symmetric_cipher)(cipher))
-}
-
-func (k *PeacemakrKey) SetDigestAlgorithm(digest MessageDigestAlgorithm) {
-	C.peacemakr_key_set_digest_algorithm(k.key, (C.message_digest_algorithm)(digest))
+func (k *PeacemakrKey) SetSymmetricCipher(cipher SymmetricCipher) bool {
+	return bool(C.peacemakr_key_set_symmetric_cipher(k.key, (C.symmetric_cipher)(cipher)))
 }
 
 func (k *PeacemakrKey) Bytes() ([]byte, error) {
@@ -567,9 +563,9 @@ func Encrypt(key *PeacemakrKey, plaintext Plaintext, rand RandomDevice) (*Cipher
 	}, nil
 }
 
-func Serialize(blob *CiphertextBlob) ([]byte, error) {
+func Serialize(digest MessageDigestAlgorithm, blob *CiphertextBlob) ([]byte, error) {
 	var cSize C.size_t
-	serialized := C.peacemakr_serialize(blob.blob, (*C.size_t)(unsafe.Pointer(&cSize)))
+	serialized := C.peacemakr_serialize((C.message_digest_algorithm)(digest), blob.blob, (*C.size_t)(unsafe.Pointer(&cSize)))
 	if serialized == nil {
 		return nil, errors.New("serialization failed")
 	}
@@ -594,7 +590,7 @@ func Deserialize(serialized []byte) (*CiphertextBlob, *CryptoConfig, error) {
 	}, &outConfig, nil
 }
 
-func Sign(senderKey *PeacemakrKey, plaintext Plaintext, ciphertext *CiphertextBlob) error {
+func Sign(senderKey *PeacemakrKey, plaintext Plaintext, digest MessageDigestAlgorithm, ciphertext *CiphertextBlob) error {
 	if !senderKey.IsValid() {
 		return errors.New("invalid key passed to Encrypt")
 	}
@@ -602,7 +598,7 @@ func Sign(senderKey *PeacemakrKey, plaintext Plaintext, ciphertext *CiphertextBl
 	cPlaintext := plaintextToInternal(plaintext)
 	defer freeInternalPlaintext(&cPlaintext)
 
-	C.peacemakr_sign(senderKey.key, (*C.plaintext_t)(unsafe.Pointer(&cPlaintext)), ciphertext.blob)
+	C.peacemakr_sign(senderKey.key, (*C.plaintext_t)(unsafe.Pointer(&cPlaintext)), (C.message_digest_algorithm)(digest), ciphertext.blob)
 	return nil
 }
 

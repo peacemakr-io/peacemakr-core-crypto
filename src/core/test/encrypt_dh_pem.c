@@ -83,10 +83,6 @@ void decrypt(symmetric_cipher symm_cipher, asymmetric_cipher curve,
 void test_symmetric_algo(symmetric_cipher symm_cipher, asymmetric_cipher curve,
                          const char *pubkey_buf, const size_t pubkey_len,
                          const char *privkey_buf, const size_t privkey_len) {
-  crypto_config_t cfg = {.mode = ASYMMETRIC,
-                         .asymm_cipher = curve,
-                         .symm_cipher = symm_cipher,
-                         .digest_algorithm = SHA_512};
 
   plaintext_t plaintext_in = {.data = (const unsigned char *)message,
                               .data_len = strlen(message) + 1,

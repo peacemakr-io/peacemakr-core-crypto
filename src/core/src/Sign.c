@@ -97,7 +97,7 @@ void symmetric_sign(const peacemakr_key_t *key, const uint8_t *plaintext,
 
   size_t out_size = 0;
   uint8_t *hmac =
-      peacemakr_hmac(peacemakr_key_get_config(key).digest_algorithm, key,
+      peacemakr_hmac(ciphertext_blob_digest_algo(cipher), key,
                      concat_buf, plaintext_len + aad_len, &out_size);
 
   buffer_t *digest_buf = ciphertext_blob_mutable_signature(cipher);
@@ -109,13 +109,17 @@ void symmetric_sign(const peacemakr_key_t *key, const uint8_t *plaintext,
 }
 
 void peacemakr_sign(const peacemakr_key_t *sender_key, const plaintext_t *plain,
+                    message_digest_algorithm digest,
                     ciphertext_blob_t *cipher) {
 
-  EXPECT_NOT_NULL_RET_NONE(sender_key, false,
-                           "Cannot verify with a NULL key\n")
+  EXPECT_NOT_NULL_RET_NONE(sender_key, false, "Cannot verify with a NULL key\n")
   EXPECT_NOT_NULL_RET_NONE(cipher, false,
                            "Cannot verify with nothing to compare against\n")
   EXPECT_NOT_NULL_RET_NONE(plain, false, "Cannot verify an empty plaintext\n")
+
+  if (ciphertext_blob_digest_algo(cipher) == DIGEST_UNSPECIFIED) {
+    ciphertext_blob_set_digest_algo(cipher, digest);
+  }
 
   switch (peacemakr_key_get_config(sender_key).mode) {
   case SYMMETRIC:
@@ -135,8 +139,7 @@ static bool asymmetric_verify(const peacemakr_key_t *sender_key,
   EVP_MD_CTX *md_ctx;
   EVP_PKEY *verif_key = peacemakr_key_asymmetric(sender_key);
   EXPECT_NOT_NULL_RET_VALUE(
-      verif_key, false,
-      "can't verify the message with a NULL asymmetric key\n")
+      verif_key, false, "can't verify the message with a NULL asymmetric key\n")
 
   const EVP_MD *digest_algo = parse_digest(ciphertext_blob_digest_algo(cipher));
 
@@ -206,7 +209,7 @@ static bool symmetric_verify(const peacemakr_key_t *key,
 
   size_t out_size = 0;
   uint8_t *hmac =
-      peacemakr_hmac(peacemakr_key_get_config(key).digest_algorithm, key,
+      peacemakr_hmac(ciphertext_blob_digest_algo(cipher), key,
                      concat_buf, plaintext_len + aad_len, &out_size);
 
   const buffer_t *digest_buf = ciphertext_blob_signature(cipher);

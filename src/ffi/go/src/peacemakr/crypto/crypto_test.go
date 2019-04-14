@@ -141,7 +141,6 @@ UXUc21h6963I8reNygMtcJyJpVV1Dngbnc8X6Oi6xF9iNwMBESc7e1QY1NU=
 }
 
 func TestAsymmetricEncrypt(t *testing.T) {
-	t.Parallel()
 	if !PeacemakrInit() {
 		t.Fatalf("Unable to successfully start and seed the CSPRNG")
 	}
@@ -163,7 +162,6 @@ func TestAsymmetricEncrypt(t *testing.T) {
 				defer key.Destroy()
 
 				key.SetSymmetricCipher(SymmetricCipher(j))
-				key.SetDigestAlgorithm(SHA_512)
 
 				ciphertext, err := Encrypt(key, plaintextIn, randomDevice)
 				if err != nil && len(plaintextIn.Data) == 0 {
@@ -174,7 +172,7 @@ func TestAsymmetricEncrypt(t *testing.T) {
 					t.Fatalf("%v", err)
 				}
 
-				serialized, err := Serialize(ciphertext)
+				serialized, err := Serialize(SHA_512, ciphertext)
 				if err != nil {
 					t.Fatalf("%v", err)
 				}
@@ -216,7 +214,6 @@ func TestAsymmetricEncrypt(t *testing.T) {
 }
 
 func TestAsymmetricEncryptFromPem(t *testing.T) {
-	t.Parallel()
 	if !PeacemakrInit() {
 		t.Fatalf("Unable to successfully start and seed the CSPRNG")
 	}
@@ -239,7 +236,6 @@ func TestAsymmetricEncryptFromPem(t *testing.T) {
 	defer pubkey.Destroy()
 
 	pubkey.SetSymmetricCipher(AES_256_GCM)
-	pubkey.SetDigestAlgorithm(SHA_512)
 
 	ciphertext, err := Encrypt(pubkey, plaintextIn, randomDevice)
 	if err != nil && len(plaintextIn.Data) == 0 {
@@ -250,7 +246,7 @@ func TestAsymmetricEncryptFromPem(t *testing.T) {
 		t.Fatalf("%v", err)
 	}
 
-	serialized, err := Serialize(ciphertext)
+	serialized, err := Serialize(SHA_512, ciphertext)
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
@@ -295,91 +291,93 @@ func TestAsymmetricEncryptFromPem(t *testing.T) {
 }
 
 func TestAsymmetricEncryptFromRandomPem(t *testing.T) {
-	t.Parallel()
 	if !PeacemakrInit() {
 		t.Fatalf("Unable to successfully start and seed the CSPRNG")
 	}
 	for i := RSA_2048; i <= RSA_4096; i++ {
-		cfg := CryptoConfig{
-			Mode:             ASYMMETRIC,
-			AsymmetricCipher: AsymmetricCipher(i),
-			SymmetricCipher:  AES_256_GCM,
-			DigestAlgorithm:  SHA_512,
-		}
+		go func (i int) {
+			cfg := CryptoConfig{
+				Mode:             ASYMMETRIC,
+				AsymmetricCipher: AsymmetricCipher(i),
+				SymmetricCipher:  AES_256_GCM,
+				DigestAlgorithm:  SHA_512,
+			}
 
-		plaintextIn := SetUpPlaintext()
+			plaintextIn := SetUpPlaintext()
 
-		randomDevice := NewRandomDevice()
+			randomDevice := NewRandomDevice()
 
-		var priv string
-		var pub string
-		if AsymmetricCipher(i) == RSA_2048 {
-			priv, pub = GetNewRSAKey(2048)
-		} else if AsymmetricCipher(i) == RSA_4096 {
-			priv, pub = GetNewRSAKey(4096)
-		}
+			var priv string
+			var pub string
+			if AsymmetricCipher(i) == RSA_2048 {
+				priv, pub = GetNewRSAKey(2048)
+			} else if AsymmetricCipher(i) == RSA_4096 {
+				priv, pub = GetNewRSAKey(4096)
+			}
 
-		privkey, err := NewPrivateKeyFromPEM(priv)
-		if err != nil {
-			t.Fatal(err)
-		}
-		defer privkey.Destroy()
-
-		pubkey, err := NewPublicKeyFromPEM(pub)
-		if err != nil {
-			t.Fatal(err)
-		}
-		defer pubkey.Destroy()
-
-		ciphertext, err := Encrypt(pubkey, plaintextIn, randomDevice)
-		if err != nil && len(plaintextIn.Data) == 0 {
-			return
-		}
-		if err != nil {
-			t.Fatalf("%v", err)
-		}
-
-		serialized, err := Serialize(ciphertext)
-		if err != nil {
-			t.Fatalf("%v", err)
-		}
-
-		if plaintextIn.Aad != nil {
-			AAD, err := ExtractUnverifiedAAD(serialized)
+			privkey, err := NewPrivateKeyFromPEM(priv)
 			if err != nil {
-				t.Fatalf("Extract failed")
+				t.Fatal(err)
 			}
-			if !bytes.Equal(plaintextIn.Aad, AAD) {
-				t.Fatalf("extracted aad did not match")
+			defer privkey.Destroy()
+
+			pubkey, err := NewPublicKeyFromPEM(pub)
+			if err != nil {
+				t.Fatal(err)
 			}
-		}
+			defer pubkey.Destroy()
 
-		deserialized, deserializedConfig, err := Deserialize(serialized)
-		if err != nil {
-			t.Fatalf("%v", err)
-		}
+			pubkey.SetSymmetricCipher(AES_256_GCM)
 
-		if !reflect.DeepEqual(*deserializedConfig, cfg) {
-			t.Fatalf("did not deserialize the correct configuration")
-		}
+			ciphertext, err := Encrypt(pubkey, plaintextIn, randomDevice)
+			if err != nil && len(plaintextIn.Data) == 0 {
+				return
+			}
+			if err != nil {
+				t.Fatalf("%v", err)
+			}
 
-		plaintextOut, _, err := Decrypt(privkey, deserialized)
-		if err != nil {
-			t.Fatalf("Decrypt failed")
-		}
+			serialized, err := Serialize(SHA_512, ciphertext)
+			if err != nil {
+				t.Fatalf("%v", err)
+			}
 
-		if !bytes.Equal(plaintextIn.Data, plaintextOut.Data) {
-			t.Fatalf("plaintext data did not match")
-		}
+			if plaintextIn.Aad != nil {
+				AAD, err := ExtractUnverifiedAAD(serialized)
+				if err != nil {
+					t.Fatalf("Extract failed")
+				}
+				if !bytes.Equal(plaintextIn.Aad, AAD) {
+					t.Fatalf("extracted aad did not match")
+				}
+			}
 
-		if !bytes.Equal(plaintextIn.Aad, plaintextOut.Aad) {
-			t.Fatalf("plaintext data did not match")
-		}
+			deserialized, deserializedConfig, err := Deserialize(serialized)
+			if err != nil {
+				t.Fatalf("%v", err)
+			}
+
+			if !reflect.DeepEqual(*deserializedConfig, cfg) {
+				t.Fatalf("did not deserialize the correct configuration")
+			}
+
+			plaintextOut, _, err := Decrypt(privkey, deserialized)
+			if err != nil {
+				t.Fatalf("Decrypt failed")
+			}
+
+			if !bytes.Equal(plaintextIn.Data, plaintextOut.Data) {
+				t.Fatalf("plaintext data did not match")
+			}
+
+			if !bytes.Equal(plaintextIn.Aad, plaintextOut.Aad) {
+				t.Fatalf("plaintext data did not match")
+			}
+		}(int(i))
 	}
 }
 
 func TestSymmetricEncrypt(t *testing.T) {
-	t.Parallel()
 	if !PeacemakrInit() {
 		t.Fatalf("Unable to successfully start and seed the CSPRNG")
 	}
@@ -416,7 +414,6 @@ func TestSymmetricEncrypt(t *testing.T) {
 			key = NewPeacemakrKeyFromBytes(SymmetricCipher(j), b)
 		}
 
-		key.SetDigestAlgorithm(SHA_512)
 
 		ciphertext, err := Encrypt(key, plaintextIn, randomDevice)
 		if err != nil && len(plaintextIn.Data) == 0 {
@@ -427,7 +424,7 @@ func TestSymmetricEncrypt(t *testing.T) {
 			t.Fatalf("%v", err)
 		}
 
-		serialized, err := Serialize(ciphertext)
+		serialized, err := Serialize(SHA_512, ciphertext)
 		if err != nil {
 			key.Destroy()
 			t.Fatalf("%v", err)
@@ -491,7 +488,6 @@ func parseKeyBits(cipher SymmetricCipher) int {
 }
 
 func TestSymmetricEncryptPassword(t *testing.T) {
-	t.Parallel()
 	if !PeacemakrInit() {
 		t.Fatalf("Unable to successfully start and seed the CSPRNG")
 	}
@@ -558,7 +554,6 @@ func TestSymmetricEncryptPassword(t *testing.T) {
 }
 
 func TestSerialize(t *testing.T) {
-	t.Parallel()
 	if !PeacemakrInit() {
 		t.Fatalf("Unable to successfully start and seed the CSPRNG")
 	}
@@ -581,7 +576,6 @@ func TestSerialize(t *testing.T) {
 					defer key.Destroy()
 
 					key.SetSymmetricCipher(SymmetricCipher(j))
-					key.SetDigestAlgorithm(MessageDigestAlgorithm(k))
 
 					ciphertext, err := Encrypt(key, plaintextIn, randomDevice)
 					if err != nil && len(plaintextIn.Data) == 0 {
@@ -591,7 +585,7 @@ func TestSerialize(t *testing.T) {
 						t.Fatalf("%v", err)
 					}
 
-					serialized, err := Serialize(ciphertext)
+					serialized, err := Serialize(MessageDigestAlgorithm(k), ciphertext)
 					if err != nil {
 						t.Fatalf("%v", err)
 					}
@@ -634,7 +628,6 @@ func TestSerialize(t *testing.T) {
 }
 
 func TestECDHSerialize(t *testing.T) {
-	t.Parallel()
 	if !PeacemakrInit() {
 		t.Fatalf("Unable to successfully start and seed the CSPRNG")
 	}
@@ -670,7 +663,7 @@ func TestECDHSerialize(t *testing.T) {
 						t.Fatalf("%v", err)
 					}
 
-					serialized, err := Serialize(ciphertext)
+					serialized, err := Serialize(MessageDigestAlgorithm(k), ciphertext)
 					if err != nil {
 						t.Fatalf("%v", err)
 					}
@@ -691,7 +684,7 @@ func TestECDHSerialize(t *testing.T) {
 					}
 
 					if !reflect.DeepEqual(*deserializedConfig, secKeyCfg) {
-						t.Fatalf("did not deserialize the correct configuration")
+						t.Fatalf("did not deserialize the correct configuration, %v, %v", *deserializedConfig, secKeyCfg)
 					}
 
 					plaintextOut, _, err := Decrypt(secKey, deserialized)
@@ -713,7 +706,6 @@ func TestECDHSerialize(t *testing.T) {
 }
 
 func TestSignatures(t *testing.T) {
-	t.Parallel()
 	if !PeacemakrInit() {
 		t.Fatalf("Unable to successfully start and seed the CSPRNG")
 	}
@@ -736,7 +728,6 @@ func TestSignatures(t *testing.T) {
 					defer key.Destroy()
 
 					key.SetSymmetricCipher(SymmetricCipher(j))
-					key.SetDigestAlgorithm(MessageDigestAlgorithm(k))
 
 					ciphertext, err := Encrypt(key, plaintextIn, randomDevice)
 					if err != nil && len(plaintextIn.Data) == 0 {
@@ -745,9 +736,9 @@ func TestSignatures(t *testing.T) {
 					if err != nil {
 						t.Fatalf("%v", err)
 					}
-					err = Sign(key, plaintextIn, ciphertext)
+					err = Sign(key, plaintextIn, MessageDigestAlgorithm(k), ciphertext)
 
-					serialized, err := Serialize(ciphertext)
+					serialized, err := Serialize(MessageDigestAlgorithm(k), ciphertext)
 					if err != nil {
 						t.Fatalf("%v", err)
 					}

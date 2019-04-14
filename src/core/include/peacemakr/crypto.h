@@ -140,19 +140,19 @@ typedef void (*peacemakr_log_cb)(const char *);
  */
 void peacemakr_set_log_callback(peacemakr_log_cb log_fn);
 
-symmetric_cipher peacemakr_get_default_symmetric_algorithm();
-void peacemakr_set_default_symmetric_algorithm(symmetric_cipher cipher);
-message_digest_algorithm peacemakr_get_default_digest_algorithm();
-void peacemakr_set_default_digest_algorithm(message_digest_algorithm digest);
-
 /**
- * Create a new peacemakr_key_t from scratch with user-defined \p cfg and \p
- * rand to configure the key creation. It is recommended that \p rand come from
- * /dev/urandom or similar. \returns A newly created peacemakr key for use in
- * other library calls.
+ * Create a new asymmetric peacemakr_key_t from scratch \p rand. It is recommended that
+ * \p rand come from /dev/urandom or similar. \returns A newly created
+ * peacemakr key for use in other library calls.
  */
 peacemakr_key_t *peacemakr_key_new_asymmetric(asymmetric_cipher cipher,
                                               random_device_t *rand);
+
+/**
+ * Create a new symmetric peacemakr_key_t from scratch \p rand. It is recommended that
+ * \p rand come from /dev/urandom or similar. \returns A newly created
+ * peacemakr key for use in other library calls.
+ */
 peacemakr_key_t *peacemakr_key_new_symmetric(symmetric_cipher cipher,
                                              random_device_t *rand);
 
@@ -219,11 +219,13 @@ peacemakr_key_t *peacemakr_key_dh_generate(symmetric_cipher cipher,
                                            peacemakr_key_t *my_key,
                                            peacemakr_key_t *peer_key);
 
-void peacemakr_key_set_symmetric_cipher(peacemakr_key_t *key,
+/**
+ * Override the symmetric_cipher in \p key with \p cipher. Only supported
+ * for RSA keys, as ECDH keys are used for ECDH key exchanges, for which
+ * a cipher must be specified.
+ */
+bool peacemakr_key_set_symmetric_cipher(peacemakr_key_t *key,
                                         symmetric_cipher cipher);
-
-void peacemakr_key_set_digest_algorithm(peacemakr_key_t *key,
-                                        message_digest_algorithm digest);
 
 /**
  * Gets the crypto_config_t used to create \p key from \p key.
@@ -280,6 +282,7 @@ ciphertext_blob_t *peacemakr_encrypt(const peacemakr_key_t *recipient_key,
  * functions to do asymmetric signing of \p plain and stores it in \p cipher.
  */
 void peacemakr_sign(const peacemakr_key_t *sender_key, const plaintext_t *plain,
+                    message_digest_algorithm digest,
                     ciphertext_blob_t *cipher);
 
 //! Possible decrypt outcomes
@@ -330,7 +333,7 @@ uint8_t *peacemakr_hmac(const message_digest_algorithm digest_algorithm,
  * said buffer into \p out_size. The caller is responsible for managing
  * memory returned from this function.
  */
-uint8_t *peacemakr_serialize(ciphertext_blob_t *cipher, size_t *b64_size);
+uint8_t *peacemakr_serialize(message_digest_algorithm digest, ciphertext_blob_t *cipher, size_t *b64_size);
 
 /**
  * Deserializes a ciphertext_blob_t from \p b64_encoded_cipher. \p

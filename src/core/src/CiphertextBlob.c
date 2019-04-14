@@ -248,6 +248,10 @@ ciphertext_blob_digest_algo(const ciphertext_blob_t *ciphertext) {
   return ciphertext->m_digest_algorithm_;
 }
 
+void ciphertext_blob_set_digest_algo(ciphertext_blob_t *ciphertext, message_digest_algorithm digest) {
+  ciphertext->m_digest_algorithm_ = digest;
+}
+
 const encryption_mode
 ciphertext_blob_encryption_mode(const ciphertext_blob_t *ciphertext) {
   return ciphertext->m_encryption_mode_;

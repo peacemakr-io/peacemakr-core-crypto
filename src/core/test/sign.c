@@ -17,7 +17,7 @@ const char *message_aad = "And I'm AAD";                       // 11 + 1
 
 void test_symmetric_algo(symmetric_cipher cipher) {
   crypto_config_t cfg = {
-      .mode = SYMMETRIC, .symm_cipher = cipher, .digest_algorithm = SHA_512};
+      .mode = SYMMETRIC, .symm_cipher = cipher, .asymm_cipher = ASYMMETRIC_UNSPECIFIED, .digest_algorithm = SHA_512};
 
   plaintext_t plaintext_in = {.data = (const unsigned char *)message,
                               .data_len = strlen(message) + 1,
@@ -29,14 +29,13 @@ void test_symmetric_algo(symmetric_cipher cipher) {
   random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
 
   peacemakr_key_t *key = peacemakr_key_new_symmetric(cipher, &rand);
-  peacemakr_key_set_digest_algorithm(key, SHA_512);
 
   ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, &plaintext_in, &rand);
-  peacemakr_sign(key, &plaintext_in, ciphertext);
+  peacemakr_sign(key, &plaintext_in, SHA_512, ciphertext);
   assert(ciphertext != NULL);
 
   size_t out_size = 0;
-  uint8_t *serialized = peacemakr_serialize(ciphertext, &out_size);
+  uint8_t *serialized = peacemakr_serialize(SHA_512, ciphertext, &out_size);
   assert(serialized != NULL);
 
   crypto_config_t out_cfg;
@@ -70,11 +69,6 @@ void test_symmetric_algo(symmetric_cipher cipher) {
 void test_asymmetric_algo(symmetric_cipher cipher,
                           asymmetric_cipher asymmcipher) {
 
-  crypto_config_t cfg = {.mode = ASYMMETRIC,
-                         .symm_cipher = cipher,
-                         .asymm_cipher = asymmcipher,
-                         .digest_algorithm = SHA_512};
-
   plaintext_t plaintext_in = {.data = (const unsigned char *)message,
                               .data_len = strlen(message) + 1,
                               .aad = (const unsigned char *)message_aad,
@@ -85,25 +79,28 @@ void test_asymmetric_algo(symmetric_cipher cipher,
   random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
 
   peacemakr_key_t *mykey = peacemakr_key_new_asymmetric(asymmcipher, &rand);
-  peacemakr_key_set_symmetric_cipher(mykey, cipher);
   peacemakr_key_t *peerkey = peacemakr_key_new_asymmetric(asymmcipher, &rand);
-  peacemakr_key_set_symmetric_cipher(peerkey, cipher);
+
+  if (asymmcipher < ECDH_P256) {
+    peacemakr_key_set_symmetric_cipher(mykey, cipher);
+    peacemakr_key_set_symmetric_cipher(peerkey, cipher);
+  }
+
   // Set up the key
   peacemakr_key_t *key = (asymmcipher >= ECDH_P256)
                              ? peacemakr_key_dh_generate(cipher, mykey, peerkey)
                              : mykey;
-  cfg = peacemakr_key_get_config(key);
 
   ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, &plaintext_in, &rand);
   assert(ciphertext != NULL);
   if (asymmcipher >= ECDH_P256) {
-    peacemakr_sign(mykey, &plaintext_in, ciphertext);
+    peacemakr_sign(mykey, &plaintext_in, SHA_512, ciphertext);
   } else {
-    peacemakr_sign(key, &plaintext_in, ciphertext);
+    peacemakr_sign(key, &plaintext_in, SHA_512, ciphertext);
   }
 
   size_t out_size = 0;
-  uint8_t *serialized = peacemakr_serialize(ciphertext, &out_size);
+  uint8_t *serialized = peacemakr_serialize(SHA_512, ciphertext, &out_size);
   assert(serialized != NULL);
 
   crypto_config_t out_cfg;
@@ -115,10 +112,17 @@ void test_asymmetric_algo(symmetric_cipher cipher,
 
   decrypt_code success = peacemakr_decrypt(key, deserialized, &plaintext_out);
 
-  assert((out_cfg.mode == cfg.mode) &&
-         (out_cfg.asymm_cipher == cfg.asymm_cipher) &&
-         (out_cfg.symm_cipher == cfg.symm_cipher) &&
-         (out_cfg.digest_algorithm == cfg.digest_algorithm));
+  if (asymmcipher >= ECDH_P256) {
+    assert((out_cfg.mode == SYMMETRIC) &&
+           (out_cfg.asymm_cipher == ASYMMETRIC_UNSPECIFIED) &&
+           (out_cfg.symm_cipher == cipher) &&
+           (out_cfg.digest_algorithm == SHA_512));
+  } else {
+    assert((out_cfg.mode == ASYMMETRIC) &&
+           (out_cfg.asymm_cipher == asymmcipher) &&
+           (out_cfg.symm_cipher == cipher) &&
+           (out_cfg.digest_algorithm == SHA_512));
+  }
 
   assert(success == DECRYPT_NEED_VERIFY);
   if (asymmcipher >= ECDH_P256) {
@@ -155,17 +159,16 @@ void test_symmetric_algo_x_sign(symmetric_cipher cipher) {
   random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
 
   peacemakr_key_t *key = peacemakr_key_new_symmetric(cipher, &rand);
-  peacemakr_key_set_digest_algorithm(key, SHA_512);
   peacemakr_key_t *sign_key = peacemakr_key_new_asymmetric(RSA_4096, &rand);
-  peacemakr_key_set_digest_algorithm(sign_key, SHA_512);
+  peacemakr_key_set_symmetric_cipher(sign_key, cipher);
 
   ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, &plaintext_in, &rand);
   // Sign with asymmetric key
-  peacemakr_sign(sign_key, &plaintext_in, ciphertext);
+  peacemakr_sign(sign_key, &plaintext_in, SHA_512, ciphertext);
   assert(ciphertext != NULL);
 
   size_t out_size = 0;
-  uint8_t *serialized = peacemakr_serialize(ciphertext, &out_size);
+  uint8_t *serialized = peacemakr_serialize(SHA_512, ciphertext, &out_size);
   assert(serialized != NULL);
 
   crypto_config_t out_cfg;

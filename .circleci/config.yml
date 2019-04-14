@@ -4,10 +4,12 @@ jobs:
     machine: true
     steps:
       - checkout
-      - run: docker build -t corecrypto-dependencies:latest . -f docker/go-dependencies.Dockerfile --build-arg="CMAKE_BUILD_TYPE=RELEASE"
+      - run: docker build -t corecrypto-dependencies:latest . -f docker/go-dependencies.Dockerfile --build-arg="CMAKE_BUILD_TYPE=DEBUG"
       - run: docker build -t corecrypto:latest . -f docker/go.Dockerfile
       - run: |
           if [ "${CIRCLE_BRANCH}" = "master" ]; then
+            docker build -t corecrypto-dependencies:latest . -f docker/go-dependencies.Dockerfile --build-arg="CMAKE_BUILD_TYPE=RELEASE"
+            docker build -t corecrypto:latest . -f docker/go.Dockerfile
             $(aws ecr get-login --no-include-email --region us-east-2)
             docker tag corecrypto-dependencies:latest 716293438869.dkr.ecr.us-east-2.amazonaws.com/corecrypto-dependencies:latest
             docker push 716293438869.dkr.ecr.us-east-2.amazonaws.com/corecrypto-dependencies:latest

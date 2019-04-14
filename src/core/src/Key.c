@@ -21,26 +21,6 @@
 #include <openssl/pem.h>
 #include <openssl/rsa.h>
 
-static symmetric_cipher DEFAULT_SYMMETRIC_CIPHER = CHACHA20_POLY1305;
-
-symmetric_cipher peacemakr_get_default_symmetric_algorithm() {
-  return DEFAULT_SYMMETRIC_CIPHER;
-}
-
-void peacemakr_set_default_symmetric_algorithm(symmetric_cipher cipher) {
-  DEFAULT_SYMMETRIC_CIPHER = cipher;
-}
-
-static message_digest_algorithm DEFAULT_DIGEST_ALGORITHM = SHA_256;
-
-message_digest_algorithm peacemakr_get_default_digest_algorithm() {
-  return DEFAULT_DIGEST_ALGORITHM;
-}
-
-void peacemakr_set_default_digest_algorithm(message_digest_algorithm digest) {
-  DEFAULT_DIGEST_ALGORITHM = digest;
-}
-
 static bool keygen_inner(int key_type, EVP_PKEY **pkey, int rsa_bits) {
   EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_id(key_type, NULL);
   EXPECT_NOT_NULL_RET_VALUE(ctx, false, "EVP_PKEY_CTX_new_id failed\n")
@@ -167,9 +147,9 @@ peacemakr_key_t *peacemakr_key_new_asymmetric(asymmetric_cipher cipher,
   EXPECT_NOT_NULL_RET(out, "Malloc failed\n")
 
   out->m_cfg_.mode = ASYMMETRIC;
-  out->m_cfg_.symm_cipher = DEFAULT_SYMMETRIC_CIPHER;
+  out->m_cfg_.symm_cipher = SYMMETRIC_UNSPECIFIED;
   out->m_cfg_.asymm_cipher = cipher;
-  out->m_cfg_.digest_algorithm = DEFAULT_DIGEST_ALGORITHM;
+  out->m_cfg_.digest_algorithm = DIGEST_UNSPECIFIED;
 
   out->m_contents_.asymm = NULL;
   switch (cipher) {
@@ -238,7 +218,7 @@ peacemakr_key_t *peacemakr_key_new_symmetric(symmetric_cipher cipher,
   out->m_cfg_.mode = SYMMETRIC;
   out->m_cfg_.symm_cipher = cipher;
   out->m_cfg_.asymm_cipher = ASYMMETRIC_UNSPECIFIED;
-  out->m_cfg_.digest_algorithm = DEFAULT_DIGEST_ALGORITHM;
+  out->m_cfg_.digest_algorithm = DIGEST_UNSPECIFIED;
 
   out->m_contents_.symm = NULL;
   const EVP_CIPHER *evp_cipher = parse_cipher(cipher);
@@ -264,7 +244,7 @@ peacemakr_key_t *peacemakr_key_new_bytes(symmetric_cipher cipher,
   out->m_cfg_.mode = SYMMETRIC;
   out->m_cfg_.symm_cipher = cipher;
   out->m_cfg_.asymm_cipher = ASYMMETRIC_UNSPECIFIED;
-  out->m_cfg_.digest_algorithm = DEFAULT_DIGEST_ALGORITHM;
+  out->m_cfg_.digest_algorithm = DIGEST_UNSPECIFIED;
 
   out->m_contents_.symm = NULL;
 
@@ -365,8 +345,7 @@ peacemakr_key_t *peacemakr_key_new_pem(asymmetric_cipher cipher,
                                        const char *buf, size_t buflen,
                                        bool is_priv) {
 
-  EXPECT_TRUE_RET((buf != NULL && buflen > 0),
-                  "buf was null or buflen was 0\n")
+  EXPECT_TRUE_RET((buf != NULL && buflen > 0), "buf was null or buflen was 0\n")
   EXPECT_TRUE_RET((buflen <= INT_MAX),
                   "Length of passed pem file is greater than INT_MAX\n")
 
@@ -374,9 +353,9 @@ peacemakr_key_t *peacemakr_key_new_pem(asymmetric_cipher cipher,
   EXPECT_NOT_NULL_RET(out, "Malloc failed!\n")
 
   out->m_cfg_.mode = ASYMMETRIC;
-  out->m_cfg_.symm_cipher = DEFAULT_SYMMETRIC_CIPHER;
+  out->m_cfg_.symm_cipher = SYMMETRIC_UNSPECIFIED;
   out->m_cfg_.asymm_cipher = cipher;
-  out->m_cfg_.digest_algorithm = DEFAULT_DIGEST_ALGORITHM;
+  out->m_cfg_.digest_algorithm = DIGEST_UNSPECIFIED;
   out->m_contents_.asymm = NULL;
 
   BIO *bo = BIO_new_mem_buf(buf, (int)buflen);
@@ -468,12 +447,8 @@ peacemakr_key_t *peacemakr_key_dh_generate(symmetric_cipher cipher,
       my_key, "Neither input to peacemakr_key_dh_generate may be NULL\n")
   EXPECT_NOT_NULL_RET(
       peer_key, "Neither input to peacemakr_key_dh_generate may be NULL\n")
-
-  if (cipher == SYMMETRIC_UNSPECIFIED) {
-    cipher = peacemakr_get_default_symmetric_algorithm();
-  }
-
-  EXPECT_TRUE_RET((cipher != SYMMETRIC_UNSPECIFIED), "Cannot generate a DH key with an unspecified cipher\n")
+  EXPECT_TRUE_RET((cipher != SYMMETRIC_UNSPECIFIED),
+                  "Cannot generate a DH key with an unspecified cipher\n")
 
   EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new(my_key->m_contents_.asymm, NULL);
   EXPECT_NOT_NULL_RET(ctx, "Unable to initialize EVP_PKEY_CTX\n")
@@ -530,14 +505,26 @@ crypto_config_t peacemakr_key_get_config(const peacemakr_key_t *key) {
   return key->m_cfg_;
 }
 
-void peacemakr_key_set_symmetric_cipher(peacemakr_key_t *key,
+bool peacemakr_key_set_symmetric_cipher(peacemakr_key_t *key,
                                         symmetric_cipher cipher) {
-  key->m_cfg_.symm_cipher = cipher;
-}
 
-void peacemakr_key_set_digest_algorithm(peacemakr_key_t *key,
-                                        message_digest_algorithm digest) {
-  key->m_cfg_.digest_algorithm = digest;
+  if (key->m_cfg_.mode != ASYMMETRIC) {
+    PEACEMAKR_ERROR("Cannot override the symmetric cipher of a symmetric key\n");
+    return false;
+  }
+
+  if (key->m_cfg_.symm_cipher != SYMMETRIC_UNSPECIFIED) {
+    PEACEMAKR_ERROR("Cannot override the symmetric cipher when it's already been specified\n");
+    return false;
+  }
+
+  if (key->m_cfg_.asymm_cipher < RSA_2048 || key->m_cfg_.asymm_cipher > RSA_4096) {
+    PEACEMAKR_ERROR("ECDH keys do not support overriding the symmetric cipher\n");
+    return false;
+  }
+
+  key->m_cfg_.symm_cipher = cipher;
+  return true;
 }
 
 const buffer_t *peacemakr_key_symmetric(const peacemakr_key_t *key) {
@@ -559,8 +546,7 @@ EVP_PKEY *peacemakr_key_asymmetric(const peacemakr_key_t *key) {
 bool peacemakr_key_priv_to_pem(const peacemakr_key_t *key, char **buf,
                                size_t *bufsize) {
   EXPECT_NOT_NULL_RET_VALUE(key, false, "Cannot serialize a NULL key\n")
-  EXPECT_NOT_NULL_RET_VALUE(buf, false,
-                            "Cannot serialize into a NULL buffer\n")
+  EXPECT_NOT_NULL_RET_VALUE(buf, false, "Cannot serialize into a NULL buffer\n")
   EXPECT_NOT_NULL_RET_VALUE(bufsize, false,
                             "Cannot serialize into a NULL bufsize\n")
 
@@ -597,8 +583,7 @@ bool peacemakr_key_priv_to_pem(const peacemakr_key_t *key, char **buf,
 bool peacemakr_key_pub_to_pem(const peacemakr_key_t *key, char **buf,
                               size_t *bufsize) {
   EXPECT_NOT_NULL_RET_VALUE(key, false, "Cannot serialize a NULL key\n")
-  EXPECT_NOT_NULL_RET_VALUE(buf, false,
-                            "Cannot serialize into a NULL buffer\n")
+  EXPECT_NOT_NULL_RET_VALUE(buf, false, "Cannot serialize into a NULL buffer\n")
   EXPECT_NOT_NULL_RET_VALUE(bufsize, false,
                             "Cannot serialize into a NULL bufsize\n")
 

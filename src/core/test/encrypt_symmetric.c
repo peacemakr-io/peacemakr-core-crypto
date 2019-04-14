@@ -141,13 +141,12 @@ void test_uninit_crash() {
   random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
 
   peacemakr_key_t *key = peacemakr_key_new_symmetric(AES_128_GCM, &rand);
-  peacemakr_key_set_digest_algorithm(key, SHA_256);
 
   ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, &plaintext_in, &rand);
   assert(ciphertext != NULL);
 
   size_t out_size = 0;
-  uint8_t *serialized = peacemakr_serialize(ciphertext, &out_size);
+  uint8_t *serialized = peacemakr_serialize(SHA_256, ciphertext, &out_size);
   assert(serialized != NULL);
 
   crypto_config_t out_cfg;

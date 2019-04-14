@@ -460,9 +460,14 @@ ciphertext_blob_t *peacemakr_encrypt(const peacemakr_key_t *recipient_key,
   const crypto_config_t cfg = peacemakr_key_get_config(recipient_key);
 
   if (cfg.mode == ASYMMETRIC && cfg.asymm_cipher >= ECDH_P256) {
-    PEACEMAKR_ERROR("Improper usage of ECDH_ANSI_X9_62_P256 key detected, you "
+    PEACEMAKR_ERROR("Improper usage of ECDH key detected, you "
                     "must derive a "
                     "shared secret first\n");
+    return NULL;
+  }
+
+  if (cfg.symm_cipher == SYMMETRIC_UNSPECIFIED) {
+    PEACEMAKR_ERROR("Unable to encrypt a message without a symmetric algorithm specified in the recipient key\n");
     return NULL;
   }
 
