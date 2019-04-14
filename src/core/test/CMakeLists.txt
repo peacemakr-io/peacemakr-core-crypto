@@ -43,17 +43,3 @@ add_ctest(sign)
 add_ctest(garbage)
 add_ctest(dh_keygen)
 add_ctest(encrypt_dh_pem)
-
-enable_language(CXX)
-set(CMAKE_CXX_STANDARD 11)
-
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-    if (APPLE)
-        execute_process(COMMAND mkdir -p CORPUS WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-    endif(APPLE)
-
-    add_executable(test_fuzz EXCLUDE_FROM_ALL ${CMAKE_CURRENT_SOURCE_DIR}/fuzz.cpp)
-    target_compile_options(test_fuzz PUBLIC -g -fsanitize=fuzzer,address)
-    target_link_libraries(test_fuzz PRIVATE peacemakr-core-crypto-cpp ${LIBBSD_LIBRARIES} -fsanitize=fuzzer,address)
-    target_include_directories(test_fuzz PRIVATE ${CMAKE_SOURCE_DIR}/src/core/include ${LIBBSD_INCLUDE_DIRS})
-endif()
