@@ -50,6 +50,8 @@ uint8_t *peacemakr_serialize(message_digest_algorithm digest,
                              ciphertext_blob_t *cipher, size_t *b64_size) {
   EXPECT_TRUE_RET((cipher != NULL && b64_size != NULL),
                   "cipher or b64_size was null in call to serialize\n")
+  EXPECT_TRUE_RET((digest != DIGEST_UNSPECIFIED),
+                  "Must specify a message digest in serialize\n")
 
   if (ciphertext_blob_digest_algo(cipher) == DIGEST_UNSPECIFIED) {
     ciphertext_blob_set_digest_algo(cipher, digest);

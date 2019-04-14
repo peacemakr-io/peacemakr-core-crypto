@@ -137,7 +137,7 @@ void peacemakr_set_log_callback(peacemakr_log_cb log_fn);
 /**
  * Create a new asymmetric peacemakr_key_t from scratch \p rand. It is
  * recommended that \p rand come from /dev/urandom or similar. \p symm_cipher is
- * ignored if the asymmetric algorithm specified is not an RSA algorithm.
+ * only used for encryption operations.
  */
 peacemakr_key_t *peacemakr_key_new_asymmetric(asymmetric_cipher asymm_cipher,
                                               symmetric_cipher symm_cipher,
