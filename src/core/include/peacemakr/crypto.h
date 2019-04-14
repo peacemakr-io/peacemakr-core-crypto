@@ -142,10 +142,11 @@ void peacemakr_set_log_callback(peacemakr_log_cb log_fn);
 
 /**
  * Create a new asymmetric peacemakr_key_t from scratch \p rand. It is recommended that
- * \p rand come from /dev/urandom or similar. \returns A newly created
- * peacemakr key for use in other library calls.
+ * \p rand come from /dev/urandom or similar. \p symm_cipher is ignored if the asymmetric
+ * algorithm specified is not an RSA algorithm.
  */
-peacemakr_key_t *peacemakr_key_new_asymmetric(asymmetric_cipher cipher,
+peacemakr_key_t *peacemakr_key_new_asymmetric(asymmetric_cipher asymm_cipher,
+                                              symmetric_cipher symm_cipher,
                                               random_device_t *rand);
 
 /**
@@ -198,6 +199,7 @@ peacemakr_key_new_from_master(symmetric_cipher cipher,
  * in other library calls.
  */
 peacemakr_key_t *peacemakr_key_new_pem_pub(asymmetric_cipher cipher,
+                                           symmetric_cipher symm_cipher,
                                            const char *buf, size_t buflen);
 
 /**
@@ -208,6 +210,7 @@ peacemakr_key_t *peacemakr_key_new_pem_pub(asymmetric_cipher cipher,
  * in other library calls.
  */
 peacemakr_key_t *peacemakr_key_new_pem_priv(asymmetric_cipher cipher,
+                                            symmetric_cipher symm_cipher,
                                             const char *buf, size_t buflen);
 
 /**
@@ -218,14 +221,6 @@ peacemakr_key_t *peacemakr_key_new_pem_priv(asymmetric_cipher cipher,
 peacemakr_key_t *peacemakr_key_dh_generate(symmetric_cipher cipher,
                                            peacemakr_key_t *my_key,
                                            peacemakr_key_t *peer_key);
-
-/**
- * Override the symmetric_cipher in \p key with \p cipher. Only supported
- * for RSA keys, as ECDH keys are used for ECDH key exchanges, for which
- * a cipher must be specified.
- */
-bool peacemakr_key_set_symmetric_cipher(peacemakr_key_t *key,
-                                        symmetric_cipher cipher);
 
 /**
  * Gets the crypto_config_t used to create \p key from \p key.

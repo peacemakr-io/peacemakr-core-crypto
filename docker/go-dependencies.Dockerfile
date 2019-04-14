@@ -14,14 +14,15 @@ WORKDIR /opt
 ADD CMakeLists.txt /opt/CMakeLists.txt
 ADD src/core /opt/src/core
 ADD src/ffi/go /opt/src/ffi/go
-ADD src/ffi/cpp /opt/src/ffi/cpp
 ADD src/ffi/CMakeLists.txt /opt/src/ffi/CMakeLists.txt
 ADD cmake /opt/cmake
 
 ENV GOPATH=/go
 
 ARG CMAKE_BUILD_TYPE=DEBUG
-RUN mkdir -p build && cd build && cmake .. -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DPEACEMAKR_BUILD_GO=ON -DPEACEMAKR_BUILD_IOS=OFF && make check install
+RUN mkdir -p build && cd build \
+&& cmake .. -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DPEACEMAKR_BUILD_GO=ON -DPEACEMAKR_BUILD_CPP=OFF -DPEACEMAKR_BUILD_IOS=OFF \
+&& make check install
 
 ENV GOPATH=/go
 ENV LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH

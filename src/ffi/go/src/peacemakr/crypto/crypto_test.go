@@ -158,10 +158,8 @@ func TestAsymmetricEncrypt(t *testing.T) {
 
 				randomDevice := NewRandomDevice()
 
-				key := NewPeacemakrKeyAsymmetric(AsymmetricCipher(i), randomDevice)
+				key := NewPeacemakrKeyAsymmetric(AsymmetricCipher(i), SymmetricCipher(j), randomDevice)
 				defer key.Destroy()
-
-				key.SetSymmetricCipher(SymmetricCipher(j))
 
 				ciphertext, err := Encrypt(key, plaintextIn, randomDevice)
 				if err != nil && len(plaintextIn.Data) == 0 {
@@ -229,13 +227,11 @@ func TestAsymmetricEncryptFromPem(t *testing.T) {
 
 	randomDevice := NewRandomDevice()
 
-	pubkey, err := NewPublicKeyFromPEM(GetPubKey())
+	pubkey, err := NewPublicKeyFromPEM(AES_256_GCM, GetPubKey())
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer pubkey.Destroy()
-
-	pubkey.SetSymmetricCipher(AES_256_GCM)
 
 	ciphertext, err := Encrypt(pubkey, plaintextIn, randomDevice)
 	if err != nil && len(plaintextIn.Data) == 0 {
@@ -270,7 +266,7 @@ func TestAsymmetricEncryptFromPem(t *testing.T) {
 		t.Fatalf("did not deserialize the correct configuration")
 	}
 
-	privkey, err := NewPrivateKeyFromPEM(GetPrivKey())
+	privkey, err := NewPrivateKeyFromPEM(AES_256_GCM, GetPrivKey())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -315,19 +311,17 @@ func TestAsymmetricEncryptFromRandomPem(t *testing.T) {
 				priv, pub = GetNewRSAKey(4096)
 			}
 
-			privkey, err := NewPrivateKeyFromPEM(priv)
+			privkey, err := NewPrivateKeyFromPEM(AES_256_GCM, priv)
 			if err != nil {
 				t.Fatal(err)
 			}
 			defer privkey.Destroy()
 
-			pubkey, err := NewPublicKeyFromPEM(pub)
+			pubkey, err := NewPublicKeyFromPEM(AES_256_GCM, pub)
 			if err != nil {
 				t.Fatal(err)
 			}
 			defer pubkey.Destroy()
-
-			pubkey.SetSymmetricCipher(AES_256_GCM)
 
 			ciphertext, err := Encrypt(pubkey, plaintextIn, randomDevice)
 			if err != nil && len(plaintextIn.Data) == 0 {
@@ -572,10 +566,8 @@ func TestSerialize(t *testing.T) {
 
 					randomDevice := NewRandomDevice()
 
-					key := NewPeacemakrKeyAsymmetric(AsymmetricCipher(i), randomDevice)
+					key := NewPeacemakrKeyAsymmetric(AsymmetricCipher(i), SymmetricCipher(j), randomDevice)
 					defer key.Destroy()
-
-					key.SetSymmetricCipher(SymmetricCipher(j))
 
 					ciphertext, err := Encrypt(key, plaintextIn, randomDevice)
 					if err != nil && len(plaintextIn.Data) == 0 {
@@ -640,10 +632,10 @@ func TestECDHSerialize(t *testing.T) {
 
 					randomDevice := NewRandomDevice()
 
-					myKey := NewPeacemakrKeyAsymmetric(AsymmetricCipher(curve), randomDevice)
+					myKey := NewPeacemakrKeyAsymmetric(AsymmetricCipher(curve), SymmetricCipher(j), randomDevice)
 					defer myKey.Destroy()
 
-					peerKey := NewPeacemakrKeyAsymmetric(AsymmetricCipher(curve), randomDevice)
+					peerKey := NewPeacemakrKeyAsymmetric(AsymmetricCipher(curve), SymmetricCipher(j), randomDevice)
 					defer peerKey.Destroy()
 
 					secKey := myKey.ECDHKeygen(SymmetricCipher(j), peerKey)
@@ -724,10 +716,8 @@ func TestSignatures(t *testing.T) {
 
 					randomDevice := NewRandomDevice()
 
-					key := NewPeacemakrKeyAsymmetric(AsymmetricCipher(i), randomDevice)
+					key := NewPeacemakrKeyAsymmetric(AsymmetricCipher(i), SymmetricCipher(j), randomDevice)
 					defer key.Destroy()
-
-					key.SetSymmetricCipher(SymmetricCipher(j))
 
 					ciphertext, err := Encrypt(key, plaintextIn, randomDevice)
 					if err != nil && len(plaintextIn.Data) == 0 {

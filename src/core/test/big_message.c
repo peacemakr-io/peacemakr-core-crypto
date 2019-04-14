@@ -78,8 +78,7 @@ int main() {
 
   random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
 
-  peacemakr_key_t *asymm_key = peacemakr_key_new_asymmetric(RSA_4096, &rand);
-  peacemakr_key_set_symmetric_cipher(asymm_key, CHACHA20_POLY1305);
+  peacemakr_key_t *asymm_key = peacemakr_key_new_asymmetric(RSA_4096, CHACHA20_POLY1305, &rand);
 
   test_algo(plaintext_in, asymm_key);
 

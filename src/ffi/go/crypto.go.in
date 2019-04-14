@@ -214,9 +214,9 @@ func NewPeacemakrKeySymmetric(config SymmetricCipher, rand RandomDevice) *Peacem
 	}
 }
 
-func NewPeacemakrKeyAsymmetric(config AsymmetricCipher, rand RandomDevice) *PeacemakrKey {
+func NewPeacemakrKeyAsymmetric(asymm AsymmetricCipher, symm SymmetricCipher, rand RandomDevice) *PeacemakrKey {
 	return &PeacemakrKey{
-		key: C.peacemakr_key_new_asymmetric((C.asymmetric_cipher)(config), (*C.random_device_t)(unsafe.Pointer(&rand.randomDevice))),
+		key: C.peacemakr_key_new_asymmetric((C.asymmetric_cipher)(asymm), (C.symmetric_cipher)(symm), (*C.random_device_t)(unsafe.Pointer(&rand.randomDevice))),
 	}
 }
 
@@ -244,19 +244,19 @@ func newPeacemakrKeyFromPassword(cipher SymmetricCipher, digest MessageDigestAlg
 	}
 }
 
-func newPeacemakrKeyFromPubPem(config AsymmetricCipher, contents []byte) *PeacemakrKey {
+func newPeacemakrKeyFromPubPem(asymm AsymmetricCipher, symm SymmetricCipher, contents []byte) *PeacemakrKey {
 	cBytes := (*C.char)(C.CBytes(contents))
 	defer C.free(unsafe.Pointer(cBytes))
 	return &PeacemakrKey{
-		key: C.peacemakr_key_new_pem_pub((C.asymmetric_cipher)(config), cBytes, C.size_t(len(contents))),
+		key: C.peacemakr_key_new_pem_pub((C.asymmetric_cipher)(asymm), (C.symmetric_cipher)(symm), cBytes, C.size_t(len(contents))),
 	}
 }
 
-func newPeacemakrKeyFromPrivPem(config AsymmetricCipher, contents []byte) *PeacemakrKey {
+func newPeacemakrKeyFromPrivPem(asymm AsymmetricCipher, symm SymmetricCipher, contents []byte) *PeacemakrKey {
 	cBytes := (*C.char)(C.CBytes(contents))
 	defer C.free(unsafe.Pointer(cBytes))
 	return &PeacemakrKey{
-		key: C.peacemakr_key_new_pem_priv((C.asymmetric_cipher)(config), cBytes, C.size_t(len(contents))),
+		key: C.peacemakr_key_new_pem_priv((C.asymmetric_cipher)(asymm), (C.symmetric_cipher)(symm), cBytes, C.size_t(len(contents))),
 	}
 }
 
@@ -462,22 +462,23 @@ func SymmetricKeyFromPasswordAndSalt(keylenBits int, passwordStr string, salt []
 	return outKey, nil
 }
 
-func NewPublicKeyFromPEM(contents string) (*PeacemakrKey, error) {
+
+func NewPublicKeyFromPEM(symm SymmetricCipher, contents string) (*PeacemakrKey, error) {
 	cfg, err := GetConfigFromPubKey(contents)
 	if err != nil {
 		return nil, err
 	}
 
-	return newPeacemakrKeyFromPubPem(cfg, []byte(contents)), nil
+	return newPeacemakrKeyFromPubPem(cfg, symm, []byte(contents)), nil
 }
 
-func NewPrivateKeyFromPEM(contents string) (*PeacemakrKey, error) {
+func NewPrivateKeyFromPEM(symm SymmetricCipher, contents string) (*PeacemakrKey, error) {
 	cfg, err := GetConfigFromPrivKey(contents)
 	if err != nil {
 		return nil, err
 	}
 
-	return newPeacemakrKeyFromPrivPem(cfg, []byte(contents)), nil
+	return newPeacemakrKeyFromPrivPem(cfg, symm, []byte(contents)), nil
 }
 
 // ========================= Operations to do on keys =========================
@@ -512,10 +513,6 @@ func (k *PeacemakrKey) Config() (CryptoConfig, error) {
 
 	keyConfig := C.peacemakr_key_get_config(k.key)
 	return configFromInternal(keyConfig), nil
-}
-
-func (k *PeacemakrKey) SetSymmetricCipher(cipher SymmetricCipher) bool {
-	return bool(C.peacemakr_key_set_symmetric_cipher(k.key, (C.symmetric_cipher)(cipher)))
 }
 
 func (k *PeacemakrKey) Bytes() ([]byte, error) {

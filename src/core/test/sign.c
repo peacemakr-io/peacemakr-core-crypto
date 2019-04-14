@@ -78,13 +78,8 @@ void test_asymmetric_algo(symmetric_cipher cipher,
 
   random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
 
-  peacemakr_key_t *mykey = peacemakr_key_new_asymmetric(asymmcipher, &rand);
-  peacemakr_key_t *peerkey = peacemakr_key_new_asymmetric(asymmcipher, &rand);
-
-  if (asymmcipher < ECDH_P256) {
-    peacemakr_key_set_symmetric_cipher(mykey, cipher);
-    peacemakr_key_set_symmetric_cipher(peerkey, cipher);
-  }
+  peacemakr_key_t *mykey = peacemakr_key_new_asymmetric(asymmcipher, cipher, &rand);
+  peacemakr_key_t *peerkey = peacemakr_key_new_asymmetric(asymmcipher, cipher, &rand);
 
   // Set up the key
   peacemakr_key_t *key = (asymmcipher >= ECDH_P256)
@@ -159,8 +154,7 @@ void test_symmetric_algo_x_sign(symmetric_cipher cipher) {
   random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
 
   peacemakr_key_t *key = peacemakr_key_new_symmetric(cipher, &rand);
-  peacemakr_key_t *sign_key = peacemakr_key_new_asymmetric(RSA_4096, &rand);
-  peacemakr_key_set_symmetric_cipher(sign_key, cipher);
+  peacemakr_key_t *sign_key = peacemakr_key_new_asymmetric(RSA_4096, cipher, &rand);
 
   ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, &plaintext_in, &rand);
   // Sign with asymmetric key

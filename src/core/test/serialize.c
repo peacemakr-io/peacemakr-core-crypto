@@ -31,8 +31,7 @@ void test_serialize(symmetric_cipher symm_cipher, asymmetric_cipher cipher,
 
   random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
 
-  peacemakr_key_t *key = peacemakr_key_new_asymmetric(cipher, &rand);
-  peacemakr_key_set_symmetric_cipher(key, symm_cipher);
+  peacemakr_key_t *key = peacemakr_key_new_asymmetric(cipher, symm_cipher, &rand);
 
   ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, &plaintext_in, &rand);
   assert(ciphertext != NULL);

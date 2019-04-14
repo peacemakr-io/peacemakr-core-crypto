@@ -28,9 +28,9 @@ ciphertext_blob_t *encrypt(symmetric_cipher symm_cipher,
   random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
 
   peacemakr_key_t *pubkey =
-      peacemakr_key_new_pem_pub(curve, pubkey_buf, pubkey_len);
+      peacemakr_key_new_pem_pub(curve, SYMMETRIC_UNSPECIFIED, pubkey_buf, pubkey_len);
   peacemakr_key_t *privkey =
-      peacemakr_key_new_pem_priv(curve, privkey_buf, privkey_len);
+      peacemakr_key_new_pem_priv(curve, SYMMETRIC_UNSPECIFIED, privkey_buf, privkey_len);
 
   peacemakr_key_t *sec_key = peacemakr_key_dh_generate(symm_cipher, privkey, pubkey);
 
@@ -56,9 +56,9 @@ void decrypt(symmetric_cipher symm_cipher, asymmetric_cipher curve,
                               .aad_len = strlen(message_aad) + 1};
 
   peacemakr_key_t *pubkey =
-      peacemakr_key_new_pem_pub(curve, pubkey_buf, pubkey_len);
+      peacemakr_key_new_pem_pub(curve, SYMMETRIC_UNSPECIFIED, pubkey_buf, pubkey_len);
   peacemakr_key_t *privkey =
-      peacemakr_key_new_pem_priv(curve, privkey_buf, privkey_len);
+      peacemakr_key_new_pem_priv(curve, SYMMETRIC_UNSPECIFIED, privkey_buf, privkey_len);
 
   peacemakr_key_t *sec_key = peacemakr_key_dh_generate(symm_cipher, privkey, pubkey);
 
@@ -94,9 +94,9 @@ void test_symmetric_algo(symmetric_cipher symm_cipher, asymmetric_cipher curve,
   random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
 
   peacemakr_key_t *pubkey =
-      peacemakr_key_new_pem_pub(curve, pubkey_buf, pubkey_len);
+      peacemakr_key_new_pem_pub(curve, SYMMETRIC_UNSPECIFIED, pubkey_buf, pubkey_len);
   peacemakr_key_t *privkey =
-      peacemakr_key_new_pem_priv(curve, privkey_buf, privkey_len);
+      peacemakr_key_new_pem_priv(curve, SYMMETRIC_UNSPECIFIED, privkey_buf, privkey_len);
 
   peacemakr_key_t *sec_key = peacemakr_key_dh_generate(symm_cipher, privkey, pubkey);
 
@@ -134,8 +134,8 @@ int main() {
 
     size_t priv_len = 0, pub_len = 0;
 
-    peacemakr_key_t *my_key = peacemakr_key_new_asymmetric(curve, &rand);
-    peacemakr_key_t *peer_key = peacemakr_key_new_asymmetric(curve, &rand);
+    peacemakr_key_t *my_key = peacemakr_key_new_asymmetric(curve, SYMMETRIC_UNSPECIFIED, &rand);
+    peacemakr_key_t *peer_key = peacemakr_key_new_asymmetric(curve, SYMMETRIC_UNSPECIFIED, &rand);
 
     peacemakr_key_priv_to_pem(my_key, &my_privkey, &priv_len);
     peacemakr_key_pub_to_pem(peer_key, &peer_pubkey, &pub_len);

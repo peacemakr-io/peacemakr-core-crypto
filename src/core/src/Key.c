@@ -139,6 +139,7 @@ struct PeacemakrKey {
 typedef struct PeacemakrKey peacemakr_key_t;
 
 peacemakr_key_t *peacemakr_key_new_asymmetric(asymmetric_cipher cipher,
+                                              symmetric_cipher symm_cipher,
                                               random_device_t *rand) {
   EXPECT_NOT_NULL_RET(
       rand, "Cannot create a new key without a source of randomness\n")
@@ -151,6 +152,12 @@ peacemakr_key_t *peacemakr_key_new_asymmetric(asymmetric_cipher cipher,
   out->m_cfg_.asymm_cipher = cipher;
   out->m_cfg_.digest_algorithm = DIGEST_UNSPECIFIED;
 
+  if (symm_cipher == SYMMETRIC_UNSPECIFIED && cipher >= RSA_2048 && cipher <= RSA_4096) {
+    PEACEMAKR_ERROR("Must specify a symmetric algorithm for RSA keys\n");
+    peacemakr_key_free(out);
+    return NULL;
+  }
+
   out->m_contents_.asymm = NULL;
   switch (cipher) {
   case ASYMMETRIC_UNSPECIFIED: {
@@ -159,6 +166,7 @@ peacemakr_key_t *peacemakr_key_new_asymmetric(asymmetric_cipher cipher,
     return NULL;
   }
   case RSA_2048: {
+    out->m_cfg_.symm_cipher = symm_cipher;
     if (keygen_inner(EVP_PKEY_RSA, &out->m_contents_.asymm, 2048) == false) {
       PEACEMAKR_ERROR("keygen failed\n");
       peacemakr_key_free(out);
@@ -167,6 +175,7 @@ peacemakr_key_t *peacemakr_key_new_asymmetric(asymmetric_cipher cipher,
     break;
   }
   case RSA_4096: {
+    out->m_cfg_.symm_cipher = symm_cipher;
     if (keygen_inner(EVP_PKEY_RSA, &out->m_contents_.asymm, 4096) == false) {
       PEACEMAKR_ERROR("keygen failed\n");
       peacemakr_key_free(out);
@@ -342,6 +351,7 @@ peacemakr_key_new_from_master(symmetric_cipher cipher,
 }
 
 peacemakr_key_t *peacemakr_key_new_pem(asymmetric_cipher cipher,
+                                       symmetric_cipher symm_cipher,
                                        const char *buf, size_t buflen,
                                        bool is_priv) {
 
@@ -382,6 +392,14 @@ peacemakr_key_t *peacemakr_key_new_pem(asymmetric_cipher cipher,
     }
 
   } else if (cipher == RSA_2048 || cipher == RSA_4096) {
+    if (symm_cipher == SYMMETRIC_UNSPECIFIED) {
+      PEACEMAKR_ERROR("Must specify a symmetric algorithm for RSA keys\n");
+      BIO_free(bo);
+      peacemakr_key_free(out);
+      return NULL;
+    }
+
+    out->m_cfg_.symm_cipher = symm_cipher;
     RSA *rsaKey = NULL;
     if (is_priv) {
       out->m_contents_.asymm = PEM_read_bio_PrivateKey(bo, NULL, NULL, NULL);
@@ -431,13 +449,15 @@ peacemakr_key_t *peacemakr_key_new_pem(asymmetric_cipher cipher,
 }
 
 peacemakr_key_t *peacemakr_key_new_pem_pub(asymmetric_cipher cipher,
+                                           symmetric_cipher symm_cipher,
                                            const char *buf, size_t buflen) {
-  return peacemakr_key_new_pem(cipher, buf, buflen, false);
+  return peacemakr_key_new_pem(cipher, symm_cipher, buf, buflen, false);
 }
 
 peacemakr_key_t *peacemakr_key_new_pem_priv(asymmetric_cipher cipher,
+                                            symmetric_cipher symm_cipher,
                                             const char *buf, size_t buflen) {
-  return peacemakr_key_new_pem(cipher, buf, buflen, true);
+  return peacemakr_key_new_pem(cipher, symm_cipher, buf, buflen, true);
 }
 
 peacemakr_key_t *peacemakr_key_dh_generate(symmetric_cipher cipher,

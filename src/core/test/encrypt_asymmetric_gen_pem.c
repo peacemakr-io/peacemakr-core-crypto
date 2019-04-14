@@ -29,11 +29,9 @@ void test_symmetric_algo(symmetric_cipher symm_cipher, const char *pubkey_buf,
   random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
 
   peacemakr_key_t *pubkey =
-      peacemakr_key_new_pem_pub(RSA_4096, pubkey_buf, pubkey_len);
-  peacemakr_key_set_symmetric_cipher(pubkey, symm_cipher);
+      peacemakr_key_new_pem_pub(RSA_4096, symm_cipher, pubkey_buf, pubkey_len);
   peacemakr_key_t *privkey =
-      peacemakr_key_new_pem_priv(RSA_4096, privkey_buf, privkey_len);
-  peacemakr_key_set_symmetric_cipher(privkey, symm_cipher);
+      peacemakr_key_new_pem_priv(RSA_4096, symm_cipher, privkey_buf, privkey_len);
 
   ciphertext_blob_t *ciphertext =
       peacemakr_encrypt(pubkey, &plaintext_in, &rand);
@@ -66,7 +64,7 @@ int main() {
 
   size_t priv_len = 0, pub_len = 0;
 
-  peacemakr_key_t *asym_key = peacemakr_key_new_asymmetric(RSA_4096, &rand);
+  peacemakr_key_t *asym_key = peacemakr_key_new_asymmetric(RSA_4096, CHACHA20_POLY1305, &rand);
 
   peacemakr_key_priv_to_pem(asym_key, &privkey, &priv_len);
   peacemakr_key_pub_to_pem(asym_key, &pubkey, &pub_len);
