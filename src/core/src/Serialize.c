@@ -22,13 +22,9 @@
 static const uint8_t PEACEMAKR_MAGIC_KEY[64] =
     "7d3rAfIHtCbYLm1OY6IRjvoBdqw2QdyvPIECF4Aczs2LgiShn8CeO8c21Q+GMuGf";
 
-static peacemakr_key_t *get_hmac_key(message_digest_algorithm digest_algo) {
-  crypto_config_t hmac_cfg = {.mode = SYMMETRIC,
-                              .symm_cipher = CHACHA20_POLY1305,
-                              .asymm_cipher = NONE,
-                              .digest_algorithm = digest_algo};
+static peacemakr_key_t *get_hmac_key() {
   peacemakr_key_t *hmac_key =
-      peacemakr_key_new_bytes(hmac_cfg, PEACEMAKR_MAGIC_KEY, 32);
+      peacemakr_key_new_bytes(CHACHA20_POLY1305, PEACEMAKR_MAGIC_KEY, 32);
   return hmac_key;
 }
 
@@ -52,7 +48,7 @@ static peacemakr_key_t *get_hmac_key(message_digest_algorithm digest_algo) {
 
 uint8_t *peacemakr_serialize(ciphertext_blob_t *cipher, size_t *b64_size) {
   EXPECT_TRUE_RET((cipher != NULL && b64_size != NULL),
-                  "cipher or b64_size was null in call to serialize\n");
+                  "cipher or b64_size was null in call to serialize\n")
 
   size_t buffer_len = sizeof(uint32_t); // magic number
   buffer_len += sizeof(uint64_t);       // size of message up until digest
@@ -151,7 +147,7 @@ uint8_t *peacemakr_serialize(ciphertext_blob_t *cipher, size_t *b64_size) {
   memcpy(buf + sizeof(uint32_t), &curr_pos, sizeof(uint64_t));
 
   // get our hmac key
-  peacemakr_key_t *hmac_key = get_hmac_key(ciphertext_blob_digest_algo(cipher));
+  peacemakr_key_t *hmac_key = get_hmac_key();
 
   // Digest the message
   size_t digest_out_size = 0;
@@ -161,7 +157,7 @@ uint8_t *peacemakr_serialize(ciphertext_blob_t *cipher, size_t *b64_size) {
 
   // Make sure we didn't do a stupid
   EXPECT_TRUE_CLEANUP_RET(digest_out_size == digest_len, free(buf),
-                          "Computed HMAC was of the incorrect size\n");
+                          "Computed HMAC was of the incorrect size\n")
 
   // Store it
   buffer_t *message_digest = buffer_new(digest_len);
@@ -197,10 +193,10 @@ ciphertext_blob_t *peacemakr_deserialize(const uint8_t *b64_serialized_cipher,
 
   // Make sure the input is valid
   EXPECT_TRUE_RET((b64_serialized_cipher != NULL),
-                  "b64 serialized cipher was NULL or invalid\n");
-  EXPECT_TRUE_RET((b64_serialized_len != 0), "b64_serialized_len was 0\n");
+                  "b64 serialized cipher was NULL or invalid\n")
+  EXPECT_TRUE_RET((b64_serialized_len != 0), "b64_serialized_len was 0\n")
   EXPECT_NOT_NULL_RET(
-      cfg, "need to store the deserialized configuration somewhere\n");
+      cfg, "need to store the deserialized configuration somewhere\n")
 
   // If we are a null-terminated string, then remove that from the size.
   // The b64 decode expects that the length passed in does NOT include the
@@ -210,24 +206,24 @@ ciphertext_blob_t *peacemakr_deserialize(const uint8_t *b64_serialized_cipher,
   // We're decoding a b64 message so get the serialized length (rounded up)
   size_t serialized_len = (b64_serialized_len + 3) / 4 * 3;
   EXPECT_TRUE_RET((serialized_len < b64_serialized_len),
-                  "Unexpected condition in computing b64 decoded length\n");
+                  "Unexpected condition in computing b64 decoded length\n")
   uint8_t *serialized_cipher = calloc(serialized_len, sizeof(uint8_t));
   EXPECT_NOT_NULL_RET(serialized_cipher,
-                      "failed to allocate serialized_cipher");
+                      "failed to allocate serialized_cipher")
 
   // Don't free the b64 cipher because we don't own that memory
   bool decoded =
       b64_decode((const char *)b64_serialized_cipher, b64_serialized_len,
                  serialized_cipher, serialized_len);
   EXPECT_TRUE_CLEANUP_RET(decoded, free(serialized_cipher),
-                          "b64 decode failed\n");
+                          "b64 decode failed\n")
 
   size_t current_position = 0;
 
   // magic
   uint32_t magic = ntohl(*(uint32_t *)serialized_cipher);
   EXPECT_TRUE_CLEANUP_RET((magic == _PEACEMAKR_MAGIC_), free(serialized_cipher),
-                          "magic number corrupted/missing, aborting\n");
+                          "magic number corrupted/missing, aborting\n")
   current_position += sizeof(uint32_t);
 
   // len until digest
@@ -238,7 +234,7 @@ ciphertext_blob_t *peacemakr_deserialize(const uint8_t *b64_serialized_cipher,
   // Something is bad
   EXPECT_TRUE_CLEANUP_RET((len_before_digest < b64_serialized_len),
                           free(serialized_cipher),
-                          "corrupted length in message, aborting\n");
+                          "corrupted length in message, aborting\n")
 
   // digest algo
   uint8_t digest_algo = *(serialized_cipher + current_position);
@@ -247,25 +243,25 @@ ciphertext_blob_t *peacemakr_deserialize(const uint8_t *b64_serialized_cipher,
   { // Check that the message digests are equal
     const EVP_MD *digest_algorithm = parse_digest(digest_algo);
     EXPECT_NOT_NULL_CLEANUP_RET(digest_algorithm, free(serialized_cipher),
-                                "corrupted digest algorithm, aborting\n");
+                                "corrupted digest algorithm, aborting\n")
 
     size_t digestlen = get_digest_len(digest_algo);
     EXPECT_TRUE_CLEANUP_RET((b64_serialized_len - len_before_digest) >
                                 digestlen,
                             free(serialized_cipher),
-                            "corrupted digest length in message, aborting\n");
+                            "corrupted digest length in message, aborting\n")
     buffer_t *serialized_digest =
         buffer_deserialize(serialized_cipher + len_before_digest);
 
     EXPECT_TRUE_CLEANUP_RET(
         (buffer_get_size(serialized_digest) == digestlen),
         free(serialized_cipher),
-        "serialized digest is not of the correct length, aborting\n");
+        "serialized digest is not of the correct length, aborting\n")
 
     // Compute our digest
 
     // get our hmac key
-    peacemakr_key_t *hmac_key = get_hmac_key(digest_algo);
+    peacemakr_key_t *hmac_key = get_hmac_key();
 
     // Digest the message
     size_t computed_digest_out_size = 0;
@@ -284,7 +280,7 @@ ciphertext_blob_t *peacemakr_deserialize(const uint8_t *b64_serialized_cipher,
 
     // Compare the HMACs
     EXPECT_TRUE_CLEANUP_RET((memcmp_ret == 0), free(serialized_cipher),
-                            "digests don't compare equal, aborting\n");
+                            "digests don't compare equal, aborting\n")
   }
 
   // version
@@ -293,7 +289,7 @@ ciphertext_blob_t *peacemakr_deserialize(const uint8_t *b64_serialized_cipher,
   current_position += sizeof(uint32_t);
   EXPECT_TRUE_CLEANUP_RET((version <= PEACEMAKR_CORE_CRYPTO_VERSION_MAX),
                           free(serialized_cipher),
-                          "version greater than max supported\n");
+                          "version greater than max supported\n")
 
   // encryption mode
   uint8_t encryption_mode = *(serialized_cipher + current_position);

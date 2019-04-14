@@ -43,7 +43,8 @@ if (PEACEMAKR_BUILD_IOS)
     ")
 endif(PEACEMAKR_BUILD_IOS)
 
-option(PEACEMAKR_BUILD_CPP "Whether to build the C++ bindings" ON)
+# C++-specific stuff #####
+option(PEACEMAKR_BUILD_CPP "Whether to build the C++ bindings" OFF)
 
 if (PEACEMAKR_BUILD_CPP)
     add_subdirectory(cpp)

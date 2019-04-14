@@ -25,7 +25,7 @@ static void asymmetric_sign(const peacemakr_key_t *sender_key,
   EVP_MD_CTX *md_ctx;
   EVP_PKEY *sign_key = peacemakr_key_asymmetric(sender_key);
   EXPECT_NOT_NULL_RET_NONE(
-      sign_key, "can't sign the message with a NULL asymmetric key\n");
+      sign_key, "can't sign the message with a NULL asymmetric key\n")
 
   const EVP_MD *digest_algo = parse_digest(ciphertext_blob_digest_algo(cipher));
 
@@ -112,10 +112,10 @@ void peacemakr_sign(const peacemakr_key_t *sender_key, const plaintext_t *plain,
                     ciphertext_blob_t *cipher) {
 
   EXPECT_NOT_NULL_RET_NONE(sender_key, false,
-                           "Cannot verify with a NULL key\n");
+                           "Cannot verify with a NULL key\n")
   EXPECT_NOT_NULL_RET_NONE(cipher, false,
-                           "Cannot verify with nothing to compare against\n");
-  EXPECT_NOT_NULL_RET_NONE(plain, false, "Cannot verify an empty plaintext\n");
+                           "Cannot verify with nothing to compare against\n")
+  EXPECT_NOT_NULL_RET_NONE(plain, false, "Cannot verify an empty plaintext\n")
 
   switch (peacemakr_key_get_config(sender_key).mode) {
   case SYMMETRIC:
@@ -136,12 +136,12 @@ static bool asymmetric_verify(const peacemakr_key_t *sender_key,
   EVP_PKEY *verif_key = peacemakr_key_asymmetric(sender_key);
   EXPECT_NOT_NULL_RET_VALUE(
       verif_key, false,
-      "can't verify the message with a NULL asymmetric key\n");
+      "can't verify the message with a NULL asymmetric key\n")
 
   const EVP_MD *digest_algo = parse_digest(ciphertext_blob_digest_algo(cipher));
 
   md_ctx = EVP_MD_CTX_new();
-  EXPECT_NOT_NULL_RET_VALUE(md_ctx, false, "md_ctx_new failed\n");
+  EXPECT_NOT_NULL_RET_VALUE(md_ctx, false, "md_ctx_new failed\n")
 
   const buffer_t *stored_digest = ciphertext_blob_signature(cipher);
   size_t digestlen = 0;
@@ -210,7 +210,7 @@ static bool symmetric_verify(const peacemakr_key_t *key,
                      concat_buf, plaintext_len + aad_len, &out_size);
 
   const buffer_t *digest_buf = ciphertext_blob_signature(cipher);
-  size_t stored_size = 0;
+  size_t stored_size = SIZE_T_MAX;
   const uint8_t *stored_hmac = buffer_get_bytes(digest_buf, &stored_size);
 
   if (stored_size != out_size) {
@@ -235,10 +235,10 @@ bool peacemakr_verify(const peacemakr_key_t *sender_key,
                       const plaintext_t *plain, ciphertext_blob_t *cipher) {
 
   EXPECT_NOT_NULL_RET_VALUE(sender_key, false,
-                            "Cannot verify with a NULL key\n");
+                            "Cannot verify with a NULL key\n")
   EXPECT_NOT_NULL_RET_VALUE(cipher, false,
-                            "Cannot verify with nothing to compare against\n");
-  EXPECT_NOT_NULL_RET_VALUE(plain, false, "Cannot verify an empty plaintext\n");
+                            "Cannot verify with nothing to compare against\n")
+  EXPECT_NOT_NULL_RET_VALUE(plain, false, "Cannot verify an empty plaintext\n")
 
   bool success = false;
 

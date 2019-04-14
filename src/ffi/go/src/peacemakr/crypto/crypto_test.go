@@ -159,8 +159,11 @@ func TestAsymmetricEncrypt(t *testing.T) {
 
 				randomDevice := NewRandomDevice()
 
-				key := NewPeacemakrKey(cfg, randomDevice)
+				key := NewPeacemakrKeyAsymmetric(AsymmetricCipher(i), randomDevice)
 				defer key.Destroy()
+
+				key.SetSymmetricCipher(SymmetricCipher(j))
+				key.SetDigestAlgorithm(SHA_512)
 
 				ciphertext, err := Encrypt(key, plaintextIn, randomDevice)
 				if err != nil && len(plaintextIn.Data) == 0 {
@@ -234,6 +237,9 @@ func TestAsymmetricEncryptFromPem(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer pubkey.Destroy()
+
+	pubkey.SetSymmetricCipher(AES_256_GCM)
+	pubkey.SetDigestAlgorithm(SHA_512)
 
 	ciphertext, err := Encrypt(pubkey, plaintextIn, randomDevice)
 	if err != nil && len(plaintextIn.Data) == 0 {
@@ -380,7 +386,7 @@ func TestSymmetricEncrypt(t *testing.T) {
 	for j := AES_128_GCM; j <= CHACHA20_POLY1305; j++ {
 		cfg := CryptoConfig{
 			Mode:             SYMMETRIC,
-			AsymmetricCipher: NONE,
+			AsymmetricCipher: ASYMMETRIC_UNSPECIFIED,
 			SymmetricCipher:  j,
 			DigestAlgorithm:  SHA_512,
 		}
@@ -392,23 +398,25 @@ func TestSymmetricEncrypt(t *testing.T) {
 		var key *PeacemakrKey
 		var err error
 		if j == AES_256_GCM || j == CHACHA20_POLY1305 {
-			masterKey := NewPeacemakrKey(cfg, randomDevice)
-			key, err = masterKey.HKDFKeygen(cfg, []byte("abcdefghijklmnopqrstuvwxyz"))
+			masterKey := NewPeacemakrKeySymmetric(SymmetricCipher(j), randomDevice)
+			key, err = masterKey.HKDFKeygen(SymmetricCipher(j), SHA_512, []byte("abcdefghijklmnopqrstuvwxyz"))
 			if err != nil {
 				t.Fatalf("%v", err)
 			}
 
 			masterKey.Destroy()
 		} else {
-			origKey := NewPeacemakrKey(cfg, randomDevice)
+			origKey := NewPeacemakrKeySymmetric(SymmetricCipher(j), randomDevice)
 			b, err := origKey.Bytes()
 			if err != nil {
 				origKey.Destroy()
 				t.Fatalf("%v", err)
 			}
 
-			key = NewPeacemakrKeyFromBytes(cfg, b)
+			key = NewPeacemakrKeyFromBytes(SymmetricCipher(j), b)
 		}
+
+		key.SetDigestAlgorithm(SHA_512)
 
 		ciphertext, err := Encrypt(key, plaintextIn, randomDevice)
 		if err != nil && len(plaintextIn.Data) == 0 {
@@ -569,8 +577,11 @@ func TestSerialize(t *testing.T) {
 
 					randomDevice := NewRandomDevice()
 
-					key := NewPeacemakrKey(cfg, randomDevice)
+					key := NewPeacemakrKeyAsymmetric(AsymmetricCipher(i), randomDevice)
 					defer key.Destroy()
+
+					key.SetSymmetricCipher(SymmetricCipher(j))
+					key.SetDigestAlgorithm(MessageDigestAlgorithm(k))
 
 					ciphertext, err := Encrypt(key, plaintextIn, randomDevice)
 					if err != nil && len(plaintextIn.Data) == 0 {
@@ -631,24 +642,18 @@ func TestECDHSerialize(t *testing.T) {
 		for k := SHA_224; k <= SHA_512; k++ {
 			for curve := ECDH_P256; curve <= ECDH_P521; curve++ {
 				go func(j, k, curve int) {
-					cfg := CryptoConfig{
-						Mode:             ASYMMETRIC,
-						AsymmetricCipher: AsymmetricCipher(curve),
-						SymmetricCipher:  SymmetricCipher(j),
-						DigestAlgorithm:  MessageDigestAlgorithm(k),
-					}
 
 					plaintextIn := SetUpPlaintext()
 
 					randomDevice := NewRandomDevice()
 
-					myKey := NewPeacemakrKey(cfg, randomDevice)
+					myKey := NewPeacemakrKeyAsymmetric(AsymmetricCipher(curve), randomDevice)
 					defer myKey.Destroy()
 
-					peerKey := NewPeacemakrKey(cfg, randomDevice)
+					peerKey := NewPeacemakrKeyAsymmetric(AsymmetricCipher(curve), randomDevice)
 					defer peerKey.Destroy()
 
-					secKey := myKey.ECDHKeygen(peerKey)
+					secKey := myKey.ECDHKeygen(SymmetricCipher(j), peerKey)
 					defer secKey.Destroy()
 
 					secKeyCfg, err := secKey.Config()
@@ -727,8 +732,11 @@ func TestSignatures(t *testing.T) {
 
 					randomDevice := NewRandomDevice()
 
-					key := NewPeacemakrKey(cfg, randomDevice)
+					key := NewPeacemakrKeyAsymmetric(AsymmetricCipher(i), randomDevice)
 					defer key.Destroy()
+
+					key.SetSymmetricCipher(SymmetricCipher(j))
+					key.SetDigestAlgorithm(MessageDigestAlgorithm(k))
 
 					ciphertext, err := Encrypt(key, plaintextIn, randomDevice)
 					if err != nil && len(plaintextIn.Data) == 0 {

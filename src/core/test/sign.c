@@ -28,7 +28,8 @@ void test_symmetric_algo(symmetric_cipher cipher) {
 
   random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
 
-  peacemakr_key_t *key = peacemakr_key_new(cfg, &rand);
+  peacemakr_key_t *key = peacemakr_key_new_symmetric(cipher, &rand);
+  peacemakr_key_set_digest_algorithm(key, SHA_512);
 
   ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, &plaintext_in, &rand);
   peacemakr_sign(key, &plaintext_in, ciphertext);
@@ -83,11 +84,13 @@ void test_asymmetric_algo(symmetric_cipher cipher,
 
   random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
 
-  peacemakr_key_t *mykey = peacemakr_key_new(cfg, &rand);
-  peacemakr_key_t *peerkey = peacemakr_key_new(cfg, &rand);
+  peacemakr_key_t *mykey = peacemakr_key_new_asymmetric(asymmcipher, &rand);
+  peacemakr_key_set_symmetric_cipher(mykey, cipher);
+  peacemakr_key_t *peerkey = peacemakr_key_new_asymmetric(asymmcipher, &rand);
+  peacemakr_key_set_symmetric_cipher(peerkey, cipher);
   // Set up the key
   peacemakr_key_t *key = (asymmcipher >= ECDH_P256)
-                             ? peacemakr_key_dh_generate(mykey, peerkey)
+                             ? peacemakr_key_dh_generate(cipher, mykey, peerkey)
                              : mykey;
   cfg = peacemakr_key_get_config(key);
 
@@ -142,11 +145,6 @@ void test_symmetric_algo_x_sign(symmetric_cipher cipher) {
   crypto_config_t cfg = {
       .mode = SYMMETRIC, .symm_cipher = cipher, .digest_algorithm = SHA_512};
 
-  crypto_config_t asymm_cfg = {.mode = ASYMMETRIC,
-                               .asymm_cipher = RSA_4096,
-                               .symm_cipher = cipher,
-                               .digest_algorithm = SHA_512};
-
   plaintext_t plaintext_in = {.data = (const unsigned char *)message,
                               .data_len = strlen(message) + 1,
                               .aad = (const unsigned char *)message_aad,
@@ -156,8 +154,10 @@ void test_symmetric_algo_x_sign(symmetric_cipher cipher) {
 
   random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
 
-  peacemakr_key_t *key = peacemakr_key_new(cfg, &rand);
-  peacemakr_key_t *sign_key = peacemakr_key_new(asymm_cfg, &rand);
+  peacemakr_key_t *key = peacemakr_key_new_symmetric(cipher, &rand);
+  peacemakr_key_set_digest_algorithm(key, SHA_512);
+  peacemakr_key_t *sign_key = peacemakr_key_new_asymmetric(RSA_4096, &rand);
+  peacemakr_key_set_digest_algorithm(sign_key, SHA_512);
 
   ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, &plaintext_in, &rand);
   // Sign with asymmetric key

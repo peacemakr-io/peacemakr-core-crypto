@@ -30,10 +30,10 @@ static bool symmetric_encrypt(const peacemakr_key_t *peacemakrkey,
   const buffer_t *key = peacemakr_key_symmetric(peacemakrkey);
 
   EXPECT_NOT_NULL_RET_VALUE(
-      key, false, "can't do symmetric crypto with a NULL symmetric key\n");
+      key, false, "can't do symmetric crypto with a NULL symmetric key\n")
   EXPECT_NOT_NULL_RET_VALUE(
       buffer_get_bytes(key, NULL), false,
-      "can't do symmetric crypto with a NULL symmetric key\n");
+      "can't do symmetric crypto with a NULL symmetric key\n")
 
   const buffer_t *iv = ciphertext_blob_iv(out);
   buffer_t *tag = ciphertext_blob_mutable_tag(out);
@@ -42,7 +42,7 @@ static bool symmetric_encrypt(const peacemakr_key_t *peacemakrkey,
 
   /* Create and initialise the context */
   ctx = EVP_CIPHER_CTX_new();
-  EXPECT_NOT_NULL_RET_VALUE(ctx, false, "cipher_ctx_new failed\n");
+  EXPECT_NOT_NULL_RET_VALUE(ctx, false, "cipher_ctx_new failed\n")
 
   /* Initialize the encryption */
   if (iv != NULL) {
@@ -60,7 +60,7 @@ static bool symmetric_encrypt(const peacemakr_key_t *peacemakrkey,
   /* Handle any AAD */
   if (aad != NULL && aad_len > 0) {
     OPENSSL_CHECK_RET_VALUE(
-        EVP_EncryptUpdate(ctx, NULL, &len, aad, (int)aad_len), ctx, false);
+        EVP_EncryptUpdate(ctx, NULL, &len, aad, (int)aad_len), ctx, false)
 
     // Set the AAD in the CiphertextBlob
     buffer_set_bytes(aad_buf, aad, aad_len);
@@ -80,14 +80,14 @@ static bool symmetric_encrypt(const peacemakr_key_t *peacemakrkey,
    */
   OPENSSL_CHECK_RET_VALUE(
       EVP_EncryptUpdate(ctx, ciphertext, &len, plaintext, (int)plaintext_len),
-      ctx, false);
+      ctx, false)
   ciphertext_len = (size_t)len;
 
   /* Finalise the encryption. Further ciphertext bytes may be written at
    * this stage.
    */
   OPENSSL_CHECK_RET_VALUE(
-      EVP_EncryptFinal_ex(ctx, ciphertext + ciphertext_len, &len), ctx, false);
+      EVP_EncryptFinal_ex(ctx, ciphertext + ciphertext_len, &len), ctx, false)
   ciphertext_len += len;
   buffer_set_size(ciphertext_buf, ciphertext_len);
 
@@ -99,7 +99,7 @@ static bool symmetric_encrypt(const peacemakr_key_t *peacemakrkey,
 
       OPENSSL_CHECK_RET_VALUE(
           EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, (int)taglen, tag_buf),
-          ctx, false);
+          ctx, false)
     }
   }
 
@@ -120,10 +120,10 @@ static bool symmetric_decrypt(const peacemakr_key_t *peacemakrkey,
   const buffer_t *key = peacemakr_key_symmetric(peacemakrkey);
 
   EXPECT_NOT_NULL_RET_VALUE(
-      key, false, "can't do symmetric crypto with a NULL symmetric key\n");
+      key, false, "can't do symmetric crypto with a NULL symmetric key\n")
   EXPECT_NOT_NULL_RET_VALUE(
       buffer_get_bytes(key, NULL), false,
-      "can't do symmetric crypto with a NULL symmetric key\n");
+      "can't do symmetric crypto with a NULL symmetric key\n")
 
   const buffer_t *ciphertext = ciphertext_blob_ciphertext(in);
   const unsigned char *ciphertext_buf = buffer_get_bytes(ciphertext, NULL);
@@ -145,25 +145,25 @@ static bool symmetric_decrypt(const peacemakr_key_t *peacemakrkey,
 
   /* Create and initialise the context */
   ctx = EVP_CIPHER_CTX_new();
-  EXPECT_NOT_NULL_RET_VALUE(ctx, false, "cipher_ctx_new failed\n");
+  EXPECT_NOT_NULL_RET_VALUE(ctx, false, "cipher_ctx_new failed\n")
 
   /* Initialize the decryption */
   if (iv != NULL) {
     OPENSSL_CHECK_RET_VALUE(EVP_DecryptInit_ex(ctx, cipher, NULL,
                                                buffer_get_bytes(key, NULL),
                                                buffer_get_bytes(iv, NULL)),
-                            ctx, false);
+                            ctx, false)
   } else {
     OPENSSL_CHECK_RET_VALUE(EVP_DecryptInit_ex(ctx, cipher, NULL,
                                                buffer_get_bytes(key, NULL),
                                                NULL),
-                            ctx, false);
+                            ctx, false)
   }
 
   /* Handle any AAD */
   if (aad_buf != NULL && aad_len > 0) {
     OPENSSL_CHECK_RET_VALUE(
-        EVP_DecryptUpdate(ctx, NULL, &len, aad_buf, (int)aad_len), ctx, false);
+        EVP_DecryptUpdate(ctx, NULL, &len, aad_buf, (int)aad_len), ctx, false)
   }
 
   /* Now set up to do the actual decryption */
@@ -176,13 +176,13 @@ static bool symmetric_decrypt(const peacemakr_key_t *peacemakrkey,
   OPENSSL_CHECK_RET_VALUE(EVP_DecryptUpdate(ctx, plaintext_buf, &len,
                                             ciphertext_buf,
                                             (int)ciphertext_len),
-                          ctx, false);
+                          ctx, false)
   plaintext_len = (size_t)len;
 
   if (taglen > 0 && tag_buf != NULL) {
     OPENSSL_CHECK_RET_VALUE(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
                                                 (int)taglen, (void *)tag_buf),
-                            ctx, false);
+                            ctx, false)
   }
 
   /* Finalise the decryption. */
@@ -220,13 +220,13 @@ static bool asymmetric_encrypt(const peacemakr_key_t *pub_key,
 
   EVP_PKEY *pkey = peacemakr_key_asymmetric(pub_key);
   EXPECT_NOT_NULL_RET_VALUE(
-      pkey, false, "can't do asymmetric crypto with a NULL asymmetric key\n");
+      pkey, false, "can't do asymmetric crypto with a NULL asymmetric key\n")
 
   buffer_t *tag = ciphertext_blob_mutable_tag(out);
 
   /* Create and initialise the context */
   ctx = EVP_CIPHER_CTX_new();
-  EXPECT_NOT_NULL_RET_VALUE(ctx, false, "cipher_ctx_new failed\n");
+  EXPECT_NOT_NULL_RET_VALUE(ctx, false, "cipher_ctx_new failed\n")
 
   buffer_t *encrypted_key = ciphertext_blob_mutable_encrypted_key(out);
   const size_t keylen = buffer_get_size(encrypted_key);
@@ -323,7 +323,7 @@ static bool asymmetric_decrypt(const peacemakr_key_t *pkey,
   EVP_PKEY *priv_key = peacemakr_key_asymmetric(pkey);
   EXPECT_NOT_NULL_RET_VALUE(
       priv_key, false,
-      "can't do asymmetric crypto with a NULL asymmetric key\n");
+      "can't do asymmetric crypto with a NULL asymmetric key\n")
 
   const EVP_CIPHER *cipher = parse_cipher(ciphertext_blob_symm_cipher(in));
 
@@ -355,7 +355,7 @@ static bool asymmetric_decrypt(const peacemakr_key_t *pkey,
 
   /* Create and initialise the context */
   ctx = EVP_CIPHER_CTX_new();
-  EXPECT_NOT_NULL_RET_VALUE(ctx, false, "cipher_ctx_new failed\n");
+  EXPECT_NOT_NULL_RET_VALUE(ctx, false, "cipher_ctx_new failed\n")
 
   /* Initialise the decryption operation. The asymmetric private key is
    * provided and priv_key, whilst the encrypted session key is held in
@@ -444,13 +444,13 @@ ciphertext_blob_t *peacemakr_encrypt(const peacemakr_key_t *recipient_key,
                                      const plaintext_t *plain,
                                      random_device_t *rand) {
 
-  EXPECT_NOT_NULL_RET(recipient_key, "recipient key was null\n");
-  EXPECT_NOT_NULL_RET(plain, "plain was null\n");
-  EXPECT_NOT_NULL_RET(rand, "rand was null\n");
+  EXPECT_NOT_NULL_RET(recipient_key, "recipient key was null\n")
+  EXPECT_NOT_NULL_RET(plain, "plain was null\n")
+  EXPECT_NOT_NULL_RET(rand, "rand was null\n")
   EXPECT_TRUE_RET(plain->data_len <= INT_MAX,
-                  "Data was too big, needs to be broken up\n");
+                  "Data was too big, needs to be broken up\n")
   EXPECT_TRUE_RET(plain->aad_len <= INT_MAX,
-                  "AAD was too big, needs to be broken up\n");
+                  "AAD was too big, needs to be broken up\n")
 
   if (plain->data == NULL && plain->data_len <= 0) {
     PEACEMAKR_LOG("No data to encrypt\n");
@@ -467,7 +467,7 @@ ciphertext_blob_t *peacemakr_encrypt(const peacemakr_key_t *recipient_key,
   }
 
   const EVP_CIPHER *cipher = parse_cipher(cfg.symm_cipher);
-  EXPECT_NOT_NULL_RET(cipher, "parsing openssl cipher failed\n");
+  EXPECT_NOT_NULL_RET(cipher, "parsing openssl cipher failed\n")
 
   const int cipher_block_size = EVP_CIPHER_block_size(cipher);
 
@@ -483,7 +483,7 @@ ciphertext_blob_t *peacemakr_encrypt(const peacemakr_key_t *recipient_key,
   size_t ciphertext_len = plain->data_len + cipher_block_size - 1;
 
   EXPECT_TRUE_RET((ciphertext_len != 0), "data had length: %d\n",
-                  plain->data_len);
+                  plain->data_len)
 
   // Just initialize the signature buffer, it'll get resized later during
   // sign/verify
@@ -508,7 +508,7 @@ ciphertext_blob_t *peacemakr_encrypt(const peacemakr_key_t *recipient_key,
   }
   }
 
-  EXPECT_TRUE_RET(success, "encryption failed\n");
+  EXPECT_TRUE_RET(success, "encryption failed\n")
 
   return out;
 }
@@ -516,9 +516,9 @@ ciphertext_blob_t *peacemakr_encrypt(const peacemakr_key_t *recipient_key,
 decrypt_code peacemakr_decrypt(const peacemakr_key_t *recipient_key,
                                ciphertext_blob_t *cipher, plaintext_t *plain) {
 
-  EXPECT_NOT_NULL_RET_VALUE(plain, false, "plain was null\n");
-  EXPECT_NOT_NULL_RET_VALUE(cipher, false, "cipher was null\n");
-  EXPECT_NOT_NULL_RET_VALUE(recipient_key, false, "recipient_key was null\n");
+  EXPECT_NOT_NULL_RET_VALUE(plain, false, "plain was null\n")
+  EXPECT_NOT_NULL_RET_VALUE(cipher, false, "cipher was null\n")
+  EXPECT_NOT_NULL_RET_VALUE(recipient_key, false, "recipient_key was null\n")
 
   bool success = false;
   buffer_t *plaintext = NULL, *aad = NULL;
@@ -582,12 +582,12 @@ decrypt_code peacemakr_decrypt(const peacemakr_key_t *recipient_key,
 
 bool peacemakr_get_unverified_aad(ciphertext_blob_t *cipher,
                                   plaintext_t *plain) {
-  EXPECT_NOT_NULL_RET_VALUE(plain, false, "plain was null\n");
-  EXPECT_NOT_NULL_RET_VALUE(cipher, false, "cipher was null\n");
+  EXPECT_NOT_NULL_RET_VALUE(plain, false, "plain was null\n")
+  EXPECT_NOT_NULL_RET_VALUE(cipher, false, "cipher was null\n")
 
   const buffer_t *aad_buf = ciphertext_blob_aad(cipher);
 
-  EXPECT_NOT_NULL_RET_VALUE(aad_buf, true, "No AAD in ciphertext\n");
+  EXPECT_NOT_NULL_RET_VALUE(aad_buf, true, "No AAD in ciphertext\n")
 
   const unsigned char *tmp_aad = buffer_get_bytes(aad_buf, &plain->aad_len);
   plain->aad = calloc(plain->aad_len, sizeof(unsigned char));

@@ -41,7 +41,7 @@ ciphertext_blob_new(const crypto_config_t cfg, const size_t iv_len,
                     const size_t tag_len, const size_t aad_len,
                     const size_t ciphertext_len, const size_t digest_len) {
   ciphertext_blob_t *out = malloc(sizeof(ciphertext_blob_t));
-  EXPECT_NOT_NULL_RET(out, "malloc returned nullptr\n");
+  EXPECT_NOT_NULL_RET(out, "malloc returned nullptr\n")
 
   out->m_encrypted_key_ = NULL;
   out->m_iv_ = NULL;
@@ -62,19 +62,19 @@ ciphertext_blob_new(const crypto_config_t cfg, const size_t iv_len,
     break;
   case ASYMMETRIC:
     switch (cfg.asymm_cipher) {
-    case NONE:
+    case ASYMMETRIC_UNSPECIFIED:
       break;
     case RSA_2048:
       out->m_encrypted_key_ = buffer_new(256);
       EXPECT_NOT_NULL_CLEANUP_RET(out->m_encrypted_key_,
                                   ciphertext_blob_free(out),
-                                  "creation of encrypted key buffer failed\n");
+                                  "creation of encrypted key buffer failed\n")
       break;
     case RSA_4096:
       out->m_encrypted_key_ = buffer_new(512);
       EXPECT_NOT_NULL_CLEANUP_RET(out->m_encrypted_key_,
                                   ciphertext_blob_free(out),
-                                  "creation of encrypted key buffer failed\n");
+                                  "creation of encrypted key buffer failed\n")
       break;
     default:
       break;
@@ -86,23 +86,23 @@ ciphertext_blob_new(const crypto_config_t cfg, const size_t iv_len,
   out->m_iv_ = buffer_new(iv_len);
   EXPECT_TRUE_CLEANUP_RET((out->m_iv_ != NULL || iv_len == 0),
                           ciphertext_blob_free(out),
-                          "creation of iv buffer failed\n");
+                          "creation of iv buffer failed\n")
   out->m_tag_ = buffer_new(tag_len);
   EXPECT_TRUE_CLEANUP_RET((out->m_tag_ != NULL || tag_len == 0),
                           ciphertext_blob_free(out),
-                          "creation of tag buffer failed\n");
+                          "creation of tag buffer failed\n")
   out->m_aad_ = buffer_new(aad_len);
   EXPECT_TRUE_CLEANUP_RET((out->m_aad_ != NULL || aad_len == 0),
                           ciphertext_blob_free(out),
-                          "creation of aad buffer failed\n");
+                          "creation of aad buffer failed\n")
   out->m_ciphertext_ = buffer_new(ciphertext_len);
   EXPECT_TRUE_CLEANUP_RET((out->m_ciphertext_ != NULL || ciphertext_len == 0),
                           ciphertext_blob_free(out),
-                          "creation of ciphertext buffer failed\n");
+                          "creation of ciphertext buffer failed\n")
   out->m_signature_ = buffer_new(digest_len);
   EXPECT_TRUE_CLEANUP_RET((out->m_signature_ != NULL || digest_len == 0),
                           ciphertext_blob_free(out),
-                          "creation of digest buffer failed\n");
+                          "creation of digest buffer failed\n")
 
   return out;
 }
@@ -112,7 +112,7 @@ ciphertext_blob_from_buffers(const crypto_config_t cfg, buffer_t *encrypted_key,
                              buffer_t *iv, buffer_t *tag, buffer_t *aad,
                              buffer_t *ciphertext, buffer_t *signature) {
   ciphertext_blob_t *out = malloc(sizeof(ciphertext_blob_t));
-  EXPECT_NOT_NULL_RET(out, "malloc returned nullptr\n");
+  EXPECT_NOT_NULL_RET(out, "malloc returned nullptr\n")
   // set constants
   out->m_version_ = PEACEMAKR_CORE_CRYPTO_VERSION;
   out->m_encrypted_key_ = NULL;
@@ -137,7 +137,7 @@ ciphertext_blob_from_buffers(const crypto_config_t cfg, buffer_t *encrypted_key,
 }
 
 void ciphertext_blob_free(ciphertext_blob_t *ciphertext) {
-  EXPECT_NOT_NULL_RET_NONE(ciphertext, "ciphertext was NULL\n");
+  EXPECT_NOT_NULL_RET_NONE(ciphertext, "ciphertext was NULL\n")
 
   buffer_free(ciphertext->m_encrypted_key_);
   buffer_free(ciphertext->m_iv_);
@@ -151,85 +151,85 @@ void ciphertext_blob_free(ciphertext_blob_t *ciphertext) {
 
 void ciphertext_blob_set_version(ciphertext_blob_t *ciphertext,
                                  uint32_t version) {
-  EXPECT_NOT_NULL_RET_NONE(ciphertext, "ciphertext was NULL\n");
+  EXPECT_NOT_NULL_RET_NONE(ciphertext, "ciphertext was NULL\n")
   ciphertext->m_version_ = version;
 }
 
 const uint32_t ciphertext_blob_version(const ciphertext_blob_t *ciphertext) {
-  EXPECT_NOT_NULL_RET_VALUE(ciphertext, 0, "ciphertext was NULL\n");
+  EXPECT_NOT_NULL_RET_VALUE(ciphertext, 0, "ciphertext was NULL\n")
   return ciphertext->m_version_;
 }
 
 void ciphertext_blob_init_iv(ciphertext_blob_t *ciphertext,
                              random_device_t *rng) {
-  EXPECT_NOT_NULL_RET_NONE(ciphertext, "ciphertext was NULL\n");
+  EXPECT_NOT_NULL_RET_NONE(ciphertext, "ciphertext was NULL\n")
   buffer_init_rand(ciphertext->m_iv_, rng);
 }
 
 const buffer_t *ciphertext_blob_iv(const ciphertext_blob_t *ciphertext) {
-  EXPECT_NOT_NULL_RET(ciphertext, "ciphertext was NULL\n");
+  EXPECT_NOT_NULL_RET(ciphertext, "ciphertext was NULL\n")
   return ciphertext->m_iv_;
 }
 
 void ciphertext_blob_set_iv(ciphertext_blob_t *ciphertext,
                             const unsigned char *iv, size_t ivlen) {
-  EXPECT_NOT_NULL_RET_NONE(ciphertext, "ciphertext was NULL\n");
+  EXPECT_NOT_NULL_RET_NONE(ciphertext, "ciphertext was NULL\n")
   EXPECT_NOT_NULL_RET_NONE(ciphertext->m_iv_,
-                           "iv buffer for this ciphertext was NULL\n");
-  EXPECT_NOT_NULL_RET_NONE(iv, "ciphertext was NULL\n");
-  EXPECT_TRUE_RET_NONE((ivlen != 0), "ivlen was 0\n");
+                           "iv buffer for this ciphertext was NULL\n")
+  EXPECT_NOT_NULL_RET_NONE(iv, "ciphertext was NULL\n")
+  EXPECT_TRUE_RET_NONE((ivlen != 0), "ivlen was 0\n")
   buffer_set_bytes(ciphertext->m_iv_, iv, ivlen);
 }
 
 buffer_t *ciphertext_blob_mutable_encrypted_key(ciphertext_blob_t *ciphertext) {
-  EXPECT_NOT_NULL_RET(ciphertext, "ciphertext was NULL\n");
+  EXPECT_NOT_NULL_RET(ciphertext, "ciphertext was NULL\n")
   return ciphertext->m_encrypted_key_;
 }
 
 const buffer_t *
 ciphertext_blob_encrypted_key(const ciphertext_blob_t *ciphertext) {
-  EXPECT_NOT_NULL_RET(ciphertext, "ciphertext was NULL\n");
+  EXPECT_NOT_NULL_RET(ciphertext, "ciphertext was NULL\n")
   return ciphertext->m_encrypted_key_;
 }
 
 buffer_t *ciphertext_blob_mutable_tag(ciphertext_blob_t *ciphertext) {
-  EXPECT_NOT_NULL_RET(ciphertext, "ciphertext was NULL\n");
+  EXPECT_NOT_NULL_RET(ciphertext, "ciphertext was NULL\n")
   return ciphertext->m_tag_;
 }
 
 const buffer_t *ciphertext_blob_tag(const ciphertext_blob_t *ciphertext) {
-  EXPECT_NOT_NULL_RET(ciphertext, "ciphertext was NULL\n");
+  EXPECT_NOT_NULL_RET(ciphertext, "ciphertext was NULL\n")
   return ciphertext->m_tag_;
 }
 
 buffer_t *ciphertext_blob_mutable_aad(ciphertext_blob_t *ciphertext) {
-  EXPECT_NOT_NULL_RET(ciphertext, "ciphertext was NULL\n");
+  EXPECT_NOT_NULL_RET(ciphertext, "ciphertext was NULL\n")
   return ciphertext->m_aad_;
 }
 
 const buffer_t *ciphertext_blob_aad(const ciphertext_blob_t *ciphertext) {
-  EXPECT_NOT_NULL_RET(ciphertext, "ciphertext was NULL\n");
+  EXPECT_NOT_NULL_RET(ciphertext, "ciphertext was NULL\n")
   return ciphertext->m_aad_;
 }
 
 buffer_t *ciphertext_blob_mutable_ciphertext(ciphertext_blob_t *ciphertext) {
-  EXPECT_NOT_NULL_RET(ciphertext, "ciphertext was NULL\n");
+  EXPECT_NOT_NULL_RET(ciphertext, "ciphertext was NULL\n")
   return ciphertext->m_ciphertext_;
 }
 
 const buffer_t *
 ciphertext_blob_ciphertext(const ciphertext_blob_t *ciphertext) {
-  EXPECT_NOT_NULL_RET(ciphertext, "ciphertext was NULL\n");
+  EXPECT_NOT_NULL_RET(ciphertext, "ciphertext was NULL\n")
   return ciphertext->m_ciphertext_;
 }
 
 buffer_t *ciphertext_blob_mutable_signature(ciphertext_blob_t *ciphertext) {
-  EXPECT_NOT_NULL_RET(ciphertext, "ciphertext was NULL\n");
+  EXPECT_NOT_NULL_RET(ciphertext, "ciphertext was NULL\n")
   return ciphertext->m_signature_;
 }
 
 const buffer_t *ciphertext_blob_signature(const ciphertext_blob_t *ciphertext) {
-  EXPECT_NOT_NULL_RET(ciphertext, "ciphertext was NULL\n");
+  EXPECT_NOT_NULL_RET(ciphertext, "ciphertext was NULL\n")
   return ciphertext->m_signature_;
 }
 

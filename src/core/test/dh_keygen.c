@@ -17,10 +17,6 @@ const char *message_aad = "And I'm AAD";                       // 11 + 1
 
 void test_symmetric_algo(symmetric_cipher symm_cipher,
                          asymmetric_cipher curve) {
-  crypto_config_t cfg = {.mode = ASYMMETRIC,
-                         .asymm_cipher = curve,
-                         .symm_cipher = symm_cipher,
-                         .digest_algorithm = SHA_512};
 
   plaintext_t plaintext_in = {.data = (const unsigned char *)message,
                               .data_len = strlen(message) + 1,
@@ -31,10 +27,10 @@ void test_symmetric_algo(symmetric_cipher symm_cipher,
 
   random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
 
-  peacemakr_key_t *my_key = peacemakr_key_new(cfg, &rand);
-  peacemakr_key_t *peer_key = peacemakr_key_new(cfg, &rand);
+  peacemakr_key_t *my_key = peacemakr_key_new_asymmetric(curve, &rand);
+  peacemakr_key_t *peer_key = peacemakr_key_new_asymmetric(curve, &rand);
 
-  peacemakr_key_t *symm_key = peacemakr_key_dh_generate(my_key, peer_key);
+  peacemakr_key_t *symm_key = peacemakr_key_dh_generate(symm_cipher, my_key, peer_key);
 
   ciphertext_blob_t *ciphertext =
       peacemakr_encrypt(symm_key, &plaintext_in, &rand);

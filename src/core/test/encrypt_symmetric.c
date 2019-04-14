@@ -16,8 +16,6 @@ const char *message = "Hello, world! I'm testing encryption."; // 37 + 1
 const char *message_aad = "And I'm AAD";                       // 11 + 1
 
 void test_symmetric_algo(symmetric_cipher cipher) {
-  crypto_config_t cfg = {
-      .mode = SYMMETRIC, .symm_cipher = cipher, .digest_algorithm = SHA_512};
 
   plaintext_t plaintext_in = {.data = (const unsigned char *)message,
                               .data_len = strlen(message) + 1,
@@ -28,13 +26,13 @@ void test_symmetric_algo(symmetric_cipher cipher) {
 
   random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
 
-  peacemakr_key_t *original_key = peacemakr_key_new(cfg, &rand);
+  peacemakr_key_t *original_key = peacemakr_key_new_symmetric(cipher, &rand);
 
   uint8_t *key_bytes = NULL;
   size_t key_size = 0;
   peacemakr_key_get_bytes(original_key, &key_bytes, &key_size);
 
-  peacemakr_key_t *key = peacemakr_key_new_bytes(cfg, key_bytes, key_size);
+  peacemakr_key_t *key = peacemakr_key_new_bytes(cipher, key_bytes, key_size);
   free(key_bytes);
 
   ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, &plaintext_in, &rand);
@@ -57,19 +55,17 @@ void test_symmetric_algo(symmetric_cipher cipher) {
 
 void test_password_symmetric_algo(symmetric_cipher cipher,
                                   message_digest_algorithm digest) {
-  crypto_config_t cfg = {
-      .mode = SYMMETRIC, .symm_cipher = cipher, .digest_algorithm = digest};
 
-  size_t num_iters = rand() % 128;
+  size_t num_iters = rand() % 50000;
 
   peacemakr_key_t *key = peacemakr_key_new_from_password(
-      cfg, (uint8_t *)"abcdefghijk", 11, (uint8_t *)"123456789", 9, num_iters);
+      cipher, digest, (uint8_t *)"abcdefghijk", 11, (uint8_t *)"123456789", 9, num_iters);
 
   peacemakr_key_t *key_dup = peacemakr_key_new_from_password(
-      cfg, (uint8_t *)"abcdefghijk", 11, (uint8_t *)"123456789", 9, num_iters);
+      cipher, digest, (uint8_t *)"abcdefghijk", 11, (uint8_t *)"123456789", 9, num_iters);
 
   peacemakr_key_t *key2 = peacemakr_key_new_from_password(
-      cfg, (uint8_t *)"abcdefghijl", 11, (uint8_t *)"123456789", 9, num_iters);
+      cipher, digest, (uint8_t *)"abcdefghijl", 11, (uint8_t *)"123456789", 9, num_iters);
 
   uint8_t *key_buf = NULL;
   size_t key_buf_len = 0;
@@ -99,8 +95,6 @@ void test_password_symmetric_algo(symmetric_cipher cipher,
 void test_master_key_symmetric_algo(peacemakr_key_t *master_key,
                                     symmetric_cipher cipher,
                                     message_digest_algorithm digest) {
-  crypto_config_t cfg = {
-      .mode = SYMMETRIC, .symm_cipher = cipher, .digest_algorithm = digest};
 
   plaintext_t plaintext_in = {.data = (const unsigned char *)message,
                               .data_len = strlen(message) + 1,
@@ -112,7 +106,7 @@ void test_master_key_symmetric_algo(peacemakr_key_t *master_key,
   random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
 
   peacemakr_key_t *key = peacemakr_key_new_from_master(
-      cfg, master_key, (uint8_t *)"abcdefghijk", 11);
+      cipher, digest, master_key, (uint8_t *)"abcdefghijk", 11);
 
   ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, &plaintext_in, &rand);
   assert(ciphertext != NULL);
@@ -134,7 +128,7 @@ void test_master_key_symmetric_algo(peacemakr_key_t *master_key,
 void test_uninit_crash() {
   crypto_config_t cfg = {.mode = SYMMETRIC,
                          .symm_cipher = AES_128_GCM,
-                         .asymm_cipher = NONE,
+                         .asymm_cipher = ASYMMETRIC_UNSPECIFIED,
                          .digest_algorithm = SHA_256};
 
   plaintext_t plaintext_in = {.data = (const unsigned char *)"Hello world!",
@@ -146,7 +140,8 @@ void test_uninit_crash() {
 
   random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
 
-  peacemakr_key_t *key = peacemakr_key_new(cfg, &rand);
+  peacemakr_key_t *key = peacemakr_key_new_symmetric(AES_128_GCM, &rand);
+  peacemakr_key_set_digest_algorithm(key, SHA_256);
 
   ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, &plaintext_in, &rand);
   assert(ciphertext != NULL);
@@ -184,8 +179,6 @@ void test_uninit_crash() {
 }
 
 void test_wrong_key(symmetric_cipher cipher) {
-  crypto_config_t cfg = {
-      .mode = SYMMETRIC, .symm_cipher = cipher, .digest_algorithm = SHA_512};
 
   plaintext_t plaintext_in = {.data = (const unsigned char *)message,
                               .data_len = strlen(message) + 1,
@@ -196,7 +189,7 @@ void test_wrong_key(symmetric_cipher cipher) {
 
   random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
 
-  peacemakr_key_t *original_key = peacemakr_key_new(cfg, &rand);
+  peacemakr_key_t *original_key = peacemakr_key_new_symmetric(cipher, &rand);
 
   ciphertext_blob_t *ciphertext =
       peacemakr_encrypt(original_key, &plaintext_in, &rand);
@@ -207,7 +200,7 @@ void test_wrong_key(symmetric_cipher cipher) {
   peacemakr_key_get_bytes(original_key, &key_bytes, &key_size);
   key_bytes[0] += 1;
 
-  peacemakr_key_t *key = peacemakr_key_new_bytes(cfg, key_bytes, key_size);
+  peacemakr_key_t *key = peacemakr_key_new_bytes(cipher, key_bytes, key_size);
   free(key_bytes);
 
   decrypt_code success = peacemakr_decrypt(key, ciphertext, &plaintext_out);
@@ -231,13 +224,9 @@ int main() {
     test_wrong_key(i);
   }
 
-  crypto_config_t cfg = {.mode = SYMMETRIC,
-                         .symm_cipher = AES_256_GCM,
-                         .digest_algorithm = SHA_512};
-
   random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
 
-  peacemakr_key_t *master_key = peacemakr_key_new(cfg, &rand);
+  peacemakr_key_t *master_key = peacemakr_key_new_symmetric(AES_256_GCM, &rand);
 
   for (int i = AES_128_GCM; i <= CHACHA20_POLY1305; ++i) {
     for (int j = SHA_224; j <= SHA_512; ++j) {

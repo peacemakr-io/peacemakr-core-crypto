@@ -31,7 +31,9 @@ void test_serialize(symmetric_cipher symm_cipher, asymmetric_cipher cipher,
 
   random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
 
-  peacemakr_key_t *key = peacemakr_key_new(cfg, &rand);
+  peacemakr_key_t *key = peacemakr_key_new_asymmetric(cipher, &rand);
+  peacemakr_key_set_symmetric_cipher(key, symm_cipher);
+  peacemakr_key_set_digest_algorithm(key, digest);
 
   ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, &plaintext_in, &rand);
   assert(ciphertext != NULL);
@@ -64,6 +66,49 @@ void test_serialize(symmetric_cipher symm_cipher, asymmetric_cipher cipher,
   peacemakr_key_free(key);
 }
 
+void test_default_settings_serialize(asymmetric_cipher cipher) {
+  plaintext_t plaintext_in = {.data = (const unsigned char *)message,
+          .data_len = strlen(message) + 1,
+          .aad = (const unsigned char *)message_aad,
+          .aad_len = strlen(message_aad) + 1};
+
+  plaintext_t plaintext_out;
+
+  random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
+
+  peacemakr_key_t *key = peacemakr_key_new_asymmetric(cipher, &rand);
+
+  ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, &plaintext_in, &rand);
+  assert(ciphertext != NULL);
+
+  size_t out_size = 0;
+  uint8_t *serialized = peacemakr_serialize(ciphertext, &out_size);
+  assert(serialized != NULL);
+
+  crypto_config_t out_cfg;
+
+  ciphertext_blob_t *deserialized =
+          peacemakr_deserialize(serialized, out_size, &out_cfg);
+  decrypt_code success = peacemakr_decrypt(key, deserialized, &plaintext_out);
+
+  assert((out_cfg.mode == ASYMMETRIC) &&
+         (out_cfg.asymm_cipher == cipher) &&
+         (out_cfg.symm_cipher == peacemakr_get_default_symmetric_algorithm()) &&
+         (out_cfg.digest_algorithm == peacemakr_get_default_digest_algorithm()));
+
+  assert(success == DECRYPT_SUCCESS);
+  free(serialized);
+
+  assert(strncmp((const char *)plaintext_out.data,
+                 (const char *)plaintext_in.data, plaintext_in.data_len) == 0);
+  free((void *)plaintext_out.data);
+  assert(strncmp((const char *)plaintext_out.aad,
+                 (const char *)plaintext_in.aad, plaintext_in.data_len) == 0);
+  free((void *)plaintext_out.aad);
+
+  peacemakr_key_free(key);
+}
+
 int main() {
   if (!peacemakr_init()) {
     return 1;
@@ -75,5 +120,6 @@ int main() {
         test_serialize(j, i, k);
       }
     }
+    test_default_settings_serialize(i);
   }
 }
