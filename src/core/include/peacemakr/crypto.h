@@ -196,7 +196,8 @@ peacemakr_key_new_from_master(symmetric_cipher cipher,
  * function applies only to asymmetric encryption provided by this library,
  * and the pem file must be of a public key. Uses \p cfg to configure
  * the key being created. \returns A newly created peacemakr key for use
- * in other library calls.
+ * in other library calls. \p symm_cipher is ignored if the asymmetric
+ * algorithm specified is not an RSA algorithm.
  */
 peacemakr_key_t *peacemakr_key_new_pem_pub(asymmetric_cipher cipher,
                                            symmetric_cipher symm_cipher,
@@ -207,7 +208,8 @@ peacemakr_key_t *peacemakr_key_new_pem_pub(asymmetric_cipher cipher,
  * function applies only to asymmetric encryption provided by this library,
  * and the pem file must be of a private key. Uses \p cfg to configure
  * the key being created. \returns A newly created peacemakr key for use
- * in other library calls.
+ * in other library calls. \p symm_cipher is ignored if the asymmetric
+ * algorithm specified is not an RSA algorithm.
  */
 peacemakr_key_t *peacemakr_key_new_pem_priv(asymmetric_cipher cipher,
                                             symmetric_cipher symm_cipher,
@@ -236,7 +238,7 @@ bool peacemakr_key_priv_to_pem(const peacemakr_key_t *key, char **buf,
                                size_t *bufsize);
 
 /**
- * @copydoc PeacemakrKey_priv_to_pem
+ * @copydoc peacemakr_key_priv_to_pem
  */
 bool peacemakr_key_pub_to_pem(const peacemakr_key_t *key, char **buf,
                               size_t *bufsize);
