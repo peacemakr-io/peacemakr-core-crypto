@@ -248,7 +248,8 @@ ciphertext_blob_digest_algo(const ciphertext_blob_t *ciphertext) {
   return ciphertext->m_digest_algorithm_;
 }
 
-void ciphertext_blob_set_digest_algo(ciphertext_blob_t *ciphertext, message_digest_algorithm digest) {
+void ciphertext_blob_set_digest_algo(ciphertext_blob_t *ciphertext,
+                                     message_digest_algorithm digest) {
   ciphertext->m_digest_algorithm_ = digest;
 }
 

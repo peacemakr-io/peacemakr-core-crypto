@@ -97,8 +97,8 @@ void symmetric_sign(const peacemakr_key_t *key, const uint8_t *plaintext,
 
   size_t out_size = 0;
   uint8_t *hmac =
-      peacemakr_hmac(ciphertext_blob_digest_algo(cipher), key,
-                     concat_buf, plaintext_len + aad_len, &out_size);
+      peacemakr_hmac(ciphertext_blob_digest_algo(cipher), key, concat_buf,
+                     plaintext_len + aad_len, &out_size);
 
   buffer_t *digest_buf = ciphertext_blob_mutable_signature(cipher);
   buffer_set_size(digest_buf, out_size);
@@ -209,8 +209,8 @@ static bool symmetric_verify(const peacemakr_key_t *key,
 
   size_t out_size = 0;
   uint8_t *hmac =
-      peacemakr_hmac(ciphertext_blob_digest_algo(cipher), key,
-                     concat_buf, plaintext_len + aad_len, &out_size);
+      peacemakr_hmac(ciphertext_blob_digest_algo(cipher), key, concat_buf,
+                     plaintext_len + aad_len, &out_size);
 
   const buffer_t *digest_buf = ciphertext_blob_signature(cipher);
   size_t stored_size = SIZE_MAX;

@@ -467,7 +467,8 @@ ciphertext_blob_t *peacemakr_encrypt(const peacemakr_key_t *recipient_key,
   }
 
   if (cfg.symm_cipher == SYMMETRIC_UNSPECIFIED) {
-    PEACEMAKR_ERROR("Unable to encrypt a message without a symmetric algorithm specified in the recipient key\n");
+    PEACEMAKR_ERROR("Unable to encrypt a message without a symmetric algorithm "
+                    "specified in the recipient key\n");
     return NULL;
   }
 

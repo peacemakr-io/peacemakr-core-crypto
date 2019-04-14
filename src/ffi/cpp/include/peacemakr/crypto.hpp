@@ -64,29 +64,30 @@ private:
  */
 class Key {
 public:
-  /**
-   * Constructors for Key corresponding to:
-   * 1. peacemakr_key_t *PeacemakrKey_new(crypto_config_t, random_device_t *)
-   * 2. peacemakr_key_t *PeacemakrKey_new_bytes(crypto_config_t, const uint8_t
-   * *)
-   * 3. peacemakr_key_t *PeacemakrKey_new_pem_pub(crypto_config_t, const char *,
-   * size_t)
-   * 4. peacemakr_key_t *PeacemakrKey_new_pem_priv(crypto_config_t, const char
-   * *, size_t)
-   *
-   * 3 can be used by passing in \p priv as false, and 4 is with \p priv true.
-   */
-  //!\{
-  Key(crypto_config_t cfg, RandomDevice &rand);
-  Key(crypto_config_t cfg, const uint8_t *bytes, const size_t num);
-  Key(crypto_config_t cfg, const std::vector<uint8_t> &bytes);
-  Key(crypto_config_t cfg, const Key &master, const uint8_t *bytes,
-      const size_t num);
-  Key(crypto_config_t cfg, const Key &master,
-      const std::vector<uint8_t> &bytes);
-  Key(crypto_config_t cfg, const std::string &pem, bool priv);
-  Key(const Key &myKey, const Key &peer);
-  //!\}
+  Key(asymmetric_cipher asymm_cipher, symmetric_cipher symm_cipher,
+      RandomDevice &rand);
+  Key(symmetric_cipher symm_cipher, RandomDevice &rand);
+
+  Key(symmetric_cipher cipher, const uint8_t *bytes, const size_t num);
+  Key(symmetric_cipher cipher, const std::vector<uint8_t> &bytes);
+
+  Key(symmetric_cipher cipher, message_digest_algorithm digest,
+      const uint8_t *password, const size_t password_len, const uint8_t *salt,
+      const size_t salt_len, const size_t iteration_count);
+  Key(symmetric_cipher cipher, message_digest_algorithm digest,
+      const std::vector<uint8_t> &password, const std::vector<uint8_t> &salt,
+      const size_t iteration_count);
+
+  Key(symmetric_cipher cipher, message_digest_algorithm digest,
+      const peacemakr::Key &master, const uint8_t *bytes,
+      const size_t bytes_len);
+  Key(symmetric_cipher cipher, message_digest_algorithm digest,
+      const Key &master, const std::vector<uint8_t> &bytes);
+
+  Key(asymmetric_cipher cipher, symmetric_cipher symm_cipher,
+      const std::string &pem, bool priv);
+
+  Key(symmetric_cipher cipher, const Key &my_key, const Key &peer_key);
 
   /**
    * Key is not copy or move constructible
@@ -168,12 +169,13 @@ public:
    * EVP_DigestSign* functions to do asymmetric signing of \p plaintext and
    * stores it in \p blob.
    */
-  void Sign(const Key &senderKey, const Plaintext &plaintext, Ciphertext *blob);
+  void Sign(const Key &senderKey, const Plaintext &plaintext,
+            message_digest_algorithm digest, Ciphertext *blob);
 
   /**
    * Serializes \p blob into a \returns Base64 encoded buffer.
    */
-  std::string Serialize(Ciphertext *blob);
+  std::string Serialize(message_digest_algorithm digest, Ciphertext *blob);
 
   /**
    * Extracts unverified AAD from a serialized peacemakr::Ciphertext. Note that

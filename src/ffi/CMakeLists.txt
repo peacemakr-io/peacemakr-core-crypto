@@ -44,8 +44,10 @@ if (PEACEMAKR_BUILD_IOS)
 endif(PEACEMAKR_BUILD_IOS)
 
 # C++-specific stuff #####
-option(PEACEMAKR_BUILD_CPP "Whether to build the C++ bindings" OFF)
+option(PEACEMAKR_BUILD_CPP "Whether to build the C++ bindings" ON)
 
 if (PEACEMAKR_BUILD_CPP)
     add_subdirectory(cpp)
 endif(PEACEMAKR_BUILD_CPP)
+
+set(ALL_C_SOURCE_FILES ${SOURCES_C} ${SOURCES_H} ${INCLUDES} ${ALL_C_SOURCE_FILES} PARENT_SCOPE)

@@ -83,14 +83,8 @@ typedef enum { SYMMETRIC, ASYMMETRIC } encryption_mode;
  */
 typedef struct {
   encryption_mode mode;
-
-  //! Our asymmetric cryptography always uses symmetric crypto to
-  //! encrypt the actual message (either by generating a shared secret
-  //! or by encrypting a symmetric key) so this is always required.
   symmetric_cipher symm_cipher;
-
   asymmetric_cipher asymm_cipher;
-
   message_digest_algorithm digest_algorithm;
 } crypto_config_t;
 
@@ -111,7 +105,7 @@ typedef struct {
 //! save for the key itself
 typedef struct CiphertextBlob ciphertext_blob_t;
 
-//! Opaque type holding the key itself (EVP_PKEY or just a symmetric key)
+//! Opaque type holding the key itself, asymmetric or symmetric
 typedef struct PeacemakrKey peacemakr_key_t;
 
 /**
@@ -141,18 +135,18 @@ typedef void (*peacemakr_log_cb)(const char *);
 void peacemakr_set_log_callback(peacemakr_log_cb log_fn);
 
 /**
- * Create a new asymmetric peacemakr_key_t from scratch \p rand. It is recommended that
- * \p rand come from /dev/urandom or similar. \p symm_cipher is ignored if the asymmetric
- * algorithm specified is not an RSA algorithm.
+ * Create a new asymmetric peacemakr_key_t from scratch \p rand. It is
+ * recommended that \p rand come from /dev/urandom or similar. \p symm_cipher is
+ * ignored if the asymmetric algorithm specified is not an RSA algorithm.
  */
 peacemakr_key_t *peacemakr_key_new_asymmetric(asymmetric_cipher asymm_cipher,
                                               symmetric_cipher symm_cipher,
                                               random_device_t *rand);
 
 /**
- * Create a new symmetric peacemakr_key_t from scratch \p rand. It is recommended that
- * \p rand come from /dev/urandom or similar. \returns A newly created
- * peacemakr key for use in other library calls.
+ * Create a new symmetric peacemakr_key_t from scratch \p rand. It is
+ * recommended that \p rand come from /dev/urandom or similar. \returns A newly
+ * created peacemakr key for use in other library calls.
  */
 peacemakr_key_t *peacemakr_key_new_symmetric(symmetric_cipher cipher,
                                              random_device_t *rand);
@@ -189,7 +183,7 @@ peacemakr_key_t *
 peacemakr_key_new_from_master(symmetric_cipher cipher,
                               message_digest_algorithm digest,
                               const peacemakr_key_t *master_key,
-                              const uint8_t *key_id, const size_t key_id_len);
+                              const uint8_t *bytes, const size_t bytes_len);
 
 /**
  * Create a new peacemakr_key_t from a pem file generated externally. This
@@ -221,8 +215,8 @@ peacemakr_key_t *peacemakr_key_new_pem_priv(asymmetric_cipher cipher,
  * key)
  */
 peacemakr_key_t *peacemakr_key_dh_generate(symmetric_cipher cipher,
-                                           peacemakr_key_t *my_key,
-                                           peacemakr_key_t *peer_key);
+                                           const peacemakr_key_t *my_key,
+                                           const peacemakr_key_t *peer_key);
 
 /**
  * Gets the crypto_config_t used to create \p key from \p key.
@@ -279,8 +273,7 @@ ciphertext_blob_t *peacemakr_encrypt(const peacemakr_key_t *recipient_key,
  * functions to do asymmetric signing of \p plain and stores it in \p cipher.
  */
 void peacemakr_sign(const peacemakr_key_t *sender_key, const plaintext_t *plain,
-                    message_digest_algorithm digest,
-                    ciphertext_blob_t *cipher);
+                    message_digest_algorithm digest, ciphertext_blob_t *cipher);
 
 //! Possible decrypt outcomes
 typedef enum {
@@ -330,7 +323,8 @@ uint8_t *peacemakr_hmac(const message_digest_algorithm digest_algorithm,
  * said buffer into \p out_size. The caller is responsible for managing
  * memory returned from this function.
  */
-uint8_t *peacemakr_serialize(message_digest_algorithm digest, ciphertext_blob_t *cipher, size_t *b64_size);
+uint8_t *peacemakr_serialize(message_digest_algorithm digest,
+                             ciphertext_blob_t *cipher, size_t *b64_size);
 
 /**
  * Deserializes a ciphertext_blob_t from \p b64_encoded_cipher. \p

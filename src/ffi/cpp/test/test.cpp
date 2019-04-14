@@ -38,10 +38,6 @@ std::string get_random_string() {
 
 void test_asymmetric(symmetric_cipher symm_cipher, asymmetric_cipher cipher,
                      message_digest_algorithm digest) {
-  crypto_config_t cfg = {.mode = ASYMMETRIC,
-                         .symm_cipher = symm_cipher,
-                         .asymm_cipher = cipher,
-                         .digest_algorithm = digest};
 
   peacemakr::Plaintext plaintext_in;
   plaintext_in.data = get_random_string();
@@ -49,7 +45,7 @@ void test_asymmetric(symmetric_cipher symm_cipher, asymmetric_cipher cipher,
 
   peacemakr::RandomDevice rand = peacemakr::RandomDevice::getDefault();
 
-  peacemakr::Key key(cfg, rand);
+  peacemakr::Key key(cipher, symm_cipher, rand);
 
   peacemakr::CryptoContext ctx(log_fn);
   peacemakr::Ciphertext *encrypted = ctx.Encrypt(key, plaintext_in, rand);
@@ -59,7 +55,7 @@ void test_asymmetric(symmetric_cipher symm_cipher, asymmetric_cipher cipher,
     assert(encrypted != nullptr);
   }
 
-  std::string serialized = ctx.Serialize(encrypted);
+  std::string serialized = ctx.Serialize(digest, encrypted);
   assert(!serialized.empty());
 
   if (!plaintext_in.aad.empty()) {
@@ -81,10 +77,6 @@ void test_asymmetric(symmetric_cipher symm_cipher, asymmetric_cipher cipher,
 
 void test_symmetric(symmetric_cipher symm_cipher,
                     message_digest_algorithm digest) {
-  crypto_config_t cfg = {.mode = SYMMETRIC,
-                         .symm_cipher = symm_cipher,
-                         .asymm_cipher = NONE,
-                         .digest_algorithm = digest};
 
   peacemakr::Plaintext plaintext_in;
   plaintext_in.data = get_random_string();
@@ -92,7 +84,7 @@ void test_symmetric(symmetric_cipher symm_cipher,
 
   peacemakr::RandomDevice rand = peacemakr::RandomDevice::getDefault();
 
-  peacemakr::Key key(cfg, rand);
+  peacemakr::Key key(symm_cipher, rand);
 
   peacemakr::CryptoContext ctx(log_fn);
   peacemakr::Ciphertext *encrypted = ctx.Encrypt(key, plaintext_in, rand);
@@ -102,7 +94,7 @@ void test_symmetric(symmetric_cipher symm_cipher,
     assert(encrypted != nullptr);
   }
 
-  std::string serialized = ctx.Serialize(encrypted);
+  std::string serialized = ctx.Serialize(digest, encrypted);
   assert(!serialized.empty());
 
   if (!plaintext_in.aad.empty()) {
@@ -125,10 +117,6 @@ void test_symmetric(symmetric_cipher symm_cipher,
 
 void test_sign_symmetric(symmetric_cipher symm_cipher,
                          message_digest_algorithm digest) {
-  crypto_config_t cfg = {.mode = SYMMETRIC,
-                         .symm_cipher = symm_cipher,
-                         .asymm_cipher = NONE,
-                         .digest_algorithm = digest};
 
   peacemakr::Plaintext plaintext_in;
   plaintext_in.data = get_random_string();
@@ -136,7 +124,7 @@ void test_sign_symmetric(symmetric_cipher symm_cipher,
 
   peacemakr::RandomDevice rand = peacemakr::RandomDevice::getDefault();
 
-  peacemakr::Key key(cfg, rand);
+  peacemakr::Key key(symm_cipher, rand);
 
   peacemakr::CryptoContext ctx(log_fn);
   peacemakr::Ciphertext *encrypted = ctx.Encrypt(key, plaintext_in, rand);
@@ -145,9 +133,9 @@ void test_sign_symmetric(symmetric_cipher symm_cipher,
   } else {
     assert(encrypted != nullptr);
   }
-  ctx.Sign(key, plaintext_in, encrypted);
+  ctx.Sign(key, plaintext_in, digest, encrypted);
 
-  std::string serialized = ctx.Serialize(encrypted);
+  std::string serialized = ctx.Serialize(digest, encrypted);
   assert(!serialized.empty());
 
   if (!plaintext_in.aad.empty()) {
@@ -172,10 +160,6 @@ void test_sign_symmetric(symmetric_cipher symm_cipher,
 void test_sign_asymmetric(symmetric_cipher symm_cipher,
                           asymmetric_cipher cipher,
                           message_digest_algorithm digest) {
-  crypto_config_t cfg = {.mode = ASYMMETRIC,
-                         .symm_cipher = symm_cipher,
-                         .asymm_cipher = cipher,
-                         .digest_algorithm = digest};
 
   peacemakr::Plaintext plaintext_in;
   plaintext_in.data = get_random_string();
@@ -183,7 +167,7 @@ void test_sign_asymmetric(symmetric_cipher symm_cipher,
 
   peacemakr::RandomDevice rand = peacemakr::RandomDevice::getDefault();
 
-  peacemakr::Key key(cfg, rand);
+  peacemakr::Key key(cipher, symm_cipher, rand);
 
   peacemakr::CryptoContext ctx(log_fn);
   peacemakr::Ciphertext *encrypted = ctx.Encrypt(key, plaintext_in, rand);
@@ -192,9 +176,9 @@ void test_sign_asymmetric(symmetric_cipher symm_cipher,
   } else {
     assert(encrypted != nullptr);
   }
-  ctx.Sign(key, plaintext_in, encrypted);
+  ctx.Sign(key, plaintext_in, digest, encrypted);
 
-  std::string serialized = ctx.Serialize(encrypted);
+  std::string serialized = ctx.Serialize(digest, encrypted);
   assert(!serialized.empty());
 
   if (!plaintext_in.aad.empty()) {
@@ -220,10 +204,6 @@ void test_sign_asymmetric(symmetric_cipher symm_cipher,
 }
 
 void test_uninit_crash() {
-  crypto_config_t cfg = {.mode = SYMMETRIC,
-                         .symm_cipher = AES_128_GCM,
-                         .asymm_cipher = NONE,
-                         .digest_algorithm = SHA_256};
 
   peacemakr::Plaintext plaintext_in;
   plaintext_in.data = "Hello world!";
@@ -231,7 +211,7 @@ void test_uninit_crash() {
 
   peacemakr::RandomDevice rand = peacemakr::RandomDevice::getDefault();
 
-  peacemakr::Key key(cfg, rand);
+  peacemakr::Key key(AES_128_GCM, rand);
   assert(key.isValid());
 
   peacemakr::CryptoContext ctx(log_fn);
@@ -242,7 +222,7 @@ void test_uninit_crash() {
     assert(encrypted != nullptr);
   }
 
-  std::string serialized = ctx.Serialize(encrypted);
+  std::string serialized = ctx.Serialize(SHA_256, encrypted);
   assert(!serialized.empty());
 
   if (!plaintext_in.aad.empty()) {
@@ -269,10 +249,6 @@ void test_uninit_crash() {
 
 void test_dh_symmetric(symmetric_cipher symm_cipher,
                        message_digest_algorithm digest) {
-  crypto_config_t cfg = {.mode = ASYMMETRIC,
-                         .symm_cipher = symm_cipher,
-                         .asymm_cipher = ECDH_P256,
-                         .digest_algorithm = digest};
 
   peacemakr::Plaintext plaintext_in;
   plaintext_in.data = get_random_string();
@@ -280,10 +256,10 @@ void test_dh_symmetric(symmetric_cipher symm_cipher,
 
   peacemakr::RandomDevice rand = peacemakr::RandomDevice::getDefault();
 
-  peacemakr::Key myKey(cfg, rand);
-  peacemakr::Key peerKey(cfg, rand);
+  peacemakr::Key myKey(ECDH_P256, SYMMETRIC_UNSPECIFIED, rand);
+  peacemakr::Key peerKey(ECDH_P256, SYMMETRIC_UNSPECIFIED, rand);
 
-  peacemakr::Key sharedKey(myKey, peerKey);
+  peacemakr::Key sharedKey(symm_cipher, myKey, peerKey);
 
   peacemakr::CryptoContext ctx(log_fn);
   peacemakr::Ciphertext *encrypted = ctx.Encrypt(sharedKey, plaintext_in, rand);
@@ -292,9 +268,9 @@ void test_dh_symmetric(symmetric_cipher symm_cipher,
   } else {
     assert(encrypted != nullptr);
   }
-  ctx.Sign(sharedKey, plaintext_in, encrypted);
+  ctx.Sign(sharedKey, plaintext_in, digest, encrypted);
 
-  std::string serialized = ctx.Serialize(encrypted);
+  std::string serialized = ctx.Serialize(digest, encrypted);
   assert(!serialized.empty());
 
   if (!plaintext_in.aad.empty()) {

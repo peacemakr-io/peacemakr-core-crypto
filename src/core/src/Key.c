@@ -152,7 +152,10 @@ peacemakr_key_t *peacemakr_key_new_asymmetric(asymmetric_cipher cipher,
   out->m_cfg_.asymm_cipher = cipher;
   out->m_cfg_.digest_algorithm = DIGEST_UNSPECIFIED;
 
-  if (symm_cipher == SYMMETRIC_UNSPECIFIED && cipher >= RSA_2048 && cipher <= RSA_4096) {
+  out->m_contents_.asymm = NULL;
+
+  if (symm_cipher == SYMMETRIC_UNSPECIFIED && cipher >= RSA_2048 &&
+      cipher <= RSA_4096) {
     PEACEMAKR_ERROR("Must specify a symmetric algorithm for RSA keys\n");
     peacemakr_key_free(out);
     return NULL;
@@ -230,6 +233,7 @@ peacemakr_key_t *peacemakr_key_new_symmetric(symmetric_cipher cipher,
   out->m_cfg_.digest_algorithm = DIGEST_UNSPECIFIED;
 
   out->m_contents_.symm = NULL;
+
   const EVP_CIPHER *evp_cipher = parse_cipher(cipher);
   size_t keylen = (size_t)EVP_CIPHER_key_length(evp_cipher);
 
@@ -300,6 +304,10 @@ peacemakr_key_new_from_master(symmetric_cipher cipher,
 
   // digest length in bytes
   size_t digestbytes = get_digest_len(digest);
+  if (digestbytes == 0) {
+    PEACEMAKR_ERROR("Unable to parse digest algorithm\n");
+    return NULL;
+  }
   // digestlen should be in bits
   size_t digestbits = digestbytes * 8;
 
@@ -344,10 +352,7 @@ peacemakr_key_new_from_master(symmetric_cipher cipher,
   }
 
   // Get the first keylen bytes and uses them for the key
-  peacemakr_key_t *out =
-      peacemakr_key_new_bytes(cipher, output_bytes, keybytes);
-
-  return out;
+  return peacemakr_key_new_bytes(cipher, output_bytes, keybytes);
 }
 
 peacemakr_key_t *peacemakr_key_new_pem(asymmetric_cipher cipher,
@@ -366,6 +371,7 @@ peacemakr_key_t *peacemakr_key_new_pem(asymmetric_cipher cipher,
   out->m_cfg_.symm_cipher = SYMMETRIC_UNSPECIFIED;
   out->m_cfg_.asymm_cipher = cipher;
   out->m_cfg_.digest_algorithm = DIGEST_UNSPECIFIED;
+
   out->m_contents_.asymm = NULL;
 
   BIO *bo = BIO_new_mem_buf(buf, (int)buflen);
@@ -461,8 +467,8 @@ peacemakr_key_t *peacemakr_key_new_pem_priv(asymmetric_cipher cipher,
 }
 
 peacemakr_key_t *peacemakr_key_dh_generate(symmetric_cipher cipher,
-                                           peacemakr_key_t *my_key,
-                                           peacemakr_key_t *peer_key) {
+                                           const peacemakr_key_t *my_key,
+                                           const peacemakr_key_t *peer_key) {
   EXPECT_NOT_NULL_RET(
       my_key, "Neither input to peacemakr_key_dh_generate may be NULL\n")
   EXPECT_NOT_NULL_RET(
@@ -507,6 +513,12 @@ peacemakr_key_t *peacemakr_key_dh_generate(symmetric_cipher cipher,
 void peacemakr_key_free(peacemakr_key_t *key) {
   EXPECT_NOT_NULL_RET_NONE(key, "key was null\n")
 
+  if (key->m_contents_.symm == NULL) {
+    free(key);
+    key = NULL;
+    return;
+  }
+
   switch (key->m_cfg_.mode) {
   case SYMMETRIC: {
     buffer_free(key->m_contents_.symm); // securely frees the memory
@@ -529,17 +541,21 @@ bool peacemakr_key_set_symmetric_cipher(peacemakr_key_t *key,
                                         symmetric_cipher cipher) {
 
   if (key->m_cfg_.mode != ASYMMETRIC) {
-    PEACEMAKR_ERROR("Cannot override the symmetric cipher of a symmetric key\n");
+    PEACEMAKR_ERROR(
+        "Cannot override the symmetric cipher of a symmetric key\n");
     return false;
   }
 
   if (key->m_cfg_.symm_cipher != SYMMETRIC_UNSPECIFIED) {
-    PEACEMAKR_ERROR("Cannot override the symmetric cipher when it's already been specified\n");
+    PEACEMAKR_ERROR("Cannot override the symmetric cipher when it's already "
+                    "been specified\n");
     return false;
   }
 
-  if (key->m_cfg_.asymm_cipher < RSA_2048 || key->m_cfg_.asymm_cipher > RSA_4096) {
-    PEACEMAKR_ERROR("ECDH keys do not support overriding the symmetric cipher\n");
+  if (key->m_cfg_.asymm_cipher < RSA_2048 ||
+      key->m_cfg_.asymm_cipher > RSA_4096) {
+    PEACEMAKR_ERROR(
+        "ECDH keys do not support overriding the symmetric cipher\n");
     return false;
   }
 

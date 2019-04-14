@@ -46,7 +46,8 @@ static peacemakr_key_t *get_hmac_key() {
  * (12) Message HMAC (224, 256, 384, or 512 bits)
  */
 
-uint8_t *peacemakr_serialize(message_digest_algorithm digest, ciphertext_blob_t *cipher, size_t *b64_size) {
+uint8_t *peacemakr_serialize(message_digest_algorithm digest,
+                             ciphertext_blob_t *cipher, size_t *b64_size) {
   EXPECT_TRUE_RET((cipher != NULL && b64_size != NULL),
                   "cipher or b64_size was null in call to serialize\n")
 
