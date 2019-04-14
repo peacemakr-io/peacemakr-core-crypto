@@ -210,7 +210,7 @@ static bool symmetric_verify(const peacemakr_key_t *key,
                      concat_buf, plaintext_len + aad_len, &out_size);
 
   const buffer_t *digest_buf = ciphertext_blob_signature(cipher);
-  size_t stored_size = SIZE_T_MAX;
+  size_t stored_size = SIZE_MAX;
   const uint8_t *stored_hmac = buffer_get_bytes(digest_buf, &stored_size);
 
   if (stored_size != out_size) {
