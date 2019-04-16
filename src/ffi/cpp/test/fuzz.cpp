@@ -14,8 +14,8 @@
 #include <random>
 #include <iostream>
 extern "C" {
-  #include "../src/EVPHelper.h"
-  #include "../src/Logging.h"
+  #include "../../src/EVPHelper.h"
+  #include "../../src/Logging.h"
   #include "test_helper.h"
 }
 
@@ -33,7 +33,7 @@ void test_asymmetric(const std::string &msg, symmetric_cipher symm_cipher, asymm
 
   peacemakr::RandomDevice rand = peacemakr::RandomDevice::getDefault();
 
-  peacemakr::Key key(cfg, rand);
+  peacemakr::Key key(cipher, symm_cipher, rand);
 
   peacemakr::CryptoContext ctx;
   peacemakr::Ciphertext *ciphertext = ctx.Encrypt(key, plaintext_in, rand);
@@ -45,12 +45,6 @@ void test_asymmetric(const std::string &msg, symmetric_cipher symm_cipher, asymm
 }
 
 void test_symmetric(const std::string &msg, symmetric_cipher symm_cipher, message_digest_algorithm digest) {
-  crypto_config_t cfg = {
-          .mode = SYMMETRIC,
-          .symm_cipher = symm_cipher,
-          .asymm_cipher = NONE,
-          .digest_algorithm = digest
-  };
 
   peacemakr::Plaintext plaintext_in;
   plaintext_in.data = msg;
@@ -58,7 +52,7 @@ void test_symmetric(const std::string &msg, symmetric_cipher symm_cipher, messag
 
   peacemakr::RandomDevice rand = peacemakr::RandomDevice::getDefault();
 
-  peacemakr::Key key(cfg, rand);
+  peacemakr::Key key(symm_cipher, rand);
 
   peacemakr::CryptoContext ctx;
   peacemakr::Ciphertext *ciphertext = ctx.Encrypt(key, plaintext_in, rand);
@@ -77,13 +71,6 @@ void test_symm_keygen(const uint8_t *data, size_t size, symmetric_cipher symm_ci
     return;
   }
 
-  crypto_config_t cfg = {
-          .mode = SYMMETRIC,
-          .symm_cipher = AES_128_GCM,
-          .asymm_cipher = NONE,
-          .digest_algorithm = SHA_256
-  };
-
 //  std::cout << symm_cipher << " " << digest << std::endl;
 
   peacemakr::Plaintext plaintext_in;
@@ -92,13 +79,13 @@ void test_symm_keygen(const uint8_t *data, size_t size, symmetric_cipher symm_ci
 
   peacemakr::RandomDevice rand = peacemakr::RandomDevice::getDefault();
 
-  peacemakr::Key key(cfg, std::vector<uint8_t>(data, data+size));
+  peacemakr::Key key(AES_128_GCM, std::vector<uint8_t>(data, data+size));
 
   assert(key.isValid() || size >= keylen);
 
   peacemakr::CryptoContext ctx;
   peacemakr::Ciphertext *ciphertext = ctx.Encrypt(key, plaintext_in, rand);
-  std::string encrypted = ctx.Serialize(ciphertext);
+  std::string encrypted = ctx.Serialize(digest, ciphertext);
   if (encrypted.empty()) { // couldn't encrypt
     return;
   }
@@ -116,12 +103,6 @@ void test_symm_keygen(const uint8_t *data, size_t size, symmetric_cipher symm_ci
 }
 
 void test_asymm_keygen(const uint8_t *data, size_t size, symmetric_cipher symm_cipher, asymmetric_cipher cipher, message_digest_algorithm digest) {
-  crypto_config_t cfg = {
-          .mode = ASYMMETRIC,
-          .symm_cipher = symm_cipher,
-          .asymm_cipher = cipher,
-          .digest_algorithm = digest
-  };
 
   peacemakr::Plaintext plaintext_in;
   plaintext_in.data = "Hello world!";
@@ -129,10 +110,10 @@ void test_asymm_keygen(const uint8_t *data, size_t size, symmetric_cipher symm_c
 
   peacemakr::RandomDevice rand = peacemakr::RandomDevice::getDefault();
 
-  peacemakr::Key priv_key(cfg, std::string(data, data+size), true);
+  peacemakr::Key priv_key(cipher, symm_cipher, std::string(data, data+size), true);
   assert(!priv_key.isValid() && "randomly generated a valid key?");
 
-  peacemakr::Key pub_key(cfg, std::string(data, data+size), false);
+  peacemakr::Key pub_key(cipher, symm_cipher, std::string(data, data+size), false);
   assert(!pub_key.isValid() && "randomly generated a valid key?");
 
 //  peacemakr::CryptoContext ctx;
@@ -167,7 +148,7 @@ void test_encrypt(peacemakr_key_t *key, random_device_t *rand, const uint8_t *da
   ciphertext_blob_t *out = peacemakr_encrypt(key, &plain, rand);
 
   size_t out_size = 0;
-  uint8_t *serialized = peacemakr_serialize(out, &out_size);
+  uint8_t *serialized = peacemakr_serialize(SHA_256, out, &out_size);
 
   crypto_config_t out_cfg = {};
   ciphertext_blob_t *deserialized = peacemakr_deserialize(serialized, out_size, &out_cfg);
@@ -186,40 +167,12 @@ void test_log(const uint8_t *data, size_t size) {
   PEACEMAKR_ERROR("%s", str);
 }
 
-// Interesting problems exposed in keygen with fuzzing
-//int run(const uint8_t *data, size_t size) {
-//  for (int i = RSA_2048; i <= RSA_4096; ++i) {
-//    for (int j = AES_128_GCM; j <= CHACHA20_POLY1305; ++j) {
-//      for (int k = SHA_224; k <= SHA_512; k++) {
-//        test_asymmetric(std::string(data, data+size), (symmetric_cipher)j, (asymmetric_cipher)i, (message_digest_algorithm)k);
-//        test_asymm_keygen(data, size, (symmetric_cipher)j, (asymmetric_cipher)i, (message_digest_algorithm)k);
-//      }
-//    }
-//  }
-//
-//  for (int j = AES_128_GCM; j <= CHACHA20_POLY1305; ++j) {
-//    for (int k = SHA_224; k <= SHA_512; k++) {
-//      test_symmetric(std::string(data, data+size), (symmetric_cipher)j, (message_digest_algorithm)k);
-//      test_symm_keygen(data, size, (symmetric_cipher)AES_128_GCM, (message_digest_algorithm)SHA_256);
-//    }
-//  }
-//
-//  return 0;
-//}
-
-crypto_config_t global_cfg = {
-        .mode = SYMMETRIC,
-        .symm_cipher = AES_256_GCM,
-        .asymm_cipher = NONE,
-        .digest_algorithm = SHA_512,
-};
-
 random_device_t global_rand = {.generator = &fill_rand, .err = &rand_err};
-peacemakr_key_t *key = peacemakr_key_new(global_cfg, &global_rand);
+peacemakr_key_t *key = peacemakr_key_new_symmetric(AES_256_GCM, &global_rand);
 
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
 //  test_log(Data, Size);
   test_encrypt(key, &global_rand, Data, Size);
-//  test_deserialize(Data, Size);
+  test_deserialize(Data, Size);
   return 0;
 }

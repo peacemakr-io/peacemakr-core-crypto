@@ -22,6 +22,7 @@ void openssl_log(const char *filename, int line);
     ;                                                                          \
   else                                                                         \
     log_printf(__FUNCTION__, __LINE__, __VA_ARGS__)
+
 #define PEACEMAKR_ERROR(...)                                                   \
   if (PEACEMAKR_LOG_LEVEL > 1)                                                 \
     ;                                                                          \

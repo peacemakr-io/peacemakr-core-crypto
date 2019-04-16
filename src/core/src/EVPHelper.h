@@ -30,6 +30,8 @@
 static inline const EVP_CIPHER *parse_cipher(symmetric_cipher cfg) {
 
   switch (cfg) {
+  case SYMMETRIC_UNSPECIFIED:
+    return NULL;
   case AES_128_GCM:
     return EVP_aes_128_gcm();
   case AES_192_GCM:
@@ -45,6 +47,8 @@ static inline const EVP_CIPHER *parse_cipher(symmetric_cipher cfg) {
 
 static inline size_t get_taglen(symmetric_cipher cfg) {
   switch (cfg) {
+  case SYMMETRIC_UNSPECIFIED:
+    return 0;
   case AES_128_GCM:
     return 16;
   case AES_192_GCM:
@@ -59,6 +63,8 @@ static inline size_t get_taglen(symmetric_cipher cfg) {
 
 static inline const EVP_MD *parse_digest(message_digest_algorithm cfg) {
   switch (cfg) {
+  case DIGEST_UNSPECIFIED:
+    return NULL;
   case SHA_224:
     return EVP_sha224();
   case SHA_256:
@@ -73,6 +79,8 @@ static inline const EVP_MD *parse_digest(message_digest_algorithm cfg) {
 
 static inline size_t get_digest_len(message_digest_algorithm cfg) {
   switch (cfg) {
+  case DIGEST_UNSPECIFIED:
+    return 0;
   case SHA_224:
     return (size_t)EVP_MD_size(EVP_sha224());
   case SHA_256:

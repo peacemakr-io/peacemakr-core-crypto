@@ -23,39 +23,72 @@ peacemakr::RandomDevice peacemakr::RandomDevice::getDefault() {
 
 random_device_t &peacemakr::RandomDevice::getContents() { return m_rand_; }
 
-peacemakr::Key::Key(crypto_config_t cfg, peacemakr::RandomDevice &rand) {
-  m_key_ = peacemakr_key_new(cfg, &rand.getContents());
+peacemakr::Key::Key(asymmetric_cipher asymm_cipher,
+                    symmetric_cipher symm_cipher,
+                    peacemakr::RandomDevice &rand) {
+  m_key_ = peacemakr_key_new_asymmetric(asymm_cipher, symm_cipher,
+                                        &rand.getContents());
 }
 
-peacemakr::Key::Key(crypto_config_t cfg, const uint8_t *bytes,
+peacemakr::Key::Key(symmetric_cipher symm_cipher,
+                    peacemakr::RandomDevice &rand) {
+  m_key_ = peacemakr_key_new_symmetric(symm_cipher, &rand.getContents());
+}
+
+peacemakr::Key::Key(symmetric_cipher cipher, const uint8_t *bytes,
                     const size_t num) {
-  m_key_ = peacemakr_key_new_bytes(cfg, bytes, num);
+  m_key_ = peacemakr_key_new_bytes(cipher, bytes, num);
 }
 
-peacemakr::Key::Key(crypto_config_t cfg, const std::vector<uint8_t> &bytes) {
-  m_key_ = peacemakr_key_new_bytes(cfg, bytes.data(), bytes.size());
-}
-
-peacemakr::Key::Key(crypto_config_t cfg, const peacemakr::Key &master,
-                    const uint8_t *bytes, const size_t num) {
-  m_key_ = peacemakr_key_new_from_master(cfg, master.m_key_, bytes, num);
-}
-
-peacemakr::Key::Key(crypto_config_t cfg, const peacemakr::Key &master,
+peacemakr::Key::Key(symmetric_cipher cipher,
                     const std::vector<uint8_t> &bytes) {
-  m_key_ = peacemakr_key_new_from_master(cfg, master.m_key_, bytes.data(),
-                                         bytes.size());
+  m_key_ = peacemakr_key_new_bytes(cipher, bytes.data(), bytes.size());
 }
 
-peacemakr::Key::Key(crypto_config_t cfg, const std::string &pem, bool priv) {
-  if (priv)
-    m_key_ = peacemakr_key_new_pem_priv(cfg, pem.c_str(), pem.size());
-  else
-    m_key_ = peacemakr_key_new_pem_pub(cfg, pem.c_str(), pem.size());
+peacemakr::Key::Key(symmetric_cipher cipher, message_digest_algorithm digest,
+                    const uint8_t *password, const size_t password_len,
+                    const uint8_t *salt, const size_t salt_len,
+                    const size_t iteration_count) {
+  m_key_ = peacemakr_key_new_from_password(
+      cipher, digest, password, password_len, salt, salt_len, iteration_count);
 }
 
-peacemakr::Key::Key(const peacemakr::Key &my_key, const peacemakr::Key &peer) {
-  m_key_ = peacemakr_key_dh_generate(my_key.m_key_, peer.m_key_);
+peacemakr::Key::Key(symmetric_cipher cipher, message_digest_algorithm digest,
+                    const std::vector<uint8_t> &password,
+                    const std::vector<uint8_t> &salt,
+                    const size_t iteration_count) {
+  m_key_ = peacemakr_key_new_from_password(cipher, digest, password.data(),
+                                           password.size(), salt.data(),
+                                           salt.size(), iteration_count);
+}
+
+peacemakr::Key::Key(symmetric_cipher cipher, message_digest_algorithm digest,
+                    const peacemakr::Key &master, const uint8_t *bytes,
+                    const size_t bytes_len) {
+  m_key_ = peacemakr_key_new_from_master(cipher, digest, master.m_key_, bytes,
+                                         bytes_len);
+}
+
+peacemakr::Key::Key(symmetric_cipher cipher, message_digest_algorithm digest,
+                    const Key &master, const std::vector<uint8_t> &bytes) {
+  m_key_ = peacemakr_key_new_from_master(cipher, digest, master.m_key_,
+                                         bytes.data(), bytes.size());
+}
+
+peacemakr::Key::Key(asymmetric_cipher cipher, symmetric_cipher symm_cipher,
+                    const std::string &pem, bool priv) {
+  if (priv) {
+    m_key_ = peacemakr_key_new_pem_priv(cipher, symm_cipher, pem.c_str(),
+                                        pem.size());
+  } else {
+    m_key_ =
+        peacemakr_key_new_pem_pub(cipher, symm_cipher, pem.c_str(), pem.size());
+  }
+}
+
+peacemakr::Key::Key(symmetric_cipher cipher, const peacemakr::Key &my_key,
+                    const peacemakr::Key &peer_key) {
+  m_key_ = peacemakr_key_dh_generate(cipher, my_key.m_key_, peer_key.m_key_);
 }
 
 peacemakr::Key::~Key() { peacemakr_key_free(m_key_); }
@@ -139,6 +172,7 @@ ciphertext_blob_t *peacemakr::CryptoContext::Encrypt(const Key &key,
 
 void peacemakr::CryptoContext::Sign(const peacemakr::Key &senderKey,
                                     const peacemakr::Plaintext &plaintext,
+                                    message_digest_algorithm digest,
                                     ciphertext_blob_t *blob) {
 
   plaintext_t plain = {
@@ -151,12 +185,13 @@ void peacemakr::CryptoContext::Sign(const peacemakr::Key &senderKey,
                  : (const unsigned char *)plaintext.aad.c_str(),
       .aad_len = plaintext.aad.empty() ? 0 : (size_t)plaintext.aad.size()};
 
-  return peacemakr_sign(senderKey.getKey(), &plain, blob);
+  return peacemakr_sign(senderKey.getKey(), &plain, digest, blob);
 }
 
-std::string peacemakr::CryptoContext::Serialize(ciphertext_blob_t *blob) {
+std::string peacemakr::CryptoContext::Serialize(message_digest_algorithm digest,
+                                                ciphertext_blob_t *blob) {
   size_t out_size = 0;
-  uint8_t *serialized = peacemakr_serialize(blob, &out_size);
+  uint8_t *serialized = peacemakr_serialize(digest, blob, &out_size);
   std::string out{serialized, serialized + out_size};
   free(serialized);
   return out;

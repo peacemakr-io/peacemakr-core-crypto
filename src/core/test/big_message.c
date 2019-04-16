@@ -76,23 +76,13 @@ int main() {
                               .aad = (const unsigned char *)aad,
                               .aad_len = bigsize + 1};
 
-  crypto_config_t asymm_cfg = {.mode = ASYMMETRIC,
-                               .asymm_cipher = RSA_4096,
-                               .symm_cipher = CHACHA20_POLY1305,
-                               .digest_algorithm = SHA_512};
-
-  crypto_config_t symm_cfg = {.mode = SYMMETRIC,
-                              .asymm_cipher = NONE,
-                              .symm_cipher = CHACHA20_POLY1305,
-                              .digest_algorithm = SHA_512};
-
   random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
 
-  peacemakr_key_t *asymm_key = peacemakr_key_new(asymm_cfg, &rand);
+  peacemakr_key_t *asymm_key = peacemakr_key_new_asymmetric(RSA_4096, CHACHA20_POLY1305, &rand);
 
   test_algo(plaintext_in, asymm_key);
 
-  peacemakr_key_t *symm_key = peacemakr_key_new(symm_cfg, &rand);
+  peacemakr_key_t *symm_key = peacemakr_key_new_symmetric(CHACHA20_POLY1305, &rand);
 
   test_algo(plaintext_in, symm_key);
 

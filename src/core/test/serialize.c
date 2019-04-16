@@ -31,13 +31,13 @@ void test_serialize(symmetric_cipher symm_cipher, asymmetric_cipher cipher,
 
   random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
 
-  peacemakr_key_t *key = peacemakr_key_new(cfg, &rand);
+  peacemakr_key_t *key = peacemakr_key_new_asymmetric(cipher, symm_cipher, &rand);
 
   ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, &plaintext_in, &rand);
   assert(ciphertext != NULL);
 
   size_t out_size = 0;
-  uint8_t *serialized = peacemakr_serialize(ciphertext, &out_size);
+  uint8_t *serialized = peacemakr_serialize(digest, ciphertext, &out_size);
   assert(serialized != NULL);
 
   crypto_config_t out_cfg;

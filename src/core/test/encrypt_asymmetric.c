@@ -17,10 +17,6 @@ const char *message_aad = "And I'm AAD";                       // 11 + 1
 
 void test_asymmetric_algo(symmetric_cipher symm_cipher,
                           asymmetric_cipher cipher) {
-  crypto_config_t cfg = {.mode = ASYMMETRIC,
-                         .asymm_cipher = cipher,
-                         .symm_cipher = symm_cipher,
-                         .digest_algorithm = SHA_512};
 
   plaintext_t plaintext_in = {.data = (const unsigned char *)message,
                               .data_len = strlen(message) + 1,
@@ -31,7 +27,7 @@ void test_asymmetric_algo(symmetric_cipher symm_cipher,
 
   random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
 
-  peacemakr_key_t *key = peacemakr_key_new(cfg, &rand);
+  peacemakr_key_t *key = peacemakr_key_new_asymmetric(cipher, symm_cipher, &rand);
 
   ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, &plaintext_in, &rand);
   assert(ciphertext != NULL);
@@ -51,10 +47,6 @@ void test_asymmetric_algo(symmetric_cipher symm_cipher,
 }
 
 void test_wrong_key(symmetric_cipher symm_cipher, asymmetric_cipher cipher) {
-  crypto_config_t cfg = {.mode = ASYMMETRIC,
-                         .asymm_cipher = cipher,
-                         .symm_cipher = symm_cipher,
-                         .digest_algorithm = SHA_512};
 
   plaintext_t plaintext_in = {.data = (const unsigned char *)message,
                               .data_len = strlen(message) + 1,
@@ -65,12 +57,12 @@ void test_wrong_key(symmetric_cipher symm_cipher, asymmetric_cipher cipher) {
 
   random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
 
-  peacemakr_key_t *key = peacemakr_key_new(cfg, &rand);
+  peacemakr_key_t *key = peacemakr_key_new_asymmetric(cipher,symm_cipher, &rand);
 
   ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, &plaintext_in, &rand);
   assert(ciphertext != NULL);
 
-  peacemakr_key_t *wrong_key = peacemakr_key_new(cfg, &rand);
+  peacemakr_key_t *wrong_key = peacemakr_key_new_asymmetric(cipher, symm_cipher, &rand);
 
   decrypt_code success =
       peacemakr_decrypt(wrong_key, ciphertext, &plaintext_out);

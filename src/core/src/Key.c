@@ -13,6 +13,7 @@
 
 #include <memory.h>
 
+#include <crypto.h>
 #include <openssl/dh.h>
 #include <openssl/ecdh.h>
 #include <openssl/evp.h>
@@ -22,7 +23,7 @@
 
 static bool keygen_inner(int key_type, EVP_PKEY **pkey, int rsa_bits) {
   EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_id(key_type, NULL);
-  EXPECT_NOT_NULL_RET_VALUE(ctx, false, "EVP_PKEY_CTX_new_id failed\n");
+  EXPECT_NOT_NULL_RET_VALUE(ctx, false, "EVP_PKEY_CTX_new_id failed\n")
 
   int rc = EVP_PKEY_keygen_init(ctx);
   if (rc <= 0) {
@@ -88,6 +89,9 @@ static bool dh_keygen_inner(EVP_PKEY **pkey, curve_t curve) {
     rc = EVP_PKEY_CTX_set_ec_paramgen_curve_nid(pctx, NID_secp521r1);
     break;
   }
+  default:
+    PEACEMAKR_ERROR("Unknown curve specified: %d", curve);
+    return false;
   }
 
   if (rc != 1) {
@@ -134,98 +138,127 @@ struct PeacemakrKey {
 
 typedef struct PeacemakrKey peacemakr_key_t;
 
-peacemakr_key_t *peacemakr_key_new(crypto_config_t cfg, random_device_t *rand) {
+peacemakr_key_t *peacemakr_key_new_asymmetric(asymmetric_cipher cipher,
+                                              symmetric_cipher symm_cipher,
+                                              random_device_t *rand) {
   EXPECT_NOT_NULL_RET(
-      rand, "Cannot create a new key without a source of randomness\n");
+      rand, "Cannot create a new key without a source of randomness\n")
 
   peacemakr_key_t *out = malloc(sizeof(peacemakr_key_t));
-  EXPECT_NOT_NULL_RET(out, "Malloc failed\n");
+  EXPECT_NOT_NULL_RET(out, "Malloc failed\n")
 
-  out->m_cfg_ = cfg;
+  out->m_cfg_.mode = ASYMMETRIC;
+  out->m_cfg_.symm_cipher = SYMMETRIC_UNSPECIFIED;
+  out->m_cfg_.asymm_cipher = cipher;
+  out->m_cfg_.digest_algorithm = DIGEST_UNSPECIFIED;
 
-  switch (cfg.mode) {
-  case SYMMETRIC: {
-    out->m_contents_.symm = NULL;
-    const EVP_CIPHER *cipher = parse_cipher(cfg.symm_cipher);
-    size_t keylen = (size_t)EVP_CIPHER_key_length(cipher);
+  out->m_contents_.asymm = NULL;
 
-    out->m_contents_.symm = buffer_new(keylen);
-    buffer_init_rand(out->m_contents_.symm, rand);
-    return out;
+  if (symm_cipher == SYMMETRIC_UNSPECIFIED && cipher >= RSA_2048 &&
+      cipher <= RSA_4096) {
+    PEACEMAKR_ERROR("Must specify a symmetric algorithm for RSA keys\n");
+    peacemakr_key_free(out);
+    return NULL;
   }
-  case ASYMMETRIC: {
-    out->m_contents_.asymm = NULL;
-    switch (cfg.asymm_cipher) {
-    case NONE: {
-      PEACEMAKR_ERROR("asymmetric cipher not specified for asymmetric mode\n");
+
+  out->m_contents_.asymm = NULL;
+  switch (cipher) {
+  case ASYMMETRIC_UNSPECIFIED: {
+    PEACEMAKR_ERROR("asymmetric cipher not specified for asymmetric mode\n");
+    peacemakr_key_free(out);
+    return NULL;
+  }
+  case RSA_2048: {
+    out->m_cfg_.symm_cipher = symm_cipher;
+    if (keygen_inner(EVP_PKEY_RSA, &out->m_contents_.asymm, 2048) == false) {
+      PEACEMAKR_ERROR("keygen failed\n");
       peacemakr_key_free(out);
       return NULL;
     }
-    case RSA_2048: {
-      if (keygen_inner(EVP_PKEY_RSA, &out->m_contents_.asymm, 2048) == false) {
-        PEACEMAKR_ERROR("keygen failed\n");
-        peacemakr_key_free(out);
-        return NULL;
-      }
-      break;
+    break;
+  }
+  case RSA_4096: {
+    out->m_cfg_.symm_cipher = symm_cipher;
+    if (keygen_inner(EVP_PKEY_RSA, &out->m_contents_.asymm, 4096) == false) {
+      PEACEMAKR_ERROR("keygen failed\n");
+      peacemakr_key_free(out);
+      return NULL;
     }
-    case RSA_4096: {
-      if (keygen_inner(EVP_PKEY_RSA, &out->m_contents_.asymm, 4096) == false) {
-        PEACEMAKR_ERROR("keygen failed\n");
-        peacemakr_key_free(out);
-        return NULL;
-      }
-      break;
+    break;
+  }
+  case ECDH_P256: {
+    if (dh_keygen_inner(&out->m_contents_.asymm, P256) == false) {
+      PEACEMAKR_ERROR("keygen failed\n");
+      peacemakr_key_free(out);
+      return NULL;
     }
-    case ECDH_P256: {
-      if (dh_keygen_inner(&out->m_contents_.asymm, P256) == false) {
-        PEACEMAKR_ERROR("keygen failed\n");
-        peacemakr_key_free(out);
-        return NULL;
-      }
-      break;
+    break;
+  }
+  case ECDH_P384: {
+    if (dh_keygen_inner(&out->m_contents_.asymm, P384) == false) {
+      PEACEMAKR_ERROR("keygen failed\n");
+      peacemakr_key_free(out);
+      return NULL;
     }
-    case ECDH_P384: {
-      if (dh_keygen_inner(&out->m_contents_.asymm, P384) == false) {
-        PEACEMAKR_ERROR("keygen failed\n");
-        peacemakr_key_free(out);
-        return NULL;
-      }
-      break;
+    break;
+  }
+  case ECDH_P521: {
+    if (dh_keygen_inner(&out->m_contents_.asymm, P521) == false) {
+      PEACEMAKR_ERROR("keygen failed\n");
+      peacemakr_key_free(out);
+      return NULL;
     }
-    case ECDH_P521: {
-      if (dh_keygen_inner(&out->m_contents_.asymm, P521) == false) {
-        PEACEMAKR_ERROR("keygen failed\n");
-        peacemakr_key_free(out);
-        return NULL;
-      }
-      break;
-    }
-    }
-    return out;
+    break;
+  }
+  default: {
+    PEACEMAKR_ERROR("unknown asymmetric algorithm\n");
+    peacemakr_key_free(out);
+    return NULL;
   }
   }
-
-  PEACEMAKR_ERROR("unknown failure\n");
-  peacemakr_key_free(out);
-  return NULL;
+  return out;
 }
 
-peacemakr_key_t *peacemakr_key_new_bytes(crypto_config_t cfg,
-                                         const uint8_t *buf,
-                                         const size_t buf_len) {
-  EXPECT_TRUE_RET((cfg.mode == SYMMETRIC),
-                  "Can't set a raw bytes for asymmetric crypto\n");
-  EXPECT_NOT_NULL_RET(buf, "buffer is null\n");
-
-  const EVP_CIPHER *cipher = parse_cipher(cfg.symm_cipher);
-  size_t keylen = (size_t)EVP_CIPHER_key_length(cipher);
-  EXPECT_TRUE_RET((buf_len >= keylen), "byte buffer was too small\n");
+peacemakr_key_t *peacemakr_key_new_symmetric(symmetric_cipher cipher,
+                                             random_device_t *rand) {
+  EXPECT_NOT_NULL_RET(
+      rand, "Cannot create a new key without a source of randomness\n")
 
   peacemakr_key_t *out = malloc(sizeof(peacemakr_key_t));
-  EXPECT_NOT_NULL_RET(out, "Malloc failed!\n");
+  EXPECT_NOT_NULL_RET(out, "Malloc failed\n")
 
-  out->m_cfg_ = cfg;
+  out->m_cfg_.mode = SYMMETRIC;
+  out->m_cfg_.symm_cipher = cipher;
+  out->m_cfg_.asymm_cipher = ASYMMETRIC_UNSPECIFIED;
+  out->m_cfg_.digest_algorithm = DIGEST_UNSPECIFIED;
+
+  out->m_contents_.symm = NULL;
+
+  const EVP_CIPHER *evp_cipher = parse_cipher(cipher);
+  size_t keylen = (size_t)EVP_CIPHER_key_length(evp_cipher);
+
+  out->m_contents_.symm = buffer_new(keylen);
+  buffer_init_rand(out->m_contents_.symm, rand);
+  return out;
+}
+
+peacemakr_key_t *peacemakr_key_new_bytes(symmetric_cipher cipher,
+                                         const uint8_t *buf,
+                                         const size_t buf_len) {
+  EXPECT_NOT_NULL_RET(buf, "buffer is null\n")
+
+  const EVP_CIPHER *evp_cipher = parse_cipher(cipher);
+  size_t keylen = (size_t)EVP_CIPHER_key_length(evp_cipher);
+  EXPECT_TRUE_RET((buf_len >= keylen), "byte buffer was too small\n")
+
+  peacemakr_key_t *out = malloc(sizeof(peacemakr_key_t));
+  EXPECT_NOT_NULL_RET(out, "Malloc failed!\n")
+
+  out->m_cfg_.mode = SYMMETRIC;
+  out->m_cfg_.symm_cipher = cipher;
+  out->m_cfg_.asymm_cipher = ASYMMETRIC_UNSPECIFIED;
+  out->m_cfg_.digest_algorithm = DIGEST_UNSPECIFIED;
+
   out->m_contents_.symm = NULL;
 
   out->m_contents_.symm = buffer_new(keylen);
@@ -235,49 +268,51 @@ peacemakr_key_t *peacemakr_key_new_bytes(crypto_config_t cfg,
 }
 
 peacemakr_key_t *peacemakr_key_new_from_password(
-    crypto_config_t cfg, const uint8_t *password, const size_t password_len,
-    const uint8_t *salt, const size_t salt_len, const size_t iteration_count) {
-  EXPECT_TRUE_RET((cfg.mode == SYMMETRIC),
-                  "Can't derive an asymmetric key from a password\n");
-  EXPECT_NOT_NULL_RET(password, "buffer is null\n");
+    symmetric_cipher cipher, message_digest_algorithm digest,
+    const uint8_t *password, const size_t password_len, const uint8_t *salt,
+    const size_t salt_len, const size_t iteration_count) {
+  EXPECT_NOT_NULL_RET(password, "buffer is null\n")
   EXPECT_TRUE_RET((password_len >= 0),
-                  "Password size cannot be less than or equal to zero\n");
-  EXPECT_NOT_NULL_RET(salt, "Random device cannot be null\n");
+                  "Password size cannot be less than or equal to zero\n")
+  EXPECT_NOT_NULL_RET(salt, "Random device cannot be null\n")
   EXPECT_TRUE_RET((salt_len >= 0),
-                  "Salt size cannot be less than or equal to zero\n");
+                  "Salt size cannot be less than or equal to zero\n")
   EXPECT_TRUE_RET((iteration_count >= 0),
-                  "Iteration count cannot be less than or equal to zero\n");
+                  "Iteration count cannot be less than or equal to zero\n")
 
-  const EVP_CIPHER *cipher = parse_cipher(cfg.symm_cipher);
-  const EVP_MD *md = parse_digest(cfg.digest_algorithm);
+  const EVP_CIPHER *evp_cipher = parse_cipher(cipher);
+  const EVP_MD *mda = parse_digest(digest);
 
-  const size_t keylen = EVP_CIPHER_key_length(cipher);
+  const size_t keylen = EVP_CIPHER_key_length(evp_cipher);
   uint8_t *keybuf = alloca(keylen);
 
   // Create the key
   if (1 != PKCS5_PBKDF2_HMAC((const char *)password, password_len, salt,
-                             salt_len, iteration_count, md, keylen, keybuf)) {
+                             salt_len, iteration_count, mda, keylen, keybuf)) {
     PEACEMAKR_OPENSSL_LOG;
     return NULL;
   }
 
-  return peacemakr_key_new_bytes(cfg, keybuf, keylen);
+  return peacemakr_key_new_bytes(cipher, keybuf, keylen);
 }
 
 peacemakr_key_t *
-peacemakr_key_new_from_master(crypto_config_t cfg,
+peacemakr_key_new_from_master(symmetric_cipher cipher,
+                              message_digest_algorithm digest,
                               const peacemakr_key_t *master_key,
                               const uint8_t *key_id, const size_t key_id_len) {
-  EXPECT_TRUE_RET((cfg.mode == SYMMETRIC),
-                  "Can't set a raw bytes for asymmetric crypto\n");
 
   // digest length in bytes
-  size_t digestbytes = get_digest_len(cfg.digest_algorithm);
+  size_t digestbytes = get_digest_len(digest);
+  if (digestbytes == 0) {
+    PEACEMAKR_ERROR("Unable to parse digest algorithm\n");
+    return NULL;
+  }
   // digestlen should be in bits
   size_t digestbits = digestbytes * 8;
 
   // Get the number of bits required for the key
-  int keybytes_int = EVP_CIPHER_key_length(parse_cipher(cfg.symm_cipher));
+  int keybytes_int = EVP_CIPHER_key_length(parse_cipher(cipher));
   if (keybytes_int <= 0) {
     PEACEMAKR_OPENSSL_LOG;
     PEACEMAKR_ERROR("Cipher key length failed\n");
@@ -311,37 +346,37 @@ peacemakr_key_new_from_master(crypto_config_t cfg,
     memcpy(input_bytes, &i, sizeof(uint32_t));
 
     // Do the HMAC
-    HMAC(parse_digest(cfg.digest_algorithm), master_key_bytes,
-         (int)master_keylen, input_bytes, input_bytes_len,
-         output_bytes + (i * digestbytes), &result_len);
+    HMAC(parse_digest(digest), master_key_bytes, (int)master_keylen,
+         input_bytes, input_bytes_len, output_bytes + (i * digestbytes),
+         &result_len);
   }
 
   // Get the first keylen bytes and uses them for the key
-  peacemakr_key_t *out = peacemakr_key_new_bytes(cfg, output_bytes, keybytes);
-
-  return out;
+  return peacemakr_key_new_bytes(cipher, output_bytes, keybytes);
 }
 
-peacemakr_key_t *PeacemakrKey_new_pem(crypto_config_t cfg, const char *buf,
-                                      const size_t buflen, bool is_priv) {
+peacemakr_key_t *peacemakr_key_new_pem(asymmetric_cipher cipher,
+                                       symmetric_cipher symm_cipher,
+                                       const char *buf, size_t buflen,
+                                       bool is_priv) {
 
-  EXPECT_TRUE_RET((buf != NULL && buflen > 0),
-                  "buf was null or buflen was 0\n");
+  EXPECT_TRUE_RET((buf != NULL && buflen > 0), "buf was null or buflen was 0\n")
   EXPECT_TRUE_RET((buflen <= INT_MAX),
-                  "Length of passed pem file is greater than INT_MAX\n");
-  EXPECT_TRUE_RET((cfg.mode == ASYMMETRIC),
-                  "Can't set a new EVP_PKEY for symmetric crypto\n");
+                  "Length of passed pem file is greater than INT_MAX\n")
 
   peacemakr_key_t *out = malloc(sizeof(peacemakr_key_t));
-  EXPECT_NOT_NULL_RET(out, "Malloc failed!\n");
+  EXPECT_NOT_NULL_RET(out, "Malloc failed!\n")
 
-  out->m_cfg_ = cfg;
+  out->m_cfg_.mode = ASYMMETRIC;
+  out->m_cfg_.symm_cipher = SYMMETRIC_UNSPECIFIED;
+  out->m_cfg_.asymm_cipher = cipher;
+  out->m_cfg_.digest_algorithm = DIGEST_UNSPECIFIED;
+
   out->m_contents_.asymm = NULL;
 
   BIO *bo = BIO_new_mem_buf(buf, (int)buflen);
 
-  if (cfg.asymm_cipher == ECDH_P256 || cfg.asymm_cipher == ECDH_P384 ||
-      cfg.asymm_cipher == ECDH_P521) {
+  if (cipher == ECDH_P256 || cipher == ECDH_P384 || cipher == ECDH_P521) {
     if (is_priv) {
       out->m_contents_.asymm = PEM_read_bio_PrivateKey(bo, NULL, NULL, NULL);
       EXPECT_NOT_NULL_CLEANUP_RET(
@@ -350,7 +385,7 @@ peacemakr_key_t *PeacemakrKey_new_pem(crypto_config_t cfg, const char *buf,
             BIO_free(bo);
             peacemakr_key_free(out);
           },
-          "PEM_read_bio_ECPrivateKey failed\n");
+          "PEM_read_bio_ECPrivateKey failed\n")
     } else {
       out->m_contents_.asymm = PEM_read_bio_PUBKEY(bo, NULL, NULL, NULL);
       EXPECT_NOT_NULL_CLEANUP_RET(
@@ -359,10 +394,18 @@ peacemakr_key_t *PeacemakrKey_new_pem(crypto_config_t cfg, const char *buf,
             BIO_free(bo);
             peacemakr_key_free(out);
           },
-          "PEM_read_bio_EC_PUBKEY failed\n");
+          "PEM_read_bio_EC_PUBKEY failed\n")
     }
 
-  } else if (cfg.asymm_cipher == RSA_2048 || cfg.asymm_cipher == RSA_4096) {
+  } else if (cipher == RSA_2048 || cipher == RSA_4096) {
+    if (symm_cipher == SYMMETRIC_UNSPECIFIED) {
+      PEACEMAKR_ERROR("Must specify a symmetric algorithm for RSA keys\n");
+      BIO_free(bo);
+      peacemakr_key_free(out);
+      return NULL;
+    }
+
+    out->m_cfg_.symm_cipher = symm_cipher;
     RSA *rsaKey = NULL;
     if (is_priv) {
       out->m_contents_.asymm = PEM_read_bio_PrivateKey(bo, NULL, NULL, NULL);
@@ -372,7 +415,7 @@ peacemakr_key_t *PeacemakrKey_new_pem(crypto_config_t cfg, const char *buf,
             BIO_free(bo);
             peacemakr_key_free(out);
           },
-          "PEM_read_bio_PrivateKey failed\n");
+          "PEM_read_bio_PrivateKey failed\n")
     } else {
       if (!PEM_read_bio_RSA_PUBKEY(bo, &rsaKey, NULL, NULL)) {
         PEACEMAKR_ERROR("PEM_read_bio_RSA_PUBKEY failed\n");
@@ -397,8 +440,13 @@ peacemakr_key_t *PeacemakrKey_new_pem(crypto_config_t cfg, const char *buf,
             peacemakr_key_free(out);
             RSA_free(rsaKey);
           },
-          "PEM_read_bio_PUBKEY failed\n");
+          "PEM_read_bio_PUBKEY failed\n")
     }
+  } else {
+    PEACEMAKR_ERROR("Unknown asymmetric algorithm\n");
+    BIO_free(bo);
+    peacemakr_key_free(out);
+    return NULL;
   }
 
   BIO_free(bo);
@@ -406,25 +454,30 @@ peacemakr_key_t *PeacemakrKey_new_pem(crypto_config_t cfg, const char *buf,
   return out;
 }
 
-peacemakr_key_t *peacemakr_key_new_pem_pub(crypto_config_t cfg, const char *buf,
-                                           size_t buflen) {
-  return PeacemakrKey_new_pem(cfg, buf, buflen, false);
+peacemakr_key_t *peacemakr_key_new_pem_pub(asymmetric_cipher cipher,
+                                           symmetric_cipher symm_cipher,
+                                           const char *buf, size_t buflen) {
+  return peacemakr_key_new_pem(cipher, symm_cipher, buf, buflen, false);
 }
 
-peacemakr_key_t *peacemakr_key_new_pem_priv(crypto_config_t cfg,
+peacemakr_key_t *peacemakr_key_new_pem_priv(asymmetric_cipher cipher,
+                                            symmetric_cipher symm_cipher,
                                             const char *buf, size_t buflen) {
-  return PeacemakrKey_new_pem(cfg, buf, buflen, true);
+  return peacemakr_key_new_pem(cipher, symm_cipher, buf, buflen, true);
 }
 
-peacemakr_key_t *peacemakr_key_dh_generate(peacemakr_key_t *my_key,
-                                           peacemakr_key_t *peer_key) {
+peacemakr_key_t *peacemakr_key_dh_generate(symmetric_cipher cipher,
+                                           const peacemakr_key_t *my_key,
+                                           const peacemakr_key_t *peer_key) {
   EXPECT_NOT_NULL_RET(
-      my_key, "Neither input to peacemakr_key_dh_generate may be NULL\n");
+      my_key, "Neither input to peacemakr_key_dh_generate may be NULL\n")
   EXPECT_NOT_NULL_RET(
-      peer_key, "Neither input to peacemakr_key_dh_generate may be NULL\n");
+      peer_key, "Neither input to peacemakr_key_dh_generate may be NULL\n")
+  EXPECT_TRUE_RET((cipher != SYMMETRIC_UNSPECIFIED),
+                  "Cannot generate a DH key with an unspecified cipher\n")
 
   EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new(my_key->m_contents_.asymm, NULL);
-  EXPECT_NOT_NULL_RET(ctx, "Unable to initialize EVP_PKEY_CTX\n");
+  EXPECT_NOT_NULL_RET(ctx, "Unable to initialize EVP_PKEY_CTX\n")
 
   if (EVP_PKEY_derive_init(ctx) <= 0) {
     PEACEMAKR_OPENSSL_LOG;
@@ -450,22 +503,21 @@ peacemakr_key_t *peacemakr_key_dh_generate(peacemakr_key_t *my_key,
     return NULL;
   }
 
-  crypto_config_t symm_key_cfg = {.mode = SYMMETRIC,
-                                  .asymm_cipher = NONE,
-                                  .symm_cipher = my_key->m_cfg_.symm_cipher,
-                                  .digest_algorithm =
-                                      my_key->m_cfg_.digest_algorithm};
-
   uint8_t hash[SHA256_DIGEST_LENGTH];
-
-  SHA256(skey, skeylen, hash);
+  (void)SHA256(skey, skeylen, hash);
 
   EVP_PKEY_CTX_free(ctx);
-  return peacemakr_key_new_bytes(symm_key_cfg, hash, SHA256_DIGEST_LENGTH);
+  return peacemakr_key_new_bytes(cipher, hash, SHA256_DIGEST_LENGTH);
 }
 
 void peacemakr_key_free(peacemakr_key_t *key) {
-  EXPECT_NOT_NULL_RET_NONE(key, "key was null\n");
+  EXPECT_NOT_NULL_RET_NONE(key, "key was null\n")
+
+  if (key->m_contents_.symm == NULL) {
+    free(key);
+    key = NULL;
+    return;
+  }
 
   switch (key->m_cfg_.mode) {
   case SYMMETRIC: {
@@ -485,10 +537,36 @@ crypto_config_t peacemakr_key_get_config(const peacemakr_key_t *key) {
   return key->m_cfg_;
 }
 
+bool peacemakr_key_set_symmetric_cipher(peacemakr_key_t *key,
+                                        symmetric_cipher cipher) {
+
+  if (key->m_cfg_.mode != ASYMMETRIC) {
+    PEACEMAKR_ERROR(
+        "Cannot override the symmetric cipher of a symmetric key\n");
+    return false;
+  }
+
+  if (key->m_cfg_.symm_cipher != SYMMETRIC_UNSPECIFIED) {
+    PEACEMAKR_ERROR("Cannot override the symmetric cipher when it's already "
+                    "been specified\n");
+    return false;
+  }
+
+  if (key->m_cfg_.asymm_cipher < RSA_2048 ||
+      key->m_cfg_.asymm_cipher > RSA_4096) {
+    PEACEMAKR_ERROR(
+        "ECDH keys do not support overriding the symmetric cipher\n");
+    return false;
+  }
+
+  key->m_cfg_.symm_cipher = cipher;
+  return true;
+}
+
 const buffer_t *peacemakr_key_symmetric(const peacemakr_key_t *key) {
   EXPECT_TRUE_RET(
       (key->m_cfg_.mode == SYMMETRIC),
-      "Attempting to access the symmetric part of an asymmetric key\n");
+      "Attempting to access the symmetric part of an asymmetric key\n")
 
   return key->m_contents_.symm;
 }
@@ -496,18 +574,17 @@ const buffer_t *peacemakr_key_symmetric(const peacemakr_key_t *key) {
 EVP_PKEY *peacemakr_key_asymmetric(const peacemakr_key_t *key) {
   EXPECT_TRUE_RET(
       (key->m_cfg_.mode == ASYMMETRIC),
-      "Attempting to access the asymmetric part of a symmetric key\n");
+      "Attempting to access the asymmetric part of a symmetric key\n")
 
   return key->m_contents_.asymm;
 }
 
 bool peacemakr_key_priv_to_pem(const peacemakr_key_t *key, char **buf,
                                size_t *bufsize) {
-  EXPECT_NOT_NULL_RET_VALUE(key, false, "Cannot serialize a NULL key\n");
-  EXPECT_NOT_NULL_RET_VALUE(buf, false,
-                            "Cannot serialize into a NULL buffer\n");
+  EXPECT_NOT_NULL_RET_VALUE(key, false, "Cannot serialize a NULL key\n")
+  EXPECT_NOT_NULL_RET_VALUE(buf, false, "Cannot serialize into a NULL buffer\n")
   EXPECT_NOT_NULL_RET_VALUE(bufsize, false,
-                            "Cannot serialize into a NULL bufsize\n");
+                            "Cannot serialize into a NULL bufsize\n")
 
   if (key->m_cfg_.mode != ASYMMETRIC) {
     PEACEMAKR_ERROR("Cannot serialize a symmetric key to PEM\n");
@@ -541,11 +618,10 @@ bool peacemakr_key_priv_to_pem(const peacemakr_key_t *key, char **buf,
 
 bool peacemakr_key_pub_to_pem(const peacemakr_key_t *key, char **buf,
                               size_t *bufsize) {
-  EXPECT_NOT_NULL_RET_VALUE(key, false, "Cannot serialize a NULL key\n");
-  EXPECT_NOT_NULL_RET_VALUE(buf, false,
-                            "Cannot serialize into a NULL buffer\n");
+  EXPECT_NOT_NULL_RET_VALUE(key, false, "Cannot serialize a NULL key\n")
+  EXPECT_NOT_NULL_RET_VALUE(buf, false, "Cannot serialize into a NULL buffer\n")
   EXPECT_NOT_NULL_RET_VALUE(bufsize, false,
-                            "Cannot serialize into a NULL bufsize\n");
+                            "Cannot serialize into a NULL bufsize\n")
 
   if (key->m_cfg_.mode != ASYMMETRIC) {
     PEACEMAKR_ERROR("Cannot serialize a symmetric key to PEM\n");
@@ -585,7 +661,7 @@ bool peacemakr_key_get_bytes(const peacemakr_key_t *key, uint8_t **buf,
 
   *bufsize = buffer_get_size(key->m_contents_.symm);
   *buf = calloc(*bufsize, sizeof(uint8_t));
-  EXPECT_NOT_NULL_RET_VALUE(*buf, false, "calloc failed\n");
+  EXPECT_NOT_NULL_RET_VALUE(*buf, false, "calloc failed\n")
 
   memcpy(*buf, buffer_get_bytes(key->m_contents_.symm, NULL), *bufsize);
 

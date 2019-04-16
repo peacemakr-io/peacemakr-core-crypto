@@ -63,13 +63,13 @@ buffer_t *buffer_new(const size_t size) {
   }
 
   buffer_t *ret = malloc(sizeof(buffer_t));
-  EXPECT_NOT_NULL_RET(ret, "Malloc failed!\n");
+  EXPECT_NOT_NULL_RET(ret, "Malloc failed!\n")
 
   ret->m_size_bytes_ = size;
 
   ret->m_mem_ = calloc(ret->m_size_bytes_, sizeof(uint8_t));
   EXPECT_NOT_NULL_CLEANUP_RET(ret->m_mem_, free(ret),
-                              "malloc returned nullptr\n");
+                              "malloc returned nullptr\n")
 
   return ret;
 }
@@ -81,7 +81,7 @@ void buffer_free(buffer_t *buf) {
 
   int err = memset_s(buf->m_mem_, buf->m_size_bytes_, 0, buf->m_size_bytes_);
   EXPECT_TRUE_RET_NONE((err == 0),
-                       "memset failed, aborting (memory NOT freed)\n");
+                       "memset failed, aborting (memory NOT freed)\n")
 
   free(buf->m_mem_);
   buf->m_mem_ = NULL;
@@ -91,19 +91,19 @@ void buffer_free(buffer_t *buf) {
 }
 
 void buffer_init_rand(buffer_t *buf, random_device_t *rng) {
-  EXPECT_NOT_NULL_RET_NONE(buf, "buf was null\n");
-  EXPECT_NOT_NULL_RET_NONE(rng, "rng was null\n");
+  EXPECT_NOT_NULL_RET_NONE(buf, "buf was null\n")
+  EXPECT_NOT_NULL_RET_NONE(rng, "rng was null\n")
 
   int rc = rng->generator(buf->m_mem_, buf->m_size_bytes_);
-  EXPECT_TRUE_RET_NONE((rc == 0), "rng encountered error, %s\n", rng->err(rc));
+  EXPECT_TRUE_RET_NONE((rc == 0), "rng encountered error, %s\n", rng->err(rc))
 }
 
 void buffer_set_bytes(buffer_t *buf, const void *mem, const size_t size_bytes) {
-  EXPECT_NOT_NULL_RET_NONE(buf, "buf was null\n");
-  EXPECT_NOT_NULL_RET_NONE(mem, "mem was null\n");
+  EXPECT_NOT_NULL_RET_NONE(buf, "buf was null\n")
+  EXPECT_NOT_NULL_RET_NONE(mem, "mem was null\n")
 
   EXPECT_TRUE_RET_NONE((buf->m_size_bytes_ >= size_bytes),
-                       "buffer size less than input size\n");
+                       "buffer size less than input size\n")
 
   // Don't use the passed in size just in case
   memcpy((void *)buf->m_mem_, mem, buf->m_size_bytes_);
@@ -142,18 +142,18 @@ const size_t buffer_get_size(const buffer_t *buf) {
 }
 
 void buffer_set_size(buffer_t *buf, const size_t size) {
-  EXPECT_NOT_NULL_RET_NONE(buf, "buf was null\n");
+  EXPECT_NOT_NULL_RET_NONE(buf, "buf was null\n")
   if (buf->m_size_bytes_ == size) {
     return;
   }
 
   buf->m_mem_ = realloc((void *)buf->m_mem_, size);
-  EXPECT_NOT_NULL_RET_NONE(buf->m_mem_, "realloc failed\n");
+  EXPECT_NOT_NULL_RET_NONE(buf->m_mem_, "realloc failed\n")
   buf->m_size_bytes_ = size;
 }
 
 size_t buffer_serialize(const buffer_t *buf, uint8_t *serialized) {
-  EXPECT_NOT_NULL_RET_VALUE(serialized, 0, "serialized was null\n");
+  EXPECT_NOT_NULL_RET_VALUE(serialized, 0, "serialized was null\n")
 
   if (buf == NULL) {
     memset(serialized, 0, sizeof(uint64_t));
@@ -167,7 +167,7 @@ size_t buffer_serialize(const buffer_t *buf, uint8_t *serialized) {
 }
 
 buffer_t *buffer_deserialize(const uint8_t *serialized) {
-  EXPECT_NOT_NULL_RET(serialized, "serialized was null\n");
+  EXPECT_NOT_NULL_RET(serialized, "serialized was null\n")
 
   uint64_t buflen = ntohl(*((uint64_t *)serialized));
   buffer_t *out = buffer_new(buflen);
