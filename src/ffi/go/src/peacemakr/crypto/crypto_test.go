@@ -675,7 +675,7 @@ func TestECDHSerialize(t *testing.T) {
 						t.Fatalf("%v", err)
 					}
 
-					if !reflect.DeepEqual(*deserializedConfig, secKeyCfg) {
+					if deserializedConfig.Mode != secKeyCfg.Mode || deserializedConfig.SymmetricCipher != secKeyCfg.SymmetricCipher {
 						t.Fatalf("did not deserialize the correct configuration, %v, %v", *deserializedConfig, secKeyCfg)
 					}
 
