@@ -13,43 +13,60 @@ import libCoreCrypto
 public class PeacemakrKey {
   let internalRepr: OpaquePointer
     
-  public init?(config: CryptoConfig, rand: RandomDevice) {
+  public init?(asymmCipher: AsymmetricCipher, symmCipher: SymmetricCipher, rand: RandomDevice) {
     var randInternal = rand.getInternal()
-    let key = peacemakr_key_new(config.getInternal(), &randInternal)
+    let key = peacemakr_key_new_asymmetric(asymmetric_cipher(rawValue: asymmCipher.rawValue), symmetric_cipher(rawValue: symmCipher.rawValue), &randInternal)
+    if key == nil {
+      return nil
+    }
+    internalRepr = key!
+  }
+  
+  public init?(symmCipher: SymmetricCipher, rand: RandomDevice) {
+    var randInternal = rand.getInternal()
+    let key = peacemakr_key_new_symmetric(symmetric_cipher(rawValue: symmCipher.rawValue), &randInternal)
     if key == nil {
       return nil
     }
     internalRepr = key!
   }
 
-  public init?(config: CryptoConfig, bytes: Data) {
-    let key = bytes.withUnsafeBytes { (rawBytes: UnsafePointer<UInt8>) -> OpaquePointer in
-      return peacemakr_key_new_bytes(config.getInternal(), rawBytes, bytes.count)
+  public init?(symmCipher: SymmetricCipher, bytes: Data) {
+    let key = bytes.withUnsafeBytes { (rawBytes: UnsafePointer<UInt8>) -> OpaquePointer? in
+      return peacemakr_key_new_bytes(symmetric_cipher(rawValue: symmCipher.rawValue), rawBytes, bytes.count)
     }
-    internalRepr = key
+    if key == nil {
+      return nil
+    }
+    internalRepr = key!
+  }
+  
+  // TODO: add initializer from password
+
+  public init?(symmCipher: SymmetricCipher, digest: MessageDigestAlgorithm, master: PeacemakrKey, bytes: Data) {
+    let key = bytes.withUnsafeBytes { (rawBytes) -> OpaquePointer? in
+      return peacemakr_key_new_from_master(symmetric_cipher(rawValue: symmCipher.rawValue), message_digest_algorithm(rawValue: digest.rawValue), master.internalRepr, rawBytes, bytes.count)
+    }
+    if key == nil {
+      return nil
+    }
+    internalRepr = key!
   }
 
-  public init?(config: CryptoConfig, master: PeacemakrKey, bytes: Data) {
-    let key = bytes.withUnsafeBytes { (rawBytes: UnsafePointer<UInt8>) -> OpaquePointer in
-      return peacemakr_key_new_from_master(config.getInternal(), master.internalRepr, rawBytes, bytes.count)
-    }
-    internalRepr = key
-  }
-
-  public init?(config: CryptoConfig, fileContents: String, is_priv: Bool) {
+  public init?(asymmCipher: AsymmetricCipher, symmCipher: SymmetricCipher, fileContents: String, isPriv: Bool) {
     let key = fileContents.withCString { (fileContentsPtr: UnsafePointer<CChar>) -> OpaquePointer in
-      if is_priv {
-        return peacemakr_key_new_pem_priv(config.getInternal(), fileContentsPtr, fileContents.count)!
+      if isPriv {
+        return peacemakr_key_new_pem_priv(asymmetric_cipher(rawValue: asymmCipher.rawValue), symmetric_cipher(rawValue: symmCipher.rawValue), fileContentsPtr, fileContents.count)!
       } else {
-        return peacemakr_key_new_pem_pub(config.getInternal(), fileContentsPtr, fileContents.count)!
+        return peacemakr_key_new_pem_pub(asymmetric_cipher(rawValue: asymmCipher.rawValue), symmetric_cipher(rawValue: symmCipher.rawValue), fileContentsPtr, fileContents.count)!
       }
     }
     
     internalRepr = key
   }
 
-  public init?(myKey: PeacemakrKey, peerKey: PeacemakrKey) {
-    let key: OpaquePointer? = peacemakr_key_dh_generate(myKey.internalRepr, peerKey.internalRepr)
+  public init?(symmCipher: SymmetricCipher, myKey: PeacemakrKey, peerKey: PeacemakrKey) {
+    let key = peacemakr_key_dh_generate(symmetric_cipher(rawValue: symmCipher.rawValue), myKey.internalRepr, peerKey.internalRepr)
 
     if key == nil {
       return nil
@@ -70,10 +87,10 @@ public class PeacemakrKey {
     return internalRepr
   }
   
-  public func toPem(is_priv: Bool) -> Result<Data> {
+  public func toPem(isPriv: Bool) -> Result<Data> {
     var out: UnsafeMutablePointer<CChar>?
     var outsize: CLong = 0
-    if is_priv {
+    if isPriv {
       if !peacemakr_key_priv_to_pem(internalRepr, &out, &outsize) {
         return .error(CoreCryptoError.serializationFailed)
       }
@@ -87,8 +104,8 @@ public class PeacemakrKey {
     return .result(pemData)
   }
   
-  public func toPem(is_priv: Bool) -> Result<String> {
-    let pemData: Result<Data> = self.toPem(is_priv: is_priv)
+  public func toPem(isPriv: Bool) -> Result<String> {
+    let pemData: Result<Data> = self.toPem(isPriv: isPriv)
     switch (pemData) {
     case let .error(e):
       return .error(e)

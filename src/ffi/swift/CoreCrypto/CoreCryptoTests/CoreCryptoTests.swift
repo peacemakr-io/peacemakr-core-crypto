@@ -27,25 +27,25 @@ class CoreCryptoTests: XCTestCase {
 
     let plaintextIn = Plaintext(data: "Hello from swift!", aad: "And I'm AAD")!
     let context = CryptoContext()!
-    let key = PeacemakrKey(config: cfg, rand: device)!
+    let key = mode == EncryptionMode.ASYMMETRIC ? PeacemakrKey(asymmCipher: asymm_cipher, symmCipher: symm_cipher, rand: device)! : PeacemakrKey(symmCipher: symm_cipher, rand: device)!
 
-    var encrypted = UnwrapCall(context.Encrypt(key: key, plaintext: plaintextIn, rand: device), onError: assertFalse)!
+    var encrypted = UnwrapCall(context.encrypt(key: key, plaintext: plaintextIn, rand: device), onError: assertFalse)!
     
-    context.Sign(senderKey: key, plaintext: plaintextIn, ciphertext: &(encrypted))
-    let serialized = UnwrapCall(context.Serialize(encrypted), onError: assertFalse)!
+    context.sign(senderKey: key, plaintext: plaintextIn, digest: digest, ciphertext: &(encrypted))
+    let serialized = UnwrapCall(context.serialize(digest, encrypted), onError: assertFalse)!
     
-    let unverfiedAAD = UnwrapCall(context.ExtractUnverifiedAAD(serialized), onError: assertFalse)!
+    let unverfiedAAD = UnwrapCall(context.extractUnverifiedAAD(serialized), onError: assertFalse)!
     
     XCTAssert(unverfiedAAD.AuthenticatableData == plaintextIn.AuthenticatableData, "Something failed in ExtractUnverfiedAAD")
 
-    var (deserialized, outCfg) = UnwrapCall(context.Deserialize(serialized), onError: assertFalse)!
+    var (deserialized, outCfg) = UnwrapCall(context.deserialize(serialized), onError: assertFalse)!
     
     XCTAssert(cfg == outCfg)
-    let (decrypted, needVerify) = UnwrapCall(context.Decrypt(key: key, ciphertext: deserialized), onError: assertFalse)!
+    let (decrypted, needVerify) = UnwrapCall(context.decrypt(key: key, ciphertext: deserialized), onError: assertFalse)!
     
     
     if needVerify {
-      let success = UnwrapCall(context.Verify(senderKey: key, plaintext: decrypted, ciphertext: &(deserialized)), onError: assertFalse)!
+      let success = UnwrapCall(context.verify(senderKey: key, plaintext: decrypted, ciphertext: &(deserialized)), onError: assertFalse)!
       XCTAssert(success, "Verification failed")
     }
     XCTAssert(decrypted.EncryptableData == plaintextIn.EncryptableData)
@@ -55,19 +55,31 @@ class CoreCryptoTests: XCTestCase {
 
   func testSymmetric() {
     for symmCipher in SymmetricCipher.allCases {
+      if symmCipher == SymmetricCipher.SYMMETRIC_UNSPECIFIED {
+        continue
+      }
       for digestAlgo in MessageDigestAlgorithm.allCases {
-        innerTest(mode: EncryptionMode.SYMMETRIC, symm_cipher: symmCipher, asymm_cipher: AsymmetricCipher.NONE, digest: digestAlgo)
+        if digestAlgo == MessageDigestAlgorithm.DIGEST_UNSPECIFIED {
+          continue
+        }
+        innerTest(mode: EncryptionMode.SYMMETRIC, symm_cipher: symmCipher, asymm_cipher: AsymmetricCipher.ASYMMETRIC_UNSPECIFIED, digest: digestAlgo)
       }
     }
   }
 
   func testAsymmetric() {
     for asymmCipher in AsymmetricCipher.allCases {
-      if asymmCipher == AsymmetricCipher.NONE {
+      if asymmCipher == AsymmetricCipher.ASYMMETRIC_UNSPECIFIED {
         continue
       }
       for symmCipher in SymmetricCipher.allCases {
+        if symmCipher == SymmetricCipher.SYMMETRIC_UNSPECIFIED {
+          continue
+        }
         for digestAlgo in MessageDigestAlgorithm.allCases {
+          if digestAlgo == MessageDigestAlgorithm.DIGEST_UNSPECIFIED {
+            continue
+          }
           innerTest(mode: EncryptionMode.ASYMMETRIC, symm_cipher: symmCipher, asymm_cipher: asymmCipher, digest: digestAlgo)
         }
       }
