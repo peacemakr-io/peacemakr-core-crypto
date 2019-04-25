@@ -87,6 +87,20 @@ public class PeacemakrKey {
     return internalRepr
   }
   
+  func getBytes() -> Data {
+    var out: UnsafeMutablePointer<UInt8>?
+    var outsize: CLong = 0
+    if !peacemakr_key_get_bytes(internalRepr, &out, &outsize) {
+      return Data()
+    }
+    
+    if out == nil {
+      return Data()
+    }
+    
+    return Data(bytes: out!, count: outsize)
+  }
+  
   public func toPem(isPriv: Bool) -> Result<Data> {
     var out: UnsafeMutablePointer<CChar>?
     var outsize: CLong = 0

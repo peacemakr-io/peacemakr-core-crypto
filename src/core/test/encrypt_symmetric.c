@@ -30,13 +30,18 @@ void test_symmetric_algo(symmetric_cipher cipher) {
 
   uint8_t *key_bytes = NULL;
   size_t key_size = 0;
-  peacemakr_key_get_bytes(original_key, &key_bytes, &key_size);
+  assert(peacemakr_key_get_bytes(original_key, &key_bytes, &key_size));
 
   peacemakr_key_t *key = peacemakr_key_new_bytes(cipher, key_bytes, key_size);
   free(key_bytes);
 
   ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, &plaintext_in, &rand);
   assert(ciphertext != NULL);
+
+  plaintext_t aad;
+  assert(peacemakr_get_unverified_aad(ciphertext, &aad));
+  assert(strncmp((const char *)aad.aad,
+                 (const char *)plaintext_in.aad, plaintext_in.aad_len) == 0);
 
   decrypt_code success = peacemakr_decrypt(key, ciphertext, &plaintext_out);
 

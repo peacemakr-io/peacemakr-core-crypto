@@ -59,7 +59,6 @@ public class CryptoContext {
       }
       
       out = .result(Plaintext(cstyle: plaintextOut))
-      
     }
     
     return out

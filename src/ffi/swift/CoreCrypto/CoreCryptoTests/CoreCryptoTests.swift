@@ -27,7 +27,7 @@ class CoreCryptoTests: XCTestCase {
 
     let plaintextIn = Plaintext(data: "Hello from swift!", aad: "And I'm AAD")!
     let context = CryptoContext()!
-    let key = mode == EncryptionMode.ASYMMETRIC ? PeacemakrKey(asymmCipher: asymm_cipher, symmCipher: symm_cipher, rand: device)! : PeacemakrKey(symmCipher: symm_cipher, rand: device)!
+    let key = (mode == EncryptionMode.ASYMMETRIC) ? PeacemakrKey(asymmCipher: asymm_cipher, symmCipher: symm_cipher, rand: device)! : PeacemakrKey(symmCipher: symm_cipher, rand: device)!
 
     var encrypted = UnwrapCall(context.encrypt(key: key, plaintext: plaintextIn, rand: device), onError: assertFalse)!
     
