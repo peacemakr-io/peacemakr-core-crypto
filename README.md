@@ -31,4 +31,4 @@ For a debug build
 `./bin/release-golang.sh /path/to/peacemakr-api`
 
 ## Build - For iOS
-`cd /path/to/peacemakr-core-crypto/bin && ./release-ios.sh /where/to/put/build/artifacts`
+`cd /path/to/peacemakr-core-crypto/bin && ./release-ios.sh /where/to/put/build/artifacts [is_first_build]`
