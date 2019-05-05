@@ -296,7 +296,7 @@ decrypt_code peacemakr_decrypt(const peacemakr_key_t *recipient_key,
  * Attempts to extract any AAD from the message.
  * Note that this AAD is unconfirmed and may have been tampered with.
  */
-bool peacemakr_get_unverified_aad(ciphertext_blob_t *cipher,
+bool peacemakr_get_unverified_aad(const ciphertext_blob_t *cipher,
                                   plaintext_t *plain);
 
 /**

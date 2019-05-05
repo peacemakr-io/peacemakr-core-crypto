@@ -29,10 +29,11 @@ public enum EncryptionMode: UInt32, CaseIterable {
      reasons.
  */
 public enum SymmetricCipher: UInt32, CaseIterable {
-  case AES_128_GCM = 0
-  case AES_192_GCM = 1
-  case AES_256_GCM = 2
-  case CHACHA20_POLY1305 = 3
+  case SYMMETRIC_UNSPECIFIED = 0
+  case AES_128_GCM = 1
+  case AES_192_GCM = 2
+  case AES_256_GCM = 3
+  case CHACHA20_POLY1305 = 4
 }
 
 /**
@@ -41,7 +42,7 @@ public enum SymmetricCipher: UInt32, CaseIterable {
  NONE is appropriate when the EncryptionMode is SYMMETRIC.
  */
 public enum AsymmetricCipher: UInt32, CaseIterable {
-  case NONE = 0, RSA_2048 = 1, RSA_4096 = 2, ECDH_P256 = 3, ECDH_P384 = 4, ECDH_P521 = 5
+  case ASYMMETRIC_UNSPECIFIED = 0, RSA_2048 = 1, RSA_4096 = 2, ECDH_P256 = 3, ECDH_P384 = 4, ECDH_P521 = 5
 }
 
 /**
@@ -50,10 +51,11 @@ public enum AsymmetricCipher: UInt32, CaseIterable {
  This enum selects the hash function that will be used.
  */
 public enum MessageDigestAlgorithm: UInt32, CaseIterable {
-  case SHA_224 = 0
-  case SHA_256 = 1
-  case SHA_384 = 2
-  case SHA_512 = 3
+  case DIGEST_UNSPECIFIED = 0
+  case SHA_224 = 1
+  case SHA_256 = 2
+  case SHA_384 = 3
+  case SHA_512 = 4
 }
 
 public class CryptoConfig: Equatable {

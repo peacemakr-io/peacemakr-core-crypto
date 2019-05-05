@@ -36,9 +36,8 @@ char *b64_encode(const unsigned char *in, const size_t len, size_t *enc_len) {
     return NULL;
 
   const size_t elen = b64_encoded_size(len);
-  *enc_len = elen + 1;
-  char *out = calloc(elen + 1, sizeof(char));
-  out[elen] = '\0';
+  *enc_len = elen;
+  char *out = calloc(elen, sizeof(char));
 
   for (size_t i = 0, j = 0; i < len; i += 3, j += 4) {
     v = in[i];

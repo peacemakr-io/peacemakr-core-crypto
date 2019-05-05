@@ -30,7 +30,7 @@ void test_symmetric_algo(symmetric_cipher cipher) {
 
   uint8_t *key_bytes = NULL;
   size_t key_size = 0;
-  peacemakr_key_get_bytes(original_key, &key_bytes, &key_size);
+  assert(peacemakr_key_get_bytes(original_key, &key_bytes, &key_size));
 
   peacemakr_key_t *key = peacemakr_key_new_bytes(cipher, key_bytes, key_size);
   free(key_bytes);
@@ -38,15 +38,20 @@ void test_symmetric_algo(symmetric_cipher cipher) {
   ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, &plaintext_in, &rand);
   assert(ciphertext != NULL);
 
+  plaintext_t aad;
+  assert(peacemakr_get_unverified_aad(ciphertext, &aad));
+  assert(memcmp(aad.aad,
+                 plaintext_in.aad, plaintext_in.aad_len) == 0);
+
   decrypt_code success = peacemakr_decrypt(key, ciphertext, &plaintext_out);
 
   assert(success == DECRYPT_SUCCESS);
 
-  assert(strncmp((const char *)plaintext_out.data,
-                 (const char *)plaintext_in.data, plaintext_in.data_len) == 0);
+  assert(memcmp(plaintext_out.data,
+                 plaintext_in.data, plaintext_in.data_len) == 0);
   free((void *)plaintext_out.data);
-  assert(strncmp((const char *)plaintext_out.aad,
-                 (const char *)plaintext_in.aad, plaintext_in.aad_len) == 0);
+  assert(memcmp(plaintext_out.aad,
+                 plaintext_in.aad, plaintext_in.aad_len) == 0);
   free((void *)plaintext_out.aad);
 
   peacemakr_key_free(original_key);

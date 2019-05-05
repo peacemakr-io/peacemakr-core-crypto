@@ -45,10 +45,17 @@ public class Plaintext {
   }
 
   func getInternal() -> plaintext_t {
-    return self.data.withUnsafeBytes { (dataBytes: UnsafePointer<UInt8>) -> plaintext_t in
-      self.aad.withUnsafeBytes { (aadBytes: UnsafePointer<UInt8>) -> plaintext_t in
-        return plaintext_t(data: dataBytes, data_len: self.data.count, aad: aadBytes, aad_len: self.aad.count)
-      }
-    }
+    let dataPtr = UnsafeMutablePointer<UInt8>.allocate(capacity: self.data.count)
+    let aadPtr = UnsafeMutablePointer<UInt8>.allocate(capacity: self.aad.count)
+    
+    self.data.copyBytes(to: dataPtr, count: self.data.count)
+    self.aad.copyBytes(to: aadPtr, count: self.aad.count)
+    
+    return plaintext_t(data: dataPtr, data_len: self.data.count, aad: aadPtr, aad_len: self.aad.count)
   }
+}
+
+func destroyPlaintext(cstyle: plaintext_t) {
+  cstyle.data.deallocate()
+  cstyle.aad.deallocate()
 }

@@ -18,24 +18,26 @@ public class CryptoContext {
     }
   }
 
-  public func Encrypt(key: PeacemakrKey, plaintext: Plaintext, rand: RandomDevice) -> Result<Ciphertext> {
+  public func encrypt(key: PeacemakrKey, plaintext: Plaintext, rand: RandomDevice) -> Result<Ciphertext> {
     var innerRand = rand.getInternal()
     var innerPlaintext = plaintext.getInternal()
     let ciphertext_blob = peacemakr_encrypt(key.getInternal(), &innerPlaintext, &innerRand)
+    destroyPlaintext(cstyle: innerPlaintext)
     if ciphertext_blob == nil {
       return .error(CoreCryptoError.encryptionFailed)
     }
     return .result(ciphertext_blob!)
   }
 
-  public func Sign(senderKey: PeacemakrKey, plaintext: Plaintext, ciphertext: inout Ciphertext) -> Void {
+  public func sign(senderKey: PeacemakrKey, plaintext: Plaintext, digest: MessageDigestAlgorithm, ciphertext: inout Ciphertext) -> Void {
     var innerPlaintext = plaintext.getInternal()
-    peacemakr_sign(senderKey.getInternal(), &innerPlaintext, ciphertext);
+    peacemakr_sign(senderKey.getInternal(), &innerPlaintext, message_digest_algorithm(rawValue: digest.rawValue), ciphertext);
+    destroyPlaintext(cstyle: innerPlaintext)
   }
 
-  public func Serialize(_ ciphertext_blob: Ciphertext) -> Result<Data> {
+  public func serialize(_ digest: MessageDigestAlgorithm, _ ciphertext_blob: Ciphertext) -> Result<Data> {
     var out_size: size_t = 0
-    let bytes = peacemakr_serialize(ciphertext_blob, &out_size)
+    let bytes = peacemakr_serialize(message_digest_algorithm(rawValue: digest.rawValue), ciphertext_blob, &out_size)
     if bytes == nil {
       return .error(CoreCryptoError.serializationFailed)
     }
@@ -43,7 +45,7 @@ public class CryptoContext {
     return .result(Data(buffer: UnsafeBufferPointer(start: bytes, count: out_size)))
   }
 
-  public func ExtractUnverifiedAAD(_ serialized: Data) -> Result<Plaintext> {
+  public func extractUnverifiedAAD(_ serialized: Data) -> Result<Plaintext> {
     var out: Result<Plaintext> = .error(CoreCryptoError.deserializationFailed)
     
     serialized.withUnsafeBytes { (serializedBytes: UnsafePointer<UInt8>) -> Void in
@@ -51,21 +53,23 @@ public class CryptoContext {
       let ciphertext_blob = peacemakr_deserialize(serializedBytes, serialized.count, &out_cfg_internal)
       if ciphertext_blob == nil {
         out = .error(CoreCryptoError.deserializationFailed)
+        return
       }
       
       var plaintextOut = plaintext_t(data: nil, data_len: 0, aad: nil, aad_len: 0)
       if !peacemakr_get_unverified_aad(ciphertext_blob, &plaintextOut) {
         out = .error(CoreCryptoError.decryptionFailed)
+        return
       }
       
       out = .result(Plaintext(cstyle: plaintextOut))
-      
+      return
     }
     
     return out
   }
 
-  public func Deserialize(_ serialized: Data) -> Result<(Ciphertext, CryptoConfig)> {
+  public func deserialize(_ serialized: Data) -> Result<(Ciphertext, CryptoConfig)> {
     var out: Result<(Ciphertext, CryptoConfig)> = .error(CoreCryptoError.deserializationFailed)
     
     serialized.withUnsafeBytes { (serializedBytes: UnsafePointer<UInt8>) -> Void in
@@ -80,7 +84,7 @@ public class CryptoContext {
     return out
   }
 
-  public func Decrypt(key: PeacemakrKey, ciphertext: Ciphertext) -> Result<(Plaintext, Bool)> {
+  public func decrypt(key: PeacemakrKey, ciphertext: Ciphertext) -> Result<(Plaintext, Bool)> {
     var out = plaintext_t(data: nil, data_len: 0, aad: nil, aad_len: 0)
     let success = peacemakr_decrypt(key.getInternal(), ciphertext, &out)
 
@@ -96,9 +100,10 @@ public class CryptoContext {
     return .result((Plaintext(cstyle: out), needVerify))
   }
 
-  public func Verify(senderKey: PeacemakrKey, plaintext: Plaintext, ciphertext: inout Ciphertext) -> Result<Bool> {
+  public func verify(senderKey: PeacemakrKey, plaintext: Plaintext, ciphertext: inout Ciphertext) -> Result<Bool> {
     var innerPlaintext = plaintext.getInternal()
     let verified = peacemakr_verify(senderKey.getInternal(), &innerPlaintext, ciphertext)
+    destroyPlaintext(cstyle: innerPlaintext)
     if !verified {
       return .error(CoreCryptoError.verificationFailed)
     }

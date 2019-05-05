@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [ ! -d "openssl-1.1.1" ]; then
+if [[ ! -d "openssl-1.1.1" ]]; then
     curl -O https://www.openssl.org/source/openssl-1.1.1.tar.gz
     tar -xzf openssl-1.1.1.tar.gz
 fi
