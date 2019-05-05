@@ -22,6 +22,7 @@ public class CryptoContext {
     var innerRand = rand.getInternal()
     var innerPlaintext = plaintext.getInternal()
     let ciphertext_blob = peacemakr_encrypt(key.getInternal(), &innerPlaintext, &innerRand)
+    destroyPlaintext(cstyle: innerPlaintext)
     if ciphertext_blob == nil {
       return .error(CoreCryptoError.encryptionFailed)
     }
@@ -31,6 +32,7 @@ public class CryptoContext {
   public func sign(senderKey: PeacemakrKey, plaintext: Plaintext, digest: MessageDigestAlgorithm, ciphertext: inout Ciphertext) -> Void {
     var innerPlaintext = plaintext.getInternal()
     peacemakr_sign(senderKey.getInternal(), &innerPlaintext, message_digest_algorithm(rawValue: digest.rawValue), ciphertext);
+    destroyPlaintext(cstyle: innerPlaintext)
   }
 
   public func serialize(_ digest: MessageDigestAlgorithm, _ ciphertext_blob: Ciphertext) -> Result<Data> {
@@ -51,14 +53,17 @@ public class CryptoContext {
       let ciphertext_blob = peacemakr_deserialize(serializedBytes, serialized.count, &out_cfg_internal)
       if ciphertext_blob == nil {
         out = .error(CoreCryptoError.deserializationFailed)
+        return
       }
       
       var plaintextOut = plaintext_t(data: nil, data_len: 0, aad: nil, aad_len: 0)
       if !peacemakr_get_unverified_aad(ciphertext_blob, &plaintextOut) {
         out = .error(CoreCryptoError.decryptionFailed)
+        return
       }
       
       out = .result(Plaintext(cstyle: plaintextOut))
+      return
     }
     
     return out
@@ -98,6 +103,7 @@ public class CryptoContext {
   public func verify(senderKey: PeacemakrKey, plaintext: Plaintext, ciphertext: inout Ciphertext) -> Result<Bool> {
     var innerPlaintext = plaintext.getInternal()
     let verified = peacemakr_verify(senderKey.getInternal(), &innerPlaintext, ciphertext)
+    destroyPlaintext(cstyle: innerPlaintext)
     if !verified {
       return .error(CoreCryptoError.verificationFailed)
     }

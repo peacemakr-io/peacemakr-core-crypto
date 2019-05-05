@@ -27,11 +27,22 @@ class CoreCryptoTests: XCTestCase {
 
     let plaintextIn = Plaintext(data: "Hello from swift!", aad: "And I'm AAD")!
     let context = CryptoContext()!
-    let key = (mode == EncryptionMode.ASYMMETRIC) ? PeacemakrKey(asymmCipher: asymm_cipher, symmCipher: symm_cipher, rand: device)! : PeacemakrKey(symmCipher: symm_cipher, rand: device)!
-
-    var encrypted = UnwrapCall(context.encrypt(key: key, plaintext: plaintextIn, rand: device), onError: assertFalse)!
     
-    context.sign(senderKey: key, plaintext: plaintextIn, digest: digest, ciphertext: &(encrypted))
+    var key: PeacemakrKey? = nil
+    
+    let firstKey = (mode == EncryptionMode.ASYMMETRIC) ? PeacemakrKey(asymmCipher: asymm_cipher, symmCipher: symm_cipher, rand: device)! : PeacemakrKey(symmCipher: symm_cipher, rand: device)!
+    
+    if asymm_cipher.rawValue >= AsymmetricCipher.ECDH_P256.rawValue {
+      let secondKey = PeacemakrKey(asymmCipher: asymm_cipher, symmCipher: symm_cipher, rand: device)!
+      key = PeacemakrKey(symmCipher: symm_cipher, myKey: firstKey, peerKey: secondKey)
+    } else {
+      key = firstKey
+    }
+
+    // TODO: doesn't work for ECDH yet
+    var encrypted = UnwrapCall(context.encrypt(key: key!, plaintext: plaintextIn, rand: device), onError: assertFalse)!
+    
+    context.sign(senderKey: key!, plaintext: plaintextIn, digest: digest, ciphertext: &(encrypted))
     let serialized = UnwrapCall(context.serialize(digest, encrypted), onError: assertFalse)!
     
     let unverfiedAAD = UnwrapCall(context.extractUnverifiedAAD(serialized), onError: assertFalse)!
@@ -40,12 +51,15 @@ class CoreCryptoTests: XCTestCase {
 
     var (deserialized, outCfg) = UnwrapCall(context.deserialize(serialized), onError: assertFalse)!
     
-    XCTAssert(cfg == outCfg)
-    let (decrypted, needVerify) = UnwrapCall(context.decrypt(key: key, ciphertext: deserialized), onError: assertFalse)!
+    // The asymmetric ciphers may not match if it's ECDH, and the modes won't either, and that's OK
+    // Mostly because the mode is technically SYMMETRIC for ECDH-based crypto, and the asymmetric algorithm
+    // won't be set for the generated key
+    XCTAssert(cfg.SymmCipher == outCfg.SymmCipher && cfg.DigestAlgorithm == outCfg.DigestAlgorithm)
+    let (decrypted, needVerify) = UnwrapCall(context.decrypt(key: key!, ciphertext: deserialized), onError: assertFalse)!
     
     
     if needVerify {
-      let success = UnwrapCall(context.verify(senderKey: key, plaintext: decrypted, ciphertext: &(deserialized)), onError: assertFalse)!
+      let success = UnwrapCall(context.verify(senderKey: key!, plaintext: decrypted, ciphertext: &(deserialized)), onError: assertFalse)!
       XCTAssert(success, "Verification failed")
     }
     XCTAssert(decrypted.EncryptableData == plaintextIn.EncryptableData)

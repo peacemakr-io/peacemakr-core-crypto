@@ -74,6 +74,10 @@ public class PeacemakrKey {
 
     internalRepr = key!
   }
+  
+  private init?(cKey: OpaquePointer) {
+    internalRepr = cKey
+  }
 
   deinit {
     peacemakr_key_free(internalRepr)

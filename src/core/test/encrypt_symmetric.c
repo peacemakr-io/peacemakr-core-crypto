@@ -40,18 +40,18 @@ void test_symmetric_algo(symmetric_cipher cipher) {
 
   plaintext_t aad;
   assert(peacemakr_get_unverified_aad(ciphertext, &aad));
-  assert(strncmp((const char *)aad.aad,
-                 (const char *)plaintext_in.aad, plaintext_in.aad_len) == 0);
+  assert(memcmp(aad.aad,
+                 plaintext_in.aad, plaintext_in.aad_len) == 0);
 
   decrypt_code success = peacemakr_decrypt(key, ciphertext, &plaintext_out);
 
   assert(success == DECRYPT_SUCCESS);
 
-  assert(strncmp((const char *)plaintext_out.data,
-                 (const char *)plaintext_in.data, plaintext_in.data_len) == 0);
+  assert(memcmp(plaintext_out.data,
+                 plaintext_in.data, plaintext_in.data_len) == 0);
   free((void *)plaintext_out.data);
-  assert(strncmp((const char *)plaintext_out.aad,
-                 (const char *)plaintext_in.aad, plaintext_in.aad_len) == 0);
+  assert(memcmp(plaintext_out.aad,
+                 plaintext_in.aad, plaintext_in.aad_len) == 0);
   free((void *)plaintext_out.aad);
 
   peacemakr_key_free(original_key);

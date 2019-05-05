@@ -207,7 +207,7 @@ ciphertext_blob_t *peacemakr_deserialize(const uint8_t *b64_serialized_cipher,
 
   // If we are a null-terminated string, then remove that from the size.
   // The b64 decode expects that the length passed in does NOT include the
-  // null terminator.
+  // null terminator. Currently this should be able to be optimized away.
   b64_serialized_len -= (b64_serialized_cipher[b64_serialized_len - 1] == '\0');
 
   // We're decoding a b64 message so get the serialized length (rounded up)

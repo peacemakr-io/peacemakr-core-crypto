@@ -12,9 +12,9 @@ pushd ..
 
 PROJECT_SRC=$(pwd)
 
-#pushd src/ffi/swift/openssl
-#./build-openssl.sh
-#popd
+pushd src/ffi/swift/openssl
+./build-openssl.sh
+popd
 
 mkdir -p ios-build
 
