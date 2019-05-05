@@ -2,19 +2,34 @@
 
 set -ex
 
-if [ $# -eq 0 ]; then
-    OUTPUT_DIR=src/ffi/swift/CoreCrypto/universal
-else
-    OUTPUT_DIR=$1
+function usage {
+    echo "Usage: ./release-ios.sh [path to peacemakr-ios folder] [optional: first]"
+    echo "for example, ./bin/release-ios.sh ~/peacemakr/peacemakr-ios-sdk first"
+}
+
+if [[ "$#" -gt 2 ]]; then
+    echo "Illegal use"
+    usage
+    exit 1
 fi
+
+if [[ -z "${1}" ]]; then
+    echo "Illegal use"
+    usage
+    exit 1
+fi
+
+OUTPUT_DIR=${1}
 
 pushd ..
 
 PROJECT_SRC=$(pwd)
 
-#pushd src/ffi/swift/openssl
-#./build-openssl.sh
-#popd
+if [[ ! -z "${2}" ]]; then
+    pushd src/ffi/swift/openssl
+    ./build-openssl.sh
+    popd
+fi
 
 mkdir -p ios-build
 
