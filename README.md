@@ -1,5 +1,5 @@
 # peacemakr-core-crypto
-![CircleCI](https://circleci.com/gh/notasecret/peacemakr-core-crypto.svg?style=svg)
+[![CircleCI](https://circleci.com/gh/notasecret/peacemakr-core-crypto.svg?style=svg)](https://circleci.com/gh/notasecret/peacemakr-core-crypto)
 
 ## About
 
