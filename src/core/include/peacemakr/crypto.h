@@ -116,6 +116,13 @@ static inline uint8_t get_max_version() {
 }
 
 /**
+ * Get the current version of this library. Compile time constant.
+ */
+static inline uint8_t get_version() {
+  return PEACEMAKR_CORE_CRYPTO_VERSION;
+}
+
+/**
  * Should be called once on startup. Ensures that the system's random number
  * generator is well seeded and any numbers generated have sufficient entropy.
  */
