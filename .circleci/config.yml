@@ -1,6 +1,13 @@
 version: 2
 jobs:
-  build:
+
+  build-c:
+    machine: true
+    steps:
+      - checkout
+      - run: docker build . -f docker/test.Dockerfile --build-arg="CMAKE_BUILD_TYPE=DEBUG"
+
+  build-golang:
     machine: true
     steps:
       - checkout
@@ -16,3 +23,18 @@ jobs:
             docker tag corecrypto:latest 716293438869.dkr.ecr.us-east-2.amazonaws.com/corecrypto:latest
             docker push 716293438869.dkr.ecr.us-east-2.amazonaws.com/corecrypto:latest
           fi
+
+  build-ios:
+    machine: true
+    macos:
+      xcode: "10.2.0"
+    steps:
+      - checkout
+      - run: cd bin && ./release-ios.sh .. first
+
+workflows:
+  version: 2
+  jobs:
+    - build-c
+    - build-golang
+    - build-ios

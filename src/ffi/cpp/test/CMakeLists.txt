@@ -1,3 +1,6 @@
+enable_language(CXX)
+set(CMAKE_CXX_STANDARD 11)
+
 add_executable(test_cpp EXCLUDE_FROM_ALL ${CMAKE_CURRENT_SOURCE_DIR}/test.cpp)
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
@@ -14,9 +17,6 @@ set(ALL_C_SOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/test.cpp ${ALL_C_SOURCE_FILES
 
 add_test(NAME test_cpp COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_cpp)
 add_dependencies(check test_cpp)
-
-enable_language(CXX)
-set(CMAKE_CXX_STANDARD 11)
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     if (APPLE)
