@@ -20,22 +20,20 @@ public class Plaintext {
   }
 
   public init?(data: String, aad: String) {
-    let dataD = data.data(using: .utf8)
-    let aadD = aad.data(using: .utf8)
-    
-    if dataD == nil || aadD == nil {
+    guard let dataD = data.data(using: .utf8),
+      let aadD = aad.data(using: .utf8) else {
       return nil
     }
     
-    self.data = dataD!
-    self.aad = aadD!
+    self.data = dataD
+    self.aad = aadD
   }
   
-  public var EncryptableData: Data {
+  public var encryptableData: Data {
     return self.data
   }
   
-  public var AuthenticatableData: Data {
+  public var authenticatableData: Data {
     return self.aad
   }
 

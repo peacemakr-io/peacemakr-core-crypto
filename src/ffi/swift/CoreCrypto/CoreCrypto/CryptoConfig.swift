@@ -74,19 +74,19 @@ public class CryptoConfig: Equatable {
     )
   }
 
-  public var Mode: EncryptionMode {
+  public var mode: EncryptionMode {
     return EncryptionMode(rawValue: internalRepr.mode.rawValue)!
   }
 
-  public var SymmCipher: SymmetricCipher {
+  public var symmCipher: SymmetricCipher {
     return SymmetricCipher(rawValue: internalRepr.symm_cipher.rawValue)!
   }
 
-  public var AsymmCipher: AsymmetricCipher {
+  public var asymmCipher: AsymmetricCipher {
     return AsymmetricCipher(rawValue: internalRepr.asymm_cipher.rawValue)!
   }
 
-  public var DigestAlgorithm: MessageDigestAlgorithm {
+  public var digestAlgorithm: MessageDigestAlgorithm {
     return MessageDigestAlgorithm(rawValue: internalRepr.digest_algorithm.rawValue)!
   }
 
@@ -95,9 +95,9 @@ public class CryptoConfig: Equatable {
   }
   
   public static func == (lhs: CryptoConfig, rhs: CryptoConfig) -> Bool {
-    return (lhs.Mode == rhs.Mode) &&
-           (lhs.SymmCipher == rhs.SymmCipher) &&
-           (lhs.AsymmCipher == rhs.AsymmCipher) &&
-           (lhs.DigestAlgorithm == rhs.DigestAlgorithm)
+    return (lhs.mode == rhs.mode) &&
+           (lhs.symmCipher == rhs.symmCipher) &&
+           (lhs.asymmCipher == rhs.asymmCipher) &&
+           (lhs.digestAlgorithm == rhs.digestAlgorithm)
   }
 }

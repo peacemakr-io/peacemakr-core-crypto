@@ -21,12 +21,13 @@ public class CryptoContext {
   public func encrypt(key: PeacemakrKey, plaintext: Plaintext, rand: RandomDevice) -> Result<Ciphertext> {
     var innerRand = rand.getInternal()
     var innerPlaintext = plaintext.getInternal()
-    let ciphertext_blob = peacemakr_encrypt(key.getInternal(), &innerPlaintext, &innerRand)
+    
     destroyPlaintext(cstyle: innerPlaintext)
-    if ciphertext_blob == nil {
+    
+    guard let ciphertext_blob = peacemakr_encrypt(key.getInternal(), &innerPlaintext, &innerRand) else {
       return .error(CoreCryptoError.encryptionFailed)
     }
-    return .result(ciphertext_blob!)
+    return .result(ciphertext_blob)
   }
 
   public func sign(senderKey: PeacemakrKey, plaintext: Plaintext, digest: MessageDigestAlgorithm, ciphertext: inout Ciphertext) -> Void {
@@ -50,8 +51,7 @@ public class CryptoContext {
     
     serialized.withUnsafeBytes { (serializedBytes: UnsafePointer<UInt8>) -> Void in
       var out_cfg_internal = crypto_config_t()
-      let ciphertext_blob = peacemakr_deserialize(serializedBytes, serialized.count, &out_cfg_internal)
-      if ciphertext_blob == nil {
+      guard let ciphertext_blob = peacemakr_deserialize(serializedBytes, serialized.count, &out_cfg_internal) else {
         out = .error(CoreCryptoError.deserializationFailed)
         return
       }
@@ -74,13 +74,13 @@ public class CryptoContext {
     
     serialized.withUnsafeBytes { (serializedBytes: UnsafePointer<UInt8>) -> Void in
       var out_cfg_internal = crypto_config_t()
-      let ciphertext_blob = peacemakr_deserialize(serializedBytes, serialized.count, &out_cfg_internal)
-      if ciphertext_blob == nil {
+      if let ciphertext_blob = peacemakr_deserialize(serializedBytes, serialized.count, &out_cfg_internal) {
+        out = .result((ciphertext_blob, CryptoConfig(cfg: out_cfg_internal)))
+      } else {
         out = .error(CoreCryptoError.deserializationFailed)
       }
-      out = .result((ciphertext_blob!, CryptoConfig(cfg: out_cfg_internal)))
     }
-    
+  
     return out
   }
 
