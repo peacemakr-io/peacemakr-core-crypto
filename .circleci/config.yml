@@ -31,10 +31,3 @@ jobs:
     steps:
       - checkout
       - run: cd bin && ./release-ios.sh .. first
-
-workflows:
-  version: 2
-  jobs:
-    - build-c
-    - build-golang
-    - build-ios
