@@ -16,8 +16,8 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#define PEACEMAKR_CORE_CRYPTO_VERSION (uint8_t)1
-#define PEACEMAKR_CORE_CRYPTO_VERSION_MAX (uint8_t)1
+#define PEACEMAKR_CORE_CRYPTO_VERSION (uint32_t)0x1
+#define PEACEMAKR_CORE_CRYPTO_VERSION_MAX (uint32_t)0x1
 
 /**
  * @file peacemakr/crypto.h
@@ -111,14 +111,14 @@ typedef struct PeacemakrKey peacemakr_key_t;
 /**
  * Get max supported version by this library. Compile time constant.
  */
-static inline uint8_t get_max_version() {
+static inline uint32_t get_max_version() {
   return PEACEMAKR_CORE_CRYPTO_VERSION_MAX;
 }
 
 /**
  * Get the current version of this library. Compile time constant.
  */
-static inline uint8_t get_version() {
+static inline uint32_t get_version() {
   return PEACEMAKR_CORE_CRYPTO_VERSION;
 }
 
