@@ -8,8 +8,6 @@ This package defines the core crypto functionality for peacemakr.
 From the repository base directory,
 `./bin/serve-docs.sh` will set up a docker image that serves the doxygen docs on `localhost:3000`
 
----
-
 ## Build Dependencies - Golang
 `docker build -t corecrypto-dependencies:latest . -f docker/go-dependencies.Dockerfile --build-arg="CMAKE_BUILD_TYPE=RELEASE"`
 `docker tag corecrypto-dependencies:latest 716293438869.dkr.ecr.us-east-2.amazonaws.com/corecrypto-dependencies:latest`
