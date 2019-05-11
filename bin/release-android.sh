@@ -3,7 +3,7 @@
 set -ex
 
 function usage {
-    echo "Usage: ANDROID_NDK_ROOT=/path/to/ndk-bundle ./release-android.sh"
+    echo "Usage: ANDROID_NDK_ROOT=/path/to/ndk-bundle ./release-android.sh [path to peacemakr-ios folder] [optional: first]"
 }
 
 if [[ "$#" -gt 2 ]]; then

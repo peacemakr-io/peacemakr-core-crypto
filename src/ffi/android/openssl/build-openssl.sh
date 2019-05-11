@@ -6,7 +6,7 @@ if [[ -z "${ANDROID_NDK_ROOT}" ]]; then
 fi
 
 OPENSSL_VERSION=1.1.1b
-ANDROID_API_LEVEL=19
+ANDROID_API_LEVEL=21
 
 BUILD_DIR=/tmp/openssl_android_build
 OUT_DIR=$(pwd)/openssl-build
@@ -27,6 +27,8 @@ cd openssl-${OPENSSL_VERSION} || exit 128
 ###### remove output-directory #####
 rm -rf ${OUT_DIR}
 
+BASE_OPTIONS="no-asm no-ssl3 no-comp no-hw no-engine no-async"
+
 ###### build-function #####
 build_the_thing() {
     ${ANDROID_NDK_ROOT}/build/tools/make_standalone_toolchain.py --install-dir=${DESTDIR} --arch=${ARCH} --api=${ANDROID_API_LEVEL}
@@ -46,8 +48,6 @@ build_the_thing() {
     make install_sw DESTDIR=${DESTDIR} || exit 128
 }
 
-OPTIONS="no-asm no-ssl3 no-comp no-hw no-engine no-async"
-
 ###### set variables according to build-target #####
 for build_target in ${BUILD_TARGETS}
 do
@@ -55,7 +55,7 @@ do
     armeabi)
         TRIBLE="arm-linux-androideabi"
         TC_NAME="arm-linux-androideabi-4.9"
-        OPTIONS="--target=armv5te-linux-androideabi -mthumb -fPIC -latomic -D__ANDROID_API__=$ANDROID_API_LEVEL ${OPTIONS}"
+        OPTIONS="--target=armv5te-linux-androideabi -mthumb -fPIC -latomic -D__ANDROID_API__=$ANDROID_API_LEVEL ${BASE_OPTIONS}"
         DESTDIR="$BUILD_DIR/armeabi"
         ARCH="arm"
         SSL_TARGET="android-arm"
@@ -63,7 +63,7 @@ do
     armeabi-v7a)
         TRIBLE="arm-linux-androideabi"
         TC_NAME="arm-linux-androideabi-4.9"
-        OPTIONS="--target=armv7a-linux-androideabi -Wl,--fix-cortex-a8 -fPIC -D__ANDROID_API__=$ANDROID_API_LEVEL ${OPTIONS}"
+        OPTIONS="--target=armv7a-linux-androideabi -Wl,--fix-cortex-a8 -fPIC -D__ANDROID_API__=$ANDROID_API_LEVEL ${BASE_OPTIONS}"
         DESTDIR="$BUILD_DIR/armeabi-v7a"
         ARCH="arm"
         SSL_TARGET="android-arm"
@@ -71,7 +71,7 @@ do
     x86)
         TRIBLE="i686-linux-android"
         TC_NAME="x86-4.9"
-        OPTIONS="-fPIC -D__ANDROID_API__=${ANDROID_API_LEVEL} ${OPTIONS}"
+        OPTIONS="-fPIC -D__ANDROID_API__=${ANDROID_API_LEVEL} ${BASE_OPTIONS}"
         DESTDIR="$BUILD_DIR/x86"
         ARCH="x86"
         SSL_TARGET="android-x86"
@@ -79,7 +79,7 @@ do
     x86_64)
         TRIBLE="x86_64-linux-android"
         TC_NAME="x86_64-4.9"
-        OPTIONS="-fPIC -D__ANDROID_API__=${ANDROID_API_LEVEL} ${OPTIONS}"
+        OPTIONS="-fPIC -D__ANDROID_API__=${ANDROID_API_LEVEL} ${BASE_OPTIONS}"
         DESTDIR="$BUILD_DIR/x86_64"
         ARCH="x86_64"
         SSL_TARGET="android-x86_64"
@@ -87,7 +87,7 @@ do
     arm64-v8a)
         TRIBLE="aarch64-linux-android"
         TC_NAME="aarch64-linux-android-4.9"
-        OPTIONS="-fPIC -D__ANDROID_API__=${ANDROID_API_LEVEL} ${OPTIONS}"
+        OPTIONS="-fPIC -D__ANDROID_API__=${ANDROID_API_LEVEL} ${BASE_OPTIONS}"
         DESTDIR="$BUILD_DIR/arm64-v8a"
         ARCH="arm64"
         SSL_TARGET="android-arm64"
