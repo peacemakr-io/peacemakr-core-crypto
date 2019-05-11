@@ -1,0 +1,7 @@
+module.map
+libCoreCrypto/*
+*.patch
+openssl*.tar.gz
+openssl-build/
+openssl-*/
+universal/
