@@ -43,6 +43,16 @@ if (PEACEMAKR_BUILD_IOS)
     ")
 endif(PEACEMAKR_BUILD_IOS)
 
+# Android-specific stuff #####
+option(PEACEMAKR_BUILD_ANDROID "Whether to build the Android bindings" OFF)
+
+if (PEACEMAKR_BUILD_ANDROID)
+    set(OPENSSL_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/android/openssl/openssl-build/${CMAKE_ANDROID_ARCH})
+    set(OPENSSL_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/android/openssl/openssl-build/${CMAKE_ANDROID_ARCH}/lib)
+
+    # TODO: unclear what I should do about anything here...
+endif(PEACEMAKR_BUILD_ANDROID)
+
 # C++-specific stuff #####
 option(PEACEMAKR_BUILD_CPP "Whether to build the C++ bindings" ON)
 

@@ -7,9 +7,6 @@ public class Key {
 
     private long nativeKey;
 
-    // TODO
-//    private native PeacemakrKey_new()
-
     public Key(CryptoConfig cfg, RandomDevice rand) {
         ;
     }

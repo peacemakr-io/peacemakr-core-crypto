@@ -32,5 +32,6 @@ fi
 
 mkdir -p ${OUTPUT_DIR}
 pushd ${OUTPUT_DIR}
-# TODO: copy stuff over to OUTPUT_DIR
+    # TODO: build core crypto lib for android too
+    # TODO: copy files to destination
 popd
