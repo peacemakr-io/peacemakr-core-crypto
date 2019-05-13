@@ -30,14 +30,15 @@ if (ANDROID_ABI)
     set(OPENSSL_INCLUDE_DIR ${OPENSSL_ROOT_DIR}/include)
     include_directories(${OPENSSL_INCLUDE_DIR})
 
-    set(OPENSSL_SSL_LIBRARY ${OPENSSL_ROOT_DIR}/lib/libssl.so)
+    set(OPENSSL_SSL_LIBRARY ${OPENSSL_ROOT_DIR}/lib/libssl.a)
     add_library(OpenSSL::SSL SHARED IMPORTED)
     set_target_properties(OpenSSL::SSL PROPERTIES IMPORTED_LOCATION ${OPENSSL_SSL_LIBRARY})
 
-    set(OPENSSL_CRYPTO_LIBRARY ${OPENSSL_ROOT_DIR}/lib/libcrypto.so)
-    add_library(OpenSSL::Crypto SHARED IMPORTED ${OPENSSL_ROOT_DIR}/lib/libcrypto.so)
+    set(OPENSSL_CRYPTO_LIBRARY ${OPENSSL_ROOT_DIR}/lib/libcrypto.a)
+    add_library(OpenSSL::Crypto SHARED IMPORTED)
     set_target_properties(OpenSSL::Crypto PROPERTIES IMPORTED_LOCATION ${OPENSSL_CRYPTO_LIBRARY})
 else (ANDROID_ABI)
+    set(OPENSSL_USE_STATIC_LIBS TRUE)
     find_package(OpenSSL 1.1 REQUIRED)
 endif (ANDROID_ABI)
 

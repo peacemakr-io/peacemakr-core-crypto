@@ -1,5 +1,9 @@
 package io.peacemakr.corecrypto;
 
 public class RandomDevice {
-    // TODO
+    private long nativePtr;
+
+    long getNativePtr() {
+        return nativePtr;
+    }
 }

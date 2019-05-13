@@ -26,6 +26,8 @@ extern "C" {
 
 #include <jni.h>
 #include <android/log.h>
+#include <crypto.h>
+#include <random.h>
 
 // Android log function wrappers
 static const char* kTAG = "peacemakr-core-crypto";
@@ -36,40 +38,20 @@ static const char* kTAG = "peacemakr-core-crypto";
 #define LOGE(...) \
   ((void)__android_log_print(ANDROID_LOG_ERROR, kTAG, __VA_ARGS__))
 
-JNIEXPORT jstring JNICALL Java_io_peacemakr_corecrypto_Key_peacemakr_1key_1new_1asymmetric
-        (JNIEnv *env, jobject obj, jint asymm_cipher, jint symm_cipher, jlong rand) {
-#if defined(__arm__)
-  #if defined(__ARM_ARCH_7A__)
-    #if defined(__ARM_NEON__)
-      #if defined(__ARM_PCS_VFP)
-        #define ABI "armeabi-v7a/NEON (hard-float)"
-      #else
-        #define ABI "armeabi-v7a/NEON"
-      #endif
-    #else
-      #if defined(__ARM_PCS_VFP)
-        #define ABI "armeabi-v7a (hard-float)"
-      #else
-        #define ABI "armeabi-v7a"
-      #endif
-    #endif
-  #else
-   #define ABI "armeabi"
-  #endif
-#elif defined(__i386__)
-#define ABI "x86"
-#elif defined(__x86_64__)
-#define ABI "x86_64"
-#elif defined(__mips64)  /* mips64el-* toolchain defines __mips__ too */
-#define ABI "mips64"
-#elif defined(__mips__)
-#define ABI "mips"
-#elif defined(__aarch64__)
-#define ABI "arm64-v8a"
-#else
-#define ABI "unknown"
-#endif
-  return (*env)->NewStringUTF(env, "Hello from JNI !  Compiled with ABI " ABI ".");
+static void log_callback(const char *msg) {
+    LOGI("%s", msg);
+}
+
+void setup_log_callback(void) __attribute__((constructor));
+void setup_log_callback() {
+    peacemakr_set_log_callback(&log_callback);
+}
+
+
+JNIEXPORT jlong JNICALL Java_io_peacemakr_corecrypto_Key_peacemakr_1key_1new_1asymmetric
+        (JNIEnv *env, jobject this, jint asymm_cipher, jint symm_cipher, jlong rand) {
+  peacemakr_key_t *asymmKey = peacemakr_key_new_asymmetric(asymm_cipher, symm_cipher, (random_device_t *)rand);
+  return (long)asymmKey;
 }
 
 #ifdef __cplusplus

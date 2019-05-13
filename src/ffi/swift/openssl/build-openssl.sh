@@ -1,11 +1,11 @@
 #!/bin/bash
 
-if [[ ! -d "openssl-1.1.1b" ]]; then
-    curl -O https://www.openssl.org/source/openssl-1.1.1b.tar.gz
-    tar -xzf openssl-1.1.1b.tar.gz
+if [[ ! -d "openssl-1.1.1" ]]; then
+    curl -O https://www.openssl.org/source/openssl-1.1.1.tar.gz
+    tar -xzf openssl-1.1.1.tar.gz
 fi
 
-pushd openssl-1.1.1b
+pushd openssl-1.1.1
 
 TMP_DIR=/tmp/build_openssl_$$
 CROSS_TOP_SIM="`xcode-select --print-path`/Platforms/iPhoneSimulator.platform/Developer"

@@ -35,13 +35,13 @@ target_include_directories(peacemakr-core-crypto
 )
 if (APPLE)
     target_link_libraries(peacemakr-core-crypto
-            PRIVATE -Wl,-all_load OpenSSL::SSL OpenSSL::Crypto -Wl,-noall_load)
+            PRIVATE OpenSSL::SSL OpenSSL::Crypto)
 elseif (UNIX AND NOT APPLE AND NOT ANDROID) # Needs libbsd
     target_link_libraries(peacemakr-core-crypto
-            PRIVATE -Wl,--whole-archive OpenSSL::SSL OpenSSL::Crypto bsd -Wl,--no-whole-archive -ldl)
+            PRIVATE OpenSSL::SSL OpenSSL::Crypto bsd -ldl)
 else()
     target_link_libraries(peacemakr-core-crypto
-            PRIVATE -Wl,--whole-archive OpenSSL::SSL OpenSSL::Crypto -Wl,--no-whole-archive -ldl)
+            PRIVATE OpenSSL::SSL OpenSSL::Crypto -ldl)
 endif()
 set_target_properties(peacemakr-core-crypto PROPERTIES
         PUBLIC_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/include/peacemakr/crypto.h;${CMAKE_CURRENT_SOURCE_DIR}/include/peacemakr/random.h"
