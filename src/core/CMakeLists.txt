@@ -18,6 +18,10 @@ if (NOT HAS_MEMSET_S)
     add_definitions(-DPEACEMAKR_NO_MEMSET_S)
 endif (NOT HAS_MEMSET_S)
 
+if (UNIX AND NOT APPLE AND NOT ANDROID)
+    add_definitions(-DNEED_LIBBSD)
+endif ()
+
 file(GLOB INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/include/peacemakr/*.h)
 file(GLOB SOURCES_C ${CMAKE_CURRENT_SOURCE_DIR}/src/*.c)
 file(GLOB SOURCES_H ${CMAKE_CURRENT_SOURCE_DIR}/src/*.h)
@@ -31,10 +35,13 @@ target_include_directories(peacemakr-core-crypto
 )
 if (APPLE)
     target_link_libraries(peacemakr-core-crypto
-            PUBLIC -Wl,-all_load OpenSSL::SSL OpenSSL::Crypto -Wl,-noall_load)
+            PRIVATE -Wl,-all_load OpenSSL::SSL OpenSSL::Crypto -Wl,-noall_load)
+elseif (UNIX AND NOT APPLE AND NOT ANDROID) # Needs libbsd
+    target_link_libraries(peacemakr-core-crypto
+            PRIVATE -Wl,--whole-archive OpenSSL::SSL OpenSSL::Crypto bsd -Wl,--no-whole-archive -ldl)
 else()
     target_link_libraries(peacemakr-core-crypto
-            PUBLIC -Wl,--whole-archive OpenSSL::SSL OpenSSL::Crypto bsd -Wl,--no-whole-archive -ldl)
+            PRIVATE -Wl,--whole-archive OpenSSL::SSL OpenSSL::Crypto -Wl,--no-whole-archive -ldl)
 endif()
 set_target_properties(peacemakr-core-crypto PROPERTIES
         PUBLIC_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/include/peacemakr/crypto.h;${CMAKE_CURRENT_SOURCE_DIR}/include/peacemakr/random.h"

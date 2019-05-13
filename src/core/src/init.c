@@ -9,7 +9,7 @@
 #include "Logging.h"
 #include "crypto.h"
 
-#ifdef linux
+#ifdef NEED_LIBBSD
 #include <bsd/stdlib.h>
 #endif
 #include <stdlib.h>

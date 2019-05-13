@@ -17,7 +17,6 @@ set(PEACEMAKR_CORE_CRYPTO_VERSION
 
 option(BUILD_TESTS "Whether or not to build the tests" ON)
 
-
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -26,8 +25,21 @@ set(CMAKE_C_FLAGS "-Os -fPIC -fstack-protector-strong -Wall")
 
 set(ALL_C_SOURCE_FILES "")
 
-set(CMAKE_FIND_LIBRARY_SUFFIXES .a)
-find_package(OpenSSL 1.1 REQUIRED)
+if (ANDROID_ABI)
+    set(OPENSSL_ROOT_DIR ${OPENSSL_ROOT_DIR}/${ANDROID_ABI} CACHE PATH "" FORCE)
+    set(OPENSSL_INCLUDE_DIR ${OPENSSL_ROOT_DIR}/include)
+    include_directories(${OPENSSL_INCLUDE_DIR})
+
+    set(OPENSSL_SSL_LIBRARY ${OPENSSL_ROOT_DIR}/lib/libssl.so)
+    add_library(OpenSSL::SSL SHARED IMPORTED)
+    set_target_properties(OpenSSL::SSL PROPERTIES IMPORTED_LOCATION ${OPENSSL_SSL_LIBRARY})
+
+    set(OPENSSL_CRYPTO_LIBRARY ${OPENSSL_ROOT_DIR}/lib/libcrypto.so)
+    add_library(OpenSSL::Crypto SHARED IMPORTED ${OPENSSL_ROOT_DIR}/lib/libcrypto.so)
+    set_target_properties(OpenSSL::Crypto PROPERTIES IMPORTED_LOCATION ${OPENSSL_CRYPTO_LIBRARY})
+else (ANDROID_ABI)
+    find_package(OpenSSL 1.1 REQUIRED)
+endif (ANDROID_ABI)
 
 add_subdirectory(src/core)
 add_subdirectory(src/ffi)

@@ -10,7 +10,7 @@
 #define PEACEMAKR_CORE_CRYPTO_HELPER_H
 
 #include <stddef.h>
-#ifdef linux
+#ifdef NEED_LIBBSD
 #include <bsd/stdlib.h>
 #else
 #include <stdlib.h>

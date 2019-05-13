@@ -4,7 +4,10 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.3.1'
+        classpath 'com.android.tools.build:gradle:3.4.0'
+
+        // NOTE: Do not place your application dependencies here; they belong
+        // in the individual module build.gradle files
     }
 }
 
@@ -15,7 +18,58 @@ allprojects {
     }
 }
 
+apply plugin: 'com.android.library'
+apply plugin: 'idea'
 
-task clean(type: Delete) {
-    delete rootProject.buildDir
+android {
+    compileSdkVersion 28
+
+    defaultConfig {
+
+        minSdkVersion 21
+        targetSdkVersion 28
+
+        // Similar to other properties in the defaultConfig block,
+        // you can configure the ndk block for each product flavor
+        // in your build configuration.
+        ndk {
+            // Specifies the ABI configurations of your native
+            // libraries Gradle should build and package with your APK.
+            abiFilters 'x86', 'x86_64', 'armeabi-v7a', 'arm64-v8a'
+        }
+
+        externalNativeBuild {
+            cmake {
+                abiFilters 'x86', 'x86_64', 'armeabi-v7a', 'arm64-v8a'
+
+                // explicitly build libs
+                targets 'peacemakr-core-crypto-jni'
+                arguments "-DOPENSSL_ROOT_DIR=$rootProject.projectDir/openssl/openssl-build",
+                          "-DBUILD_TESTS=OFF", "-DPEACEMAKR_BUILD_GO=OFF", "-DPEACEMAKR_BUILD_CPP=OFF", "-DPEACEMAKR_BUILD_IOS=OFF",
+                          "-DPEACEMAKR_BUILD_ANDROID=ON"
+            }
+        }
+    }
+
+    externalNativeBuild {
+        cmake {
+            version "3.10.2+"
+            path "../../../CMakeLists.txt"
+        }
+    }
+
+    task buildOpenSSL(type: Exec) {
+        workingDir 'openssl'
+        def ndkDir = android.ndkDirectory.getAbsolutePath()
+        environment 'ANDROID_NDK_ROOT', ndkDir
+        commandLine "./build-openssl.sh"
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+
+    // Required for tests
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation 'junit:junit:4.12'
 }

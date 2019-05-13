@@ -8,10 +8,9 @@ fi
 OPENSSL_VERSION=1.1.1b
 ANDROID_API_LEVEL=21
 
-BUILD_DIR=/tmp/openssl_android_build
 OUT_DIR=$(pwd)/openssl-build
 
-BUILD_TARGETS="armeabi armeabi-v7a arm64-v8a x86 x86_64"
+BUILD_TARGETS="armeabi-v7a arm64-v8a x86 x86_64"
 
 if [[ ! -d openssl-${OPENSSL_VERSION} ]]
 then
@@ -27,25 +26,36 @@ cd openssl-${OPENSSL_VERSION} || exit 128
 ###### remove output-directory #####
 rm -rf ${OUT_DIR}
 
-BASE_OPTIONS="no-asm no-ssl3 no-comp no-hw no-engine no-async"
+PLATFORM='unknown'
+unamestr=$(uname)
+if [[ "$unamestr" == 'Linux' ]]; then
+   PLATFORM='linux'
+elif [[ "$unamestr" == 'Darwin' ]]; then
+   PLATFORM='darwin'
+fi
+
+BASE_OPTIONS="no-asm no-ssl3 no-comp no-hw no-engine no-async CC=clang"
+BINDIR="${ANDROID_NDK_ROOT}/toolchains/llvm/prebuilt/${PLATFORM}-x86_64"
+MAKE_CC="${BINDIR}/bin/clang"
+MAKE_CXX="${BINDIR}/bin/clang++"
+MAKE_AR="${BINDIR}/bin/llvm-ar"
+
 
 ###### build-function #####
 build_the_thing() {
-    ${ANDROID_NDK_ROOT}/build/tools/make_standalone_toolchain.py --install-dir=${DESTDIR} --arch=${ARCH} --api=${ANDROID_API_LEVEL}
-
-    ANDROID_NDK=${DESTDIR} \
-    PATH=${DESTDIR}/bin:${PATH} \
+    ANDROID_NDK=${ANDROID_NDK_ROOT} \
+    PATH=${BINDIR}/bin:${PATH} \
     ./Configure ${SSL_TARGET} ${OPTIONS}
 
     make clean
 
-    ANDROID_NDK=${DESTDIR} \
-    PATH=${DESTDIR}/bin:${PATH} \
-    make
+    ANDROID_NDK=${ANDROID_NDK_ROOT} \
+    PATH=${BINDIR}/bin:${PATH} \
+    make CC=${MAKE_CC} CXX=${MAKE_CXX} AR=${MAKE_AR}
 
-    ANDROID_NDK=${DESTDIR} \
-    PATH=${DESTDIR}/bin:${PATH} \
-    make install_sw DESTDIR=${DESTDIR} || exit 128
+    ANDROID_NDK=${ANDROID_NDK_ROOT} \
+    PATH=${BINDIR}/bin:${PATH} \
+    make CC=${MAKE_CC} CXX=${MAKE_CXX} AR=${MAKE_AR} install_sw DESTDIR=${BINDIR} || exit 128
 }
 
 ###### set variables according to build-target #####
@@ -56,7 +66,6 @@ do
         TRIBLE="arm-linux-androideabi"
         TC_NAME="arm-linux-androideabi-4.9"
         OPTIONS="--target=armv5te-linux-androideabi -mthumb -fPIC -latomic -D__ANDROID_API__=$ANDROID_API_LEVEL ${BASE_OPTIONS}"
-        DESTDIR="$BUILD_DIR/armeabi"
         ARCH="arm"
         SSL_TARGET="android-arm"
     ;;
@@ -64,7 +73,6 @@ do
         TRIBLE="arm-linux-androideabi"
         TC_NAME="arm-linux-androideabi-4.9"
         OPTIONS="--target=armv7a-linux-androideabi -Wl,--fix-cortex-a8 -fPIC -D__ANDROID_API__=$ANDROID_API_LEVEL ${BASE_OPTIONS}"
-        DESTDIR="$BUILD_DIR/armeabi-v7a"
         ARCH="arm"
         SSL_TARGET="android-arm"
     ;;
@@ -72,7 +80,6 @@ do
         TRIBLE="i686-linux-android"
         TC_NAME="x86-4.9"
         OPTIONS="-fPIC -D__ANDROID_API__=${ANDROID_API_LEVEL} ${BASE_OPTIONS}"
-        DESTDIR="$BUILD_DIR/x86"
         ARCH="x86"
         SSL_TARGET="android-x86"
     ;;
@@ -80,7 +87,6 @@ do
         TRIBLE="x86_64-linux-android"
         TC_NAME="x86_64-4.9"
         OPTIONS="-fPIC -D__ANDROID_API__=${ANDROID_API_LEVEL} ${BASE_OPTIONS}"
-        DESTDIR="$BUILD_DIR/x86_64"
         ARCH="x86_64"
         SSL_TARGET="android-x86_64"
     ;;
@@ -88,19 +94,17 @@ do
         TRIBLE="aarch64-linux-android"
         TC_NAME="aarch64-linux-android-4.9"
         OPTIONS="-fPIC -D__ANDROID_API__=${ANDROID_API_LEVEL} ${BASE_OPTIONS}"
-        DESTDIR="$BUILD_DIR/arm64-v8a"
         ARCH="arm64"
         SSL_TARGET="android-arm64"
     ;;
     esac
 
-    rm -rf ${DESTDIR}
     build_the_thing
 #### copy libraries and includes to output-directory #####
     mkdir -p ${OUT_DIR}/${build_target}/include
-    cp -R ${DESTDIR}/usr/local/include/* ${OUT_DIR}/${build_target}/include
+    cp -R ${BINDIR}/usr/local/include/* ${OUT_DIR}/${build_target}/include
     mkdir -p ${OUT_DIR}/${build_target}/lib
-    cp -R ${DESTDIR}/usr/local/lib/* ${OUT_DIR}/${build_target}/lib
+    cp -R ${BINDIR}/usr/local/lib/* ${OUT_DIR}/${build_target}/lib
 
     echo "Successfully built for target ${build_target}"
 done

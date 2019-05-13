@@ -11,7 +11,7 @@ add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} -j4 --schedule-random -V)
 
 set(ALL_C_SOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/test_helper.h ${ALL_C_SOURCE_FILES} PARENT_SCOPE)
 
-if (UNIX AND NOT APPLE)
+if (UNIX AND NOT APPLE AND NOT ANDROID_ABI)
     find_package(PkgConfig)
     pkg_check_modules(LIBBSD REQUIRED libbsd)
 endif()

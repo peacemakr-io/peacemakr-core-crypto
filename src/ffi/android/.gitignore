@@ -6,3 +6,4 @@ openssl-build/
 openssl-*/
 universal/
 .gradle/
+local.properties
