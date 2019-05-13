@@ -48,9 +48,15 @@ void setup_log_callback() {
 }
 
 
-JNIEXPORT jlong JNICALL Java_io_peacemakr_corecrypto_Key_peacemakr_1key_1new_1asymmetric
+JNIEXPORT jlong JNICALL Java_io_peacemakr_corecrypto_Key_newAsymmetric
         (JNIEnv *env, jobject this, jint asymm_cipher, jint symm_cipher, jlong rand) {
   peacemakr_key_t *asymmKey = peacemakr_key_new_asymmetric(asymm_cipher, symm_cipher, (random_device_t *)rand);
+  return (long)asymmKey;
+}
+
+JNIEXPORT jlong JNICALL Java_io_peacemakr_corecrypto_Key_newSymmetric
+        (JNIEnv *env, jobject this, jint symm_cipher, jlong rand) {
+  peacemakr_key_t *asymmKey = peacemakr_key_new_symmetric(symm_cipher, (random_device_t *)rand);
   return (long)asymmKey;
 }
 
