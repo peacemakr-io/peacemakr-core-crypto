@@ -2,9 +2,11 @@ if (NOT DEFINED ANDROID_ABI)
     find_package(JNI)
 endif (NOT DEFINED ANDROID_ABI)
 
-set(ALL_C_SOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/crypto-jni.c ${ALL_C_SOURCE_FILES} PARENT_SCOPE)
+file(GLOB SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/*.c)
 
-add_library(peacemakr-core-crypto-jni SHARED ${CMAKE_CURRENT_SOURCE_DIR}/crypto-jni.c)
+set(ALL_C_SOURCE_FILES ${SOURCES} ${ALL_C_SOURCE_FILES} PARENT_SCOPE)
+
+add_library(peacemakr-core-crypto-jni SHARED ${SOURCES})
 target_include_directories(peacemakr-core-crypto-jni PRIVATE ${JNI_INCLUDE_DIRS})
 
 if (APPLE)
@@ -15,6 +17,6 @@ else()
             PRIVATE peacemakr-core-crypto -ldl)
 endif()
 
-if (NOT DEFINED ANDROID_ABI)
+if (DEFINED ANDROID_ABI)
     target_link_libraries(peacemakr-core-crypto-jni PUBLIC android log)
-endif (NOT DEFINED ANDROID_ABI)
+endif (DEFINED ANDROID_ABI)
