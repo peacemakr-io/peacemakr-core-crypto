@@ -5,7 +5,7 @@ public class Key {
         System.loadLibrary("peacemakr-core-crypto-jni");
     }
 
-    private long nativeKey = 0;
+    long nativeKey = 0;
 
 
     private native void newAsymmetric(int asymm_cipher, int symm_cipher, long rand);
@@ -20,10 +20,22 @@ public class Key {
      * Returns a new pointer to a peacemakr_key_t to be used in returning aa new Key object
      */
     private native long dhGenerate(int symm_cipher, long peer_key);
-    // TODO: getConfig
-    // TODO: toPem
-    // TODO: getBytes
-    // TODO: free
+
+    // Instead of getting the whole config object, get pieces of it (to make JNI easier)
+    // We can wrap these up on the Java side if required/desired.
+    private native int getMode();
+    private native int getSymmCipher();
+    private native int getAsymmCipher();
+    private native int getDigestAlgorithm();
+
+    // Stores the pem data in the String buf
+    private native String toPrivPem();
+    private native String toPubPem();
+
+    // Stores the bytes into buf
+    private native byte[] getBytes();
+
+    private native void free();
 
 
     // Private constructor to make keys from pointers

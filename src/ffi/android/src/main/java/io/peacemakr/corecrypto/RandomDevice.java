@@ -6,4 +6,7 @@ public class RandomDevice {
     long getNativePtr() {
         return nativePtr;
     }
+
+    native int generate(byte[] recipientBuf);
+    native String error(int errorCode);
 }
