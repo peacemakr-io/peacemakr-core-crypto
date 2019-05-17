@@ -1,14 +1,26 @@
 package io.peacemakr.corecrypto;
 
 public enum EncryptionMode {
-    SYMMETRIC(0), ASYMMETRIC(1);
+    SYMMETRIC,
+    ASYMMETRIC;
 
-    public int getcIdx() {
-        return cIdx;
+    public static EncryptionMode fromInt(int x) {
+        switch (x) {
+            case 0:
+                return SYMMETRIC;
+            case 1:
+                return ASYMMETRIC;
+        }
+        return null;
     }
 
-    private final int cIdx;
-    private EncryptionMode(int cIdx) {
-        this.cIdx = cIdx;
+    public int toInt() {
+        switch (this) {
+            case SYMMETRIC:
+                return 0;
+            case ASYMMETRIC:
+                return 1;
+        }
+        return -1;
     }
 }

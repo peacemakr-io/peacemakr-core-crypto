@@ -1,6 +1,9 @@
 package io.peacemakr.corecrypto;
 
 public class CryptoContext {
+    static {
+        System.loadLibrary("peacemakr-core-crypto-jni");
+    }
 
     private native void init();
 

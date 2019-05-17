@@ -1,11 +1,8 @@
 package io.peacemakr.corecrypto;
 
 public class Key {
-    static {
-        System.loadLibrary("peacemakr-core-crypto-jni");
-    }
 
-    long nativeKey = 0;
+    private long nativeKey = 0;
 
 
     private native void newAsymmetric(int asymm_cipher, int symm_cipher, long rand);
@@ -44,12 +41,25 @@ public class Key {
     }
 
     // Public constructors
-//    public Key(AsymmetricCipher asymmCipher, SymmetricCipher symmCipher, RandomDevice rand) {
-//        nativeKey = newAsymmetric(asymmCipher.getcIdx(), symmCipher.getcIdx(), rand.getNativePtr());
-//    }
-//
-//    public Key(SymmetricCipher symmCipher, RandomDevice rand) {
-//        nativeKey = newSymmetric(symmCipher.getcIdx(), rand.getNativePtr());
-//    }
+    public Key(AsymmetricCipher asymmCipher, SymmetricCipher symmCipher, RandomDevice rand) {
+        newAsymmetric(asymmCipher.toInt(), symmCipher.toInt(), rand.getNativePtr());
+    }
+
+    public Key(SymmetricCipher symmCipher, RandomDevice rand) {
+        newSymmetric(symmCipher.toInt(), rand.getNativePtr());
+    }
+
+    public CryptoConfig getConfig() {
+        return new CryptoConfig(
+                EncryptionMode.fromInt(getMode()),
+                AsymmetricCipher.fromInt(getAsymmCipher()),
+                SymmetricCipher.fromInt(getSymmCipher()),
+                MessageDigestAlgorithm.fromInt(getDigestAlgorithm())
+        );
+    }
+
+    public long getNativeKey() {
+        return nativeKey;
+    }
 
 }

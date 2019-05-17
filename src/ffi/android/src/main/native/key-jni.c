@@ -24,31 +24,13 @@
 extern "C" {
 #endif
 
-#include <crypto.h>
 #include <jni.h>
-#include <random.h>
+
 #include <stdlib.h>
 
-#ifdef __ANDROID__
-static const char *kTAG = "peacemakr-core-crypto";
-#include <android/log.h>
-// Android log function wrappers
-#define LOGI(...)                                                              \
-  ((void)__android_log_print(ANDROID_LOG_INFO, kTAG, __VA_ARGS__))
-#define LOGW(...)                                                              \
-  ((void)__android_log_print(ANDROID_LOG_WARN, kTAG, __VA_ARGS__))
-#define LOGE(...)                                                              \
-  ((void)__android_log_print(ANDROID_LOG_ERROR, kTAG, __VA_ARGS__))
-#else // __ANDROID__
-#define LOGI(...) ((void)printf(__VA_ARGS__))
-#define LOGW(...) ((void)printf(__VA_ARGS__))
-#define LOGE(...) ((void)printf(__VA_ARGS__))
-#endif // __ANDROID__
-
-static void log_callback(const char *msg) { LOGE("%s", msg); }
-
-void setup_log_callback(void) __attribute__((constructor));
-void setup_log_callback() { peacemakr_set_log_callback(&log_callback); }
+#include "crypto.h"
+#include "random.h"
+#include "common-jni.h"
 
 static bool setNativeKey(JNIEnv *env, jobject this, peacemakr_key_t *ptr) {
   jclass clazz = (*env)->GetObjectClass(env, this);
@@ -93,13 +75,13 @@ JNIEXPORT void JNICALL Java_io_peacemakr_corecrypto_Key_newFromBytes(
     JNIEnv *env, jobject this, jint symm_cipher, jbyteArray bytes) {
   jbyte *raw = (*env)->GetByteArrayElements(env, bytes, NULL);
   const jsize length = (*env)->GetArrayLength(env, bytes);
-  (*env)->ReleaseByteArrayElements(env, bytes, raw, JNI_ABORT);
 
   peacemakr_key_t *symm_key =
       peacemakr_key_new_bytes(symm_cipher, (uint8_t *)raw, length);
   if (!setNativeKey(env, this, symm_key)) {
     LOGE("%s", "Attempting to reset a key\n");
   }
+  (*env)->ReleaseByteArrayElements(env, bytes, raw, JNI_ABORT);
 }
 
 JNIEXPORT void JNICALL Java_io_peacemakr_corecrypto_Key_newFromPassword(
@@ -107,7 +89,6 @@ JNIEXPORT void JNICALL Java_io_peacemakr_corecrypto_Key_newFromPassword(
     jstring password, jstring salt, jint iterations) {
   const jchar *raw_pass = (*env)->GetStringChars(env, password, NULL);
   const jsize pass_len = (*env)->GetStringLength(env, password);
-  (*env)->ReleaseStringChars(env, password, raw_pass);
 
   const jchar *raw_salt = (*env)->GetStringChars(env, salt, NULL);
   const jsize salt_len = (*env)->GetStringLength(env, salt);
@@ -118,6 +99,8 @@ JNIEXPORT void JNICALL Java_io_peacemakr_corecrypto_Key_newFromPassword(
   if (!setNativeKey(env, this, symm_key)) {
     LOGE("%s", "Attempting to reset a key\n");
   }
+  (*env)->ReleaseStringChars(env, password, raw_pass);
+  (*env)->ReleaseStringChars(env, salt, raw_salt);
 }
 
 JNIEXPORT void JNICALL Java_io_peacemakr_corecrypto_Key_newFromMaster(
@@ -125,7 +108,6 @@ JNIEXPORT void JNICALL Java_io_peacemakr_corecrypto_Key_newFromMaster(
     jlong master_key, jbyteArray bytes) {
   jbyte *raw = (*env)->GetByteArrayElements(env, bytes, NULL);
   const jsize length = (*env)->GetArrayLength(env, bytes);
-  (*env)->ReleaseByteArrayElements(env, bytes, raw, JNI_ABORT);
 
   peacemakr_key_t *symm_key = peacemakr_key_new_from_master(
       symm_cipher, digest_algorithm, (const peacemakr_key_t *)master_key,
@@ -133,6 +115,8 @@ JNIEXPORT void JNICALL Java_io_peacemakr_corecrypto_Key_newFromMaster(
   if (!setNativeKey(env, this, symm_key)) {
     LOGE("%s", "Attempting to reset a key\n");
   }
+
+  (*env)->ReleaseByteArrayElements(env, bytes, raw, JNI_ABORT);
 }
 
 JNIEXPORT void JNICALL Java_io_peacemakr_corecrypto_Key_newFromPubPem(
@@ -140,13 +124,13 @@ JNIEXPORT void JNICALL Java_io_peacemakr_corecrypto_Key_newFromPubPem(
     jstring buf) {
   const jchar *raw_buf = (*env)->GetStringChars(env, buf, NULL);
   const jsize buf_len = (*env)->GetStringLength(env, buf);
-  (*env)->ReleaseStringChars(env, buf, raw_buf);
 
   peacemakr_key_t *asymm_key = peacemakr_key_new_pem_pub(
       asymm_cipher, symm_cipher, (const char *)raw_buf, buf_len);
   if (!setNativeKey(env, this, asymm_key)) {
     LOGE("%s", "Attempting to reset a key\n");
   }
+  (*env)->ReleaseStringChars(env, buf, raw_buf);
 }
 
 JNIEXPORT void JNICALL Java_io_peacemakr_corecrypto_Key_newFromPrivPem(
@@ -154,13 +138,13 @@ JNIEXPORT void JNICALL Java_io_peacemakr_corecrypto_Key_newFromPrivPem(
     jstring buf) {
   const jchar *raw_buf = (*env)->GetStringChars(env, buf, NULL);
   const jsize buf_len = (*env)->GetStringLength(env, buf);
-  (*env)->ReleaseStringChars(env, buf, raw_buf);
 
   peacemakr_key_t *asymm_key = peacemakr_key_new_pem_priv(
       asymm_cipher, symm_cipher, (const char *)raw_buf, buf_len);
   if (!setNativeKey(env, this, asymm_key)) {
     LOGE("%s", "Attempting to reset a key\n");
   }
+  (*env)->ReleaseStringChars(env, buf, raw_buf);
 }
 
 JNIEXPORT jlong JNICALL Java_io_peacemakr_corecrypto_Key_dhGenerate(
