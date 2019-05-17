@@ -1,13 +1,24 @@
 package io.peacemakr.corecrypto;
 
 public class RandomDevice {
-    private long nativePtr;
-
-    long getNativePtr() {
+    protected long nativePtr = 0;
+    public long getNativePtr() {
         return nativePtr;
     }
 
-    // TODO: these need to be callbacks into the java code...AKA C should call java
-    native int generate(byte[] recipientBuf);
-    native String error(int errorCode);
+    protected native void registerNative();
+
+    public RandomDevice() {
+        registerNative();
+    }
+
+    static public int generate(byte[] recipientBuf) {
+        // To be implemented by subclass
+        return -1;
+    }
+
+    static public String error(int errorCode) {
+        // To be implemented by subclass
+        return "";
+    }
 }

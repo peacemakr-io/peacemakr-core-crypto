@@ -42,12 +42,14 @@ static bool setNativeKey(JNIEnv *env, jobject this, peacemakr_key_t *ptr) {
   }
 
   (*env)->SetLongField(env, this, fieldID, (long)ptr);
+  (*env)->DeleteLocalRef(env, clazz);
   return true;
 }
 
 static peacemakr_key_t *getNativeKey(JNIEnv *env, jobject this) {
   jclass clazz = (*env)->GetObjectClass(env, this);
   jfieldID fieldID = (*env)->GetFieldID(env, clazz, "nativeKey", "J");
+  (*env)->DeleteLocalRef(env, clazz);
   return (peacemakr_key_t *)(*env)->GetLongField(env, this, fieldID);
 }
 
@@ -187,6 +189,7 @@ JNIEXPORT jstring JNICALL Java_io_peacemakr_corecrypto_Key_toPrivPem
 
   jstring out = (*env)->NewString(env, (jchar *)pem_buf, pem_buf_size);
   free(pem_buf);
+  // TODO: should DeleteLocalRef on out?
   return out;
 }
 
@@ -203,6 +206,7 @@ JNIEXPORT jstring JNICALL Java_io_peacemakr_corecrypto_Key_toPubPem
 
   jstring out = (*env)->NewString(env, (jchar *)pem_buf, pem_buf_size);
   free(pem_buf);
+  // TODO: should DeleteLocalRef on out?
   return out;
 }
 
@@ -220,6 +224,7 @@ JNIEXPORT jbyteArray JNICALL Java_io_peacemakr_corecrypto_Key_getBytes
   jbyteArray out = (*env)->NewByteArray(env, buf_size);
   (*env)->SetByteArrayRegion(env, out, 0, buf_size, (jbyte *)buf);
   free(buf);
+  // TODO: should DeleteLocalRef on out?
   return out;
 }
 
@@ -239,6 +244,7 @@ JNIEXPORT void JNICALL Java_io_peacemakr_corecrypto_Key_free
 
   // And set the java field to 0
   (*env)->SetLongField(env, this, fieldID, 0);
+  (*env)->DeleteLocalRef(env, this);
 }
 
 #ifdef __cplusplus

@@ -51,6 +51,9 @@ JNIEXPORT void JNICALL Java_io_peacemakr_corecrypto_Plaintext_fromNative
   free((void *)plaintext->data);
   free((void *)plaintext->aad);
   free((void *)plaintext);
+  (*env)->DeleteLocalRef(env, dataField);
+  (*env)->DeleteLocalRef(env, aadField);
+  (*env)->DeleteLocalRef(env, clazz);
 }
 
 JNIEXPORT jlong JNICALL Java_io_peacemakr_corecrypto_Plaintext_toNative
@@ -90,6 +93,10 @@ JNIEXPORT jlong JNICALL Java_io_peacemakr_corecrypto_Plaintext_toNative
 
   (*env)->ReleaseByteArrayElements(env, dataField, rawData, JNI_ABORT);
   (*env)->ReleaseByteArrayElements(env, aadField, rawAAD, JNI_ABORT);
+
+  (*env)->DeleteLocalRef(env, dataField);
+  (*env)->DeleteLocalRef(env, aadField);
+  (*env)->DeleteLocalRef(env, clazz);
 
   return (long)out;
 }
