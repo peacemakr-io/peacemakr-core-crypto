@@ -28,9 +28,9 @@ extern "C" {
 
 #include <stdlib.h>
 
+#include "common-jni.h"
 #include "crypto.h"
 #include "random.h"
-#include "common-jni.h"
 
 static bool setNativeKey(JNIEnv *env, jobject this, peacemakr_key_t *ptr) {
   jclass clazz = (*env)->GetObjectClass(env, this);
@@ -68,6 +68,7 @@ JNIEXPORT void JNICALL Java_io_peacemakr_corecrypto_Key_newSymmetric(
     JNIEnv *env, jobject this, jint symm_cipher, jlong rand) {
   peacemakr_key_t *symm_key =
       peacemakr_key_new_symmetric(symm_cipher, (random_device_t *)rand);
+
   if (!setNativeKey(env, this, symm_key)) {
     LOGE("%s", "Attempting to reset a key\n");
   }
@@ -156,32 +157,33 @@ JNIEXPORT jlong JNICALL Java_io_peacemakr_corecrypto_Key_dhGenerate(
   return (long)symm_key;
 }
 
-JNIEXPORT jint JNICALL Java_io_peacemakr_corecrypto_Key_getMode
-        (JNIEnv *env, jobject this) {
+JNIEXPORT jint JNICALL Java_io_peacemakr_corecrypto_Key_getMode(JNIEnv *env,
+                                                                jobject this) {
   return peacemakr_key_get_config(getNativeKey(env, this)).mode;
 }
 
-JNIEXPORT jint JNICALL Java_io_peacemakr_corecrypto_Key_getSymmCipher
-        (JNIEnv *env, jobject this) {
+JNIEXPORT jint JNICALL
+Java_io_peacemakr_corecrypto_Key_getSymmCipher(JNIEnv *env, jobject this) {
   return peacemakr_key_get_config(getNativeKey(env, this)).symm_cipher;
 }
 
-JNIEXPORT jint JNICALL Java_io_peacemakr_corecrypto_Key_getAsymmCipher
-        (JNIEnv *env, jobject this) {
+JNIEXPORT jint JNICALL
+Java_io_peacemakr_corecrypto_Key_getAsymmCipher(JNIEnv *env, jobject this) {
   return peacemakr_key_get_config(getNativeKey(env, this)).asymm_cipher;
 }
 
-JNIEXPORT jint JNICALL Java_io_peacemakr_corecrypto_Key_getDigestAlgorithm
-        (JNIEnv *env, jobject this) {
+JNIEXPORT jint JNICALL
+Java_io_peacemakr_corecrypto_Key_getDigestAlgorithm(JNIEnv *env, jobject this) {
   return peacemakr_key_get_config(getNativeKey(env, this)).digest_algorithm;
 }
 
-JNIEXPORT jstring JNICALL Java_io_peacemakr_corecrypto_Key_toPrivPem
-        (JNIEnv *env, jobject this) {
+JNIEXPORT jstring JNICALL
+Java_io_peacemakr_corecrypto_Key_toPrivPem(JNIEnv *env, jobject this) {
 
   char *pem_buf = NULL;
   size_t pem_buf_size = 0;
-  bool success = peacemakr_key_priv_to_pem(getNativeKey(env, this), &pem_buf, &pem_buf_size);
+  bool success = peacemakr_key_priv_to_pem(getNativeKey(env, this), &pem_buf,
+                                           &pem_buf_size);
   if (!success) {
     free(pem_buf);
     return false;
@@ -193,12 +195,13 @@ JNIEXPORT jstring JNICALL Java_io_peacemakr_corecrypto_Key_toPrivPem
   return out;
 }
 
-JNIEXPORT jstring JNICALL Java_io_peacemakr_corecrypto_Key_toPubPem
-        (JNIEnv *env, jobject this) {
+JNIEXPORT jstring JNICALL
+Java_io_peacemakr_corecrypto_Key_toPubPem(JNIEnv *env, jobject this) {
 
   char *pem_buf = NULL;
   size_t pem_buf_size = 0;
-  bool success = peacemakr_key_pub_to_pem(getNativeKey(env, this), &pem_buf, &pem_buf_size);
+  bool success = peacemakr_key_pub_to_pem(getNativeKey(env, this), &pem_buf,
+                                          &pem_buf_size);
   if (!success) {
     free(pem_buf);
     return false;
@@ -210,12 +213,13 @@ JNIEXPORT jstring JNICALL Java_io_peacemakr_corecrypto_Key_toPubPem
   return out;
 }
 
-JNIEXPORT jbyteArray JNICALL Java_io_peacemakr_corecrypto_Key_getBytes
-        (JNIEnv *env, jobject this) {
+JNIEXPORT jbyteArray JNICALL
+Java_io_peacemakr_corecrypto_Key_getBytes(JNIEnv *env, jobject this) {
 
   uint8_t *buf = NULL;
   size_t buf_size = 0;
-  bool success = peacemakr_key_get_bytes(getNativeKey(env, this), &buf, &buf_size);
+  bool success =
+      peacemakr_key_get_bytes(getNativeKey(env, this), &buf, &buf_size);
   if (!success) {
     free(buf);
     return false;
@@ -228,8 +232,8 @@ JNIEXPORT jbyteArray JNICALL Java_io_peacemakr_corecrypto_Key_getBytes
   return out;
 }
 
-JNIEXPORT void JNICALL Java_io_peacemakr_corecrypto_Key_free
-        (JNIEnv *env, jobject this) {
+JNIEXPORT void JNICALL Java_io_peacemakr_corecrypto_Key_free(JNIEnv *env,
+                                                             jobject this) {
 
   jclass clazz = (*env)->GetObjectClass(env, this);
   jfieldID fieldID = (*env)->GetFieldID(env, clazz, "nativeKey", "J");

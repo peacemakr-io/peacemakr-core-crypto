@@ -39,10 +39,19 @@ public class CryptoConfig {
     private SymmetricCipher symmetricCipher;
     private MessageDigestAlgorithm digestAlgorithm;
 
-    public CryptoConfig(EncryptionMode mode, AsymmetricCipher asymmetricCipher, SymmetricCipher symmetricCipher, MessageDigestAlgorithm digestAlgorithm) {
+    CryptoConfig(EncryptionMode mode, AsymmetricCipher asymmetricCipher, SymmetricCipher symmetricCipher, MessageDigestAlgorithm digestAlgorithm) {
         this.encryptionMode = mode;
         this.asymmetricCipher = asymmetricCipher;
         this.symmetricCipher = symmetricCipher;
         this.digestAlgorithm = digestAlgorithm;
+    }
+
+    public String toString() {
+        return "Config {" +
+                "\n\tMode: " + getEncryptionMode().toString() +
+                "\n\tSymmetric Cipher: " + getSymmetricCipher().toString() +
+                "\n\tAsymmetric Cipher: " + getAsymmetricCipher().toString() +
+                "\n\tDigest Algorithm: " + getDigestAlgorithm().toString() +
+                "\n}";
     }
 }

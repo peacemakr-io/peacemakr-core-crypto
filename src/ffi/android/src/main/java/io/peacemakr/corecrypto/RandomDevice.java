@@ -1,10 +1,8 @@
 package io.peacemakr.corecrypto;
 
 public class RandomDevice {
-    protected long nativePtr = 0;
-    public long getNativePtr() {
-        return nativePtr;
-    }
+    // Gets the native JNI static object
+    native long getNativePtr();
 
     protected native void registerNative();
 

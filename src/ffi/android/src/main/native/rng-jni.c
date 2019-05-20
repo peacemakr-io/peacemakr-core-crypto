@@ -10,9 +10,9 @@
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
-    
+
         http://www.apache.org/licenses/LICENSE-2.0
-    
+
     Unless required by applicable law or agreed to in writing, software
     distributed under the License is distributed on an "AS IS" BASIS,
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,8 +29,8 @@ extern "C" {
 #include <stdlib.h>
 #include <string.h>
 
-#include "random.h"
 #include "common-jni.h"
+#include "random.h"
 
 // TODO: this is very hacky...there may be a nicer way to do it
 
@@ -39,15 +39,22 @@ typedef struct {
   jmethodID errID;
   JNIEnv *env;
   jobject this;
-} jni_random_device_t ;
+} jni_random_device_t;
 
 static jni_random_device_t jni_random_device;
+static random_device_t jni_rng;
 
 int jni_generate_rand(unsigned char *buf, size_t size) {
-  jbyteArray bytes = (*jni_random_device.env)->NewByteArray(jni_random_device.env, size);
+  jbyteArray bytes =
+      (*jni_random_device.env)->NewByteArray(jni_random_device.env, size);
 
-  jint result = (*jni_random_device.env)->CallIntMethod(jni_random_device.env, jni_random_device.this, jni_random_device.generateID, bytes);
-  jbyte *rawData = (*jni_random_device.env)->GetByteArrayElements(jni_random_device.env, bytes, NULL);
+  jint result =
+      (*jni_random_device.env)
+          ->CallIntMethod(jni_random_device.env, jni_random_device.this,
+                          jni_random_device.generateID, bytes);
+  jbyte *rawData =
+      (*jni_random_device.env)
+          ->GetByteArrayElements(jni_random_device.env, bytes, NULL);
 
   memcpy(buf, rawData, size);
 
@@ -55,32 +62,46 @@ int jni_generate_rand(unsigned char *buf, size_t size) {
 }
 
 const char *jni_err(int code) {
-  jstring result = (jstring)(*jni_random_device.env)->CallObjectMethod(jni_random_device.env, jni_random_device.this, jni_random_device.errID, code);
-  const char *charResult = (*jni_random_device.env)->GetStringUTFChars(jni_random_device.env, result, NULL);
-  const size_t charLen = (*jni_random_device.env)->GetStringLength(jni_random_device.env, result);
+  jstring result =
+      (jstring)(*jni_random_device.env)
+          ->CallObjectMethod(jni_random_device.env, jni_random_device.this,
+                             jni_random_device.errID, code);
+  const char *charResult =
+      (*jni_random_device.env)
+          ->GetStringUTFChars(jni_random_device.env, result, NULL);
+  const size_t charLen =
+      (*jni_random_device.env)->GetStringLength(jni_random_device.env, result);
 
   char *outResult = calloc(charLen, sizeof(char));
   memcpy(outResult, charResult, charLen);
 
-  (*jni_random_device.env)->ReleaseStringUTFChars(jni_random_device.env, result, charResult);
+  (*jni_random_device.env)
+      ->ReleaseStringUTFChars(jni_random_device.env, result, charResult);
 
   return outResult;
 }
 
-JNIEXPORT void JNICALL Java_io_peacemakr_corecrypto_RandomDevice_registerNative
-        (JNIEnv *env, jobject this) {
-  jclass clazz = (*env)->GetObjectClass(env, this);
-  jni_random_device.generateID = (*env)->GetMethodID(env, clazz, "generate", "([B)I");
-  jni_random_device.errID = (*env)->GetMethodID(env, clazz, "error", "(I)Ljava/lang/String;");
+JNIEXPORT jlong JNICALL Java_io_peacemakr_corecrypto_RandomDevice_getNativePtr(
+    JNIEnv *env, jobject this) {
   jni_random_device.env = env;
   jni_random_device.this = this;
 
-  random_device_t *rng = malloc(sizeof(random_device_t));
-  rng->generator = (rng_buf)&jni_generate_rand;
-  rng->err = (rng_err)&jni_err;
+  jni_random_device.env = env;
+  jni_random_device.this = this;
 
-  jfieldID ptr = (*env)->GetFieldID(env, clazz, "nativePtr", "J");
-  (*env)->SetLongField(env, this, ptr, (long)rng);
+  jni_rng.generator = (rng_buf)&jni_generate_rand;
+  jni_rng.err = (rng_err)&jni_err;
+
+  return (long)&jni_rng;
+}
+
+JNIEXPORT void JNICALL Java_io_peacemakr_corecrypto_RandomDevice_registerNative(
+    JNIEnv *env, jobject this) {
+  jclass clazz = (*env)->GetObjectClass(env, this);
+  jni_random_device.generateID =
+      (*env)->GetStaticMethodID(env, clazz, "generate", "([B)I");
+  jni_random_device.errID =
+      (*env)->GetStaticMethodID(env, clazz, "error", "(I)Ljava/lang/String;");
 }
 
 #ifdef __cplusplus

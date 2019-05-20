@@ -40,9 +40,4 @@ static const char *kTAG = "peacemakr-core-crypto";
 #define LOGE(...) ((void)printf(__VA_ARGS__))
 #endif // __ANDROID__
 
-static void log_callback(const char *msg) { LOGE("%s", msg); }
-
-void setup_log_callback(void) __attribute__((constructor));
-void setup_log_callback() { peacemakr_set_log_callback(&log_callback); }
-
 #endif //PEACEMAKR_CORE_CRYPTO_COMMON_JNOI_H

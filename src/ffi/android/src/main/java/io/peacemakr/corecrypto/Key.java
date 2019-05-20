@@ -25,15 +25,7 @@ public class Key {
     private native int getAsymmCipher();
     private native int getDigestAlgorithm();
 
-    // Stores the pem data in the String buf
-    private native String toPrivPem();
-    private native String toPubPem();
-
-    // Stores the bytes into buf
-    private native byte[] getBytes();
-
     private native void free();
-
 
     // Private constructor to make keys from pointers
     private Key(long nativeKey) {
@@ -49,6 +41,31 @@ public class Key {
         newSymmetric(symmCipher.toInt(), rand.getNativePtr());
     }
 
+    public Key(SymmetricCipher symmCipher, byte[] bytes) {
+        newFromBytes(symmCipher.toInt(), bytes);
+    }
+
+    public Key(SymmetricCipher symmCipher, MessageDigestAlgorithm digestAlgorithm, String password, String salt, int iterationCount) {
+        newFromPassword(symmCipher.toInt(), digestAlgorithm.toInt(), password, salt, iterationCount);
+    }
+
+    public Key(SymmetricCipher symmCipher, MessageDigestAlgorithm digestAlgorithm, Key masterKey, byte[] bytes) {
+        newFromMaster(symmCipher.toInt(), digestAlgorithm.toInt(), masterKey.getNativeKey(), bytes);
+    }
+
+    public Key(AsymmetricCipher asymmCipher, SymmetricCipher symmCipher, String pemBuf, boolean isPriv) {
+        if (isPriv) {
+            newFromPrivPem(asymmCipher.toInt(), symmCipher.toInt(), pemBuf);
+        } else {
+            newFromPubPem(asymmCipher.toInt(), symmCipher.toInt(), pemBuf);
+        }
+    }
+
+    public Key ECDHKeygen(SymmetricCipher symmCipher, Key peerKey) {
+        long nativeDHKey = dhGenerate(symmCipher.toInt(), peerKey.getNativeKey());
+        return new Key(nativeDHKey);
+    }
+
     public CryptoConfig getConfig() {
         return new CryptoConfig(
                 EncryptionMode.fromInt(getMode()),
@@ -58,7 +75,18 @@ public class Key {
         );
     }
 
-    public long getNativeKey() {
+    // Stores the pem data in the String buf
+    public native String toPrivPem();
+    public native String toPubPem();
+
+    // Stores the bytes into buf
+    public native byte[] getBytes();
+
+    public void destroy() {
+        free();
+    }
+
+    private long getNativeKey() {
         return nativeKey;
     }
 
