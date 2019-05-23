@@ -16,8 +16,10 @@ const char *message = "Hello, world! I'm testing encryption."; // 37 + 1
 const char *message_aad = "And I'm AAD";                       // 11 + 1
 
 void test_symmetric_algo(symmetric_cipher cipher) {
-  crypto_config_t cfg = {
-      .mode = SYMMETRIC, .symm_cipher = cipher, .asymm_cipher = ASYMMETRIC_UNSPECIFIED, .digest_algorithm = SHA_512};
+  crypto_config_t cfg = {.mode = SYMMETRIC,
+                         .symm_cipher = cipher,
+                         .asymm_cipher = ASYMMETRIC_UNSPECIFIED,
+                         .digest_algorithm = SHA_512};
 
   plaintext_t plaintext_in = {.data = (const unsigned char *)message,
                               .data_len = strlen(message) + 1,
@@ -78,8 +80,10 @@ void test_asymmetric_algo(symmetric_cipher cipher,
 
   random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
 
-  peacemakr_key_t *mykey = peacemakr_key_new_asymmetric(asymmcipher, cipher, &rand);
-  peacemakr_key_t *peerkey = peacemakr_key_new_asymmetric(asymmcipher, cipher, &rand);
+  peacemakr_key_t *mykey =
+      peacemakr_key_new_asymmetric(asymmcipher, cipher, &rand);
+  peacemakr_key_t *peerkey =
+      peacemakr_key_new_asymmetric(asymmcipher, cipher, &rand);
 
   // Set up the key
   peacemakr_key_t *key = (asymmcipher >= ECDH_P256)
@@ -154,7 +158,8 @@ void test_symmetric_algo_x_sign(symmetric_cipher cipher) {
   random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
 
   peacemakr_key_t *key = peacemakr_key_new_symmetric(cipher, &rand);
-  peacemakr_key_t *sign_key = peacemakr_key_new_asymmetric(RSA_4096, cipher, &rand);
+  peacemakr_key_t *sign_key =
+      peacemakr_key_new_asymmetric(RSA_4096, cipher, &rand);
 
   ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, &plaintext_in, &rand);
   // Sign with asymmetric key

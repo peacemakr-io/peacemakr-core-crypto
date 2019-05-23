@@ -31,7 +31,8 @@ void test_serialize(symmetric_cipher symm_cipher, asymmetric_cipher cipher,
 
   random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
 
-  peacemakr_key_t *key = peacemakr_key_new_asymmetric(cipher, symm_cipher, &rand);
+  peacemakr_key_t *key =
+      peacemakr_key_new_asymmetric(cipher, symm_cipher, &rand);
 
   ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, &plaintext_in, &rand);
   assert(ciphertext != NULL);
@@ -64,16 +65,17 @@ void test_serialize(symmetric_cipher symm_cipher, asymmetric_cipher cipher,
   peacemakr_key_free(key);
 }
 
-void test_serialize_symmetric(symmetric_cipher symm_cipher, message_digest_algorithm digest) {
+void test_serialize_symmetric(symmetric_cipher symm_cipher,
+                              message_digest_algorithm digest) {
   crypto_config_t cfg = {.mode = SYMMETRIC,
-          .symm_cipher = symm_cipher,
-          .asymm_cipher = ASYMMETRIC_UNSPECIFIED,
-          .digest_algorithm = digest};
+                         .symm_cipher = symm_cipher,
+                         .asymm_cipher = ASYMMETRIC_UNSPECIFIED,
+                         .digest_algorithm = digest};
 
   plaintext_t plaintext_in = {.data = (const unsigned char *)message,
-          .data_len = strlen(message) + 1,
-          .aad = (const unsigned char *)message_aad,
-          .aad_len = strlen(message_aad) + 1};
+                              .data_len = strlen(message) + 1,
+                              .aad = (const unsigned char *)message_aad,
+                              .aad_len = strlen(message_aad) + 1};
 
   plaintext_t plaintext_out;
 
@@ -91,7 +93,7 @@ void test_serialize_symmetric(symmetric_cipher symm_cipher, message_digest_algor
   crypto_config_t out_cfg;
 
   ciphertext_blob_t *deserialized =
-          peacemakr_deserialize(serialized, out_size, &out_cfg);
+      peacemakr_deserialize(serialized, out_size, &out_cfg);
   decrypt_code success = peacemakr_decrypt(key, deserialized, &plaintext_out);
 
   assert((out_cfg.mode == cfg.mode) &&

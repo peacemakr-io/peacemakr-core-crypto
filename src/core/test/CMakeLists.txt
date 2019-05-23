@@ -45,3 +45,5 @@ add_ctest(sign)
 add_ctest(garbage)
 add_ctest(dh_keygen)
 add_ctest(encrypt_dh_pem)
+
+set(ALL_C_SOURCE_FILES ${ALL_C_SOURCE_FILES} PARENT_SCOPE)

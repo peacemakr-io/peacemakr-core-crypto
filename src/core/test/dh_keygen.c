@@ -27,10 +27,13 @@ void test_symmetric_algo(symmetric_cipher symm_cipher,
 
   random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
 
-  peacemakr_key_t *my_key = peacemakr_key_new_asymmetric(curve, symm_cipher, &rand);
-  peacemakr_key_t *peer_key = peacemakr_key_new_asymmetric(curve, symm_cipher, &rand);
+  peacemakr_key_t *my_key =
+      peacemakr_key_new_asymmetric(curve, symm_cipher, &rand);
+  peacemakr_key_t *peer_key =
+      peacemakr_key_new_asymmetric(curve, symm_cipher, &rand);
 
-  peacemakr_key_t *symm_key = peacemakr_key_dh_generate(symm_cipher, my_key, peer_key);
+  peacemakr_key_t *symm_key =
+      peacemakr_key_dh_generate(symm_cipher, my_key, peer_key);
 
   ciphertext_blob_t *ciphertext =
       peacemakr_encrypt(symm_key, &plaintext_in, &rand);
