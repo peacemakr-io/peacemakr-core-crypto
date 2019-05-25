@@ -295,6 +295,7 @@ static bool asymmetric_encrypt(const peacemakr_key_t *pub_key,
     return false;
   }
   ciphertext_len += len;
+  PEACEMAKR_LOG("ciphertext_len: %d\n", ciphertext_len);
   buffer_set_size(mutable_ciphertext, ciphertext_len);
 
   /* Get the tag at this point, if the algorithm provides one */
@@ -459,7 +460,7 @@ ciphertext_blob_t *peacemakr_encrypt(const peacemakr_key_t *recipient_key,
   EXPECT_TRUE_RET(plain->aad_len <= INT_MAX,
                   "AAD was too big, needs to be broken up\n")
 
-  if (plain->data == NULL && plain->data_len <= 0) {
+  if (plain->data == NULL || plain->data_len <= 0) {
     PEACEMAKR_LOG("No data to encrypt\n");
     return NULL;
   }
