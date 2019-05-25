@@ -10,7 +10,7 @@
 #include <memory.h>
 #include <peacemakr/crypto.h>
 
-#include "test_helper.h"
+#include "utils/helper.h"
 
 const char *message = "Hello, world! I'm testing encryption from C!"; // 37 + 1
 const char *message_aad = "And I'm AAD";                              // 11 + 1

@@ -32,7 +32,7 @@
 #include <memory.h>
 #include <peacemakr/crypto.h>
 
-#include "test_helper.h"
+#include "utils/helper.h"
 
 void test_algo(plaintext_t plaintext_in, const peacemakr_key_t *key) {
 

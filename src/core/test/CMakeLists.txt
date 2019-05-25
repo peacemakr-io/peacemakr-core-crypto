@@ -9,7 +9,9 @@
 enable_testing()
 add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} -j4 --schedule-random -V)
 
-set(ALL_C_SOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/test_helper.h ${ALL_C_SOURCE_FILES} PARENT_SCOPE)
+file(GLOB HELPERS ${CMAKE_CURRENT_SOURCE_DIR}/utils/*)
+
+set(ALL_C_SOURCE_FILES ${HELPERS} ${ALL_C_SOURCE_FILES} PARENT_SCOPE)
 
 if (UNIX AND NOT APPLE)
     find_package(PkgConfig)
@@ -17,7 +19,7 @@ if (UNIX AND NOT APPLE)
 endif()
 
 function(add_ctest test_name)
-    add_executable(test_${test_name} EXCLUDE_FROM_ALL ${CMAKE_CURRENT_SOURCE_DIR}/${test_name}.c)
+    add_executable(test_${test_name} EXCLUDE_FROM_ALL ${HELPERS} ${CMAKE_CURRENT_SOURCE_DIR}/${test_name}.c)
 
     if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
         target_compile_options(test_${test_name} PUBLIC -fsanitize=address -g -Os -fPIC -fstack-protector-strong -fno-omit-frame-pointer -Wall)

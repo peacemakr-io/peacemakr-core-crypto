@@ -31,14 +31,26 @@ target_include_directories(peacemakr-core-crypto
 )
 if (APPLE)
     target_link_libraries(peacemakr-core-crypto
-            PUBLIC -Wl,-all_load OpenSSL::SSL OpenSSL::Crypto -Wl,-noall_load)
+            PRIVATE OpenSSL::SSL OpenSSL::Crypto)
+    target_link_options(peacemakr-core-crypto PRIVATE -Wl,-dead_strip)
 else()
     target_link_libraries(peacemakr-core-crypto
-            PUBLIC -Wl,--whole-archive OpenSSL::SSL OpenSSL::Crypto bsd -Wl,--no-whole-archive -ldl)
+            PRIVATE OpenSSL::SSL OpenSSL::Crypto bsd -ldl)
+    target_link_options(peacemakr-core-crypto PRIVATE -Wl,--gc-sections)
 endif()
 set_target_properties(peacemakr-core-crypto PROPERTIES
         PUBLIC_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/include/peacemakr/crypto.h;${CMAKE_CURRENT_SOURCE_DIR}/include/peacemakr/random.h"
 )
+
+if ((CMAKE_BUILD_TYPE MATCHES RELEASE) OR (CMAKE_BUILD_TYPE MATCHES Release))
+    if (APPLE)
+        add_custom_command(TARGET peacemakr-core-crypto POST_BUILD
+                COMMAND ${CMAKE_STRIP} -x $<TARGET_FILE:peacemakr-core-crypto>)
+    else()
+        add_custom_command(TARGET peacemakr-core-crypto POST_BUILD
+                COMMAND ${CMAKE_STRIP} $<TARGET_FILE:peacemakr-core-crypto>)
+    endif()
+endif ()
 
 install(TARGETS peacemakr-core-crypto
         EXPORT peacemakr-core-crypto-targets

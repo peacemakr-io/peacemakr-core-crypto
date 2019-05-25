@@ -10,9 +10,8 @@
 #include <memory.h>
 #include <peacemakr/crypto.h>
 
-#include "../src/b64.h"
-
-#include "test_helper.h"
+#include "utils/b64.h"
+#include "utils/helper.h"
 
 void test_deserialize_garbage() {
   const uint32_t message_len = 253;
