@@ -295,7 +295,6 @@ static bool asymmetric_encrypt(const peacemakr_key_t *pub_key,
     return false;
   }
   ciphertext_len += len;
-  PEACEMAKR_LOG("ciphertext_len: %d\n", ciphertext_len);
   buffer_set_size(mutable_ciphertext, ciphertext_len);
 
   /* Get the tag at this point, if the algorithm provides one */
