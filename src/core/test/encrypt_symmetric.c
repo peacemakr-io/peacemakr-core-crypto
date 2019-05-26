@@ -41,6 +41,7 @@ void test_symmetric_algo(symmetric_cipher cipher) {
   plaintext_t aad;
   assert(peacemakr_get_unverified_aad(ciphertext, &aad));
   assert(memcmp(aad.aad, plaintext_in.aad, plaintext_in.aad_len) == 0);
+  free((void *)aad.aad);
 
   decrypt_code success = peacemakr_decrypt(key, ciphertext, &plaintext_out);
 

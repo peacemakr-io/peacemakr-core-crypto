@@ -484,11 +484,7 @@ ciphertext_blob_t *peacemakr_encrypt(const peacemakr_key_t *recipient_key,
 
   const int cipher_block_size = EVP_CIPHER_block_size(cipher);
 
-  // guard against the possibility of getting a weird value
-  const int ossl_iv_len = EVP_CIPHER_iv_length(cipher);
-  size_t iv_len = (ossl_iv_len > EVP_MAX_IV_LENGTH || ossl_iv_len <= 0)
-                      ? EVP_MAX_IV_LENGTH
-                      : (size_t)ossl_iv_len;
+  size_t iv_len = EVP_MAX_IV_LENGTH; // 16 bytes
 
   size_t tag_len = get_taglen(cfg.symm_cipher);
   size_t aad_len = plain->aad_len;

@@ -20,14 +20,8 @@ endif()
 
 function(add_ctest test_name)
     add_executable(test_${test_name} EXCLUDE_FROM_ALL ${HELPERS} ${CMAKE_CURRENT_SOURCE_DIR}/${test_name}.c)
-
-    if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-        target_compile_options(test_${test_name} PUBLIC -fsanitize=address -g -Os -fPIC -fstack-protector-strong -fno-omit-frame-pointer -Wall)
-        target_link_libraries(test_${test_name} PRIVATE -fsanitize=address)
-    else()
-        target_compile_options(test_${test_name} PUBLIC -g -Os -fPIC -fstack-protector-strong -fno-omit-frame-pointer -Wall)
-        target_link_libraries(test_${test_name} PRIVATE)
-    endif()
+    # Inherits -fsanitize=address from peacemakr-core-crypto target
+    target_compile_options(test_${test_name} PUBLIC -g -O0 -fPIC -fstack-protector-strong -Wall)
 
     target_link_libraries(test_${test_name} PRIVATE peacemakr-core-crypto ${LIBBSD_LIBRARIES})
     target_include_directories(test_${test_name} PRIVATE ${CMAKE_SOURCE_DIR}/src/core/include ${LIBBSD_INCLUDE_DIRS})
