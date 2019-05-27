@@ -147,9 +147,15 @@ void buffer_set_size(buffer_t *buf, const size_t size) {
     return;
   }
 
-  buf->m_mem_ = realloc((void *)buf->m_mem_, size);
-  EXPECT_NOT_NULL_RET_NONE(buf->m_mem_, "realloc failed\n")
-  buf->m_size_bytes_ = size;
+  void *tmp = realloc((void *)buf->m_mem_, size);
+  if (tmp == NULL) {
+    PEACEMAKR_ERROR("realloc failed, clearing buf\n");
+    buffer_free(buf);
+    buf = NULL;
+  } else {
+    buf->m_mem_ = tmp;
+    buf->m_size_bytes_ = size;
+  }
 }
 
 size_t buffer_serialize(const buffer_t *buf, uint8_t *serialized) {

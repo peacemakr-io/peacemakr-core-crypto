@@ -81,6 +81,12 @@ static bool symmetric_encrypt(const peacemakr_key_t *peacemakrkey,
   OPENSSL_CHECK_RET_VALUE(
       EVP_EncryptUpdate(ctx, ciphertext, &len, plaintext, (int)plaintext_len),
       ctx, false)
+
+  if (len <= 0) {
+    PEACEMAKR_ERROR("encrypt update created a negative length buffer\n");
+    EVP_CIPHER_CTX_free(ctx);
+    return false;
+  }
   ciphertext_len = (size_t)len;
 
   /* Finalise the encryption. Further ciphertext bytes may be written at
@@ -89,6 +95,7 @@ static bool symmetric_encrypt(const peacemakr_key_t *peacemakrkey,
   OPENSSL_CHECK_RET_VALUE(
       EVP_EncryptFinal_ex(ctx, ciphertext + ciphertext_len, &len), ctx, false)
   ciphertext_len += len;
+  // Shrink the buffer to the final size
   buffer_set_size(ciphertext_buf, ciphertext_len);
 
   /* Get the tag at this point, if the algorithm provides one */
@@ -167,7 +174,7 @@ static bool symmetric_decrypt(const peacemakr_key_t *peacemakrkey,
   }
 
   /* Now set up to do the actual decryption */
-  *plaintext = buffer_new(ciphertext_len << 1);
+  *plaintext = buffer_new(ciphertext_len);
   unsigned char *plaintext_buf = buffer_mutable_bytes(*plaintext);
 
   /* Provide the message to be encrypted, and obtain the encrypted output.
@@ -350,7 +357,7 @@ static bool asymmetric_decrypt(const peacemakr_key_t *pkey,
     tag_buf = (unsigned char *)buffer_get_bytes(stored_tag, &taglen);
   }
 
-  *plaintext = buffer_new(ciphertext_len << 1);
+  *plaintext = buffer_new(ciphertext_len);
   unsigned char *plaintext_buf = buffer_mutable_bytes(*plaintext);
 
   /* Create and initialise the context */
@@ -452,7 +459,7 @@ ciphertext_blob_t *peacemakr_encrypt(const peacemakr_key_t *recipient_key,
   EXPECT_TRUE_RET(plain->aad_len <= INT_MAX,
                   "AAD was too big, needs to be broken up\n")
 
-  if (plain->data == NULL && plain->data_len <= 0) {
+  if (plain->data == NULL || plain->data_len <= 0) {
     PEACEMAKR_LOG("No data to encrypt\n");
     return NULL;
   }
@@ -477,16 +484,13 @@ ciphertext_blob_t *peacemakr_encrypt(const peacemakr_key_t *recipient_key,
 
   const int cipher_block_size = EVP_CIPHER_block_size(cipher);
 
-  // guard against the possibility of getting a weird value
-  const int ossl_iv_len = EVP_CIPHER_iv_length(cipher);
-  size_t iv_len = (ossl_iv_len > EVP_MAX_IV_LENGTH || ossl_iv_len <= 0)
-                      ? EVP_MAX_IV_LENGTH
-                      : (size_t)ossl_iv_len;
+  size_t iv_len = EVP_MAX_IV_LENGTH; // 16 bytes
 
   size_t tag_len = get_taglen(cfg.symm_cipher);
   size_t aad_len = plain->aad_len;
 
-  size_t ciphertext_len = plain->data_len + cipher_block_size - 1;
+  size_t ciphertext_len = plain->data_len + cipher_block_size -
+                          (plain->data_len % cipher_block_size);
 
   EXPECT_TRUE_RET((ciphertext_len != 0), "data had length: %d\n",
                   plain->data_len)

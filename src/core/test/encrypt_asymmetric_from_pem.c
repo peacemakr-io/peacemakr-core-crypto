@@ -10,7 +10,7 @@
 #include <memory.h>
 #include <peacemakr/crypto.h>
 
-#include "test_helper.h"
+#include "utils/helper.h"
 
 const char *message = "Hello, world! I'm testing encryption."; // 37 + 1
 const char *message_aad = "And I'm AAD";                       // 11 + 1
@@ -30,8 +30,8 @@ void test_symmetric_algo(symmetric_cipher symm_cipher, const char *pubkey_buf,
 
   peacemakr_key_t *pubkey =
       peacemakr_key_new_pem_pub(RSA_4096, symm_cipher, pubkey_buf, pubkey_len);
-  peacemakr_key_t *privkey =
-      peacemakr_key_new_pem_priv(RSA_4096, symm_cipher, privkey_buf, privkey_len);
+  peacemakr_key_t *privkey = peacemakr_key_new_pem_priv(
+      RSA_4096, symm_cipher, privkey_buf, privkey_len);
 
   ciphertext_blob_t *ciphertext =
       peacemakr_encrypt(pubkey, &plaintext_in, &rand);

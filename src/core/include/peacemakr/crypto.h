@@ -19,6 +19,10 @@
 #define PEACEMAKR_CORE_CRYPTO_VERSION (uint32_t)0x1
 #define PEACEMAKR_CORE_CRYPTO_VERSION_MAX (uint32_t)0x1
 
+// Export these symbols and make sure the linker dead code elimination
+// doesn't get rid of them
+#define PEACEMAKR_EXPORT __attribute__((visibility("default"), used))
+
 /**
  * @file peacemakr/crypto.h
  * Peacemakr core crypto
@@ -111,14 +115,14 @@ typedef struct PeacemakrKey peacemakr_key_t;
 /**
  * Get max supported version by this library. Compile time constant.
  */
-static inline uint32_t get_max_version() {
+PEACEMAKR_EXPORT inline uint32_t get_max_version() {
   return PEACEMAKR_CORE_CRYPTO_VERSION_MAX;
 }
 
 /**
  * Get the current version of this library. Compile time constant.
  */
-static inline uint32_t get_version() {
+PEACEMAKR_EXPORT inline uint32_t get_version() {
   return PEACEMAKR_CORE_CRYPTO_VERSION;
 }
 
@@ -126,7 +130,7 @@ static inline uint32_t get_version() {
  * Should be called once on startup. Ensures that the system's random number
  * generator is well seeded and any numbers generated have sufficient entropy.
  */
-bool peacemakr_init();
+PEACEMAKR_EXPORT bool peacemakr_init();
 
 /**
  * Logging callback that takes a C string and does something with it.
@@ -139,24 +143,25 @@ typedef void (*peacemakr_log_cb)(const char *);
  * Sets peacemakr logging utilities to use \p log_fn as a callback to return
  * log messages upstream.
  */
-void peacemakr_set_log_callback(peacemakr_log_cb log_fn);
+PEACEMAKR_EXPORT void peacemakr_set_log_callback(peacemakr_log_cb log_fn);
 
 /**
  * Create a new asymmetric peacemakr_key_t from scratch \p rand. It is
  * recommended that \p rand come from /dev/urandom or similar. \p symm_cipher is
  * only used for encryption operations.
  */
-peacemakr_key_t *peacemakr_key_new_asymmetric(asymmetric_cipher asymm_cipher,
-                                              symmetric_cipher symm_cipher,
-                                              random_device_t *rand);
+PEACEMAKR_EXPORT peacemakr_key_t *
+peacemakr_key_new_asymmetric(asymmetric_cipher asymm_cipher,
+                             symmetric_cipher symm_cipher,
+                             random_device_t *rand);
 
 /**
  * Create a new symmetric peacemakr_key_t from scratch \p rand. It is
  * recommended that \p rand come from /dev/urandom or similar. \returns A newly
  * created peacemakr key for use in other library calls.
  */
-peacemakr_key_t *peacemakr_key_new_symmetric(symmetric_cipher cipher,
-                                             random_device_t *rand);
+PEACEMAKR_EXPORT peacemakr_key_t *
+peacemakr_key_new_symmetric(symmetric_cipher cipher, random_device_t *rand);
 
 /**
  * Create a new peacemakr_key_t from bytes generated externally. This
@@ -166,16 +171,16 @@ peacemakr_key_t *peacemakr_key_new_symmetric(symmetric_cipher cipher,
  * similar. \returns A newly created peacemakr key for use in other library
  * calls.
  */
-peacemakr_key_t *peacemakr_key_new_bytes(symmetric_cipher cipher,
-                                         const uint8_t *buf,
-                                         const size_t buf_len);
+PEACEMAKR_EXPORT peacemakr_key_t *
+peacemakr_key_new_bytes(symmetric_cipher cipher, const uint8_t *buf,
+                        const size_t buf_len);
 
 /**
  * Computes a symmetric key specified by \p cfg according to PKCS5. We
  * use a PBKDF2_HMAC construction from OpenSSL that operates on \p password
  * for \p iteration_count times, using \p salt.
  */
-peacemakr_key_t *peacemakr_key_new_from_password(
+PEACEMAKR_EXPORT peacemakr_key_t *peacemakr_key_new_from_password(
     symmetric_cipher cipher, message_digest_algorithm digest,
     const uint8_t *password, const size_t password_len, const uint8_t *salt,
     const size_t salt_len, const size_t iteration_count);
@@ -186,7 +191,7 @@ peacemakr_key_t *peacemakr_key_new_from_password(
  * NIST SP 800-180 with \p key_id on \p master_key to create a new key that can
  * be used in further cryptographic endeavors.
  */
-peacemakr_key_t *
+PEACEMAKR_EXPORT peacemakr_key_t *
 peacemakr_key_new_from_master(symmetric_cipher cipher,
                               message_digest_algorithm digest,
                               const peacemakr_key_t *master_key,
@@ -200,9 +205,10 @@ peacemakr_key_new_from_master(symmetric_cipher cipher,
  * in other library calls. \p symm_cipher is ignored if the asymmetric
  * algorithm specified is not an RSA algorithm.
  */
-peacemakr_key_t *peacemakr_key_new_pem_pub(asymmetric_cipher cipher,
-                                           symmetric_cipher symm_cipher,
-                                           const char *buf, size_t buflen);
+PEACEMAKR_EXPORT peacemakr_key_t *
+peacemakr_key_new_pem_pub(asymmetric_cipher cipher,
+                          symmetric_cipher symm_cipher, const char *buf,
+                          size_t buflen);
 
 /**
  * Create a new peacemakr_key_t from a pem file generated externally. This
@@ -212,55 +218,58 @@ peacemakr_key_t *peacemakr_key_new_pem_pub(asymmetric_cipher cipher,
  * in other library calls. \p symm_cipher is ignored if the asymmetric
  * algorithm specified is not an RSA algorithm.
  */
-peacemakr_key_t *peacemakr_key_new_pem_priv(asymmetric_cipher cipher,
-                                            symmetric_cipher symm_cipher,
-                                            const char *buf, size_t buflen);
+PEACEMAKR_EXPORT peacemakr_key_t *
+peacemakr_key_new_pem_priv(asymmetric_cipher cipher,
+                           symmetric_cipher symm_cipher, const char *buf,
+                           size_t buflen);
 
 /**
  * Create a new symmetric peacemakr_key_t using a Diffie-Hellman exchange
  * between \p my_key (which is a private key) and \p peer_key (which is a public
  * key)
  */
-peacemakr_key_t *peacemakr_key_dh_generate(symmetric_cipher cipher,
-                                           const peacemakr_key_t *my_key,
-                                           const peacemakr_key_t *peer_key);
+PEACEMAKR_EXPORT peacemakr_key_t *
+peacemakr_key_dh_generate(symmetric_cipher cipher,
+                          const peacemakr_key_t *my_key,
+                          const peacemakr_key_t *peer_key);
 
 /**
  * Gets the crypto_config_t used to create \p key from \p key.
  */
-crypto_config_t peacemakr_key_get_config(const peacemakr_key_t *key);
+PEACEMAKR_EXPORT crypto_config_t
+peacemakr_key_get_config(const peacemakr_key_t *key);
 
 /**
  * Serializes private key \p key into \p buf in PEM format and places its size
  * into \p bufsize. The caller is responsible for memory returned from this
  * function via \p buf.
  */
-bool peacemakr_key_priv_to_pem(const peacemakr_key_t *key, char **buf,
-                               size_t *bufsize);
+PEACEMAKR_EXPORT bool peacemakr_key_priv_to_pem(const peacemakr_key_t *key,
+                                                char **buf, size_t *bufsize);
 
 /**
  * @copydoc peacemakr_key_priv_to_pem
  */
-bool peacemakr_key_pub_to_pem(const peacemakr_key_t *key, char **buf,
-                              size_t *bufsize);
+PEACEMAKR_EXPORT bool peacemakr_key_pub_to_pem(const peacemakr_key_t *key,
+                                               char **buf, size_t *bufsize);
 
 /**
  * Copies the bytes of \p key into \p buf and copies the size of \p buf into \p
  * bufsize.
  */
-bool peacemakr_key_get_bytes(const peacemakr_key_t *key, uint8_t **buf,
-                             size_t *bufsize);
+PEACEMAKR_EXPORT bool peacemakr_key_get_bytes(const peacemakr_key_t *key,
+                                              uint8_t **buf, size_t *bufsize);
 
 /**
  * Free \p key. Attempts to securely clear all memory associated with \p key.
  */
-void peacemakr_key_free(peacemakr_key_t *key);
+PEACEMAKR_EXPORT void peacemakr_key_free(peacemakr_key_t *key);
 
 /**
  * Free ciphertext blob objects. Will need to be called very rarely,
  * the FFI should handle this.
  */
-void ciphertext_blob_free(ciphertext_blob_t *ciphertext);
+PEACEMAKR_EXPORT void ciphertext_blob_free(ciphertext_blob_t *ciphertext);
 
 /**
  * Performs the encryption operation using the configuration and the (symmetric
@@ -269,9 +278,9 @@ void ciphertext_blob_free(ciphertext_blob_t *ciphertext);
  * ciphertext_blob_t that can be used in calls to peacemakr_sign,
  * peacemakr_serialize, peacemakr_decrypt, and peacemakr_verify
  */
-ciphertext_blob_t *peacemakr_encrypt(const peacemakr_key_t *recipient_key,
-                                     const plaintext_t *plain,
-                                     random_device_t *rand);
+PEACEMAKR_EXPORT ciphertext_blob_t *
+peacemakr_encrypt(const peacemakr_key_t *recipient_key,
+                  const plaintext_t *plain, random_device_t *rand);
 
 /**
  * Signs the plaintext in \p plain with key \p sender_key. If the configuration
@@ -279,8 +288,10 @@ ciphertext_blob_t *peacemakr_encrypt(const peacemakr_key_t *recipient_key,
  * If the configuration is ASYMMETRIC then this method uses the EVP_DigestSign*
  * functions to do asymmetric signing of \p plain and stores it in \p cipher.
  */
-void peacemakr_sign(const peacemakr_key_t *sender_key, const plaintext_t *plain,
-                    message_digest_algorithm digest, ciphertext_blob_t *cipher);
+PEACEMAKR_EXPORT void peacemakr_sign(const peacemakr_key_t *sender_key,
+                                     const plaintext_t *plain,
+                                     message_digest_algorithm digest,
+                                     ciphertext_blob_t *cipher);
 
 //! Possible decrypt outcomes
 typedef enum {
@@ -296,15 +307,17 @@ typedef enum {
  * verify needs to be called on the result of decryption, if decrypt succeeded
  * outright, or if decrypt failed.
  */
-decrypt_code peacemakr_decrypt(const peacemakr_key_t *recipient_key,
-                               ciphertext_blob_t *cipher, plaintext_t *plain);
+PEACEMAKR_EXPORT decrypt_code
+peacemakr_decrypt(const peacemakr_key_t *recipient_key,
+                  ciphertext_blob_t *cipher, plaintext_t *plain);
 
 /**
  * Attempts to extract any AAD from the message.
  * Note that this AAD is unconfirmed and may have been tampered with.
  */
-bool peacemakr_get_unverified_aad(const ciphertext_blob_t *cipher,
-                                  plaintext_t *plain);
+PEACEMAKR_EXPORT bool
+peacemakr_get_unverified_aad(const ciphertext_blob_t *cipher,
+                             plaintext_t *plain);
 
 /**
  * Verifies the plaintext in \p plain with key \p sender_key. If the
@@ -314,24 +327,27 @@ bool peacemakr_get_unverified_aad(const ciphertext_blob_t *cipher,
  * asymmetric verification of \p plain against the signature in \p cipher.
  * \returns false if verification is unsuccessful.
  */
-bool peacemakr_verify(const peacemakr_key_t *sender_key,
-                      const plaintext_t *plain, ciphertext_blob_t *cipher);
+PEACEMAKR_EXPORT bool peacemakr_verify(const peacemakr_key_t *sender_key,
+                                       const plaintext_t *plain,
+                                       ciphertext_blob_t *cipher);
 
 /**
  * Computes the HMAC of \p buf with \p master_key. Allocates memory and
  * returns it to the caller with the HMAC stored inside.
  */
-uint8_t *peacemakr_hmac(const message_digest_algorithm digest_algorithm,
-                        const peacemakr_key_t *master_key, const uint8_t *buf,
-                        const size_t buf_len, size_t *out_bytes);
+PEACEMAKR_EXPORT uint8_t *
+peacemakr_hmac(const message_digest_algorithm digest_algorithm,
+               const peacemakr_key_t *master_key, const uint8_t *buf,
+               const size_t buf_len, size_t *out_bytes);
 
 /**
  * Serializes \p cipher into a \return Base64 encoded buffer. Stores the size of
  * said buffer into \p out_size. The caller is responsible for managing
  * memory returned from this function.
  */
-uint8_t *peacemakr_serialize(message_digest_algorithm digest,
-                             ciphertext_blob_t *cipher, size_t *b64_size);
+PEACEMAKR_EXPORT uint8_t *peacemakr_serialize(message_digest_algorithm digest,
+                                              ciphertext_blob_t *cipher,
+                                              size_t *b64_size);
 
 /**
  * Deserializes a ciphertext_blob_t from \p b64_encoded_cipher. \p
@@ -340,8 +356,8 @@ uint8_t *peacemakr_serialize(message_digest_algorithm digest,
  * ciphertext_blob_t that may be passed to bool peacemakr_decrypt(const
  * peacemakr_key_t *, ciphertext_blob_t *, plaintext_t *)
  */
-ciphertext_blob_t *peacemakr_deserialize(const uint8_t *b64_serialized_cipher,
-                                         size_t b64_serialized_len,
-                                         crypto_config_t *cfg);
+PEACEMAKR_EXPORT ciphertext_blob_t *
+peacemakr_deserialize(const uint8_t *b64_serialized_cipher,
+                      size_t b64_serialized_len, crypto_config_t *cfg);
 
 #endif // PEACEMAKR_CORE_CRYPTO_CRYPTO_H

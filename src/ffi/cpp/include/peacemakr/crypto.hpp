@@ -17,7 +17,7 @@ extern "C" {
 #else
 #include <stdlib.h>
 #endif
-};
+}
 
 #include <functional>
 #include <string>

@@ -7,6 +7,7 @@
 //
 
 #include "Logging.h"
+#include "crypto.h"
 
 #include <assert.h>
 #include <memory.h>
@@ -22,7 +23,7 @@ static void log_to_stderr(const char *msg) { fprintf(stderr, "%s", msg); }
 void log_printf(const char *function_name, int line, const char *fmt, ...) {
 
   if (log_fn == NULL) {
-    log_fn = &log_to_stderr;
+    peacemakr_set_log_callback(&log_to_stderr);
   }
 
   char linenum[4];

@@ -186,7 +186,7 @@ uint8_t *peacemakr_serialize(message_digest_algorithm digest,
   cipher = NULL;
 
   // Return the b64 encoded version
-  uint8_t *b64_buf = (uint8_t *)b64_encode(buf, current_pos, b64_size);
+  uint8_t *b64_buf = b64_encode(buf, current_pos, b64_size);
 
   // Clean up the workspace
   free(buf);
@@ -205,24 +205,11 @@ ciphertext_blob_t *peacemakr_deserialize(const uint8_t *b64_serialized_cipher,
   EXPECT_NOT_NULL_RET(
       cfg, "need to store the deserialized configuration somewhere\n")
 
-  // If we are a null-terminated string, then remove that from the size.
-  // The b64 decode expects that the length passed in does NOT include the
-  // null terminator. Currently this should be able to be optimized away.
-  b64_serialized_len -= (b64_serialized_cipher[b64_serialized_len - 1] == '\0');
-
-  // We're decoding a b64 message so get the serialized length (rounded up)
-  size_t serialized_len = (b64_serialized_len + 3) / 4 * 3;
-  EXPECT_TRUE_RET((serialized_len < b64_serialized_len),
-                  "Unexpected condition in computing b64 decoded length\n")
-  uint8_t *serialized_cipher = calloc(serialized_len, sizeof(uint8_t));
-  EXPECT_NOT_NULL_RET(serialized_cipher, "failed to allocate serialized_cipher")
-
   // Don't free the b64 cipher because we don't own that memory
-  bool decoded =
-      b64_decode((const char *)b64_serialized_cipher, b64_serialized_len,
-                 serialized_cipher, serialized_len);
-  EXPECT_TRUE_CLEANUP_RET(decoded, free(serialized_cipher),
-                          "b64 decode failed\n")
+  size_t serialized_len = 0;
+  uint8_t *serialized_cipher =
+      b64_decode(b64_serialized_cipher, b64_serialized_len, &serialized_len);
+  EXPECT_NOT_NULL_RET(serialized_cipher, "failed to decode b64 object")
 
   size_t current_position = 0;
 
