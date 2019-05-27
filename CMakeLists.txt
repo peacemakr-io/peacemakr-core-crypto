@@ -21,7 +21,8 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-set(CMAKE_C_FLAGS "-Os -fPIC -fstack-protector-strong -Wall")
+set(CMAKE_C_FLAGS_RELEASE "-Os -fPIC -Wall -fvisibility=hidden -ffunction-sections")
+set(CMAKE_C_FLAGS_DEBUG "-O0 -g -fstack-protector-strong")
 
 set(ALL_C_SOURCE_FILES "")
 
@@ -38,6 +39,7 @@ if (ANDROID_ABI)
     add_library(OpenSSL::Crypto SHARED IMPORTED)
     set_target_properties(OpenSSL::Crypto PROPERTIES IMPORTED_LOCATION ${OPENSSL_CRYPTO_LIBRARY})
 else (ANDROID_ABI)
+    set(CMAKE_FIND_LIBRARY_SUFFIXES .a)
     set(OPENSSL_USE_STATIC_LIBS TRUE)
     find_package(OpenSSL 1.1 REQUIRED)
 endif (ANDROID_ABI)

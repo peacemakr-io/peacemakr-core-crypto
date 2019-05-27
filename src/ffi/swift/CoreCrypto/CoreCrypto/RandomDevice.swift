@@ -21,7 +21,7 @@ open class RandomDevice {
    Returns the generator associated with this object - a generator
    fills a buffer with a specified number of random bytes.
    */
-  open var Generator: RNGBuf? {
+  open var generator: RNGBuf? {
     return nil
   }
 
@@ -30,24 +30,24 @@ open class RandomDevice {
    generator returns nonzero, the library will call this on the return
    code to provide input as to what failed.
    */
-  open var Err: RNGErr? {
+  open var err: RNGErr? {
     return nil
   }
 
   func getInternal() -> random_device_t {
-    return random_device_t(generator: self.Generator!, err: self.Err!)
+    return random_device_t(generator: self.generator!, err: self.err!)
   }
 }
 
 final class DefaultRandomDevice: RandomDevice {
 
-  override var Generator: RNGBuf {
+  override var generator: RNGBuf {
     return { bytes, count in
       return SecRandomCopyBytes(kSecRandomDefault, count, bytes!)
     }
   }
 
-  override var Err: RNGErr {
+  override var err: RNGErr {
     return { code in
         switch code {
         case 0:

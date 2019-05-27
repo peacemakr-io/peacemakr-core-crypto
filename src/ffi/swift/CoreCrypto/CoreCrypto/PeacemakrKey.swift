@@ -15,42 +15,33 @@ public class PeacemakrKey {
     
   public init?(asymmCipher: AsymmetricCipher, symmCipher: SymmetricCipher, rand: RandomDevice) {
     var randInternal = rand.getInternal()
-    let key = peacemakr_key_new_asymmetric(asymmetric_cipher(rawValue: asymmCipher.rawValue), symmetric_cipher(rawValue: symmCipher.rawValue), &randInternal)
-    if key == nil {
+    guard let key = peacemakr_key_new_asymmetric(asymmetric_cipher(rawValue: asymmCipher.rawValue), symmetric_cipher(rawValue: symmCipher.rawValue), &randInternal) else {
       return nil
     }
-    internalRepr = key!
+    internalRepr = key
   }
   
   public init?(symmCipher: SymmetricCipher, rand: RandomDevice) {
     var randInternal = rand.getInternal()
-    let key = peacemakr_key_new_symmetric(symmetric_cipher(rawValue: symmCipher.rawValue), &randInternal)
-    if key == nil {
+    guard let key = peacemakr_key_new_symmetric(symmetric_cipher(rawValue: symmCipher.rawValue), &randInternal) else {
       return nil
     }
-    internalRepr = key!
+    internalRepr = key
   }
 
   public init?(symmCipher: SymmetricCipher, bytes: Data) {
-    let key = bytes.withUnsafeBytes { (rawBytes: UnsafePointer<UInt8>) -> OpaquePointer? in
+    let key = bytes.withUnsafeBytes { (rawBytes: UnsafePointer<UInt8>) -> OpaquePointer in
       return peacemakr_key_new_bytes(symmetric_cipher(rawValue: symmCipher.rawValue), rawBytes, bytes.count)
     }
-    if key == nil {
-      return nil
-    }
-    internalRepr = key!
+    internalRepr = key
   }
   
   // TODO: add initializer from password
-
   public init?(symmCipher: SymmetricCipher, digest: MessageDigestAlgorithm, master: PeacemakrKey, bytes: Data) {
-    let key = bytes.withUnsafeBytes { (rawBytes) -> OpaquePointer? in
-      return peacemakr_key_new_from_master(symmetric_cipher(rawValue: symmCipher.rawValue), message_digest_algorithm(rawValue: digest.rawValue), master.internalRepr, rawBytes, bytes.count)
+    let key = bytes.withUnsafeBytes { (rawBytes) -> OpaquePointer in
+    return peacemakr_key_new_from_master(symmetric_cipher(rawValue: symmCipher.rawValue), message_digest_algorithm(rawValue: digest.rawValue), master.internalRepr, rawBytes, bytes.count)
     }
-    if key == nil {
-      return nil
-    }
-    internalRepr = key!
+    internalRepr = key
   }
 
   public init?(asymmCipher: AsymmetricCipher, symmCipher: SymmetricCipher, fileContents: String, isPriv: Bool) {
@@ -66,13 +57,11 @@ public class PeacemakrKey {
   }
 
   public init?(symmCipher: SymmetricCipher, myKey: PeacemakrKey, peerKey: PeacemakrKey) {
-    let key = peacemakr_key_dh_generate(symmetric_cipher(rawValue: symmCipher.rawValue), myKey.internalRepr, peerKey.internalRepr)
-
-    if key == nil {
+    guard let key = peacemakr_key_dh_generate(symmetric_cipher(rawValue: symmCipher.rawValue), myKey.internalRepr, peerKey.internalRepr) else{
       return nil
     }
 
-    internalRepr = key!
+    internalRepr = key
   }
   
   private init?(cKey: OpaquePointer) {
@@ -119,22 +108,13 @@ public class PeacemakrKey {
     }
     
     let pemData = Data(buffer: UnsafeBufferPointer(start: out, count: outsize))
+    
     return .result(pemData)
   }
-  
-  public func toPem(isPriv: Bool) -> Result<String> {
-    let pemData: Result<Data> = self.toPem(isPriv: isPriv)
-    switch (pemData) {
-    case let .error(e):
-      return .error(e)
-    case let .result(pem):
-      // We are assuming PEM is UTF8 compatible
-      let pemString = String(data: pem, encoding: .utf8)
-      if pemString == nil {
-        return .error(CoreCryptoError.keySerializationFailed)
-      }
-      
-      return .result(pemString!)
-    }
+}
+
+extension Data {
+  public func toString() -> String {
+    return String(data: self, encoding: String.Encoding.utf8) ?? ""
   }
 }

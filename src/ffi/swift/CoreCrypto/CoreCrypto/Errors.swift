@@ -8,6 +8,7 @@
 
 import Foundation
 
+// NOTE: It's better to use completionHandlers 
 public enum Result<T> {
   case result (T)
   case error (CoreCryptoError)

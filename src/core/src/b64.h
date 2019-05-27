@@ -6,22 +6,35 @@
 // Full license at peacemakr_core_crypto/LICENSE.txt
 //
 
-// From https://nachtimwald.com/2017/11/18/base64-encode-and-decode-in-c/
-
 #ifndef PEACEMAKR_CORE_CRYPTO_B64_H
 #define PEACEMAKR_CORE_CRYPTO_B64_H
 
-#include <stdbool.h>
-#include <stddef.h>
-
-char *b64_encode(const unsigned char *in, const size_t len, size_t *enc_len);
+#include <stdint.h>
 
 /**
- * Decodes \p in that is of length \p inlen bytes and stores up to \p outlen
- * bytes into \p out. Assumes that \p inlen does not contain a null terminator
- * on \p in.
+ * base64_encode - Base64 encode
+ * @src: Data to be encoded
+ * @len: Length of the data to be encoded
+ * @out_len: Pointer to output length variable, or %NULL if not used
+ * Returns: Allocated buffer of out_len bytes of encoded data,
+ * or %NULL on failure
+ *
+ * Caller is responsible for freeing the returned buffer. Returned buffer is
+ * nul terminated to make it easier to use as a C string. The nul terminator is
+ * not included in out_len.
  */
-bool b64_decode(const char *in, const size_t inlen, unsigned char *out,
-                const size_t outlen);
+uint8_t *b64_encode(const uint8_t *src, const size_t len, size_t *out_len);
+
+/**
+ * base64_decode - Base64 decode
+ * @src: Data to be decoded
+ * @len: Length of the data to be decoded
+ * @out_len: Pointer to output length variable
+ * Returns: Allocated buffer of out_len bytes of decoded data,
+ * or %NULL on failure
+ *
+ * Caller is responsible for freeing the returned buffer.
+ */
+uint8_t *b64_decode(const uint8_t *src, const size_t len, size_t *out_len);
 
 #endif // PEACEMAKR_CORE_CRYPTO_B64_H

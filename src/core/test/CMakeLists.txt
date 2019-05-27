@@ -9,7 +9,9 @@
 enable_testing()
 add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} -j4 --schedule-random -V)
 
-set(ALL_C_SOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/test_helper.h ${ALL_C_SOURCE_FILES} PARENT_SCOPE)
+file(GLOB HELPERS ${CMAKE_CURRENT_SOURCE_DIR}/utils/*)
+
+set(ALL_C_SOURCE_FILES ${HELPERS} ${ALL_C_SOURCE_FILES} PARENT_SCOPE)
 
 if (UNIX AND NOT APPLE AND NOT ANDROID_ABI)
     find_package(PkgConfig)
@@ -17,15 +19,9 @@ if (UNIX AND NOT APPLE AND NOT ANDROID_ABI)
 endif()
 
 function(add_ctest test_name)
-    add_executable(test_${test_name} EXCLUDE_FROM_ALL ${CMAKE_CURRENT_SOURCE_DIR}/${test_name}.c)
-
-    if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-        target_compile_options(test_${test_name} PUBLIC -fsanitize=address -g -Os -fPIC -fstack-protector-strong -fno-omit-frame-pointer -Wall)
-        target_link_libraries(test_${test_name} PRIVATE -fsanitize=address)
-    else()
-        target_compile_options(test_${test_name} PUBLIC -g -Os -fPIC -fstack-protector-strong -fno-omit-frame-pointer -Wall)
-        target_link_libraries(test_${test_name} PRIVATE)
-    endif()
+    add_executable(test_${test_name} EXCLUDE_FROM_ALL ${HELPERS} ${CMAKE_CURRENT_SOURCE_DIR}/${test_name}.c)
+    # Inherits -fsanitize=address from peacemakr-core-crypto target
+    target_compile_options(test_${test_name} PUBLIC -g -O0 -fPIC -fstack-protector-strong -Wall)
 
     target_link_libraries(test_${test_name} PRIVATE peacemakr-core-crypto ${LIBBSD_LIBRARIES})
     target_include_directories(test_${test_name} PRIVATE ${CMAKE_SOURCE_DIR}/src/core/include ${LIBBSD_INCLUDE_DIRS})
@@ -45,3 +41,5 @@ add_ctest(sign)
 add_ctest(garbage)
 add_ctest(dh_keygen)
 add_ctest(encrypt_dh_pem)
+
+set(ALL_C_SOURCE_FILES ${ALL_C_SOURCE_FILES} PARENT_SCOPE)

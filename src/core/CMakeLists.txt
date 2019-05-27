@@ -7,7 +7,7 @@
 #
 
 if((CMAKE_BUILD_TYPE MATCHES RELEASE) OR (CMAKE_BUILD_TYPE MATCHES Release))
-    message("Setting log to release")
+    message(STATUS "Setting log to release")
     add_definitions(-DPEACEMAKR_LOG_LEVEL=1)
 endif()
 
@@ -33,6 +33,14 @@ target_include_directories(peacemakr-core-crypto
                $<INSTALL_INTERFACE:include>
         PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
+
+# Compile core crypto lib under asan if we're running in debug mode
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" AND (CMAKE_BUILD_TYPE MATCHES DEBUG) OR (CMAKE_BUILD_TYPE MATCHES Debug))
+    message(STATUS "Setting AddressSanitizer for Debug build")
+    target_compile_options(peacemakr-core-crypto PUBLIC -fsanitize=address -fno-omit-frame-pointer)
+    target_link_libraries(peacemakr-core-crypto PUBLIC -fsanitize=address)
+endif()
+
 if (APPLE)
     target_link_libraries(peacemakr-core-crypto
             PRIVATE OpenSSL::SSL OpenSSL::Crypto)
@@ -43,9 +51,25 @@ else()
     target_link_libraries(peacemakr-core-crypto
             PRIVATE OpenSSL::SSL OpenSSL::Crypto -ldl)
 endif()
+
 set_target_properties(peacemakr-core-crypto PROPERTIES
         PUBLIC_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/include/peacemakr/crypto.h;${CMAKE_CURRENT_SOURCE_DIR}/include/peacemakr/random.h"
 )
+
+if ((CMAKE_BUILD_TYPE MATCHES RELEASE) OR (CMAKE_BUILD_TYPE MATCHES Release))
+    message(STATUS "Stripping library of dead symbols")
+    if (APPLE)
+        target_link_options(peacemakr-core-crypto PRIVATE -Wl,-dead_strip)
+
+        add_custom_command(TARGET peacemakr-core-crypto POST_BUILD
+                COMMAND ${CMAKE_STRIP} -x $<TARGET_FILE:peacemakr-core-crypto>)
+    else()
+        target_link_options(peacemakr-core-crypto PRIVATE -Wl,--gc-sections)
+
+        add_custom_command(TARGET peacemakr-core-crypto POST_BUILD
+                COMMAND ${CMAKE_STRIP} $<TARGET_FILE:peacemakr-core-crypto>)
+    endif()
+endif ()
 
 install(TARGETS peacemakr-core-crypto
         EXPORT peacemakr-core-crypto-targets

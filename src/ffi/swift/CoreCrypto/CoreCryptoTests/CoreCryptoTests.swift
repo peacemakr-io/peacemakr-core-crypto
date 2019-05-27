@@ -47,14 +47,14 @@ class CoreCryptoTests: XCTestCase {
     
     let unverfiedAAD = UnwrapCall(context.extractUnverifiedAAD(serialized), onError: assertFalse)!
     
-    XCTAssert(unverfiedAAD.AuthenticatableData == plaintextIn.AuthenticatableData, "Something failed in ExtractUnverfiedAAD")
+    XCTAssert(unverfiedAAD.authenticatableData == plaintextIn.authenticatableData, "Something failed in ExtractUnverfiedAAD")
 
     var (deserialized, outCfg) = UnwrapCall(context.deserialize(serialized), onError: assertFalse)!
     
     // The asymmetric ciphers may not match if it's ECDH, and the modes won't either, and that's OK
     // Mostly because the mode is technically SYMMETRIC for ECDH-based crypto, and the asymmetric algorithm
     // won't be set for the generated key
-    XCTAssert(cfg.SymmCipher == outCfg.SymmCipher && cfg.DigestAlgorithm == outCfg.DigestAlgorithm)
+    XCTAssert(cfg.symmCipher == outCfg.symmCipher && cfg.digestAlgorithm == outCfg.digestAlgorithm)
     let (decrypted, needVerify) = UnwrapCall(context.decrypt(key: key!, ciphertext: deserialized), onError: assertFalse)!
     
     
@@ -62,8 +62,8 @@ class CoreCryptoTests: XCTestCase {
       let success = UnwrapCall(context.verify(senderKey: key!, plaintext: decrypted, ciphertext: &(deserialized)), onError: assertFalse)!
       XCTAssert(success, "Verification failed")
     }
-    XCTAssert(decrypted.EncryptableData == plaintextIn.EncryptableData)
-    XCTAssert(decrypted.AuthenticatableData == plaintextIn.AuthenticatableData)
+    XCTAssert(decrypted.encryptableData == plaintextIn.encryptableData)
+    XCTAssert(decrypted.authenticatableData == plaintextIn.authenticatableData)
     
   }
 

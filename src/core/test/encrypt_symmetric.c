@@ -10,7 +10,7 @@
 #include <memory.h>
 #include <peacemakr/crypto.h>
 
-#include "test_helper.h"
+#include "utils/helper.h"
 
 const char *message = "Hello, world! I'm testing encryption."; // 37 + 1
 const char *message_aad = "And I'm AAD";                       // 11 + 1
@@ -40,18 +40,18 @@ void test_symmetric_algo(symmetric_cipher cipher) {
 
   plaintext_t aad;
   assert(peacemakr_get_unverified_aad(ciphertext, &aad));
-  assert(memcmp(aad.aad,
-                 plaintext_in.aad, plaintext_in.aad_len) == 0);
+  assert(memcmp(aad.aad, plaintext_in.aad, plaintext_in.aad_len) == 0);
+  free((void *)aad.aad);
 
   decrypt_code success = peacemakr_decrypt(key, ciphertext, &plaintext_out);
 
   assert(success == DECRYPT_SUCCESS);
 
-  assert(memcmp(plaintext_out.data,
-                 plaintext_in.data, plaintext_in.data_len) == 0);
+  assert(memcmp(plaintext_out.data, plaintext_in.data, plaintext_in.data_len) ==
+         0);
   free((void *)plaintext_out.data);
-  assert(memcmp(plaintext_out.aad,
-                 plaintext_in.aad, plaintext_in.aad_len) == 0);
+  assert(memcmp(plaintext_out.aad, plaintext_in.aad, plaintext_in.aad_len) ==
+         0);
   free((void *)plaintext_out.aad);
 
   peacemakr_key_free(original_key);
@@ -63,14 +63,17 @@ void test_password_symmetric_algo(symmetric_cipher cipher,
 
   size_t num_iters = rand() % 50000;
 
-  peacemakr_key_t *key = peacemakr_key_new_from_password(
-      cipher, digest, (uint8_t *)"abcdefghijk", 11, (uint8_t *)"123456789", 9, num_iters);
+  peacemakr_key_t *key =
+      peacemakr_key_new_from_password(cipher, digest, (uint8_t *)"abcdefghijk",
+                                      11, (uint8_t *)"123456789", 9, num_iters);
 
-  peacemakr_key_t *key_dup = peacemakr_key_new_from_password(
-      cipher, digest, (uint8_t *)"abcdefghijk", 11, (uint8_t *)"123456789", 9, num_iters);
+  peacemakr_key_t *key_dup =
+      peacemakr_key_new_from_password(cipher, digest, (uint8_t *)"abcdefghijk",
+                                      11, (uint8_t *)"123456789", 9, num_iters);
 
-  peacemakr_key_t *key2 = peacemakr_key_new_from_password(
-      cipher, digest, (uint8_t *)"abcdefghijl", 11, (uint8_t *)"123456789", 9, num_iters);
+  peacemakr_key_t *key2 =
+      peacemakr_key_new_from_password(cipher, digest, (uint8_t *)"abcdefghijl",
+                                      11, (uint8_t *)"123456789", 9, num_iters);
 
   uint8_t *key_buf = NULL;
   size_t key_buf_len = 0;
