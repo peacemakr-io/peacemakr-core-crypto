@@ -6,22 +6,13 @@
 // Full license at peacemakr_core_crypto/LICENSE.txt
 //
 
-// From https://nachtimwald.com/2017/11/18/base64-encode-and-decode-in-c/
-
 #ifndef PEACEMAKR_CORE_CRYPTO_B64_H
 #define PEACEMAKR_CORE_CRYPTO_B64_H
 
-#include <stdbool.h>
-#include <stddef.h>
+#include <stdint.h>
 
-char *b64_encode(const unsigned char *in, const size_t len, size_t *enc_len);
+uint8_t *b64_encode(const uint8_t *in, const size_t len, size_t *enc_len);
 
-/**
- * Decodes \p in that is of length \p inlen bytes and stores up to \p outlen
- * bytes into \p out. Assumes that \p inlen does not contain a null terminator
- * on \p in.
- */
-bool b64_decode(const char *in, const size_t inlen, unsigned char *out,
-                const size_t outlen);
+uint8_t *b64_decode(const uint8_t *in, const size_t inlen, size_t *outlen);
 
 #endif // PEACEMAKR_CORE_CRYPTO_B64_H

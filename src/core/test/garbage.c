@@ -35,8 +35,7 @@ void test_deserialize_b64_garbage() {
   fill_rand(garbage_message, message_len);
 
   size_t outlen;
-  uint8_t *b64_msg =
-      (uint8_t *)b64_encode(garbage_message, message_len, &outlen);
+  uint8_t *b64_msg = b64_encode(garbage_message, message_len, &outlen);
 
   crypto_config_t out_cfg;
 
@@ -56,8 +55,7 @@ void test_deserialize_b64_with_magic_garbage() {
   memcpy(garbage_message, &magic, sizeof(uint32_t));
 
   size_t outlen;
-  uint8_t *b64_msg =
-      (uint8_t *)b64_encode(garbage_message, message_len, &outlen);
+  uint8_t *b64_msg = b64_encode(garbage_message, message_len, &outlen);
 
   crypto_config_t out_cfg;
 
@@ -80,8 +78,7 @@ void test_deserialize_b64_with_magic_and_correct_len_garbage() {
          sizeof(uint64_t));
 
   size_t outlen;
-  uint8_t *b64_msg =
-      (uint8_t *)b64_encode(garbage_message, message_len, &outlen);
+  uint8_t *b64_msg = b64_encode(garbage_message, message_len, &outlen);
 
   crypto_config_t out_cfg;
 
