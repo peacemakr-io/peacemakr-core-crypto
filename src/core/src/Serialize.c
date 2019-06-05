@@ -16,35 +16,714 @@
 
 #include <memory.h>
 
-#define _PEACEMAKR_MAGIC_ (uint32_t)1054
+/**
+ * @file
+ * Message Serialization Format 0x1
+ *
+ * All multi-byte fields are serialized in LE format.
+ *
+ * @code
+ * --------------------------------------------
+ * (header) Version number (32 bits)
+ * --------------------------------------------
+ * (header) Offset table:
+ *
+ * - Number of offsets in table
+ * - Offset to data start
+ * - Offset to [4]
+ * - Offset to [5]
+ * - Offset to [6]
+ * ...
+ * - Offset to [10]
+ *
+ * (entry) - offset in bytes (uint32_t)
+ * ---------------
+ *     [0] - 0 (omitted)
+ *     [1] - 1 (omitted)
+ *     [2] - 2 (omitted)
+ *     [3] - 3 (omitted)
+ *     [4] - 4 (omitted)
+ *     [5] - 28 + sizeof([4])
+ *     [6] - 44 + sizeof([4])
+ *     [7] - 60 + sizeof([4])
+ *     [8] - 60 + sizeof([4]) + sizeof([7])
+ *     [9] - 60 + sizeof([4]) + sizeof([7]) + sizeof([8])
+ *    [10] - 60 + sizeof([4]) + sizeof([7]) + sizeof([8]) + sizeof([9])
+ *
+ * Table Metadata (not included in the table):
+ * ------------------------------------------
+ * AAD length = offsetof([8]) - offsetof([7])
+ * Ciphertext length = offsetof([9]) - offsetof([8])
+ *
+ * --------------------------------------------
+ * [0] Encryption Mode (8 bits)
+ * --------------------------------------------
+ * [1] Symmetric Cipher Algorithm (8 bits)
+ * --------------------------------------------
+ * [2] Asymmetric Cipher Algorithm (8 bits)
+ * --------------------------------------------
+ * [3] Digest Algorithm (8 bits)
+ * --------------------------------------------
+ * [4] Encrypted key ({128, 192, 256} bits)
+ * --------------------------------------------
+ * [5] IV (128 bits)
+ * --------------------------------------------
+ * [6] Tag (128 bits)
+ * --------------------------------------------
+ * [7] AAD
+ * --------------------------------------------
+ * [8] Ciphertext
+ * --------------------------------------------
+ * [9] Signature
+ * --------------------------------------------
+ * [10] Message HMAC ({224, 256, 384, 512} bits)
+ * --------------------------------------------
+ * @endcode
+ *
+ *
+ * In order to add a new field to the message format:
+ * -# Update the number of table entries in serialize_headers
+ * -# Add the index of your offset to the static data below
+ * -# Add the offset of your entry to the table before the hmac offset at the
+ *     end but after the signature field
+ * -# Add a getter for your offset
+ * -# Add a serializer and deserializer for your field to use in
+ *     peacemakr_serialize/peacemakr_deserialize
+ */
 
-// HMAC-SHA512 needs a 64 byte key. Shorter HMAC versions will truncate.
+// Byte swap magic so we have fast bswap32
+#ifdef linux
+#include <byteswap.h>
+#else // linux
+uint32_t bswap_32(uint32_t input) {
+#if defined(__clang__) | defined(__GNUC__)
+  return __builtin_bswap32(input);
+#else
+  return (((input & 0x000000FF) << 24) | ((input & 0x0000FF00) << 8) |
+          ((input & 0x00FF0000) >> 8) | ((input & 0xFF000000) >> 24));
+#endif // defined(__builtin_bswap32)
+}
+#endif // linux
+
+// Check for endianness
+#if defined(BYTE_ORDER) & defined(LITTLE_ENDIAN)
+#define IS_LITTLE_ENDIAN BYTE_ORDER == LITTLE_ENDIAN
+#else
+#define IS_LITTLE_ENDIAN                                                       \
+  (((union {                                                                   \
+     unsigned x;                                                               \
+     unsigned char c;                                                          \
+   }){1})                                                                      \
+       .c)
+#endif // BYTE_ORDER & LITTLE_ENDIAN
+
+//! HMAC-SHA512 needs a 64 byte key. Shorter HMAC versions will truncate.
 static const uint8_t PEACEMAKR_MAGIC_KEY[64] =
     "7d3rAfIHtCbYLm1OY6IRjvoBdqw2QdyvPIECF4Aczs2LgiShn8CeO8c21Q+GMuGf";
 
 static peacemakr_key_t *get_hmac_key() {
   peacemakr_key_t *hmac_key =
-      peacemakr_key_new_bytes(CHACHA20_POLY1305, PEACEMAKR_MAGIC_KEY, 32);
+      peacemakr_key_new_bytes(CHACHA20_POLY1305, PEACEMAKR_MAGIC_KEY, 64);
   return hmac_key;
 }
 
-/*
- * Peacemakr message serialization format:
- *
- * (0) Magic number (32 bits)
- * (1) Size of the message until the digest (64 bits)
- * (2) Digest algorithm (8 bits)
- * (3) Version (32 bits)
- * (4) Encryption mode (8 bits)
- * (5) Symmetric cipher algorithm (8 bits)
- * (6) Asymmetric cipher algorithm (8 bits)
- * (7) Encrypted key (128, 192, or 256 bits)
- * (8) IV (usually 96 bits, always <= 128 bits)
- * (9) Tag (128 bits)
- * (10) AAD
- * (11) Ciphertext
- * (12) Message HMAC (224, 256, 384, or 512 bits)
- */
+static const size_t table_entries_index = 1;
+static const size_t data_start_index = 2;
+static const size_t encrypted_key_offset_index = 3;
+static const size_t iv_offset_index = 4;
+static const size_t tag_offset_index = 5;
+static const size_t aad_offset_index = 6;
+static const size_t ciphertext_offset_index = 7;
+static const size_t signature_offset_index = 8;
+
+static uint8_t *serialize_headers(const ciphertext_blob_t *blob,
+                                  size_t *final_len) {
+  EXPECT_NOT_NULL_RET(final_len,
+                      "Cannot store an output size in a NULL pointer\n")
+
+  const uint32_t config_size = 4;
+  const size_t num_table_entries = 9;
+  const uint32_t offset_table_size = num_table_entries * sizeof(uint32_t);
+  const uint32_t offset_table_end = sizeof(uint32_t) + offset_table_size;
+
+  size_t buffer_len = sizeof(uint32_t); // version number
+  buffer_len += offset_table_size;      // Offset table
+  buffer_len += 4 * sizeof(uint8_t);    // crypto config of the message
+  buffer_len +=
+      buffer_get_size(ciphertext_blob_encrypted_key(blob)); // encrypted key
+  buffer_len += buffer_get_size(ciphertext_blob_iv(blob));  // IV
+  buffer_len += buffer_get_size(ciphertext_blob_tag(blob)); // Tag
+  buffer_len += buffer_get_size(ciphertext_blob_aad(blob)); // AAD
+  buffer_len += buffer_get_size(ciphertext_blob_ciphertext(blob)); // Ciphertext
+  buffer_len += buffer_get_size(ciphertext_blob_signature(blob));  // Signature
+
+  // HMAC's length is determined by the crypto config of the message
+  buffer_len += get_digest_len(ciphertext_blob_digest_algo(blob));
+
+  *final_len = buffer_len;
+
+  uint8_t *out = calloc(buffer_len, sizeof(uint8_t));
+
+  const uint32_t iv_offset = buffer_get_size(ciphertext_blob_iv(blob));
+  const uint32_t tag_offset = buffer_get_size(ciphertext_blob_tag(blob));
+
+  // Set the version
+  ((uint32_t *)out)[0] = ciphertext_blob_version(blob);
+
+  // Set the header offset table
+
+  // Number of offsets in table
+  ((uint32_t *)out)[table_entries_index] =
+      IS_LITTLE_ENDIAN ? num_table_entries : bswap_32(num_table_entries);
+
+  // Data start offset
+  ((uint32_t *)out)[data_start_index] =
+      IS_LITTLE_ENDIAN ? offset_table_end : bswap_32(offset_table_end);
+
+  // Config end offset (encrypted key offset)
+  ((uint32_t *)out)[encrypted_key_offset_index] =
+      offset_table_end + config_size;
+  if (!(IS_LITTLE_ENDIAN)) {
+    ((uint32_t *)out)[encrypted_key_offset_index] =
+        bswap_32(((uint32_t *)out)[encrypted_key_offset_index]);
+  }
+
+  // IV offset
+  ((uint32_t *)out)[iv_offset_index] =
+      offset_table_end + config_size +
+      /* sizeof([4]) */ buffer_get_size(ciphertext_blob_encrypted_key(blob));
+  if (!(IS_LITTLE_ENDIAN)) {
+    ((uint32_t *)out)[iv_offset_index] =
+        bswap_32(((uint32_t *)out)[iv_offset_index]);
+  }
+
+  // Tag offset
+  ((uint32_t *)out)[tag_offset_index] =
+      offset_table_end + config_size + iv_offset +
+      /* sizeof([4]) */ buffer_get_size(ciphertext_blob_encrypted_key(blob));
+  if (!(IS_LITTLE_ENDIAN)) {
+    ((uint32_t *)out)[tag_offset_index] =
+        bswap_32(((uint32_t *)out)[tag_offset_index]);
+  }
+
+  // AAD offset
+  ((uint32_t *)out)[aad_offset_index] =
+      offset_table_end + config_size + iv_offset + tag_offset +
+      /* sizeof([4]) */ buffer_get_size(ciphertext_blob_encrypted_key(blob));
+  if (!(IS_LITTLE_ENDIAN)) {
+    ((uint32_t *)out)[aad_offset_index] =
+        bswap_32(((uint32_t *)out)[aad_offset_index]);
+  }
+
+  // Ciphertext offset
+  ((uint32_t *)out)[ciphertext_offset_index] =
+      offset_table_end + config_size + iv_offset + tag_offset +
+      /* sizeof([4]) */ buffer_get_size(ciphertext_blob_encrypted_key(blob)) +
+      /* sizeof([7]) */ buffer_get_size(ciphertext_blob_aad(blob));
+  if (!(IS_LITTLE_ENDIAN)) {
+    ((uint32_t *)out)[ciphertext_offset_index] =
+        bswap_32(((uint32_t *)out)[ciphertext_offset_index]);
+  }
+
+  // Signature offset
+  ((uint32_t *)out)[signature_offset_index] =
+      offset_table_end + config_size + iv_offset + tag_offset +
+      /* sizeof([4]) */ buffer_get_size(ciphertext_blob_encrypted_key(blob)) +
+      /* sizeof([7]) */ buffer_get_size(ciphertext_blob_aad(blob)) +
+      /* sizeof([8]) */ buffer_get_size(ciphertext_blob_ciphertext(blob));
+  if (!(IS_LITTLE_ENDIAN)) {
+    ((uint32_t *)out)[signature_offset_index] =
+        bswap_32(((uint32_t *)out)[signature_offset_index]);
+  }
+
+  // HMAC offset
+  ((uint32_t *)out)[num_table_entries] =
+      offset_table_end + config_size + iv_offset + tag_offset +
+      /* sizeof([4]) */ buffer_get_size(ciphertext_blob_encrypted_key(blob)) +
+      /* sizeof([7]) */ buffer_get_size(ciphertext_blob_aad(blob)) +
+      /* sizeof([8]) */ buffer_get_size(ciphertext_blob_ciphertext(blob)) +
+      /* sizeof([9]) */ buffer_get_size(ciphertext_blob_signature(blob));
+  if (!(IS_LITTLE_ENDIAN)) {
+    ((uint32_t *)out)[num_table_entries] =
+        bswap_32(((uint32_t *)out)[num_table_entries]);
+  }
+
+  return out;
+}
+
+// Just returns the version, the rest of the offset table is used for the
+// individual functions
+static uint32_t deserialize_headers(const uint8_t *buf, const size_t buf_size) {
+  uint32_t out = ((uint32_t *)buf)[0];
+  if (out > buf_size) {
+    PEACEMAKR_ERROR("Corrupted message, could not get the offset of header\n");
+    return UINT32_MAX;
+  }
+  if (!(IS_LITTLE_ENDIAN)) {
+    return bswap_32(out);
+  }
+  return out;
+}
+
+static uint32_t get_num_offsets(const uint8_t *buf, const size_t buf_size) {
+  uint32_t out = ((uint32_t *)buf)[table_entries_index];
+  if (out > buf_size) {
+    PEACEMAKR_ERROR("Corrupted message, could not get the number of offsets\n");
+    return UINT32_MAX;
+  }
+  if (!(IS_LITTLE_ENDIAN)) {
+    return bswap_32(out);
+  }
+  return out;
+}
+
+static uint32_t get_data_start_offset(const uint8_t *buf,
+                                      const size_t buf_size) {
+  uint32_t out = ((uint32_t *)buf)[data_start_index];
+  if (out > buf_size) {
+    PEACEMAKR_ERROR("Corrupted message, could not get the data start offset\n");
+    return UINT32_MAX;
+  }
+  if (!(IS_LITTLE_ENDIAN)) {
+    return bswap_32(out);
+  }
+  return out;
+}
+
+static uint32_t get_encrypted_key_offset(const uint8_t *buf,
+                                         const size_t buf_size) {
+  uint32_t out = ((uint32_t *)buf)[encrypted_key_offset_index];
+  if (out > buf_size) {
+    PEACEMAKR_ERROR(
+        "Corrupted message, could not get the encrypted key offset\n");
+    return UINT32_MAX;
+  }
+  if (!(IS_LITTLE_ENDIAN)) {
+    return bswap_32(out);
+  }
+  return out;
+}
+
+static uint32_t get_iv_offset(const uint8_t *buf, const size_t buf_size) {
+  uint32_t out = ((uint32_t *)buf)[iv_offset_index];
+  if (out > buf_size) {
+    PEACEMAKR_ERROR("Corrupted message, could not get the iv offset\n");
+    return UINT32_MAX;
+  }
+  if (!(IS_LITTLE_ENDIAN)) {
+    return bswap_32(out);
+  }
+  return out;
+}
+
+static uint32_t get_tag_offset(const uint8_t *buf, const size_t buf_size) {
+  uint32_t out = ((uint32_t *)buf)[tag_offset_index];
+  if (out > buf_size) {
+    PEACEMAKR_ERROR("Corrupted message, could not get the tag offset\n");
+    return UINT32_MAX;
+  }
+  if (!(IS_LITTLE_ENDIAN)) {
+    return bswap_32(out);
+  }
+  return out;
+}
+
+static uint32_t get_aad_offset(const uint8_t *buf, const size_t buf_size) {
+  uint32_t out = ((uint32_t *)buf)[aad_offset_index];
+  if (out > buf_size) {
+    PEACEMAKR_ERROR("Corrupted message, could not get the aad offset\n");
+    return UINT32_MAX;
+  }
+  if (!(IS_LITTLE_ENDIAN)) {
+    return bswap_32(out);
+  }
+  return out;
+}
+
+static uint32_t get_ciphertext_offset(const uint8_t *buf,
+                                      const size_t buf_size) {
+  uint32_t out = ((uint32_t *)buf)[ciphertext_offset_index];
+  if (out > buf_size) {
+    PEACEMAKR_ERROR("Corrupted message, could not get the ciphertext offset\n");
+    return UINT32_MAX;
+  }
+  if (!(IS_LITTLE_ENDIAN)) {
+    return bswap_32(out);
+  }
+  return out;
+}
+
+static uint32_t get_signature_offset(const uint8_t *buf,
+                                     const size_t buf_size) {
+  uint32_t out = ((uint32_t *)buf)[signature_offset_index];
+  if (out > buf_size) {
+    PEACEMAKR_ERROR("Corrupted message, could not get the signature offset\n");
+    return UINT32_MAX;
+  }
+  if (!(IS_LITTLE_ENDIAN)) {
+    return bswap_32(out);
+  }
+  return out;
+}
+
+static uint32_t get_hmac_offset(const uint8_t *buf, const size_t buf_size) {
+  uint32_t num_offsets = get_num_offsets(buf, buf_size);
+  if (num_offsets == UINT32_MAX) {
+    return UINT32_MAX;
+  }
+
+  uint32_t out = ((uint32_t *)buf)[num_offsets];
+  if (out > buf_size) {
+    PEACEMAKR_ERROR("Corrupted message, could not get the hmac offset\n");
+    return UINT32_MAX;
+  }
+  if (!(IS_LITTLE_ENDIAN)) {
+    return bswap_32(out);
+  }
+  return out;
+}
+
+// TODO: these are getting corrupted
+static void serialize_crypto_config(uint8_t *buf, const size_t buf_size,
+                                    const ciphertext_blob_t *blob) {
+  const uint32_t data_start_offset = get_data_start_offset(buf, buf_size);
+  if (data_start_offset == UINT32_MAX) {
+    return;
+  }
+
+  uint8_t *buf_start = buf + data_start_offset;
+  // Set up crypto config
+  buf_start[0] = ciphertext_blob_encryption_mode(blob);
+  buf_start[1] = ciphertext_blob_symm_cipher(blob);
+  buf_start[2] = ciphertext_blob_asymm_cipher(blob);
+  buf_start[3] = ciphertext_blob_digest_algo(blob);
+}
+
+static crypto_config_t deserialize_crypto_config(const uint8_t *buf,
+                                                 const size_t buf_size) {
+  const uint32_t data_start_offset = get_data_start_offset(buf, buf_size);
+  if (data_start_offset == UINT32_MAX) {
+    crypto_config_t out;
+    memset(&out, 0, sizeof(crypto_config_t));
+    return out;
+  }
+
+  const uint8_t *buf_start = buf + data_start_offset;
+
+  crypto_config_t out = {.mode = buf_start[0],
+                         .symm_cipher = buf_start[1],
+                         .asymm_cipher = buf_start[2],
+                         .digest_algorithm = buf_start[3]};
+
+  return out;
+}
+
+static void serialize_encrypted_key(uint8_t *buf, const size_t buf_size,
+                                    const ciphertext_blob_t *blob) {
+  const uint32_t encrypted_key_offset = get_encrypted_key_offset(buf, buf_size);
+  if (encrypted_key_offset == UINT32_MAX) {
+    return;
+  }
+
+  uint8_t *buf_start = buf + encrypted_key_offset;
+
+  const buffer_t *enc_key = ciphertext_blob_encrypted_key(blob);
+
+  memcpy(buf_start, buffer_get_bytes(enc_key, NULL), buffer_get_size(enc_key));
+}
+
+static buffer_t *deserialize_encrypted_key(const uint8_t *buf,
+                                           const size_t buf_size) {
+  const uint32_t encrypted_key_offset = get_encrypted_key_offset(buf, buf_size);
+  if (encrypted_key_offset == UINT32_MAX) {
+    return NULL;
+  }
+
+  const uint8_t *buf_start = buf + encrypted_key_offset;
+  size_t next_field_offset = get_iv_offset(buf, buf_size);
+  if (next_field_offset == UINT32_MAX) {
+    return NULL;
+  }
+
+  // This could be 0
+  size_t field_size = next_field_offset - encrypted_key_offset;
+
+  buffer_t *out = buffer_new(field_size);
+  buffer_set_bytes(out, buf_start, field_size);
+
+  return out;
+}
+
+static void serialize_iv(uint8_t *buf, const size_t buf_size,
+                         const ciphertext_blob_t *blob) {
+  const uint32_t iv_offset = get_iv_offset(buf, buf_size);
+  if (iv_offset == UINT32_MAX) {
+    return;
+  }
+
+  uint8_t *buf_start = buf + iv_offset;
+
+  const buffer_t *iv = ciphertext_blob_iv(blob);
+
+  memcpy(buf_start, buffer_get_bytes(iv, NULL), buffer_get_size(iv));
+}
+
+static buffer_t *deserialize_iv(const uint8_t *buf, const size_t buf_size) {
+  const uint32_t iv_offset = get_iv_offset(buf, buf_size);
+  if (iv_offset == UINT32_MAX) {
+    return NULL;
+  }
+
+  const uint8_t *buf_start = buf + iv_offset;
+  size_t next_field_offset = get_tag_offset(buf, buf_size);
+  if (next_field_offset == UINT32_MAX) {
+    return NULL;
+  }
+
+  // This could be 0
+  size_t field_size = next_field_offset - iv_offset;
+
+  buffer_t *out = buffer_new(field_size);
+  buffer_set_bytes(out, buf_start, field_size);
+
+  return out;
+}
+
+static void serialize_tag(uint8_t *buf, const size_t buf_size,
+                          const ciphertext_blob_t *blob) {
+  const uint32_t tag_offset = get_tag_offset(buf, buf_size);
+  if (tag_offset == UINT32_MAX) {
+    return;
+  }
+
+  uint8_t *buf_start = buf + tag_offset;
+
+  const buffer_t *tag = ciphertext_blob_tag(blob);
+
+  memcpy(buf_start, buffer_get_bytes(tag, NULL), buffer_get_size(tag));
+}
+
+static buffer_t *deserialize_tag(const uint8_t *buf, const size_t buf_size) {
+  const uint32_t tag_offset = get_tag_offset(buf, buf_size);
+  if (tag_offset == UINT32_MAX) {
+    return NULL;
+  }
+
+  const uint8_t *buf_start = buf + tag_offset;
+  size_t next_field_offset = get_aad_offset(buf, buf_size);
+  if (next_field_offset == UINT32_MAX) {
+    return NULL;
+  }
+
+  // This could be 0
+  size_t field_size = next_field_offset - tag_offset;
+
+  buffer_t *out = buffer_new(field_size);
+  buffer_set_bytes(out, buf_start, field_size);
+
+  return out;
+}
+
+static void serialize_aad(uint8_t *buf, const size_t buf_size,
+                          const ciphertext_blob_t *blob) {
+  const uint32_t aad_offset = get_aad_offset(buf, buf_size);
+  if (aad_offset == UINT32_MAX) {
+    return;
+  }
+
+  uint8_t *buf_start = buf + aad_offset;
+
+  const buffer_t *aad = ciphertext_blob_aad(blob);
+
+  memcpy(buf_start, buffer_get_bytes(aad, NULL), buffer_get_size(aad));
+}
+
+static buffer_t *deserialize_aad(const uint8_t *buf, const size_t buf_size) {
+  const uint32_t aad_offset = get_aad_offset(buf, buf_size);
+  if (aad_offset == UINT32_MAX) {
+    return NULL;
+  }
+
+  const uint8_t *buf_start = buf + aad_offset;
+  size_t next_field_offset = get_ciphertext_offset(buf, buf_size);
+  if (next_field_offset == UINT32_MAX) {
+    return NULL;
+  }
+
+  // This could be 0
+  size_t field_size = next_field_offset - aad_offset;
+
+  buffer_t *out = buffer_new(field_size);
+  buffer_set_bytes(out, buf_start, field_size);
+
+  return out;
+}
+
+static void serialize_ciphertext(uint8_t *buf, const size_t buf_size,
+                                 const ciphertext_blob_t *blob) {
+  const uint32_t ciphertext_offset = get_ciphertext_offset(buf, buf_size);
+  if (ciphertext_offset == UINT32_MAX) {
+    return;
+  }
+
+  uint8_t *buf_start = buf + ciphertext_offset;
+
+  const buffer_t *ciphertext = ciphertext_blob_ciphertext(blob);
+
+  memcpy(buf_start, buffer_get_bytes(ciphertext, NULL),
+         buffer_get_size(ciphertext));
+}
+
+static buffer_t *deserialize_ciphertext(const uint8_t *buf,
+                                        const size_t buf_size) {
+  const uint32_t ciphertext_offset = get_ciphertext_offset(buf, buf_size);
+  if (ciphertext_offset == UINT32_MAX) {
+    return NULL;
+  }
+
+  const uint8_t *buf_start = buf + ciphertext_offset;
+  size_t next_field_offset = get_signature_offset(buf, buf_size);
+  if (next_field_offset == UINT32_MAX) {
+    return NULL;
+  }
+
+  // This could be 0
+  size_t field_size = next_field_offset - ciphertext_offset;
+
+  buffer_t *out = buffer_new(field_size);
+  buffer_set_bytes(out, buf_start, field_size);
+
+  return out;
+}
+
+static void serialize_signature(uint8_t *buf, const size_t buf_size,
+                                const ciphertext_blob_t *blob) {
+  const uint32_t signature_offset = get_signature_offset(buf, buf_size);
+  if (signature_offset == UINT32_MAX) {
+    return;
+  }
+
+  uint8_t *buf_start = buf + signature_offset;
+
+  const buffer_t *signature = ciphertext_blob_signature(blob);
+
+  memcpy(buf_start, buffer_get_bytes(signature, NULL),
+         buffer_get_size(signature));
+}
+
+static buffer_t *deserialize_signature(const uint8_t *buf,
+                                       const size_t buf_size) {
+  const uint32_t signature_offset = get_signature_offset(buf, buf_size);
+  if (signature_offset == UINT32_MAX) {
+    return NULL;
+  }
+
+  const uint8_t *buf_start = buf + signature_offset;
+  size_t next_field_offset = get_hmac_offset(buf, buf_size);
+  if (next_field_offset == UINT32_MAX) {
+    return NULL;
+  }
+
+  // This could be 0
+  size_t field_size = next_field_offset - signature_offset;
+
+  buffer_t *out = buffer_new(field_size);
+  buffer_set_bytes(out, buf_start, field_size);
+
+  return out;
+}
+
+static void serialize_hmac(uint8_t *buf, const size_t buf_size,
+                           const ciphertext_blob_t *blob) {
+  const uint32_t hmac_offset = get_hmac_offset(buf, buf_size);
+  if (hmac_offset == UINT32_MAX) {
+    return;
+  }
+
+  uint8_t *buf_start = buf + hmac_offset;
+
+  message_digest_algorithm blob_digest = ciphertext_blob_digest_algo(blob);
+  peacemakr_key_t *hmac_key = get_hmac_key();
+
+  // Digest the message
+  size_t digest_out_size = 0;
+  uint8_t *raw_digest =
+      peacemakr_hmac(blob_digest, hmac_key, buf, get_hmac_offset(buf, buf_size),
+                     &digest_out_size);
+
+  EXPECT_TRUE_CLEANUP_RET_NONE(digest_out_size == get_digest_len(blob_digest),
+                               free(raw_digest),
+                               "Computed HMAC was of the incorrect size\n")
+
+  // HMAC length determined by the config of the message blob.
+  memcpy(buf_start, raw_digest, digest_out_size);
+
+  free(raw_digest);
+  peacemakr_key_free(hmac_key);
+}
+
+static bool deserialize_hmac(const uint8_t *buf, const size_t buf_size) {
+  const uint32_t hmac_offset = get_hmac_offset(buf, buf_size);
+  if (hmac_offset == UINT32_MAX) {
+    return false;
+  }
+
+  const uint8_t *buf_start = buf + hmac_offset;
+
+  crypto_config_t message_config = deserialize_crypto_config(buf, buf_size);
+
+  // This could be 0
+  size_t field_size = get_digest_len(message_config.digest_algorithm);
+
+  buffer_t *out = buffer_new(field_size);
+  buffer_set_bytes(out, buf_start, field_size);
+
+  { // Check that the message digests are equal
+    const EVP_MD *digest_algorithm =
+        parse_digest(message_config.digest_algorithm);
+    if (digest_algorithm == NULL) {
+      buffer_free(out);
+      PEACEMAKR_ERROR("corrupted digest algorithm, aborting\n");
+      return false;
+    }
+
+    size_t digestlen = get_digest_len(message_config.digest_algorithm);
+
+    if (field_size != digestlen) {
+      buffer_free(out);
+      PEACEMAKR_ERROR(
+          "serialized digest is not of the correct length, aborting\n");
+      return false;
+    }
+
+    // Compute our digest
+
+    // get our hmac key
+    peacemakr_key_t *hmac_key = get_hmac_key();
+
+    // Digest the message
+    size_t computed_digest_out_size = 0;
+    uint8_t *computed_raw_digest = peacemakr_hmac(
+        message_config.digest_algorithm, hmac_key, buf,
+        get_hmac_offset(buf, buf_size), &computed_digest_out_size);
+
+    // Clean up
+    peacemakr_key_free(hmac_key);
+    int memcmp_ret = CRYPTO_memcmp(computed_raw_digest,
+                                   buffer_get_bytes(out, NULL), digestlen);
+
+    free(computed_raw_digest);
+    buffer_free(out);
+
+    // Compare the HMACs
+    if (memcmp_ret != 0) {
+      PEACEMAKR_ERROR("digests don't compare equal, aborting\n");
+      return false;
+    }
+  }
+
+  return true;
+}
 
 uint8_t *peacemakr_serialize(message_digest_algorithm digest,
                              ciphertext_blob_t *cipher, size_t *b64_size) {
@@ -57,139 +736,28 @@ uint8_t *peacemakr_serialize(message_digest_algorithm digest,
     ciphertext_blob_set_digest_algo(cipher, digest);
   }
 
-  size_t buffer_len = sizeof(uint32_t); // magic number
-  buffer_len += sizeof(uint64_t);       // size of message up until digest
-  buffer_len += sizeof(uint8_t);        // digest algo
-  // version
-  buffer_len += sizeof(uint32_t);
-  // encryption mode, symm_cipher, asymm_cipher
-  buffer_len += sizeof(uint8_t) * 3;
+  // TODO: why are the encrypt/decrypt operations failing here?
 
-  const buffer_t *encrypted_key = ciphertext_blob_encrypted_key(cipher);
-  buffer_len += buffer_get_serialized_size(encrypted_key);
-
-  const buffer_t *iv = ciphertext_blob_iv(cipher);
-  buffer_len += buffer_get_serialized_size(iv);
-
-  const buffer_t *tag = ciphertext_blob_tag(cipher);
-  buffer_len += buffer_get_serialized_size(tag);
-
-  const buffer_t *aad = ciphertext_blob_aad(cipher);
-  buffer_len += buffer_get_serialized_size(aad);
-
-  const buffer_t *ciphertext = ciphertext_blob_ciphertext(cipher);
-  buffer_len += buffer_get_serialized_size(ciphertext);
-
-  const buffer_t *signature = ciphertext_blob_signature(cipher);
-  buffer_len += buffer_get_serialized_size(signature);
-
-  // We will digest the message and set it at the end
-  buffer_len += sizeof(uint64_t);
-  size_t digest_len = get_digest_len(ciphertext_blob_digest_algo(cipher));
-  buffer_len += digest_len;
-
-  uint8_t *buf = calloc(buffer_len, sizeof(uint8_t));
-  size_t current_pos = 0;
-
-  // magic
-  uint32_t magic = htonl(_PEACEMAKR_MAGIC_);
-  memcpy(buf, &magic, sizeof(uint32_t));
-  current_pos += sizeof(uint32_t);
-
-  // len until digest
-  memset((buf + current_pos), 0, sizeof(uint64_t));
-  current_pos += sizeof(uint64_t);
-
-  // digest algo
-  uint8_t digest_algo = ciphertext_blob_digest_algo(cipher);
-  *(buf + current_pos) = digest_algo;
-  current_pos += sizeof(uint8_t);
-
-  // version
-  uint32_t version = htonl(ciphertext_blob_version(cipher));
-  memcpy(buf + current_pos, &version, sizeof(uint32_t));
-  current_pos += sizeof(uint32_t);
-
-  // encryption mode
-  uint8_t encryption_mode = ciphertext_blob_encryption_mode(cipher);
-  *(buf + current_pos) = encryption_mode;
-  current_pos += sizeof(uint8_t);
-
-  // symm cipher
-  uint8_t symm_cipher = ciphertext_blob_symm_cipher(cipher);
-  *(buf + current_pos) = symm_cipher;
-  current_pos += sizeof(uint8_t);
-
-  // asymm cipher
-  uint8_t asymm_cipher = ciphertext_blob_asymm_cipher(cipher);
-  *(buf + current_pos) = asymm_cipher;
-  current_pos += sizeof(uint8_t);
-
-  // encrypted key
-  size_t ekey_len = buffer_serialize(encrypted_key, buf + current_pos);
-  current_pos += ekey_len;
-
-  // iv
-  size_t ivlen = buffer_serialize(iv, buf + current_pos);
-  current_pos += ivlen;
-
-  // tag
-  size_t taglen = buffer_serialize(tag, buf + current_pos);
-  current_pos += taglen;
-
-  // aad
-  size_t aadlen = buffer_serialize(aad, buf + current_pos);
-  current_pos += aadlen;
-
-  // ciphertext
-  size_t ciphertextlen = buffer_serialize(ciphertext, buf + current_pos);
-  current_pos += ciphertextlen;
-
-  // signature
-  size_t signaturelen = buffer_serialize(signature, buf + current_pos);
-  current_pos += signaturelen;
-
-  // set the size of the buffer until the digest (at offset sizeof(uint32_t))
-  uint64_t curr_pos = htonl(current_pos);
-  memcpy(buf + sizeof(uint32_t), &curr_pos, sizeof(uint64_t));
-
-  // get our hmac key
-  peacemakr_key_t *hmac_key = get_hmac_key();
-
-  // Digest the message
-  size_t digest_out_size = 0;
-  uint8_t *raw_digest =
-      peacemakr_hmac(ciphertext_blob_digest_algo(cipher), hmac_key, buf,
-                     current_pos, &digest_out_size);
-
-  // Make sure we didn't do a stupid
-  EXPECT_TRUE_CLEANUP_RET(digest_out_size == digest_len, free(buf),
-                          "Computed HMAC was of the incorrect size\n")
-
-  // Store it
-  buffer_t *message_digest = buffer_new(digest_len);
-  buffer_set_bytes(message_digest, raw_digest, digest_out_size);
-
-  // Clean up
-  free(raw_digest);
-  peacemakr_key_free(hmac_key);
-
-  // Append the digest
-  size_t digestlen = buffer_serialize(message_digest, buf + current_pos);
-  current_pos += digestlen;
-
-  // Clean up the buffer
-  buffer_free(message_digest);
+  size_t outlen = 0;
+  uint8_t *raw_out = serialize_headers(cipher, &outlen);
+  serialize_crypto_config(raw_out, outlen, cipher);
+  serialize_encrypted_key(raw_out, outlen, cipher);
+  serialize_iv(raw_out, outlen, cipher);
+  serialize_tag(raw_out, outlen, cipher);
+  serialize_aad(raw_out, outlen, cipher);
+  serialize_ciphertext(raw_out, outlen, cipher);
+  serialize_signature(raw_out, outlen, cipher);
+  serialize_hmac(raw_out, outlen, cipher);
 
   // Clean up the ciphertext blob
   ciphertext_blob_free(cipher);
   cipher = NULL;
 
   // Return the b64 encoded version
-  uint8_t *b64_buf = b64_encode(buf, current_pos, b64_size);
+  uint8_t *b64_buf = b64_encode(raw_out, outlen, b64_size);
 
   // Clean up the workspace
-  free(buf);
+  free(raw_out);
 
   return b64_buf;
 }
@@ -209,126 +777,28 @@ ciphertext_blob_t *peacemakr_deserialize(const uint8_t *b64_serialized_cipher,
   size_t serialized_len = 0;
   uint8_t *serialized_cipher =
       b64_decode(b64_serialized_cipher, b64_serialized_len, &serialized_len);
-  EXPECT_NOT_NULL_RET(serialized_cipher, "failed to decode b64 object")
+  EXPECT_NOT_NULL_RET(serialized_cipher, "failed to decode b64 object\n")
 
-  size_t current_position = 0;
-
-  // magic
-  uint32_t magic = ntohl(*(uint32_t *)serialized_cipher);
-  EXPECT_TRUE_CLEANUP_RET((magic == _PEACEMAKR_MAGIC_), free(serialized_cipher),
-                          "magic number corrupted/missing, aborting\n")
-  current_position += sizeof(uint32_t);
-
-  // len until digest
-  uint64_t len_before_digest =
-      ntohl(*(uint64_t *)(serialized_cipher + current_position));
-  current_position += sizeof(uint64_t);
-
-  // Something is bad
-  EXPECT_TRUE_CLEANUP_RET((len_before_digest < b64_serialized_len),
-                          free(serialized_cipher),
-                          "corrupted length in message, aborting\n")
-
-  // digest algo
-  uint8_t digest_algo = *(serialized_cipher + current_position);
-  current_position += sizeof(uint8_t);
-
-  { // Check that the message digests are equal
-    const EVP_MD *digest_algorithm = parse_digest(digest_algo);
-    EXPECT_NOT_NULL_CLEANUP_RET(digest_algorithm, free(serialized_cipher),
-                                "corrupted digest algorithm, aborting\n")
-
-    size_t digestlen = get_digest_len(digest_algo);
-    EXPECT_TRUE_CLEANUP_RET((b64_serialized_len - len_before_digest) >
-                                digestlen,
-                            free(serialized_cipher),
-                            "corrupted digest length in message, aborting\n")
-    buffer_t *serialized_digest =
-        buffer_deserialize(serialized_cipher + len_before_digest);
-
-    EXPECT_TRUE_CLEANUP_RET(
-        (buffer_get_size(serialized_digest) == digestlen),
-        free(serialized_cipher),
-        "serialized digest is not of the correct length, aborting\n")
-
-    // Compute our digest
-
-    // get our hmac key
-    peacemakr_key_t *hmac_key = get_hmac_key();
-
-    // Digest the message
-    size_t computed_digest_out_size = 0;
-    uint8_t *computed_raw_digest =
-        peacemakr_hmac(digest_algo, hmac_key, serialized_cipher,
-                       len_before_digest, &computed_digest_out_size);
-
-    // Clean up
-    peacemakr_key_free(hmac_key);
-    int memcmp_ret =
-        CRYPTO_memcmp(computed_raw_digest,
-                      buffer_get_bytes(serialized_digest, NULL), digestlen);
-
-    free(computed_raw_digest);
-    buffer_free(serialized_digest);
-
-    // Compare the HMACs
-    EXPECT_TRUE_CLEANUP_RET((memcmp_ret == 0), free(serialized_cipher),
-                            "digests don't compare equal, aborting\n")
-  }
-
-  // version
-  uint32_t version =
-      ntohl(*((uint32_t *)(serialized_cipher + current_position)));
-  current_position += sizeof(uint32_t);
+  uint32_t version = deserialize_headers(serialized_cipher, serialized_len);
   EXPECT_TRUE_CLEANUP_RET((version <= PEACEMAKR_CORE_CRYPTO_VERSION_MAX),
                           free(serialized_cipher),
                           "version greater than max supported\n")
 
-  // encryption mode
-  uint8_t encryption_mode = *(serialized_cipher + current_position);
-  current_position += sizeof(uint8_t);
+  bool valid_message = deserialize_hmac(serialized_cipher, serialized_len);
+  EXPECT_TRUE_CLEANUP_RET(valid_message, free(serialized_cipher),
+                          "HMAC verification failed, aborting\n")
 
-  // symm_cipher
-  uint8_t symm_cipher = *(serialized_cipher + current_position);
-  current_position += sizeof(uint8_t);
-
-  // asymm_cipher
-  uint8_t asymm_cipher = *(serialized_cipher + current_position);
-  current_position += sizeof(uint8_t);
-
-  cfg->mode = encryption_mode;
-  cfg->symm_cipher = symm_cipher;
-  cfg->asymm_cipher = asymm_cipher;
-  cfg->digest_algorithm = digest_algo;
-
-  // encrypted key
+  *cfg = deserialize_crypto_config(serialized_cipher, serialized_len);
   buffer_t *encrypted_key =
-      buffer_deserialize(serialized_cipher + current_position);
-  current_position += buffer_get_serialized_size(encrypted_key);
-
-  // iv
-  buffer_t *iv = buffer_deserialize(serialized_cipher + current_position);
-  current_position += buffer_get_serialized_size(iv);
-
-  // tag
-  buffer_t *tag = buffer_deserialize(serialized_cipher + current_position);
-  current_position += buffer_get_serialized_size(tag);
-
-  // aad
-  buffer_t *aad = buffer_deserialize(serialized_cipher + current_position);
-  current_position += buffer_get_serialized_size(aad);
-
-  // ciphertext
+      deserialize_encrypted_key(serialized_cipher, serialized_len);
+  buffer_t *iv = deserialize_iv(serialized_cipher, serialized_len);
+  buffer_t *tag = deserialize_tag(serialized_cipher, serialized_len);
+  buffer_t *aad = deserialize_aad(serialized_cipher, serialized_len);
   buffer_t *ciphertext =
-      buffer_deserialize(serialized_cipher + current_position);
-  current_position += buffer_get_serialized_size(ciphertext);
-
-  // signature
+      deserialize_ciphertext(serialized_cipher, serialized_len);
   buffer_t *signature =
-      buffer_deserialize(serialized_cipher + current_position);
+      deserialize_signature(serialized_cipher, serialized_len);
 
-  // Ciphertext blob takes ownership of the buffers, so don't free the buffers
-  // at the end of the function
   ciphertext_blob_t *out = ciphertext_blob_from_buffers(
       *cfg, encrypted_key, iv, tag, aad, ciphertext, signature);
 
