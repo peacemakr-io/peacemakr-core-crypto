@@ -268,7 +268,6 @@ static length_t get_hmac_offset(const uint8_t *buf, const size_t buf_size) {
   return out;
 }
 
-// TODO: these are getting corrupted
 static void serialize_crypto_config(uint8_t *buf, const size_t buf_size,
                                     const ciphertext_blob_t *blob) {
   const length_t data_start_offset = get_data_start_offset(buf, buf_size);
@@ -291,7 +290,6 @@ static void serialize_encrypted_key(uint8_t *buf, const size_t buf_size,
     return;
   }
 
-  // TODO: do I need to go back to buffer_serialize?
   uint8_t *buf_start = buf + encrypted_key_offset;
 
   const buffer_t *enc_key = ciphertext_blob_encrypted_key(blob);
