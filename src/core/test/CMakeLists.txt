@@ -23,7 +23,7 @@ function(add_ctest test_name)
     # Inherits -fsanitize=address from peacemakr-core-crypto target
     target_compile_options(test_${test_name} PUBLIC -g -O0 -fPIC -fstack-protector-strong -Wall)
 
-    target_link_libraries(test_${test_name} PRIVATE peacemakr-core-crypto ${LIBBSD_LIBRARIES})
+    target_link_libraries(test_${test_name} PRIVATE peacemakr-core-crypto ${LIBBSD_LIBRARIES} ${ARGN})
     target_include_directories(test_${test_name} PRIVATE ${CMAKE_SOURCE_DIR}/src/core/include ${LIBBSD_INCLUDE_DIRS})
     set(ALL_C_SOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/${test_name}.c ${ALL_C_SOURCE_FILES} PARENT_SCOPE)
 
@@ -41,5 +41,10 @@ add_ctest(sign)
 add_ctest(garbage)
 add_ctest(dh_keygen)
 add_ctest(encrypt_dh_pem)
+
+# This test doesn't work with a release version because it uses internal symbols
+if ((CMAKE_BUILD_TYPE MATCHES DEBUG) OR (CMAKE_BUILD_TYPE MATCHES Debug))
+    add_ctest(serialize_new_field OpenSSL::SSL OpenSSL::Crypto)
+endif()
 
 set(ALL_C_SOURCE_FILES ${ALL_C_SOURCE_FILES} PARENT_SCOPE)

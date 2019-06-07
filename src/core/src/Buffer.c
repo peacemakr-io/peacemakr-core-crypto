@@ -157,3 +157,36 @@ void buffer_set_size(buffer_t *buf, const size_t size) {
     buf->m_size_bytes_ = size;
   }
 }
+
+length_t buffer_serialize(const buffer_t *buf, uint8_t *serialized) {
+  EXPECT_NOT_NULL_RET_VALUE(serialized, 0, "serialized was null\n")
+
+  if (buf == NULL) {
+    memset(serialized, 0, sizeof(length_t));
+    return sizeof(length_t);
+  }
+
+  uint32_t buf_len = ENDIAN_CHECK(buf->m_size_bytes_);
+  memcpy(serialized, &buf_len, sizeof(length_t));
+  memcpy(serialized + sizeof(length_t), buf->m_mem_, buf->m_size_bytes_);
+  return buf->m_size_bytes_ + sizeof(length_t);
+}
+
+buffer_t *buffer_deserialize(const uint8_t *serialized) {
+  EXPECT_NOT_NULL_RET(serialized, "serialized was null\n")
+
+  uint32_t buflen = ENDIAN_CHECK(*((length_t *)serialized));
+  buffer_t *out = buffer_new(buflen);
+  if (out != NULL) {
+    buffer_set_bytes(out, serialized + sizeof(length_t), buflen);
+  }
+  return out;
+}
+
+length_t buffer_get_serialized_size(const buffer_t *buf) {
+  if (buf == NULL) {
+    return sizeof(length_t); // we will serialize to zero
+  }
+
+  return buf->m_size_bytes_ + sizeof(length_t);
+}
