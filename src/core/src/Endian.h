@@ -24,21 +24,12 @@
 #ifndef PEACEMAKR_CORE_CRYPTO_ENDIAN_H
 #define PEACEMAKR_CORE_CRYPTO_ENDIAN_H
 
+#include <stdint.h>
+
 typedef uint32_t length_t;
 
 // Byte swap magic so we have fast bswap32
-#ifdef linux
-#include <byteswap.h>
-#else // linux
-static length_t bswap(length_t input) {
-#if defined(__clang__) | defined(__GNUC__)
-  return __builtin_bswap32(input);
-#else
-  return (((input & 0x000000FF) << 24) | ((input & 0x0000FF00) << 8) |
-          ((input & 0x00FF0000) >> 8) | ((input & 0xFF000000) >> 24));
-#endif // defined(__builtin_bswap32)
-}
-#endif // linux
+length_t bswap(length_t input);
 
 // Check for endianness
 #if defined(BYTE_ORDER) & defined(LITTLE_ENDIAN)
