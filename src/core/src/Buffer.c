@@ -158,35 +158,35 @@ void buffer_set_size(buffer_t *buf, const size_t size) {
   }
 }
 
-size_t buffer_serialize(const buffer_t *buf, uint8_t *serialized) {
+length_t buffer_serialize(const buffer_t *buf, uint8_t *serialized) {
   EXPECT_NOT_NULL_RET_VALUE(serialized, 0, "serialized was null\n")
 
   if (buf == NULL) {
-    memset(serialized, 0, sizeof(uint64_t));
-    return sizeof(uint64_t);
+    memset(serialized, 0, sizeof(length_t));
+    return sizeof(length_t);
   }
 
-  uint64_t buf_len = htonl(buf->m_size_bytes_);
-  memcpy(serialized, &buf_len, sizeof(uint64_t));
-  memcpy(serialized + sizeof(uint64_t), buf->m_mem_, buf->m_size_bytes_);
-  return buf->m_size_bytes_ + sizeof(uint64_t);
+  uint32_t buf_len = ENDIAN_CHECK(buf->m_size_bytes_);
+  memcpy(serialized, &buf_len, sizeof(length_t));
+  memcpy(serialized + sizeof(length_t), buf->m_mem_, buf->m_size_bytes_);
+  return buf->m_size_bytes_ + sizeof(length_t);
 }
 
 buffer_t *buffer_deserialize(const uint8_t *serialized) {
   EXPECT_NOT_NULL_RET(serialized, "serialized was null\n")
 
-  uint64_t buflen = ntohl(*((uint64_t *)serialized));
+  uint32_t buflen = ENDIAN_CHECK(*((length_t *)serialized));
   buffer_t *out = buffer_new(buflen);
   if (out != NULL) {
-    buffer_set_bytes(out, serialized + sizeof(uint64_t), buflen);
+    buffer_set_bytes(out, serialized + sizeof(length_t), buflen);
   }
   return out;
 }
 
-size_t buffer_get_serialized_size(const buffer_t *buf) {
+length_t buffer_get_serialized_size(const buffer_t *buf) {
   if (buf == NULL) {
-    return sizeof(uint64_t); // we will serialize to zero
+    return sizeof(length_t); // we will serialize to zero
   }
 
-  return buf->m_size_bytes_ + sizeof(uint64_t);
+  return buf->m_size_bytes_ + sizeof(length_t);
 }

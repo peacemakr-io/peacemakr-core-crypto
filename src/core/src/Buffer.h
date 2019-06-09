@@ -14,6 +14,8 @@
 
 #include <random.h>
 
+#include "Endian.h"
+
 typedef struct Buffer buffer_t;
 
 // Allocates a buffer of zeros - also doesn't allocate anything if size <= 0
@@ -30,8 +32,8 @@ uint8_t *buffer_mutable_bytes(buffer_t *buf);
 const size_t buffer_get_size(const buffer_t *buf);
 void buffer_set_size(buffer_t *buf, const size_t size);
 
-size_t buffer_serialize(const buffer_t *buf, uint8_t *serialized);
+length_t buffer_serialize(const buffer_t *buf, uint8_t *serialized);
 buffer_t *buffer_deserialize(const uint8_t *serialized);
-size_t buffer_get_serialized_size(const buffer_t *buf);
+length_t buffer_get_serialized_size(const buffer_t *buf);
 
 #endif // PEACEMAKR_CORE_CRYPTO_MEMORY_H
