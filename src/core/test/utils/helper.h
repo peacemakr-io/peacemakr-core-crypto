@@ -10,8 +10,13 @@
 #define PEACEMAKR_CORE_CRYPTO_HELPER_H
 
 #include <stddef.h>
-#ifdef linux
-#include <bsd/stdlib.h>
+#ifdef PEACEMAKR_NEEDS_BSD
+#include <openssl/rand.h>
+void arc4random_buf(void *buf, size_t n) {
+  if (1 != RAND_bytes(buf, n)) {
+    return;
+  }
+}
 #else
 #include <stdlib.h>
 #endif

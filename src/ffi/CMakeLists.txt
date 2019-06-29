@@ -51,3 +51,14 @@ if (PEACEMAKR_BUILD_CPP)
 endif(PEACEMAKR_BUILD_CPP)
 
 set(ALL_C_SOURCE_FILES ${SOURCES_C} ${SOURCES_H} ${INCLUDES} ${ALL_C_SOURCE_FILES} PARENT_SCOPE)
+
+# Web-specfic stuff #####
+option(PEACEMAKR_BUILD_WEB "Whether to build the WASM bindings" ON)
+
+if (PEACEMAKR_BUILD_WEB)
+    set(SOURCE_CMAKE_DIR ${CMAKE_SOURCE_DIR})
+    set(OPENSSL_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/web/openssl/build)
+    set(OPENSSL_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/web/openssl/build/lib)
+    configure_file(${CMAKE_SOURCE_DIR}/src/ffi/web/build-core-crypto.sh.in ${CMAKE_SOURCE_DIR}/src/ffi/web/build-core-crypto.sh @ONLY)
+endif()
+

@@ -10,7 +10,7 @@ FROM corecrypto-dependencies:latest as builder
 
 FROM alpine
 
-RUN apk add --no-cache libbsd
+RUN apk add --no-cache
 
 COPY --from=builder /usr/local/lib/cmake /usr/local/lib/cmake
 COPY --from=builder /usr/local/lib/libpeacemakr* /usr/local/lib/

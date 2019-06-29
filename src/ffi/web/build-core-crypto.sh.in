@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+set -ex
+
+if [[ ! -z "${EMSCRIPTEN_SDK}" ]]; then
+    source ${EMSCRIPTEN_SDK}/emsdk_env.sh
+else
+    echo "Must define EMSCRIPTEN_SDK environment variable"
+    exit 1
+fi
+
+mkdir -p web-build && pushd web-build
+emconfigure cmake @SOURCE_CMAKE_DIR@ -DOPENSSL_CRYPTO_LIBRARY=@OPENSSL_LIB_DIR@/libcrypto.a -DOPENSSL_SSL_LIBRARY=@OPENSSL_LIB_DIR@/libssl.a -DOPENSSL_INCLUDE_DIR=@OPENSSL_ROOT_DIR@/include -DPEACEMAKR_BUILD_WEB=ON -DPEACEMAKR_BUILD_IOS=OFF -DPEACEMAKR_BUILD_GO=OFF -DPEACEMAKR_BUILD_CPP=OFF
+emmake make -j
+popd

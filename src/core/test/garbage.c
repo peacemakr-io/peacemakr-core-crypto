@@ -8,6 +8,8 @@
 
 #include <assert.h>
 #include <memory.h>
+#include <stdlib.h>
+#include <arpa/inet.h>
 #include <peacemakr/crypto.h>
 
 #include "utils/b64.h"

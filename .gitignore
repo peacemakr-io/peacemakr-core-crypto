@@ -1,9 +1,10 @@
 cmake-build-*/
-*build*/
+**/*build/
 .idea/
 archive/
 *.def
 docs/
+**/build/
 
 venv/
 
