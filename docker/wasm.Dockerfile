@@ -8,7 +8,7 @@
 
 FROM apiaryio/emcc:1.38.11
 
-RUN apt-get update && apt-get install -y --no-install-recommends perl build-essential wget ca-certificates linux-headers-amd64 \
+RUN apt-get update && apt-get install -y --no-install-recommends perl build-essential curl wget ca-certificates linux-headers-amd64 \
 && apt-get remove -y cmake
 RUN wget -qO- "https://cmake.org/files/v3.14/cmake-3.14.3-Linux-x86_64.tar.gz" | tar --strip-components=1 -xz -C /usr/local
 
