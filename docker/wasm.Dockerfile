@@ -34,3 +34,5 @@ RUN cd openssl && ./build-openssl.sh && cd .. \
     -DCMAKE_INSTALL_PREFIX=/opt/corecrypto-build \
 && emmake make -j install && cd /opt/corecrypto-build/lib \
 && emcc libpeacemakr-core-crypto.bc -g -o corecrypto.html
+
+WORKDIR /opt/corecrypto-build/

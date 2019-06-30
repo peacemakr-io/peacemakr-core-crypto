@@ -25,7 +25,7 @@ fi
 
 pushd openssl-${OPENSSL_VERSION}
 
-CC=emcc CXX=em++ AR=emar RANLIB=emranlib ./Configure linux-generic64 no-asm no-ssl3 no-comp no-hw no-engine no-async --prefix=${INSTALL_DIR}
+CC=emcc CXX=em++ AR=emar RANLIB=emranlib ./Configure linux-generic64 no-asm no-ssl3 no-comp no-hw no-engine no-async -D__STDC_NO_ATOMICS__ --prefix=${INSTALL_DIR}
 
 sed 's/^CROSS_COMPILE.*$/CROSS_COMPILE=/g' Makefile
 
