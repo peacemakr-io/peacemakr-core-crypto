@@ -21,10 +21,10 @@ ADD src/ffi/web /opt/src/ffi/web
 ADD src/ffi/CMakeLists.txt /opt/src/ffi/CMakeLists.txt
 ADD cmake /opt/cmake
 
-# Install emscripten and do the build
 WORKDIR /opt/src/ffi/web
-RUN cd openssl && ./build-openssl.sh && cd .. \
-&& mkdir -p web-build && cd web-build && mkdir -p /opt/corecrypto-build \
+RUN cd openssl && ./build-openssl.sh && cd ..
+
+RUN mkdir -p web-build && cd web-build && mkdir -p /opt/corecrypto-build \
 && emconfigure cmake /opt -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DPEACEMAKR_BUILD_WEB=ON \
     -DPEACEMAKR_BUILD_GO=OFF -DPEACEMAKR_BUILD_CPP=OFF -DPEACEMAKR_BUILD_IOS=OFF \
     -DOPENSSL_ROOT_DIR=/opt/src/ffi/web/openssl/build \
@@ -33,6 +33,6 @@ RUN cd openssl && ./build-openssl.sh && cd .. \
     -DOPENSSL_INCLUDE_DIR=/opt/src/ffi/web/openssl/build/include \
     -DCMAKE_INSTALL_PREFIX=/opt/corecrypto-build \
 && emmake make -j install && cd /opt/corecrypto-build/lib \
-&& emcc libpeacemakr-core-crypto.bc -g -o corecrypto.html
+&& emcc libpeacemakr-core-crypto.bc -Os -o corecrypto.js
 
 WORKDIR /opt/corecrypto-build/
