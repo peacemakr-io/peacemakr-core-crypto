@@ -9,6 +9,7 @@
 #include <assert.h>
 #include <memory.h>
 #include <peacemakr/crypto.h>
+#include <stdlib.h>
 
 #include "utils/helper.h"
 

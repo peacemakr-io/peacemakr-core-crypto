@@ -8,7 +8,7 @@
 
 FROM alpine:3.8 as builder
 
-RUN apk add --no-cache libbsd-dev git alpine-sdk perl cmake linux-headers clang-analyzer clang-dev llvm5-dev compiler-rt
+RUN apk add --no-cache git alpine-sdk perl cmake linux-headers clang-analyzer clang-dev llvm5-dev compiler-rt
 
 WORKDIR /opt
 RUN git clone -b OpenSSL_1_1_1-stable --single-branch https://github.com/openssl/openssl.git

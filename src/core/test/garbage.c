@@ -6,9 +6,11 @@
 // Full license at peacemakr_core_crypto/LICENSE.txt
 //
 
+#include <arpa/inet.h>
 #include <assert.h>
 #include <memory.h>
 #include <peacemakr/crypto.h>
+#include <stdlib.h>
 
 #include "utils/b64.h"
 #include "utils/helper.h"

@@ -15,6 +15,7 @@
 #include "Logging.h"
 #include "b64.h"
 
+#include <arpa/inet.h>
 #include <memory.h>
 
 /**
