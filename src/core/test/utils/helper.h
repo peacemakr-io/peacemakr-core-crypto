@@ -33,6 +33,4 @@ static inline int fill_rand(unsigned char *buf, size_t num) {
   return 0;
 }
 
-static inline const char *rand_err(int err) { return ""; }
-
 #endif // PEACEMAKR_CORE_CRYPTO_HELPER_H

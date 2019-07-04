@@ -11,6 +11,8 @@
 
 #include <stddef.h>
 
+#define PEACEMAKR_EXPORT __attribute__((visibility("default"), used))
+
 /**
  * @file peacemakr/random.h
  * Peacemakr core crypto csprng utilities
@@ -40,5 +42,7 @@ typedef struct {
   rng_buf generator;
   rng_err err;
 } random_device_t;
+
+PEACEMAKR_EXPORT random_device_t get_default_random_device();
 
 #endif // PEACEMAKR_CORE_CRYPTO_RANDOM_H

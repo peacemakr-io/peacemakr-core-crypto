@@ -26,3 +26,19 @@ bool peacemakr_init() {
   arc4random_buf((void *)random_buf, bufsize);
   return true;
 }
+
+static int gen_rand(unsigned char *buf, size_t num) {
+  arc4random_buf((void *)buf, num);
+  return 0;
+}
+static const char *err(int code) {
+  return "Unknown error code";
+}
+
+random_device_t get_default_random_device() {
+  random_device_t out;
+  out.generator = &gen_rand;
+  out.err = &err;
+
+  return out;
+}
