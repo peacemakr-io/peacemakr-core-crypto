@@ -44,13 +44,13 @@ if (PEACEMAKR_BUILD_IOS)
 endif(PEACEMAKR_BUILD_IOS)
 
 # Android-specific stuff #####
-option(PEACEMAKR_BUILD_ANDROID "Whether to build the Android bindings" ON)
-if (PEACEMAKR_BUILD_ANDROID)
+option(PEACEMAKR_BUILD_JAVA "Whether to build the Android bindings" ON)
+if (PEACEMAKR_BUILD_JAVA)
     set(OPENSSL_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/java/openssl/openssl-build/${ANDROID_ABI})
     set(OPENSSL_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/java/openssl/openssl-build/${ANDROID_ABI}/lib)
 
     add_subdirectory(java/src/main/native)
-endif(PEACEMAKR_BUILD_ANDROID)
+endif(PEACEMAKR_BUILD_JAVA)
 
 # C++-specific stuff #####
 option(PEACEMAKR_BUILD_CPP "Whether to build the C++ bindings" ON)
