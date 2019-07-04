@@ -25,7 +25,7 @@ void test_symmetric_algo(symmetric_cipher symm_cipher,
 
   plaintext_t plaintext_out;
 
-  random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
+  random_device_t rand = get_default_random_device();
 
   peacemakr_key_t *my_key =
       peacemakr_key_new_asymmetric(curve, symm_cipher, &rand);

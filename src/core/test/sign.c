@@ -28,7 +28,7 @@ void test_symmetric_algo(symmetric_cipher cipher) {
 
   plaintext_t plaintext_out;
 
-  random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
+  random_device_t rand = get_default_random_device();
 
   peacemakr_key_t *key = peacemakr_key_new_symmetric(cipher, &rand);
 
@@ -78,7 +78,7 @@ void test_asymmetric_algo(symmetric_cipher cipher,
 
   plaintext_t plaintext_out;
 
-  random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
+  random_device_t rand = get_default_random_device();
 
   peacemakr_key_t *mykey =
       peacemakr_key_new_asymmetric(asymmcipher, cipher, &rand);
@@ -155,7 +155,7 @@ void test_symmetric_algo_x_sign(symmetric_cipher cipher) {
 
   plaintext_t plaintext_out;
 
-  random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
+  random_device_t rand = get_default_random_device();
 
   peacemakr_key_t *key = peacemakr_key_new_symmetric(cipher, &rand);
   peacemakr_key_t *sign_key =

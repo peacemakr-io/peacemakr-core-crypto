@@ -25,7 +25,7 @@ ciphertext_blob_t *encrypt(symmetric_cipher symm_cipher,
                               .aad = (const unsigned char *)message_aad,
                               .aad_len = strlen(message_aad) + 1};
 
-  random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
+  random_device_t rand = get_default_random_device();
 
   peacemakr_key_t *pubkey = peacemakr_key_new_pem_pub(
       curve, SYMMETRIC_UNSPECIFIED, pubkey_buf, pubkey_len);
@@ -93,7 +93,7 @@ void test_symmetric_algo(symmetric_cipher symm_cipher, asymmetric_cipher curve,
 
   plaintext_t plaintext_out;
 
-  random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
+  random_device_t rand = get_default_random_device();
 
   peacemakr_key_t *pubkey = peacemakr_key_new_pem_pub(
       curve, SYMMETRIC_UNSPECIFIED, pubkey_buf, pubkey_len);
@@ -130,7 +130,7 @@ int main() {
 
   for (int curve = ECDH_P256; curve <= ECDH_P521; ++curve) {
 
-    random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
+    random_device_t rand = get_default_random_device();
 
     char *my_privkey, *peer_privkey;
     char *my_pubkey, *peer_pubkey;
