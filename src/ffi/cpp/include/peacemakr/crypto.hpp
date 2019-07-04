@@ -46,7 +46,7 @@ public:
   /**
    * Construct a 'default' RandomDevice that reads from /dev/urandom.
    */
-   RandomDevice();
+  RandomDevice();
 
   /**
    * Convenience function for getting the internal random_device_t.

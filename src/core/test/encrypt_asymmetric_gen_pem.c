@@ -57,7 +57,7 @@ int main() {
     return 1;
   }
 
-  random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
+  random_device_t rand = get_default_random_device();
 
   char *privkey;
   char *pubkey;

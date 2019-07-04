@@ -13,7 +13,8 @@
 peacemakr::RandomDevice::RandomDevice(rng_buf generator, rng_err err_handler)
     : m_rand_{.generator = generator, .err = err_handler} {}
 
-peacemakr::RandomDevice::RandomDevice() : m_rand_(get_default_random_device()) {}
+peacemakr::RandomDevice::RandomDevice()
+    : m_rand_(get_default_random_device()) {}
 
 random_device_t &peacemakr::RandomDevice::getContents() { return m_rand_; }
 

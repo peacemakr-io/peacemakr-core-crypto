@@ -54,7 +54,7 @@ int main() {
                               .aad = (const unsigned char *)aad,
                               .aad_len = bigsize + 1};
 
-  random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
+  random_device_t rand = get_default_random_device();
 
   peacemakr_key_t *asymm_key =
       peacemakr_key_new_asymmetric(RSA_4096, CHACHA20_POLY1305, &rand);
