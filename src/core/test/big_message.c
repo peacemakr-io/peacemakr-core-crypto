@@ -1,26 +1,4 @@
 //
-// Created by Aman LaChapelle on 11/6/18.
-//
-// peacemakr_core_crypto
-// Copyright (c) 2018 Aman LaChapelle
-// Full license at peacemakr_core_crypto/LICENSE.txt
-//
-
-/*
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
- */
-
-//
 // Created by Aman LaChapelle on 7/20/18.
 //
 // peacemakr-core-crypto
@@ -38,7 +16,7 @@ void test_algo(plaintext_t plaintext_in, const peacemakr_key_t *key) {
 
   plaintext_t plaintext_out;
 
-  random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
+  random_device_t rand = get_default_random_device();
 
   ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, &plaintext_in, &rand);
   assert(ciphertext != NULL);
@@ -76,7 +54,7 @@ int main() {
                               .aad = (const unsigned char *)aad,
                               .aad_len = bigsize + 1};
 
-  random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
+  random_device_t rand = get_default_random_device();
 
   peacemakr_key_t *asymm_key =
       peacemakr_key_new_asymmetric(RSA_4096, CHACHA20_POLY1305, &rand);

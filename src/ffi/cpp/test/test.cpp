@@ -43,7 +43,7 @@ void test_asymmetric(symmetric_cipher symm_cipher, asymmetric_cipher cipher,
   plaintext_in.data = get_random_string();
   plaintext_in.aad = get_random_string();
 
-  peacemakr::RandomDevice rand = peacemakr::RandomDevice::getDefault();
+  peacemakr::RandomDevice rand;
 
   peacemakr::Key key(cipher, symm_cipher, rand);
 
@@ -82,7 +82,7 @@ void test_symmetric(symmetric_cipher symm_cipher,
   plaintext_in.data = get_random_string();
   plaintext_in.aad = get_random_string();
 
-  peacemakr::RandomDevice rand = peacemakr::RandomDevice::getDefault();
+  peacemakr::RandomDevice rand;
 
   peacemakr::Key key(symm_cipher, rand);
 
@@ -122,7 +122,7 @@ void test_sign_symmetric(symmetric_cipher symm_cipher,
   plaintext_in.data = get_random_string();
   plaintext_in.aad = get_random_string();
 
-  peacemakr::RandomDevice rand = peacemakr::RandomDevice::getDefault();
+  peacemakr::RandomDevice rand;
 
   peacemakr::Key key(symm_cipher, rand);
 
@@ -165,7 +165,7 @@ void test_sign_asymmetric(symmetric_cipher symm_cipher,
   plaintext_in.data = get_random_string();
   plaintext_in.aad = get_random_string();
 
-  peacemakr::RandomDevice rand = peacemakr::RandomDevice::getDefault();
+  peacemakr::RandomDevice rand;
 
   peacemakr::Key key(cipher, symm_cipher, rand);
 
@@ -209,7 +209,7 @@ void test_uninit_crash() {
   plaintext_in.data = "Hello world!";
   plaintext_in.aad = "";
 
-  peacemakr::RandomDevice rand = peacemakr::RandomDevice::getDefault();
+  peacemakr::RandomDevice rand;
 
   peacemakr::Key key(AES_128_GCM, rand);
   assert(key.isValid());
@@ -254,7 +254,7 @@ void test_dh_symmetric(symmetric_cipher symm_cipher,
   plaintext_in.data = get_random_string();
   plaintext_in.aad = get_random_string();
 
-  peacemakr::RandomDevice rand = peacemakr::RandomDevice::getDefault();
+  peacemakr::RandomDevice rand;
 
   peacemakr::Key myKey(ECDH_P256, SYMMETRIC_UNSPECIFIED, rand);
   peacemakr::Key peerKey(ECDH_P256, SYMMETRIC_UNSPECIFIED, rand);

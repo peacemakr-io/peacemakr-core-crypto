@@ -24,7 +24,7 @@ void test_symmetric_algo(symmetric_cipher cipher) {
 
   plaintext_t plaintext_out;
 
-  random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
+  random_device_t rand = get_default_random_device();
 
   peacemakr_key_t *original_key = peacemakr_key_new_symmetric(cipher, &rand);
 
@@ -111,7 +111,7 @@ void test_master_key_symmetric_algo(peacemakr_key_t *master_key,
 
   plaintext_t plaintext_out;
 
-  random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
+  random_device_t rand = get_default_random_device();
 
   peacemakr_key_t *key = peacemakr_key_new_from_master(
       cipher, digest, master_key, (uint8_t *)"abcdefghijk", 11);
@@ -146,7 +146,7 @@ void test_uninit_crash() {
 
   plaintext_t plaintext_out;
 
-  random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
+  random_device_t rand = get_default_random_device();
 
   peacemakr_key_t *key = peacemakr_key_new_symmetric(AES_128_GCM, &rand);
 
@@ -194,7 +194,7 @@ void test_wrong_key(symmetric_cipher cipher) {
 
   plaintext_t plaintext_out;
 
-  random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
+  random_device_t rand = get_default_random_device();
 
   peacemakr_key_t *original_key = peacemakr_key_new_symmetric(cipher, &rand);
 
@@ -231,7 +231,7 @@ int main() {
     test_wrong_key(i);
   }
 
-  random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
+  random_device_t rand = get_default_random_device();
 
   peacemakr_key_t *master_key = peacemakr_key_new_symmetric(AES_256_GCM, &rand);
 

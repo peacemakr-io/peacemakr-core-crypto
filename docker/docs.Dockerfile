@@ -1,6 +1,6 @@
 FROM alpine:3.8 as builder
 
-RUN apk add --no-cache libbsd-dev git alpine-sdk perl cmake linux-headers doxygen
+RUN apk add --no-cache git alpine-sdk perl cmake linux-headers doxygen
 
 WORKDIR /opt
 RUN git clone -b OpenSSL_1_1_1-stable --single-branch https://github.com/openssl/openssl.git

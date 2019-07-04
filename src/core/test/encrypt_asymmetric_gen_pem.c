@@ -26,7 +26,7 @@ void test_symmetric_algo(symmetric_cipher symm_cipher, const char *pubkey_buf,
 
   plaintext_t plaintext_out;
 
-  random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
+  random_device_t rand = get_default_random_device();
 
   peacemakr_key_t *pubkey =
       peacemakr_key_new_pem_pub(RSA_4096, symm_cipher, pubkey_buf, pubkey_len);
@@ -57,7 +57,7 @@ int main() {
     return 1;
   }
 
-  random_device_t rand = {.generator = &fill_rand, .err = &rand_err};
+  random_device_t rand = get_default_random_device();
 
   char *privkey;
   char *pubkey;

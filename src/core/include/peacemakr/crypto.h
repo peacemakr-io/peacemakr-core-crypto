@@ -81,7 +81,7 @@ typedef enum { SYMMETRIC, ASYMMETRIC } encryption_mode;
 /**
  * @brief Configures the crypto library calls
  *
- * Uses the above enums to configure the library calls so that the encryption is
+ * Uses specified enums to configure the library calls so that the encryption is
  * performed as required. Held inside peacemakr_key_t objects so that the key
  * is guaranteed to be suitable for the configuration.
  */
@@ -349,10 +349,8 @@ PEACEMAKR_EXPORT uint8_t *peacemakr_serialize(message_digest_algorithm digest,
 
 /**
  * Deserializes a ciphertext_blob_t from \p b64_encoded_cipher. \p
- * serialized_len must be the same as out_size from uint8_t
- * *peacemakr_serialize(ciphertext_blob_t *, size_t *). \returns A
- * ciphertext_blob_t that may be passed to bool peacemakr_decrypt(const
- * peacemakr_key_t *, ciphertext_blob_t *, plaintext_t *)
+ * serialized_len must be the same as out_size from peacemakr_serialize.
+ * \returns A ciphertext_blob_t that may be passed to peacemakr_decrypt.
  */
 PEACEMAKR_EXPORT ciphertext_blob_t *
 peacemakr_deserialize(const uint8_t *b64_serialized_cipher,

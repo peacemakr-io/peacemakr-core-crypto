@@ -6,25 +6,32 @@
 # Full license at peacemakr-core-crypto/LICENSE.txt
 #
 
+include(CheckFunctionExists)
+include(CheckCCompilerFlag)
+
 if((CMAKE_BUILD_TYPE MATCHES RELEASE) OR (CMAKE_BUILD_TYPE MATCHES Release))
     message(STATUS "Setting log to release")
     add_definitions(-DPEACEMAKR_LOG_LEVEL=1)
 endif()
 
-include(CheckFunctionExists)
 check_function_exists(memset_s HAS_MEMSET_S)
 if (NOT HAS_MEMSET_S)
     message(WARNING "memset_s function does not exist in this compiler, zeroing secure memory may be optimized away")
     add_definitions(-DPEACEMAKR_NO_MEMSET_S)
 endif (NOT HAS_MEMSET_S)
 
-if (UNIX AND NOT APPLE AND NOT ANDROID)
-    add_definitions(-DNEED_LIBBSD)
-endif ()
+check_function_exists(arc4random_buf HAS_BSD)
+if (NOT HAS_BSD)
+    add_definitions(-DPEACEMAKR_NEEDS_BSD)
+endif()
 
 file(GLOB INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/include/peacemakr/*.h)
-file(GLOB SOURCES_C ${CMAKE_CURRENT_SOURCE_DIR}/src/*.c)
 file(GLOB SOURCES_H ${CMAKE_CURRENT_SOURCE_DIR}/src/*.h)
+file(GLOB SOURCES_C ${CMAKE_CURRENT_SOURCE_DIR}/src/*.c)
+
+if (DEFINED ENV{EMSCRIPTEN_BUILD})
+    set(CMAKE_SHARED_LIBRARY_SUFFIX .bc)
+endif()
 
 add_library(peacemakr-core-crypto SHARED ${SOURCES_C} ${SOURCES_H} ${INCLUDES})
 add_definitions(-DOPENSSL_MIN_API=0x10100000L)
@@ -36,20 +43,19 @@ target_include_directories(peacemakr-core-crypto
 
 # Compile core crypto lib under asan if we're running in debug mode
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" AND (CMAKE_BUILD_TYPE MATCHES DEBUG) OR (CMAKE_BUILD_TYPE MATCHES Debug))
-    message(STATUS "Setting AddressSanitizer for Debug build")
-    target_compile_options(peacemakr-core-crypto PUBLIC -fsanitize=address -fno-omit-frame-pointer)
-    target_link_libraries(peacemakr-core-crypto PUBLIC -fsanitize=address)
+    check_c_compiler_flag(-fsanitize=address ASAN_AVAILABLE)
+    if (ASAN_AVAILABLE)
+        message(STATUS "Setting AddressSanitizer for Debug build")
+        target_compile_options(peacemakr-core-crypto PUBLIC -fsanitize=address -fno-omit-frame-pointer)
+        target_link_libraries(peacemakr-core-crypto PUBLIC -fsanitize=address)
+    endif()
 endif()
 
-if (APPLE)
-    target_link_libraries(peacemakr-core-crypto
-            PRIVATE OpenSSL::SSL OpenSSL::Crypto)
-elseif (UNIX AND NOT APPLE AND NOT ANDROID) # Needs libbsd
-    target_link_libraries(peacemakr-core-crypto
-            PRIVATE OpenSSL::SSL OpenSSL::Crypto bsd -ldl)
-else()
-    target_link_libraries(peacemakr-core-crypto
-            PRIVATE OpenSSL::SSL OpenSSL::Crypto -ldl)
+target_link_libraries(peacemakr-core-crypto
+        PRIVATE OpenSSL::SSL OpenSSL::Crypto)
+
+if (NOT APPLE)
+    target_link_libraries(peacemakr-core-crypto PRIVATE -ldl)
 endif()
 
 set_target_properties(peacemakr-core-crypto PROPERTIES

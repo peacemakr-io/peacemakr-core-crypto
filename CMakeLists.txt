@@ -60,10 +60,18 @@ if (DOXYGEN_FOUND)
     set(DOXYGEN_OPTIMIZE_OUTPUT_FOR_C YES)
     set(DOXYGEN_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/docs)
     set(DOXYGEN_USE_MDFILE_AS_MAINPAGE ${CMAKE_CURRENT_SOURCE_DIR}/README.md)
-    doxygen_add_docs(doxygen
-            ${CMAKE_CURRENT_SOURCE_DIR}/README.md
-            ${CMAKE_CURRENT_SOURCE_DIR}/src/core/include/peacemakr
-            COMMENT "Generate documentation pages")
+    if((CMAKE_BUILD_TYPE MATCHES RELEASE) OR (CMAKE_BUILD_TYPE MATCHES Release))
+        doxygen_add_docs(doxygen
+                ${CMAKE_CURRENT_SOURCE_DIR}/README.md
+                ${CMAKE_CURRENT_SOURCE_DIR}/src/core/include/peacemakr
+                COMMENT "Generate documentation pages")
+    else()
+        set(DOXYGEN_EXTRACT_ALL YES)
+        doxygen_add_docs(doxygen
+                ${CMAKE_CURRENT_SOURCE_DIR}/README.md
+                ${CMAKE_CURRENT_SOURCE_DIR}/src/core
+                COMMENT "Generate documentation pages")
+    endif()
 endif (DOXYGEN_FOUND)
 
 # INSTALL

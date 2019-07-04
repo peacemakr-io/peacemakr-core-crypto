@@ -6,9 +6,11 @@
 // Full license at peacemakr_core_crypto/LICENSE.txt
 //
 
+#include <arpa/inet.h>
 #include <assert.h>
 #include <memory.h>
 #include <peacemakr/crypto.h>
+#include <stdlib.h>
 
 #include "utils/b64.h"
 #include "utils/helper.h"
@@ -50,8 +52,8 @@ void test_deserialize_b64_with_magic_garbage() {
   uint8_t garbage_message[message_len];
 
   fill_rand(garbage_message, message_len);
-  // Magic number used in Serialize.c
-  uint32_t magic = htonl(1054);
+  // Version number
+  uint32_t magic = 1;
   memcpy(garbage_message, &magic, sizeof(uint32_t));
 
   size_t outlen;
@@ -70,8 +72,8 @@ void test_deserialize_b64_with_magic_and_correct_len_garbage() {
   uint8_t garbage_message[message_len];
 
   fill_rand(garbage_message, message_len);
-  // Magic number used in Serialize.c
-  uint32_t magic = htonl(1054);
+  // version number
+  uint32_t magic = 1;
   memcpy(garbage_message, &magic, sizeof(uint32_t));
   uint64_t len_until_digest = htonl(message_len - 32);
   memcpy(garbage_message + sizeof(uint32_t), &len_until_digest,
