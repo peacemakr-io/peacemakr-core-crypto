@@ -32,76 +32,16 @@ extern "C" {
 #include "common-jni.h"
 #include "random.h"
 
-// TODO: this is very hacky...there may be a nicer way to do it
-
-typedef struct {
-  jmethodID generateID;
-  jmethodID errID;
-  JNIEnv *env;
-  jobject this;
-} jni_random_device_t;
-
-static jni_random_device_t jni_random_device;
 static random_device_t jni_rng;
-
-int jni_generate_rand(unsigned char *buf, size_t size) {
-  jbyteArray bytes =
-      (*jni_random_device.env)->NewByteArray(jni_random_device.env, size);
-
-  jint result =
-      (*jni_random_device.env)
-          ->CallIntMethod(jni_random_device.env, jni_random_device.this,
-                          jni_random_device.generateID, bytes);
-  jbyte *rawData =
-      (*jni_random_device.env)
-          ->GetByteArrayElements(jni_random_device.env, bytes, NULL);
-
-  memcpy(buf, rawData, size);
-
-  return result;
-}
-
-const char *jni_err(int code) {
-  jstring result =
-      (jstring)(*jni_random_device.env)
-          ->CallObjectMethod(jni_random_device.env, jni_random_device.this,
-                             jni_random_device.errID, code);
-  const char *charResult =
-      (*jni_random_device.env)
-          ->GetStringUTFChars(jni_random_device.env, result, NULL);
-  const size_t charLen =
-      (*jni_random_device.env)->GetStringLength(jni_random_device.env, result);
-
-  char *outResult = calloc(charLen, sizeof(char));
-  memcpy(outResult, charResult, charLen);
-
-  (*jni_random_device.env)
-      ->ReleaseStringUTFChars(jni_random_device.env, result, charResult);
-
-  return outResult;
-}
 
 JNIEXPORT jlong JNICALL Java_io_peacemakr_corecrypto_RandomDevice_getNativePtr(
     JNIEnv *env, jobject this) {
-  jni_random_device.env = env;
-  jni_random_device.this = this;
-
-  jni_random_device.env = env;
-  jni_random_device.this = this;
-
-  jni_rng.generator = (rng_buf)&jni_generate_rand;
-  jni_rng.err = (rng_err)&jni_err;
-
   return (long)&jni_rng;
 }
 
 JNIEXPORT void JNICALL Java_io_peacemakr_corecrypto_RandomDevice_registerNative(
     JNIEnv *env, jobject this) {
-  jclass clazz = (*env)->GetObjectClass(env, this);
-  jni_random_device.generateID =
-      (*env)->GetStaticMethodID(env, clazz, "generate", "([B)I");
-  jni_random_device.errID =
-      (*env)->GetStaticMethodID(env, clazz, "error", "(I)Ljava/lang/String;");
+  jni_rng = get_default_random_device();
 }
 
 #ifdef __cplusplus

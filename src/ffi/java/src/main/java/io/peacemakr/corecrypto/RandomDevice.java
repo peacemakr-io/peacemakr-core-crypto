@@ -9,14 +9,4 @@ public class RandomDevice {
     public RandomDevice() {
         registerNative();
     }
-
-    static public int generate(byte[] recipientBuf) {
-        // To be implemented by subclass
-        return -1;
-    }
-
-    static public String error(int errorCode) {
-        // To be implemented by subclass
-        return "";
-    }
 }
