@@ -6,10 +6,10 @@ public class Crypto {
     }
 
     enum SymmetricCryptoTypes {
-        AES_GCM_128 = 0,
-        AES_GSM_192 = 1,
-        AES_GCM_256 = 2,
-        CHACHA20_POLY1902 = 3
+        AES_GCM_128,
+        AES_GSM_192,
+        AES_GCM_256,
+        CHACHA20_POLY1902
     }
 
     public native static byte[] encryptSymmetric(byte[] key, byte[] keyId, AsymmetricKey signingKey, byte[] signingKeyId, byte[] plaintext, SymmetricCryptoTypes mode);
