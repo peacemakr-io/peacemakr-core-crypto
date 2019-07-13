@@ -20,9 +20,11 @@ public class Crypto {
         EC_521
     }
 
-    public native static void genKeypair(AsymmetricCryptoTypes type,
-                                         String priv,
-                                         String pub);
+    public native static AsymmetricKey genKeypairFromPubPem(String pub);
+
+    public native static AsymmetricKey genKeypairFromPrivPem(String priv);
+
+    public native static AsymmetricKey genKeypairFromPRNG(AsymmetricCryptoTypes type);
 
     public native static byte[] encryptSymmetric(byte[] key,
                                                  byte[] keyId,

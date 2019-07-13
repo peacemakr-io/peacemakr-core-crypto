@@ -8,18 +8,38 @@
 
 /*
  * Class:     io_peacemakr_corecrypto_Crypto
- * Method:    genKeypair
- * Signature: (Lio/peacemakr/corecrypto/Crypto/AsymmetricCryptoTypes;Ljava/lang/String;Ljava/lang/String;)V
+ * Method:    genKeypairFromPubPem
+ * Signature: (Ljava/lang/String;)Lio/peacemakr/corecrypto/AsymmetricKey;
  */
-JNIEXPORT void JNICALL Java_io_peacemakr_corecrypto_Crypto_genKeypair
+JNIEXPORT jobject JNICALL Java_io_peacemakr_corecrypto_Crypto_genKeypairFromPubPem
   (JNIEnv *jniEnv,
   jclass c,
-  jobject type,
-  jstring priv,
-  jstring pub) {
+  jstring pubPem) {
+  return NULL;
+ }
 
-  return;
+/*
+ * Class:     io_peacemakr_corecrypto_Crypto
+ * Method:    genKeypairFromPrivPem
+ * Signature: (Ljava/lang/String;)Lio/peacemakr/corecrypto/AsymmetricKey;
+ */
+JNIEXPORT jobject JNICALL Java_io_peacemakr_corecrypto_Crypto_genKeypairFromPrivPem
+  (JNIEnv *jniEnv,
+  jclass c,
+  jstring privPem) {
+  return NULL;
+}
 
+/*
+ * Class:     io_peacemakr_corecrypto_Crypto
+ * Method:    genKeypairFromPRNG
+ * Signature: (Lio/peacemakr/corecrypto/Crypto/AsymmetricCryptoTypes;)Lio/peacemakr/corecrypto/AsymmetricKey;
+ */
+JNIEXPORT jobject JNICALL Java_io_peacemakr_corecrypto_Crypto_genKeypairFromPRNG
+  (JNIEnv *jniEnv,
+  jclass c,
+  jobject type) {
+  return NULL;
 }
 
 
