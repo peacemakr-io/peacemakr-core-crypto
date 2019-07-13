@@ -25,7 +25,7 @@ pushd ..
 PROJECT_SRC=$(pwd)
 
 if [[ ! -z "${2}" ]]; then
-    pushd src/ffi/java/openssl
+    pushd src/ffi/android/openssl
     ./build-openssl.sh
     popd
 fi
