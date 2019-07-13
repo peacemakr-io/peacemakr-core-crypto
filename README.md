@@ -32,7 +32,10 @@ For a debug build
 
 Make sure you have OpenSSL 1.1 or greater installed - `brew install openssl@1.1`
 
-## Build - For Android
+## Build - For Android (doesn't work yet)
 `cd /path/to/peacemakr-core-crypto/bin && ANDROID_NDK_ROOT=/path/to/android/ndk-bundle ./release-android.sh /where/to/put/build/artifacts [is_first_build]`
 
 Make sure you have the [Android NDK installed](https://developer.android.com/ndk/guides): 
+
+## Build - Java
+`./bin/release_java.sh -release 1.0.0`

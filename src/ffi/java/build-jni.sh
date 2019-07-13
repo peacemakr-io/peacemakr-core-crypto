@@ -20,3 +20,18 @@ ar rcs bin/main/c/libpeacemakr-core-crypto-jni.a bin/main/c/*.o
 mkdir -p bin/main/java
 javac src/main/java/io/peacemakr/corecrypto/*.java
 jar cf bin/main/java/PeacemakrCoreCrypto.jar src/main/java/io/peacemakr/corecrypto/*.class
+jar -uf bin/main/java/PeacemakrCoreCrypto.jar bin/main/c/libpeacemakr-core-crypto-jni.a
+jar tf bin/main/java/PeacemakrCoreCrypto.jar
+
+#
+# Version this?
+#
+if [ "$1" == "-release" ]; then
+  TAG="latest"
+  if [[ ! -z "${2}" ]]; then
+    TAG=${2}
+  fi
+
+  mv bin/main/java/PeacemakrCoreCrypto.jar bin/main/java/PeacemakrCoreCrypto-${TAG}.jar
+
+fi
