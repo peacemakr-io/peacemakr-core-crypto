@@ -5,14 +5,14 @@ public class Crypto {
         System.loadLibrary("peacemakr-core-crypto-jni");
     }
 
-    enum SymmetricCryptoTypes {
+    public enum SymmetricCryptoTypes {
         AES_GCM_128,
         AES_GSM_192,
         AES_GCM_256,
         CHACHA20_POLY1902
     }
 
-    enum AsymmetricCryptoTypes {
+    public enum AsymmetricCryptoTypes {
         RSA_2048,
         RSA_4096,
         EC_256,
