@@ -8,6 +8,23 @@
 
 /*
  * Class:     io_peacemakr_corecrypto_Crypto
+ * Method:    genKeypair
+ * Signature: (Lio/peacemakr/corecrypto/Crypto/AsymmetricCryptoTypes;Ljava/lang/String;Ljava/lang/String;)V
+ */
+JNIEXPORT void JNICALL Java_io_peacemakr_corecrypto_Crypto_genKeypair
+  (JNIEnv *jniEnv,
+  jclass c,
+  jobject type,
+  jstring priv,
+  jstring pub) {
+
+  return;
+
+}
+
+
+/*
+ * Class:     io_peacemakr_corecrypto_Crypto
  * Method:    encryptSymmetric
  * Signature: ([B[BLio/peacemakr/corecrypto/AsymmetricKey;[B[BLio/peacemakr/corecrypto/Crypto/SymmetricCryptoTypes;)[B
  */
