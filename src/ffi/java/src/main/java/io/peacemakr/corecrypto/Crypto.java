@@ -12,7 +12,12 @@ public class Crypto {
         CHACHA20_POLY1902
     }
 
-    public native static byte[] encryptSymmetric(byte[] key, byte[] keyId, AsymmetricKey signingKey, byte[] signingKeyId, byte[] plaintext, SymmetricCryptoTypes mode);
+    public native static byte[] encryptSymmetric(byte[] key,
+                                                 byte[] keyId,
+                                                 AsymmetricKey signingKey,
+                                                 byte[] signingKeyId,
+                                                 byte[] plaintext,
+                                                 SymmetricCryptoTypes mode);
 
     public native static byte[] getEncryptingKeyIdFromCiphertext(byte[] ciphertext);
 
