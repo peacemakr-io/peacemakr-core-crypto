@@ -19,8 +19,12 @@ ar rcs bin/main/c/libpeacemakr-core-crypto-jni.a bin/main/c/*.o
 #
 mkdir -p bin/main/java
 javac src/main/java/io/peacemakr/corecrypto/*.java
-jar cf bin/main/java/PeacemakrCoreCrypto.jar src/main/java/io/peacemakr/corecrypto/*.class
-jar -uf bin/main/java/PeacemakrCoreCrypto.jar bin/main/c/libpeacemakr-core-crypto-jni.a
+cd src/main/java
+jar cf ../../../bin/main/java/PeacemakrCoreCrypto.jar io/peacemakr/corecrypto/*.class
+cd ../../..
+cd bin/main/c
+jar -uf ../../../bin/main/java/PeacemakrCoreCrypto.jar libpeacemakr-core-crypto-jni.a
+cd ../../..
 jar tf bin/main/java/PeacemakrCoreCrypto.jar
 
 #
