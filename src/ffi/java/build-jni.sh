@@ -20,7 +20,16 @@ ar rcs bin/main/c/libpeacemakr-core-crypto-jni.a bin/main/c/*.o
 mkdir -p bin/main/java
 javac src/main/java/io/peacemakr/corecrypto/*.java
 cd src/main/java
-jar cf ../../../bin/main/java/PeacemakrCoreCrypto.jar io/peacemakr/corecrypto/*.class
+echo """
+Name: corecrypto
+Specification-Title: Peacemakr Core Crypto Library
+Specification-Version: 1.0
+Specification-Vendor: Peacemakr Crypto Systems
+Implementation-Title: io.peacemakr.corecrypto
+Implementation-Version: 0
+Implementation-Vendor: Peacemakr Crypto Systems
+""" > Manifest.txt
+jar cfm ../../../bin/main/java/PeacemakrCoreCrypto.jar Manifest.txt io/peacemakr/corecrypto/*.class
 cd ../../..
 cd bin/main/c
 jar -uf ../../../bin/main/java/PeacemakrCoreCrypto.jar libpeacemakr-core-crypto-jni.a
