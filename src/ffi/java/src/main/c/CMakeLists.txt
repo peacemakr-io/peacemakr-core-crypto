@@ -20,3 +20,10 @@ endif()
 if (DEFINED ANDROID_ABI)
     target_link_libraries(peacemakr-core-crypto-jni PUBLIC android log)
 endif (DEFINED ANDROID_ABI)
+
+install(TARGETS peacemakr-core-crypto-jni
+        EXPORT peacemakr-core-crypto-targets
+        LIBRARY DESTINATION lib
+        PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_PREFIX}/include/peacemakr"
+        COMPONENT dev
+)

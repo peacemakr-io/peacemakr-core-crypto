@@ -122,7 +122,9 @@ PEACEMAKR_EXPORT inline uint32_t get_max_version() {
 /**
  * Get the current version of this library. Compile time constant.
  */
-PEACEMAKR_EXPORT inline uint32_t get_version() { return PEACEMAKR_CORE_CRYPTO_VERSION; }
+PEACEMAKR_EXPORT inline uint32_t get_version() {
+  return PEACEMAKR_CORE_CRYPTO_VERSION;
+}
 
 /**
  * Should be called once on startup. Ensures that the system's random number

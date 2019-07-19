@@ -13,39 +13,24 @@ public class Crypto {
 
     }
 
-    public enum SymmetricCryptoTypes {
-        AES_GCM_128,
-        AES_GSM_192,
-        AES_GCM_256,
-        CHACHA20_POLY1902
+    public enum MessageDigest {
+        SHA_224,
+        SHA_256,
+        SHA_384,
+        SHA_512
     }
 
-    public enum AsymmetricCryptoTypes {
-        RSA_2048,
-        RSA_4096,
-        EC_256,
-        EC_384,
-        EC_521
-    }
-
-    public native static AsymmetricKey genKeypairFromPubPem(String pub);
-
-    public native static AsymmetricKey genKeypairFromPrivPem(String priv);
-
-    public native static AsymmetricKey genKeypairFromPRNG(AsymmetricCryptoTypes type);
-
-    public native static byte[] encryptSymmetric(byte[] key,
-                                                 byte[] keyId,
+    public native static byte[] encryptSymmetric(byte[] encryptionKey,
+                                                 SymmetricCipher mode,
                                                  AsymmetricKey signingKey,
-                                                 byte[] signingKeyId,
                                                  byte[] plaintext,
-                                                 SymmetricCryptoTypes mode);
+                                                 byte[] aad, // have to pack the key IDs in here on your own
+                                                 MessageDigest digestType);
 
-    public native static byte[] getEncryptingKeyIdFromCiphertext(byte[] ciphertext);
-
-    public native static byte[] getSigningKeyIdFromCiphertext(byte[] ciphertext);
+    public native static byte[] getCiphertextAAD(byte[] ciphertext);
 
     public native static byte[] decryptSymmetric(byte[] key,
+                                                 SymmetricCipher mode,
                                                  AsymmetricKey verificationKey,
                                                  byte[] ciphertext);
 

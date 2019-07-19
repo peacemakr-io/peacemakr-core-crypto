@@ -6,23 +6,18 @@
 // Full license at peacemakr_core_crypto/LICENSE.txt
 //
 
-/*
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-    
-        http://www.apache.org/licenses/LICENSE-2.0
-    
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
- */
-
 
 #ifndef PEACEMAKR_CORE_CRYPTO_COMMON_JNOI_H
 #define PEACEMAKR_CORE_CRYPTO_COMMON_JNOI_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include <jni.h>
+
+#include <stdlib.h>
+
+#include "crypto.h"
 
 #ifdef __ANDROID__
 static const char *kTAG = "peacemakr-core-crypto";
@@ -40,4 +35,17 @@ static const char *kTAG = "peacemakr-core-crypto";
 #define LOGE(...) ((void)printf(__VA_ARGS__))
 #endif // __ANDROID__
 
+uint32_t unwrapEnumToInt(JNIEnv *env, jobject asymm_cipher, const char *class);
+
+jobject constructObject(JNIEnv *env, jclass clazz);
+
+bool setNativeKey(JNIEnv *env, jobject this, peacemakr_key_t *ptr);
+
+void clearNativeKey(JNIEnv *env, jobject this);
+
+peacemakr_key_t *getNativeKey(JNIEnv *env, jobject this);
+
+#ifdef __cplusplus
+}
+#endif
 #endif //PEACEMAKR_CORE_CRYPTO_COMMON_JNOI_H

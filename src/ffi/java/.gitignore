@@ -1,9 +1,8 @@
-module.map
-libCoreCrypto/*
-*.patch
+*.class
 openssl*.tar.gz
 openssl-build/
 openssl-*/
-universal/
 .gradle/
 local.properties
+io_peacemakr_corecrypto_*.h
+Manifest.txt

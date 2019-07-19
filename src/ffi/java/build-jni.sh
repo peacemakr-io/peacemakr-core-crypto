@@ -10,9 +10,10 @@ javac -h src/main/c/. src/main/java/io/peacemakr/corecrypto/*.java src/main/java
 #
 # Build the JNI Glue.
 #
-mkdir -p bin/main/c
-gcc -I${JAVA_HOME}/include -I${JAVA_HOME}/include/linux -I${JAVA_HOME}/include/darwin -c src/main/c/io_peacemakr_corecrypto_Crypto.c -o bin/main/c/io_peacemakr_corecrypto_Crypto.o
-ar rcs bin/main/c/libpeacemakr-core-crypto-jni.a bin/main/c/*.o
+mkdir -p bin/main/c && pushd bin/main/c
+cmake ../../../../../.. -DCMAKE_INSTALL_PREFIX=$(pwd) -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl@1.1 -DPEACEMAKR_BUILD_JAVA=ON -DPEACEMAKR_BUILD_IOS=OFF -DPEACEMAKR_BUILD_CPP=OFF -DPEACEMAKR_BUILD_GO=OFF -DPEACEMAKR_BUILD_WEB=OFF
+make install
+popd
 
 #
 # Compile the Java interface
@@ -32,7 +33,8 @@ Implementation-Vendor: Peacemakr Crypto Systems
 jar cfm ../../../bin/main/java/PeacemakrCoreCrypto.jar Manifest.txt io/peacemakr/corecrypto/*.class
 cd ../../..
 cd bin/main/c
-jar -uf ../../../bin/main/java/PeacemakrCoreCrypto.jar libpeacemakr-core-crypto-jni.a
+jar -uf ../../../bin/main/java/PeacemakrCoreCrypto.jar lib/libpeacemakr-core-crypto-jni.*
+jar -uf ../../../bin/main/java/PeacemakrCoreCrypto.jar lib/libpeacemakr-core-crypto.*
 cd ../../..
 jar tf bin/main/java/PeacemakrCoreCrypto.jar
 
