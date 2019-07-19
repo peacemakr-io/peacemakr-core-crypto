@@ -1,8 +1,16 @@
 package io.peacemakr.corecrypto;
 
+import cz.adamh.utils.NativeUtils;
+import java.io.IOException;
+
 public class Crypto {
     static {
-        System.loadLibrary("peacemakr-core-crypto-jni");
+        try {
+            NativeUtils.loadLibraryFromJar("peacemakr-core-crypto-jni");
+        } catch (IOException e) {
+            System.err.println("Failed to laod the native jni crypto from jar due to " + e.getMessage());
+        }
+
     }
 
     public enum SymmetricCryptoTypes {

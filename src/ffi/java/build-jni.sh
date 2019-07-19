@@ -5,7 +5,7 @@ set -ex
 #
 # Build the JNI C headers.
 #
-javac -h src/main/c/. src/main/java/io/peacemakr/corecrypto/*.java
+javac -h src/main/c/. src/main/java/io/peacemakr/corecrypto/*.java src/main/java/cz/adamh/utils/*.java
 
 #
 # Build the JNI Glue.
@@ -18,7 +18,7 @@ ar rcs bin/main/c/libpeacemakr-core-crypto-jni.a bin/main/c/*.o
 # Compile the Java interface
 #
 mkdir -p bin/main/java
-javac src/main/java/io/peacemakr/corecrypto/*.java
+javac src/main/java/io/peacemakr/corecrypto/*.java src/main/java/cz/adamh/utils/*.java
 cd src/main/java
 echo """
 Name: corecrypto
