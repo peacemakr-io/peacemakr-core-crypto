@@ -28,6 +28,6 @@ RUN mkdir -p analysis_build && cd analysis_build && /usr/bin/scan-build cmake ..
 # If you want to mount a corpus for fuzzing, mount it into /opt/CORPUS
 RUN mkdir -p /opt/CORPUS
 
-RUN mkdir -p build && cd build && CC=clang CXX=clang++ cmake .. && make check && make test_fuzz
+RUN mkdir -p build && cd build && CC=clang CXX=clang++ cmake .. -DPEACEMAKR_BUILD_CPP=ON && make check && make test_fuzz
 
 CMD /opt/build/test_fuzz /opt/CORPUS -max_len=16384 -jobs=4

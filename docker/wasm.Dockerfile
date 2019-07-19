@@ -26,7 +26,6 @@ RUN cd openssl && ./build-openssl.sh && cd ..
 
 RUN mkdir -p web-build && cd web-build && mkdir -p /opt/corecrypto-build \
 && emconfigure cmake /opt -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DPEACEMAKR_BUILD_WEB=ON \
-    -DPEACEMAKR_BUILD_GO=OFF -DPEACEMAKR_BUILD_CPP=OFF -DPEACEMAKR_BUILD_IOS=OFF \
     -DOPENSSL_ROOT_DIR=/opt/src/ffi/web/openssl/build \
     -DOPENSSL_CRYPTO_LIBRARY=/opt/src/ffi/web/openssl/build/lib/libcrypto.a \
     -DOPENSSL_SSL_LIBRARY=/opt/src/ffi/web/openssl/build/lib/libssl.a \

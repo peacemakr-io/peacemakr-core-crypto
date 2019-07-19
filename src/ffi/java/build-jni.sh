@@ -11,7 +11,7 @@ javac -h src/main/c/. src/main/java/io/peacemakr/corecrypto/*.java src/main/java
 # Build the JNI Glue.
 #
 mkdir -p bin/main/c && pushd bin/main/c
-cmake ../../../../../.. -DCMAKE_INSTALL_PREFIX=$(pwd) -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl@1.1 -DPEACEMAKR_BUILD_JAVA=ON -DPEACEMAKR_BUILD_IOS=OFF -DPEACEMAKR_BUILD_CPP=OFF -DPEACEMAKR_BUILD_GO=OFF -DPEACEMAKR_BUILD_WEB=OFF
+cmake ../../../../../.. -DCMAKE_INSTALL_PREFIX=$(pwd) -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl@1.1 -DPEACEMAKR_BUILD_JAVA=ON
 make install
 popd
 
