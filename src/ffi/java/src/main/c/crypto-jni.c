@@ -68,8 +68,8 @@ Java_io_peacemakr_corecrypto_Crypto_decryptAsymmetric(JNIEnv *env, jclass clazz,
                                                       jbyteArray ciphertext) {
   peacemakr_key_t *native_key = getNativeKey(env, key);
   crypto_config_t native_key_config = peacemakr_key_get_config(native_key);
-  if (native_key_config.asymm_cipher == RSA_2048 ||
-      native_key_config.asymm_cipher == RSA_4096) {
+  if (native_key_config.asymm_cipher != RSA_2048 &&
+      native_key_config.asymm_cipher != RSA_4096) {
     LOGE("%s\n", "Cannot call decryptAsymmetric with non-RSA key. For EC keys "
                  "call ecdhKeygen to create the symmetric encryption key and "
                  "use the symmetric functions.");
