@@ -45,7 +45,7 @@ public class NativeUtils {
      * The minimum length a prefix for a file has to have according to {@link File#createTempFile(String, String)}}.
      */
     private static final int MIN_PREFIX_LENGTH = 3;
-    public static final String NATIVE_FOLDER_PATH_PREFIX = "nativeutils";
+    public static final String NATIVE_FOLDER_PATH_PREFIX = "lib";
 
     /**
      * Temporary directory which will contain the DLLs.
@@ -94,6 +94,7 @@ public class NativeUtils {
         }
 
         File temp = new File(temporaryDir, filename);
+        temp.setExecutable(true, false);
 
         try (InputStream is = NativeUtils.class.getResourceAsStream(path)) {
             Files.copy(is, temp.toPath(), StandardCopyOption.REPLACE_EXISTING);
@@ -104,18 +105,9 @@ public class NativeUtils {
             temp.delete();
             throw new FileNotFoundException("File " + path + " was not found inside JAR.");
         }
+        temp.setExecutable(true);
 
-        try {
-            System.load(temp.getAbsolutePath());
-        } finally {
-            if (isPosixCompliant()) {
-                // Assume POSIX compliant file system, can be deleted after loading
-                temp.delete();
-            } else {
-                // Assume non-POSIX, and don't delete until last file descriptor closed
-                temp.deleteOnExit();
-            }
-        }
+        System.load(temp.getAbsolutePath());
     }
 
     private static boolean isPosixCompliant() {

@@ -33,6 +33,7 @@ Implementation-Vendor: Peacemakr Crypto Systems
 jar cfm ../../../bin/main/java/PeacemakrCoreCrypto.jar Manifest.txt io/peacemakr/corecrypto/*.class cz/adamh/utils/*.class
 cd ../../..
 cd bin/main/c
+chmod -R 755 lib/*
 jar -uf ../../../bin/main/java/PeacemakrCoreCrypto.jar lib/libpeacemakr-core-crypto-jni.*
 jar -uf ../../../bin/main/java/PeacemakrCoreCrypto.jar lib/libpeacemakr-core-crypto.*
 cd ../../..

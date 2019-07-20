@@ -6,6 +6,10 @@ import java.lang.RuntimeException;
 
 public class Crypto {
 
+    public static void init() {
+        // Need to call something to trip the JVM to hit the static load block of this class.
+    }
+
     public static boolean isWindows() {
         System.getProperty("os.name").toLowerCase();
         return (System.getProperty("os.name").toLowerCase().indexOf("win") >= 0);
@@ -27,9 +31,13 @@ public class Crypto {
     static {
         try {
             if (isMac()) {
-                NativeUtils.loadLibraryFromJar("/libpeacemakr-core-crypto-jni.dylib");
+                // This order is very important, don't flip.
+                NativeUtils.loadLibraryFromJar("/lib/libpeacemakr-core-crypto.dylib");
+                NativeUtils.loadLibraryFromJar("/lib/libpeacemakr-core-crypto-jni.dylib");
             } else if (isUnix()) {
-                NativeUtils.loadLibraryFromJar("/libpeacemakr-core-crypto-jni.so");
+                // This order is very important, don't flip.
+                NativeUtils.loadLibraryFromJar("/lib/libpeacemakr-core-crypto.so");
+                NativeUtils.loadLibraryFromJar("/lib/libpeacemakr-core-crypto-jni.so");
             } else {
                 throw new RuntimeException("Unsupported OS Detected, of " + System.getProperty("os.name").toLowerCase());
             }
