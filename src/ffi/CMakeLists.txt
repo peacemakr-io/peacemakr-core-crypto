@@ -54,7 +54,7 @@ if (PEACEMAKR_BUILD_ANDROID)
 endif(PEACEMAKR_BUILD_ANDROID)
 
 # Java-specific stuff #####
-option(PEACEMAKR_BUILD_JAVA "Whether to build the Java bindings" ON)
+option(PEACEMAKR_BUILD_JAVA "Whether to build the Java bindings" OFF)
 if (PEACEMAKR_BUILD_JAVA)
     add_subdirectory(java/src/main/c)
 endif(PEACEMAKR_BUILD_JAVA)
