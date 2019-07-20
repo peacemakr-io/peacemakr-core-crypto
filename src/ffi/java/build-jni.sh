@@ -1,32 +1,19 @@
-#!/bin/bash
+#!/bin/sh
 
 set -ex
 
 #
 # Build the JNI C headers.
 #
-javac -h src/main/c/. src/main/java/io/peacemakr/corecrypto/*.java src/main/java/cz/adamh/utils/*.java
+#javac -h src/main/c/. src/main/java/io/peacemakr/corecrypto/*.java src/main/java/cz/adamh/utils/*.java
 
 #
 # Build the JNI Glue.
 #
-mkdir -p bin/main/c && pushd bin/main/c
+mkdir -p bin/main/c && cd bin/main/c
 cmake ../../../../../.. -DCMAKE_INSTALL_PREFIX=$(pwd) -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl@1.1 -DPEACEMAKR_BUILD_JAVA=ON
 make install
-popd
-# mkdir -p bin/main/c
-# gcc -I${JAVA_HOME}/include -I${JAVA_HOME}/include/linux -I${JAVA_HOME}/include/darwin -c src/main/c/*.c
-# ar rcs bin/main/c/libpeacemakr-core-crypto-jni.a bin/main/c/*.o
-
-#
-# Mac dylib
-#
-g++ -dynamiclib bin/main/c/*.o -o bin/main/c/libpeacemakr-core-crypto-jni.dylib
-
-#
-# Linux .so
-#
-gcc -shared -o bin/main/c/libpeacemakr-core-crypto-jni.so -fPIC bin/main/c/*.o
+cd ../../..
 
 #
 # Compile the Java interface

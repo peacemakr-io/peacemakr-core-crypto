@@ -29,7 +29,7 @@ public class Crypto {
             if (isMac()) {
                 NativeUtils.loadLibraryFromJar("/libpeacemakr-core-crypto-jni.dylib");
             } else if (isUnix()) {
-                NativeUtils.loadLibraryFromJar("/libpeacemakr-core-crypto-jni.os");
+                NativeUtils.loadLibraryFromJar("/libpeacemakr-core-crypto-jni.so");
             } else {
                 throw new RuntimeException("Unsupported OS Detected, of " + System.getProperty("os.name").toLowerCase());
             }
