@@ -64,10 +64,10 @@ public class Crypto {
     public native static byte[] getCiphertextAAD(byte[] ciphertext);
 
     public native static byte[] decryptSymmetric(byte[] key,
-                                                 SymmetricCipher mode,
                                                  AsymmetricKey verificationKey,
                                                  byte[] ciphertext);
 
     public native static byte[] decryptAsymmetric(AsymmetricKey key,
+                                                  AsymmetricKey verificationKey,
                                                   byte[] ciphertext);
 }
