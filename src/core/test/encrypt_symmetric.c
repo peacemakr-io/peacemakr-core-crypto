@@ -273,6 +273,7 @@ int main() {
 
   for (int i = AES_128_GCM; i <= CHACHA20_POLY1305; ++i) {
     test_symmetric_algo(i);
+    test_symmetric_algo_wrong_decrypt_cipher(i);
     test_wrong_key(i);
   }
 
