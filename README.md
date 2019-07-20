@@ -8,6 +8,10 @@ This package defines the core crypto functionality for peacemakr.
 From the repository base directory,
 `./bin/serve-docs.sh` will set up a docker image that serves the doxygen docs on `localhost:3000`
 
+## Make sure you have OpenSSL 1.1 or greater installed:
+
+`brew install openssl@1.1`
+
 ## Build Dependencies - Golang
 `docker build -t corecrypto-dependencies:latest . -f docker/go-dependencies.Dockerfile --build-arg="CMAKE_BUILD_TYPE=RELEASE"`
 `docker tag corecrypto-dependencies:latest 716293438869.dkr.ecr.us-east-2.amazonaws.com/corecrypto-dependencies:latest`
@@ -30,7 +34,6 @@ For a debug build
 ## Build - For iOS
 `cd /path/to/peacemakr-core-crypto/bin && ./release-ios.sh /where/to/put/build/artifacts [is_first_build]`
 
-Make sure you have OpenSSL 1.1 or greater installed - `brew install openssl@1.1`
 
 ## Build - For Android (doesn't work yet)
 `cd /path/to/peacemakr-core-crypto/bin && ANDROID_NDK_ROOT=/path/to/android/ndk-bundle ./release-android.sh /where/to/put/build/artifacts [is_first_build]`
