@@ -26,23 +26,9 @@ set(CMAKE_C_FLAGS_DEBUG "-O0 -g -fstack-protector-strong")
 
 set(ALL_C_SOURCE_FILES "")
 
-if (ANDROID_ABI)
-    set(OPENSSL_ROOT_DIR ${OPENSSL_ROOT_DIR}/${ANDROID_ABI} CACHE PATH "" FORCE)
-    set(OPENSSL_INCLUDE_DIR ${OPENSSL_ROOT_DIR}/include)
-    include_directories(${OPENSSL_INCLUDE_DIR})
-
-    set(OPENSSL_SSL_LIBRARY ${OPENSSL_ROOT_DIR}/lib/libssl.a)
-    add_library(OpenSSL::SSL SHARED IMPORTED)
-    set_target_properties(OpenSSL::SSL PROPERTIES IMPORTED_LOCATION ${OPENSSL_SSL_LIBRARY})
-
-    set(OPENSSL_CRYPTO_LIBRARY ${OPENSSL_ROOT_DIR}/lib/libcrypto.a)
-    add_library(OpenSSL::Crypto SHARED IMPORTED)
-    set_target_properties(OpenSSL::Crypto PROPERTIES IMPORTED_LOCATION ${OPENSSL_CRYPTO_LIBRARY})
-else (ANDROID_ABI)
-    set(CMAKE_FIND_LIBRARY_SUFFIXES .a)
-    set(OPENSSL_USE_STATIC_LIBS TRUE)
-    find_package(OpenSSL 1.1 REQUIRED)
-endif (ANDROID_ABI)
+set(CMAKE_FIND_LIBRARY_SUFFIXES .a)
+set(OPENSSL_USE_STATIC_LIBS TRUE)
+find_package(OpenSSL 1.1 REQUIRED)
 
 add_subdirectory(src/core)
 add_subdirectory(src/ffi)
