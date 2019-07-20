@@ -61,9 +61,9 @@ void test_symmetric_algo(symmetric_cipher cipher) {
 void test_symmetric_algo_wrong_decrypt_cipher(symmetric_cipher cipher) {
 
   plaintext_t plaintext_in = {.data = (const unsigned char *)message,
-          .data_len = strlen(message) + 1,
-          .aad = (const unsigned char *)message_aad,
-          .aad_len = strlen(message_aad) + 1};
+                              .data_len = strlen(message) + 1,
+                              .aad = (const unsigned char *)message_aad,
+                              .aad_len = strlen(message_aad) + 1};
 
   plaintext_t plaintext_out;
 
@@ -71,16 +71,18 @@ void test_symmetric_algo_wrong_decrypt_cipher(symmetric_cipher cipher) {
 
   peacemakr_key_t *original_key = peacemakr_key_new_symmetric(cipher, &rand);
 
-  ciphertext_blob_t *ciphertext = peacemakr_encrypt(original_key, &plaintext_in, &rand);
+  ciphertext_blob_t *ciphertext =
+      peacemakr_encrypt(original_key, &plaintext_in, &rand);
   assert(ciphertext != NULL);
 
   uint8_t *key_bytes = NULL;
   size_t key_size = 0;
   assert(peacemakr_key_get_bytes(original_key, &key_bytes, &key_size));
 
-  peacemakr_key_t *key = peacemakr_key_new_bytes(SYMMETRIC_UNSPECIFIED, key_bytes, key_size);
+  peacemakr_key_t *key =
+      peacemakr_key_new_bytes(SYMMETRIC_UNSPECIFIED, key_bytes, key_size);
   free(key_bytes);
-  
+
   plaintext_t aad;
   assert(peacemakr_get_unverified_aad(ciphertext, &aad));
   assert(memcmp(aad.aad, plaintext_in.aad, plaintext_in.aad_len) == 0);
