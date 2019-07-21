@@ -5,10 +5,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Arrays;
-
-import static org.junit.Assert.*;
-
 public class AsymmetricKeyTest {
 
     @Before
@@ -23,11 +19,12 @@ public class AsymmetricKeyTest {
     @Test
     public void newKey() throws Exception {
         AsymmetricKey key = AsymmetricKey.fromPRNG(AsymmetricCipher.ECDH_P256, SymmetricCipher.CHACHA20_POLY1305);
-        System.out.println(key.getPrivPemStr());
 
-        AsymmetricKey peerKey = AsymmetricKey.fromPRNG(AsymmetricCipher.ECDH_P256, SymmetricCipher.CHACHA20_POLY1305);
-        byte[] symmKey = key.ecdhKeygen(SymmetricCipher.CHACHA20_POLY1305, peerKey);
-        System.out.println(Arrays.toString(symmKey));
+        String pubPem = key.getPubPemStr();
+        String privPem = key.getPrivPemStr();
+
+        Assert.assertEquals(pubPem, key.getPubPemStr());
+        Assert.assertEquals(privPem, key.getPrivPemStr());
     }
 
     @Test
@@ -37,12 +34,14 @@ public class AsymmetricKeyTest {
         AsymmetricKey peerKey = AsymmetricKey.fromPRNG(AsymmetricCipher.ECDH_P256, SymmetricCipher.SYMMETRIC_UNSPECIFIED);
         byte[] symmKey = key.ecdhKeygen(SymmetricCipher.CHACHA20_POLY1305, peerKey);
 
-//        byte[] plaintext = "Hello, world!".getBytes();
-//        byte[] aad = "AAD".getBytes();
-//
-//        byte[] encrypted = Crypto.encryptSymmetric(symmKey, SymmetricCipher.CHACHA20_POLY1305, key, plaintext, aad, Crypto.MessageDigest.SHA_256);
-//        byte[] decrypted = Crypto.decryptSymmetric(symmKey, key, encrypted);
-//
-//        Assert.assertArrayEquals(plaintext, decrypted);
+        byte[] plaintext = "Hello, world!".getBytes();
+        byte[] aad = "AAD".getBytes();
+
+        byte[] encrypted = Crypto.encryptSymmetric(symmKey, SymmetricCipher.CHACHA20_POLY1305, key, plaintext, aad, MessageDigest.SHA_256);
+        byte[] gotAAD = Crypto.getCiphertextAAD(encrypted);
+        Assert.assertArrayEquals(aad, gotAAD);
+
+        byte[] decrypted = Crypto.decryptSymmetric(symmKey, key, encrypted);
+        Assert.assertArrayEquals(plaintext, decrypted);
     }
 }

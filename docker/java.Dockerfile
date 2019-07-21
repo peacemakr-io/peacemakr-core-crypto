@@ -24,4 +24,4 @@ RUN mkdir -p build && cd build \
 && make check
 
 WORKDIR /opt/src/ffi/java
-RUN ./build-jni.sh
+RUN ./gradlew test

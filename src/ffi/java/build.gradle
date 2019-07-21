@@ -8,12 +8,12 @@ task setupBuildDir(type:Exec) {
 
 task setupNativeDir(type:Exec) {
     workingDir buildDir.path
-    commandLine 'mkdir', '-p', 'native-libs'
+    commandLine 'mkdir', '-p', 'native'
     dependsOn += 'setupBuildDir'
 }
 
 task cmake(type:Exec) {
-    workingDir buildDir.path + "/native-libs"
+    workingDir buildDir.path + "/native"
 
     commandLine 'cmake', '../../../../..',
                 '-DCMAKE_INSTALL_PREFIX=../../src/main/resources',
@@ -24,15 +24,16 @@ task cmake(type:Exec) {
 }
 
 task makeInstall(type:Exec) {
-    workingDir buildDir.path + "/native-libs"
+    workingDir buildDir.path + "/native"
     commandLine 'make', 'install'
 
     dependsOn += 'cmake'
 }
 compileJava.dependsOn += 'makeInstall'
+test.dependsOn += 'makeInstall'
 
 task removeInstall(type:Exec) {
-    commandLine 'rm', '-rf', 'src/main/resources/*'
+    commandLine 'rm', '-rf', 'src/main/resources/include', 'src/main/resources/lib'
 }
 clean.dependsOn += 'removeInstall'
 

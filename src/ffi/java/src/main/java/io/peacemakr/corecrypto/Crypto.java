@@ -48,13 +48,6 @@ public class Crypto {
 
     }
 
-    public enum MessageDigest {
-        SHA_224,
-        SHA_256,
-        SHA_384,
-        SHA_512
-    }
-
     public native static byte[] encryptSymmetric(byte[] encryptionKey,
                                                  SymmetricCipher mode,
                                                  AsymmetricKey signingKey,
