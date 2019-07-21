@@ -6,3 +6,4 @@ openssl-*/
 local.properties
 io_peacemakr_corecrypto_*.h
 Manifest.txt
+.idea/
