@@ -8,6 +8,7 @@ public class Crypto {
 
     public static void init() {
         // Need to call something to trip the JVM to hit the static load block of this class.
+        nativeInit();
     }
 
     public static boolean isWindows() {
@@ -42,7 +43,7 @@ public class Crypto {
                 throw new RuntimeException("Unsupported OS Detected, of " + System.getProperty("os.name").toLowerCase());
             }
         } catch (IOException e) {
-            System.err.println("Failed to laod the native jni crypto from jar due to " + e.getMessage());
+            System.err.println("Failed to load the native jni crypto from jar due to " + e.getMessage());
         }
 
     }
@@ -70,4 +71,6 @@ public class Crypto {
     public native static byte[] decryptAsymmetric(AsymmetricKey key,
                                                   AsymmetricKey verificationKey,
                                                   byte[] ciphertext);
+
+    private native static void nativeInit();
 }

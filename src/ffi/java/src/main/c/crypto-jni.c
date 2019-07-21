@@ -18,12 +18,6 @@ extern "C" {
 #include "crypto.h"
 #include "random.h"
 
-/*
- * Class:     io_peacemakr_corecrypto_Crypto
- * Method:    encryptSymmetric
- * Signature:
- * ([BLio/peacemakr/corecrypto/SymmetricCipher;Lio/peacemakr/corecrypto/AsymmetricKey;[B[BLio/peacemakr/corecrypto/Crypto/MessageDigest;)[B
- */
 JNIEXPORT jbyteArray JNICALL
 Java_io_peacemakr_corecrypto_Crypto_encryptSymmetric(
     JNIEnv *env, jclass clazz, jbyteArray key, jobject symm_cipher,
@@ -97,11 +91,6 @@ Java_io_peacemakr_corecrypto_Crypto_encryptSymmetric(
   return out;
 }
 
-/*
- * Class:     io_peacemakr_corecrypto_Crypto
- * Method:    getCiphertextAAD
- * Signature: ([B)[B
- */
 JNIEXPORT jbyteArray JNICALL
 Java_io_peacemakr_corecrypto_Crypto_getCiphertextAAD(JNIEnv *env, jclass clazz,
                                                      jbyteArray ciphertext) {
@@ -131,12 +120,6 @@ Java_io_peacemakr_corecrypto_Crypto_getCiphertextAAD(JNIEnv *env, jclass clazz,
   return out;
 }
 
-/*
- * Class:     io_peacemakr_corecrypto_Crypto
- * Method:    decryptSymmetric
- * Signature:
- * ([BLio/peacemakr/corecrypto/SymmetricCipher;Lio/peacemakr/corecrypto/AsymmetricKey;[B)[B
- */
 JNIEXPORT jbyteArray JNICALL
 Java_io_peacemakr_corecrypto_Crypto_decryptSymmetric(JNIEnv *env, jclass clazz,
                                                      jbyteArray key,
@@ -283,6 +266,14 @@ Java_io_peacemakr_corecrypto_Crypto_decryptAsymmetric(JNIEnv *env, jclass clazz,
   free((void *)plaintext.aad);
 
   return out;
+}
+
+JNIEXPORT void JNICALL
+Java_io_peacemakr_corecrypto_Crypto_nativeInit(JNIEnv *env, jclass clazz) {
+  if (!peacemakr_init()) {
+    (*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Exception"),
+                     "Failed to initialize native lib");
+  }
 }
 
 #ifdef __cplusplus

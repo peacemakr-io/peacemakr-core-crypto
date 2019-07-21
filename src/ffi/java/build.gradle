@@ -1,0 +1,69 @@
+plugins {
+    id 'java'
+}
+
+task setupBuildDir(type:Exec) {
+    commandLine 'mkdir', '-p', buildDir.path
+}
+
+task setupNativeDir(type:Exec) {
+    workingDir buildDir.path
+    commandLine 'mkdir', '-p', 'native-libs'
+    dependsOn += 'setupBuildDir'
+}
+
+task cmake(type:Exec) {
+    workingDir buildDir.path + "/native-libs"
+
+    commandLine 'cmake', '../../../../..',
+                '-DCMAKE_INSTALL_PREFIX=../../src/main/resources',
+                '-DOPENSSL_ROOT_DIR=/usr/local/opt/openssl@1.1',
+                '-DPEACEMAKR_BUILD_JAVA=ON'
+
+    dependsOn += 'setupNativeDir'
+}
+
+task makeInstall(type:Exec) {
+    workingDir buildDir.path + "/native-libs"
+    commandLine 'make', 'install'
+
+    dependsOn += 'cmake'
+}
+compileJava.dependsOn += 'makeInstall'
+
+task removeInstall(type:Exec) {
+    commandLine 'rm', '-rf', 'src/main/resources/*'
+}
+clean.dependsOn += 'removeInstall'
+
+sourceSets {
+    main {
+        java {
+            srcDirs += ['src/main/java']
+        }
+    }
+}
+
+jar {
+    baseName = "PeacemakrCoreCrypto"
+    version = "0.0.1"
+    manifest {
+        attributes (
+            'Name': 'corecrypto',
+            'Specification-Title': 'Peacemakr Core Crypto Library',
+            'Specification-Version': '1.0',
+            'Specification-Vendor': 'Peacemakr Crypto Systems',
+            'Implementation-Title': 'io.peacemakr.corecrypto',
+            'Implementation-Version': '0',
+            'Implementation-Vendor': 'Peacemakr Crypto Systems',
+        )
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testCompile "junit:junit:4.12"
+}
