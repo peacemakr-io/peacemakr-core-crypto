@@ -247,9 +247,15 @@ peacemakr_key_t *peacemakr_key_new_bytes(symmetric_cipher cipher,
                                          const size_t buf_len) {
   EXPECT_NOT_NULL_RET(buf, "buffer is null\n")
 
+  // If the cipher is not specified, then assume it's some default value.
   const EVP_CIPHER *evp_cipher = parse_cipher(cipher);
-  size_t keylen = (size_t)EVP_CIPHER_key_length(evp_cipher);
-  EXPECT_TRUE_RET((buf_len >= keylen), "byte buffer was too small\n")
+  size_t keylen;
+  if (evp_cipher != NULL) {
+    keylen = (size_t)EVP_CIPHER_key_length(evp_cipher);
+    EXPECT_TRUE_RET((buf_len >= keylen), "byte buffer was too small\n")
+  } else {
+    keylen = buf_len;
+  }
 
   peacemakr_key_t *out = malloc(sizeof(peacemakr_key_t));
   EXPECT_NOT_NULL_RET(out, "Malloc failed!\n")
