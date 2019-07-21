@@ -8,17 +8,17 @@ set -ex
 #
 # Cleanup crap from previous builds
 #
-rm -rf src/ffi/java/bin/main/java || true
+rm -rf src/ffi/java/build || true
 rm -rf *.jar || true
 
 #
 # Actually build it.
 #
 cd src/ffi/java
-./build-jni.sh $@
+./gradlew jar
 cd ../../..
 
 #
 # Make it obvious where the artifact is.
 #
-cp src/ffi/java/bin/main/java/*.jar .
+cp src/ffi/java/build/libs/*.jar ${1}
