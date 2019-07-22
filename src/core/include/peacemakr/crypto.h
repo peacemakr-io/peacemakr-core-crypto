@@ -206,8 +206,7 @@ peacemakr_key_new_from_master(symmetric_cipher cipher,
  * algorithm specified is not an RSA algorithm.
  */
 PEACEMAKR_EXPORT peacemakr_key_t *
-peacemakr_key_new_pem_pub(asymmetric_cipher cipher,
-                          symmetric_cipher symm_cipher, const char *buf,
+peacemakr_key_new_pem_pub(symmetric_cipher symm_cipher, const char *buf,
                           size_t buflen);
 
 /**
@@ -219,8 +218,7 @@ peacemakr_key_new_pem_pub(asymmetric_cipher cipher,
  * algorithm specified is not an RSA algorithm.
  */
 PEACEMAKR_EXPORT peacemakr_key_t *
-peacemakr_key_new_pem_priv(asymmetric_cipher cipher,
-                           symmetric_cipher symm_cipher, const char *buf,
+peacemakr_key_new_pem_priv(symmetric_cipher symm_cipher, const char *buf,
                            size_t buflen);
 
 /**
