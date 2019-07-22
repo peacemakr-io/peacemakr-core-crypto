@@ -5,7 +5,7 @@ jobs:
     steps:
       - checkout
       - run: docker build -t corecrypto-dependencies:latest . -f docker/go-dependencies.Dockerfile --build-arg="CMAKE_BUILD_TYPE=DEBUG"
-      - run: docker build -t corecrypto-wasm:latest . -f docker/wasm.Dockerfile
+      # - run: docker build -t corecrypto-wasm:latest . -f docker/wasm.Dockerfile
       - run: docker build -t corecrypto:latest . -f docker/go.Dockerfile
       - run: |
           if [ "${CIRCLE_BRANCH}" = "master" ]; then
