@@ -1,6 +1,6 @@
 package io.peacemakr.corecrypto;
 
-public class AsymmetricKey {
+public class AsymmetricKey implements AutoCloseable {
 
 	private long nativeKey;
 
@@ -15,7 +15,8 @@ public class AsymmetricKey {
     // Deallocates asymmetricKeyPtr
 	private native void cleanup();
 
-	public void finalize() {
+	@Override
+	public void close() {
 	    cleanup();
 	}
 }
