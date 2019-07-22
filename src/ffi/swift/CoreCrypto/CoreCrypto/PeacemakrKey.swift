@@ -44,12 +44,12 @@ public class PeacemakrKey {
     internalRepr = key
   }
 
-  public init?(asymmCipher: AsymmetricCipher, symmCipher: SymmetricCipher, fileContents: String, isPriv: Bool) {
+  public init?(symmCipher: SymmetricCipher, fileContents: String, isPriv: Bool) {
     let key = fileContents.withCString { (fileContentsPtr: UnsafePointer<CChar>) -> OpaquePointer in
       if isPriv {
-        return peacemakr_key_new_pem_priv(asymmetric_cipher(rawValue: asymmCipher.rawValue), symmetric_cipher(rawValue: symmCipher.rawValue), fileContentsPtr, fileContents.count)!
+        return peacemakr_key_new_pem_priv(symmetric_cipher(rawValue: symmCipher.rawValue), fileContentsPtr, fileContents.count)!
       } else {
-        return peacemakr_key_new_pem_pub(asymmetric_cipher(rawValue: asymmCipher.rawValue), symmetric_cipher(rawValue: symmCipher.rawValue), fileContentsPtr, fileContents.count)!
+        return peacemakr_key_new_pem_pub(symmetric_cipher(rawValue: symmCipher.rawValue), fileContentsPtr, fileContents.count)!
       }
     }
     

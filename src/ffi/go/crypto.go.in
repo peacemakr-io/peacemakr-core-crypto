@@ -244,19 +244,19 @@ func newPeacemakrKeyFromPassword(cipher SymmetricCipher, digest MessageDigestAlg
 	}
 }
 
-func newPeacemakrKeyFromPubPem(asymm AsymmetricCipher, symm SymmetricCipher, contents []byte) *PeacemakrKey {
+func newPeacemakrKeyFromPubPem(symm SymmetricCipher, contents []byte) *PeacemakrKey {
 	cBytes := (*C.char)(C.CBytes(contents))
 	defer C.free(unsafe.Pointer(cBytes))
 	return &PeacemakrKey{
-		key: C.peacemakr_key_new_pem_pub((C.asymmetric_cipher)(asymm), (C.symmetric_cipher)(symm), cBytes, C.size_t(len(contents))),
+		key: C.peacemakr_key_new_pem_pub((C.symmetric_cipher)(symm), cBytes, C.size_t(len(contents))),
 	}
 }
 
-func newPeacemakrKeyFromPrivPem(asymm AsymmetricCipher, symm SymmetricCipher, contents []byte) *PeacemakrKey {
+func newPeacemakrKeyFromPrivPem(symm SymmetricCipher, contents []byte) *PeacemakrKey {
 	cBytes := (*C.char)(C.CBytes(contents))
 	defer C.free(unsafe.Pointer(cBytes))
 	return &PeacemakrKey{
-		key: C.peacemakr_key_new_pem_priv((C.asymmetric_cipher)(asymm), (C.symmetric_cipher)(symm), cBytes, C.size_t(len(contents))),
+		key: C.peacemakr_key_new_pem_priv((C.symmetric_cipher)(symm), cBytes, C.size_t(len(contents))),
 	}
 }
 
@@ -464,21 +464,11 @@ func SymmetricKeyFromPasswordAndSalt(keylenBits int, passwordStr string, salt []
 
 
 func NewPublicKeyFromPEM(symm SymmetricCipher, contents string) (*PeacemakrKey, error) {
-	cfg, err := GetConfigFromPubKey(contents)
-	if err != nil {
-		return nil, err
-	}
-
-	return newPeacemakrKeyFromPubPem(cfg, symm, []byte(contents)), nil
+	return newPeacemakrKeyFromPubPem(symm, []byte(contents)), nil
 }
 
 func NewPrivateKeyFromPEM(symm SymmetricCipher, contents string) (*PeacemakrKey, error) {
-	cfg, err := GetConfigFromPrivKey(contents)
-	if err != nil {
-		return nil, err
-	}
-
-	return newPeacemakrKeyFromPrivPem(cfg, symm, []byte(contents)), nil
+	return newPeacemakrKeyFromPrivPem(symm, []byte(contents)), nil
 }
 
 // ========================= Operations to do on keys =========================

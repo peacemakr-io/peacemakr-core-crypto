@@ -39,15 +39,15 @@ JNIEXPORT jobject JNICALL Java_io_peacemakr_corecrypto_AsymmetricKey_fromPRNG(
 }
 
 JNIEXPORT jobject JNICALL Java_io_peacemakr_corecrypto_AsymmetricKey_fromPubPem(
-    JNIEnv *env, jclass clazz, jobject asymm_cipher, jobject symm_cipher,
-    jstring pub_pem) {
+    JNIEnv *env, jclass clazz, jobject symm_cipher, jstring pub_pem) {
 
-  const jchar *raw_buf = (*env)->GetStringChars(env, pub_pem, NULL);
+  jboolean is_copy = false;
+  const jchar *raw_buf = (*env)->GetStringChars(env, pub_pem, &is_copy);
   const jsize buf_len = (*env)->GetStringLength(env, pub_pem);
 
+  LOGE("%s\n", raw_buf);
+
   peacemakr_key_t *asymm_key = peacemakr_key_new_pem_pub(
-      unwrapEnumToInt(env, asymm_cipher,
-                      "io/peacemakr/corecrypto/AsymmetricCipher"),
       unwrapEnumToInt(env, symm_cipher,
                       "io/peacemakr/corecrypto/SymmetricCipher"),
       (const char *)raw_buf, buf_len);
@@ -66,15 +66,13 @@ JNIEXPORT jobject JNICALL Java_io_peacemakr_corecrypto_AsymmetricKey_fromPubPem(
 JNIEXPORT jobject JNICALL
 Java_io_peacemakr_corecrypto_AsymmetricKey_fromPrivPem(JNIEnv *env,
                                                        jclass clazz,
-                                                       jobject asymm_cipher,
                                                        jobject symm_cipher,
                                                        jstring priv_pem) {
-  const jchar *raw_buf = (*env)->GetStringChars(env, priv_pem, NULL);
+  jboolean is_copy = false;
+  const jchar *raw_buf = (*env)->GetStringChars(env, priv_pem, &is_copy);
   const jsize buf_len = (*env)->GetStringLength(env, priv_pem);
 
   peacemakr_key_t *asymm_key = peacemakr_key_new_pem_priv(
-      unwrapEnumToInt(env, asymm_cipher,
-                      "io/peacemakr/corecrypto/AsymmetricCipher"),
       unwrapEnumToInt(env, symm_cipher,
                       "io/peacemakr/corecrypto/SymmetricCipher"),
       (const char *)raw_buf, buf_len);

@@ -66,8 +66,8 @@ Java_io_peacemakr_corecrypto_Crypto_encryptSymmetric(
     return NULL;
   }
 
-  message_digest_algorithm digest_algo = unwrapEnumToInt(
-      env, digest, "io/peacemakr/corecrypto/MessageDigest");
+  message_digest_algorithm digest_algo =
+      unwrapEnumToInt(env, digest, "io/peacemakr/corecrypto/MessageDigest");
 
   if (sign_native_key != NULL) {
     peacemakr_sign(sign_native_key, &plain, digest_algo, encrypted);

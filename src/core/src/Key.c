@@ -361,8 +361,7 @@ peacemakr_key_new_from_master(symmetric_cipher cipher,
   return peacemakr_key_new_bytes(cipher, output_bytes, keybytes);
 }
 
-peacemakr_key_t *peacemakr_key_new_pem(asymmetric_cipher cipher,
-                                       symmetric_cipher symm_cipher,
+peacemakr_key_t *peacemakr_key_new_pem(symmetric_cipher symm_cipher,
                                        const char *buf, size_t buflen,
                                        bool is_priv) {
 
@@ -374,85 +373,84 @@ peacemakr_key_t *peacemakr_key_new_pem(asymmetric_cipher cipher,
   EXPECT_NOT_NULL_RET(out, "Malloc failed!\n")
 
   out->m_cfg_.mode = ASYMMETRIC;
-  out->m_cfg_.symm_cipher = SYMMETRIC_UNSPECIFIED;
-  out->m_cfg_.asymm_cipher = cipher;
+  out->m_cfg_.symm_cipher = symm_cipher;
   out->m_cfg_.digest_algorithm = DIGEST_UNSPECIFIED;
 
   out->m_contents_.asymm = NULL;
 
   BIO *bo = BIO_new_mem_buf(buf, (int)buflen);
 
-  if (cipher == ECDH_P256 || cipher == ECDH_P384 || cipher == ECDH_P521) {
-    if (is_priv) {
-      out->m_contents_.asymm = PEM_read_bio_PrivateKey(bo, NULL, NULL, NULL);
-      EXPECT_NOT_NULL_CLEANUP_RET(
-          out->m_contents_.asymm,
-          {
-            BIO_free(bo);
-            peacemakr_key_free(out);
-          },
-          "PEM_read_bio_ECPrivateKey failed\n")
-    } else {
-      out->m_contents_.asymm = PEM_read_bio_PUBKEY(bo, NULL, NULL, NULL);
-      EXPECT_NOT_NULL_CLEANUP_RET(
-          out->m_contents_.asymm,
-          {
-            BIO_free(bo);
-            peacemakr_key_free(out);
-          },
-          "PEM_read_bio_EC_PUBKEY failed\n")
-    }
+  if (is_priv) {
+    out->m_contents_.asymm = PEM_read_bio_PrivateKey(bo, NULL, NULL, NULL);
+    EXPECT_NOT_NULL_CLEANUP_RET(
+        out->m_contents_.asymm,
+        {
+          BIO_free(bo);
+          peacemakr_key_free(out);
+        },
+        "PEM_read_bio_ECPrivateKey failed\n")
+  } else {
+    out->m_contents_.asymm = PEM_read_bio_PUBKEY(bo, NULL, NULL, NULL);
+    EXPECT_NOT_NULL_CLEANUP_RET(
+        out->m_contents_.asymm,
+        {
+          BIO_free(bo);
+          peacemakr_key_free(out);
+        },
+        "PEM_read_bio_EC_PUBKEY failed\n")
+  }
 
-  } else if (cipher == RSA_2048 || cipher == RSA_4096) {
-    if (symm_cipher == SYMMETRIC_UNSPECIFIED) {
-      PEACEMAKR_ERROR("Must specify a symmetric algorithm for RSA keys\n");
+  int pkeyID = EVP_PKEY_id(out->m_contents_.asymm);
+
+  switch (pkeyID) {
+  // ECDH
+  case NID_X9_62_id_ecPublicKey: {
+    EC_KEY *k = EVP_PKEY_get0_EC_KEY(out->m_contents_.asymm);
+    const EC_GROUP *group = EC_KEY_get0_group(k);
+    int curve_name = EC_GROUP_get_curve_name(group);
+    if (curve_name == NID_X9_62_prime256v1) {
+      out->m_cfg_.asymm_cipher = ECDH_P256;
+    } else if (curve_name == NID_secp384r1) {
+      out->m_cfg_.asymm_cipher = ECDH_P384;
+    } else if (curve_name == NID_secp521r1) {
+      out->m_cfg_.asymm_cipher = ECDH_P521;
+    } else {
+      PEACEMAKR_ERROR("Unknown EC key size\n");
       BIO_free(bo);
       peacemakr_key_free(out);
       return NULL;
     }
 
-    out->m_cfg_.symm_cipher = symm_cipher;
-    RSA *rsaKey = NULL;
-    if (is_priv) {
-      out->m_contents_.asymm = PEM_read_bio_PrivateKey(bo, NULL, NULL, NULL);
-      EXPECT_NOT_NULL_CLEANUP_RET(
-          out->m_contents_.asymm,
-          {
-            BIO_free(bo);
-            peacemakr_key_free(out);
-          },
-          "PEM_read_bio_PrivateKey failed\n")
-    } else {
-      if (!PEM_read_bio_RSA_PUBKEY(bo, &rsaKey, NULL, NULL)) {
-        PEACEMAKR_ERROR("PEM_read_bio_RSA_PUBKEY failed\n");
-        BIO_free(bo);
-        peacemakr_key_free(out);
-        RSA_free(rsaKey);
-        return NULL;
-      }
+    break;
+  }
 
-      out->m_contents_.asymm = EVP_PKEY_new();
-      if (1 != EVP_PKEY_assign_RSA(out->m_contents_.asymm, rsaKey)) {
-        PEACEMAKR_ERROR("EVP_PKEY_assign_RSA failed\n");
-        BIO_free(bo);
-        RSA_free(rsaKey);
-        peacemakr_key_free(out);
-        return NULL;
-      }
-      EXPECT_NOT_NULL_CLEANUP_RET(
-          out->m_contents_.asymm,
-          {
-            BIO_free(bo);
-            peacemakr_key_free(out);
-            RSA_free(rsaKey);
-          },
-          "PEM_read_bio_PUBKEY failed\n")
+  // RSA
+  case NID_rsaEncryption:
+  case NID_rsa: {
+    RSA *rsa = EVP_PKEY_get0_RSA(out->m_contents_.asymm);
+    int rsa_size = RSA_size(rsa);
+
+    if (rsa_size == 256) {
+      out->m_cfg_.asymm_cipher = RSA_2048;
+    } else if (rsa_size == 512) {
+      out->m_cfg_.asymm_cipher = RSA_4096;
+    } else {
+      PEACEMAKR_ERROR("Unknown RSA size\n");
+      BIO_free(bo);
+      peacemakr_key_free(out);
+      return NULL;
     }
-  } else {
+
+    break;
+  }
+
+  // And by default we don't know
+  default: {
     PEACEMAKR_ERROR("Unknown asymmetric algorithm\n");
     BIO_free(bo);
     peacemakr_key_free(out);
     return NULL;
+  }
   }
 
   BIO_free(bo);
@@ -460,16 +458,14 @@ peacemakr_key_t *peacemakr_key_new_pem(asymmetric_cipher cipher,
   return out;
 }
 
-peacemakr_key_t *peacemakr_key_new_pem_pub(asymmetric_cipher cipher,
-                                           symmetric_cipher symm_cipher,
+peacemakr_key_t *peacemakr_key_new_pem_pub(symmetric_cipher symm_cipher,
                                            const char *buf, size_t buflen) {
-  return peacemakr_key_new_pem(cipher, symm_cipher, buf, buflen, false);
+  return peacemakr_key_new_pem(symm_cipher, buf, buflen, false);
 }
 
-peacemakr_key_t *peacemakr_key_new_pem_priv(asymmetric_cipher cipher,
-                                            symmetric_cipher symm_cipher,
+peacemakr_key_t *peacemakr_key_new_pem_priv(symmetric_cipher symm_cipher,
                                             const char *buf, size_t buflen) {
-  return peacemakr_key_new_pem(cipher, symm_cipher, buf, buflen, true);
+  return peacemakr_key_new_pem(symm_cipher, buf, buflen, true);
 }
 
 peacemakr_key_t *peacemakr_key_dh_generate(symmetric_cipher cipher,

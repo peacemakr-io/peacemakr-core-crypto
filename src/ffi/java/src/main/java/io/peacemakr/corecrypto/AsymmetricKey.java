@@ -5,8 +5,8 @@ public class AsymmetricKey {
 	private long nativeKey;
 
     public static native AsymmetricKey fromPRNG(AsymmetricCipher type, SymmetricCipher symmetricType);
-	public static native AsymmetricKey fromPubPem(AsymmetricCipher type, SymmetricCipher symmetricType, String pubPem);
-	public static native AsymmetricKey fromPrivPem(AsymmetricCipher type, SymmetricCipher symmetricType, String privPem);
+	public static native AsymmetricKey fromPubPem(SymmetricCipher symmetricType, String pubPem);
+	public static native AsymmetricKey fromPrivPem(SymmetricCipher symmetricType, String privPem);
 	public native String getPubPemStr();
 	public native String getPrivPemStr();
 

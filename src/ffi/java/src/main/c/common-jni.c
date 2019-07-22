@@ -14,8 +14,7 @@ extern "C" {
 
 uint32_t unwrapEnumToInt(JNIEnv *env, jobject asymm_cipher, const char *class) {
   jclass clazz = (*env)->FindClass(env, class);
-  jmethodID getOrdinalValue =
-      (*env)->GetMethodID(env, clazz, "ordinal", "()I");
+  jmethodID getOrdinalValue = (*env)->GetMethodID(env, clazz, "ordinal", "()I");
   jint value = (*env)->CallIntMethod(env, asymm_cipher, getOrdinalValue);
   if (value < 0) {
     LOGE("Invalid value for %s: %d", class, value);

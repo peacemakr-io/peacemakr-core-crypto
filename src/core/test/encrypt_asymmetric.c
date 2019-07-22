@@ -108,8 +108,8 @@ void test_create_key(symmetric_cipher symm_cipher, asymmetric_cipher cipher) {
       peacemakr_deserialize(serialized, b64_size, &cfg);
   free(serialized);
 
-  peacemakr_key_t *key_from_pem = peacemakr_key_new_pem_priv(
-      cfg.asymm_cipher, cfg.symm_cipher, pembuf, pembufsize);
+  peacemakr_key_t *key_from_pem =
+      peacemakr_key_new_pem_priv(cfg.symm_cipher, pembuf, pembufsize);
   free(pembuf);
 
   decrypt_code result =
