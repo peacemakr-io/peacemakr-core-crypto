@@ -70,14 +70,12 @@ peacemakr::Key::Key(symmetric_cipher cipher, message_digest_algorithm digest,
                                          bytes.data(), bytes.size());
 }
 
-peacemakr::Key::Key(symmetric_cipher symm_cipher,
-                    const std::string &pem, bool priv) {
+peacemakr::Key::Key(symmetric_cipher symm_cipher, const std::string &pem,
+                    bool priv) {
   if (priv) {
-    m_key_ = peacemakr_key_new_pem_priv(symm_cipher, pem.c_str(),
-                                        pem.size());
+    m_key_ = peacemakr_key_new_pem_priv(symm_cipher, pem.c_str(), pem.size());
   } else {
-    m_key_ =
-        peacemakr_key_new_pem_pub(symm_cipher, pem.c_str(), pem.size());
+    m_key_ = peacemakr_key_new_pem_pub(symm_cipher, pem.c_str(), pem.size());
   }
 }
 
