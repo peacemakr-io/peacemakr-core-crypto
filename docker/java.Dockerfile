@@ -1,4 +1,4 @@
-FROM openjdk:8-alpine
+FROM openjdk:12-alpine
 
 RUN apk add --no-cache git alpine-sdk perl cmake linux-headers
 
@@ -13,11 +13,21 @@ WORKDIR /opt
 
 ADD CMakeLists.txt /opt/CMakeLists.txt
 ADD src/core /opt/src/core
-ADD src/ffi/java /opt/src/ffi/java
+# Gradle
+ADD src/ffi/java/gradle /opt/src/ffi/java/gradle
+ADD src/ffi/java/gradlew /opt/src/ffi/java/gradlew
+ADD src/ffi/java/build.gradle /opt/src/ffi/java/build.gradle
+# C code
+ADD src/ffi/java/src/main/c /opt/src/ffi/java/src/main/c
+# Java code
+ADD src/ffi/java/src/main/java /opt/src/ffi/java/src/main/java
+# Test code
+ADD src/ffi/java/src/test /opt/src/ffi/java/src/test
+# Build requirements
 ADD src/ffi/CMakeLists.txt /opt/src/ffi/CMakeLists.txt
 ADD cmake /opt/cmake
 
-ARG CMAKE_BUILD_TYPE=DEBUG
+ARG CMAKE_BUILD_TYPE=Release
 RUN mkdir -p build && cd build \
 && cmake .. -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
    -DPEACEMAKR_BUILD_JAVA=ON \
