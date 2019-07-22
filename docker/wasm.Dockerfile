@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends perl build-esse
 && apt-get remove -y cmake
 RUN wget -qO- "https://cmake.org/files/v3.14/cmake-3.14.3-Linux-x86_64.tar.gz" | tar --strip-components=1 -xz -C /usr/local
 
-ARG CMAKE_BUILD_TYPE=DEBUG
+ARG CMAKE_BUILD_TYPE=RELEASE
 ENV EMSCRIPTEN_BUILD "ON"
 
 ADD CMakeLists.txt /opt/CMakeLists.txt
