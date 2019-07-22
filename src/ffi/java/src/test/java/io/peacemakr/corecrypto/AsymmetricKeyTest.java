@@ -23,12 +23,11 @@ public class AsymmetricKeyTest {
         String pubPem = key.getPubPemStr();
         String privPem = key.getPrivPemStr();
 
-        // TODO: this is not working...why
         AsymmetricKey pubFromPem = AsymmetricKey.fromPubPem(SymmetricCipher.CHACHA20_POLY1305, pubPem);
         AsymmetricKey privFromPem = AsymmetricKey.fromPrivPem(SymmetricCipher.CHACHA20_POLY1305, privPem);
 
-//        Assert.assertEquals(pubPem, pubFromPem.getPubPemStr());
-//        Assert.assertEquals(privPem, privFromPem.getPrivPemStr());
+        Assert.assertEquals(pubPem, pubFromPem.getPubPemStr());
+        Assert.assertEquals(privPem, privFromPem.getPrivPemStr());
     }
 
     @Test
