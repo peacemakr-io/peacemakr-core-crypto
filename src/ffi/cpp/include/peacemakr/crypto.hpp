@@ -84,7 +84,7 @@ public:
   Key(symmetric_cipher cipher, message_digest_algorithm digest,
       const Key &master, const std::vector<uint8_t> &bytes);
 
-  Key(asymmetric_cipher cipher, symmetric_cipher symm_cipher,
+  Key(symmetric_cipher symm_cipher,
       const std::string &pem, bool priv);
 
   Key(symmetric_cipher cipher, const Key &my_key, const Key &peer_key);

@@ -7,7 +7,7 @@
 #
 
 cmake_minimum_required(VERSION 3.10)
-project(peacemakr_core_crypto C)
+project(peacemakr_core_crypto C CXX)
 
 set(PEACEMAKR_CORE_CRYPTO_MAJOR_VERSION 0)
 set(PEACEMAKR_CORE_CRYPTO_MINOR_VERSION 1)
@@ -21,8 +21,8 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-set(CMAKE_C_FLAGS_RELEASE "-Os -fPIC -Wall -fvisibility=hidden -ffunction-sections")
 set(CMAKE_C_FLAGS_DEBUG "-O0 -g -fstack-protector-strong")
+set(CMAKE_C_FLAGS_RELEASE "-Os -fPIC -Wall -fvisibility=hidden -ffunction-sections")
 
 set(ALL_C_SOURCE_FILES "")
 

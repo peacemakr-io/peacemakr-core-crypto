@@ -27,10 +27,10 @@ ciphertext_blob_t *encrypt(symmetric_cipher symm_cipher,
 
   random_device_t rand = get_default_random_device();
 
-  peacemakr_key_t *pubkey = peacemakr_key_new_pem_pub(
-      curve, SYMMETRIC_UNSPECIFIED, pubkey_buf, pubkey_len);
+  peacemakr_key_t *pubkey =
+      peacemakr_key_new_pem_pub(SYMMETRIC_UNSPECIFIED, pubkey_buf, pubkey_len);
   peacemakr_key_t *privkey = peacemakr_key_new_pem_priv(
-      curve, SYMMETRIC_UNSPECIFIED, privkey_buf, privkey_len);
+      SYMMETRIC_UNSPECIFIED, privkey_buf, privkey_len);
 
   peacemakr_key_t *sec_key =
       peacemakr_key_dh_generate(symm_cipher, privkey, pubkey);
@@ -56,10 +56,10 @@ void decrypt(symmetric_cipher symm_cipher, asymmetric_cipher curve,
                               .aad = (const unsigned char *)message_aad,
                               .aad_len = strlen(message_aad) + 1};
 
-  peacemakr_key_t *pubkey = peacemakr_key_new_pem_pub(
-      curve, SYMMETRIC_UNSPECIFIED, pubkey_buf, pubkey_len);
+  peacemakr_key_t *pubkey =
+      peacemakr_key_new_pem_pub(SYMMETRIC_UNSPECIFIED, pubkey_buf, pubkey_len);
   peacemakr_key_t *privkey = peacemakr_key_new_pem_priv(
-      curve, SYMMETRIC_UNSPECIFIED, privkey_buf, privkey_len);
+      SYMMETRIC_UNSPECIFIED, privkey_buf, privkey_len);
 
   peacemakr_key_t *sec_key =
       peacemakr_key_dh_generate(symm_cipher, privkey, pubkey);
@@ -95,10 +95,10 @@ void test_symmetric_algo(symmetric_cipher symm_cipher, asymmetric_cipher curve,
 
   random_device_t rand = get_default_random_device();
 
-  peacemakr_key_t *pubkey = peacemakr_key_new_pem_pub(
-      curve, SYMMETRIC_UNSPECIFIED, pubkey_buf, pubkey_len);
+  peacemakr_key_t *pubkey =
+      peacemakr_key_new_pem_pub(SYMMETRIC_UNSPECIFIED, pubkey_buf, pubkey_len);
   peacemakr_key_t *privkey = peacemakr_key_new_pem_priv(
-      curve, SYMMETRIC_UNSPECIFIED, privkey_buf, privkey_len);
+      SYMMETRIC_UNSPECIFIED, privkey_buf, privkey_len);
 
   peacemakr_key_t *sec_key =
       peacemakr_key_dh_generate(symm_cipher, privkey, pubkey);
