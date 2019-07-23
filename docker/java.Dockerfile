@@ -28,4 +28,4 @@ ADD src/ffi/CMakeLists.txt /opt/src/ffi/CMakeLists.txt
 ADD cmake /opt/cmake
 
 WORKDIR /opt/src/ffi/java
-RUN ./gradlew clean && ./gradlew test --info
+RUN ./gradlew clean && ./gradlew test

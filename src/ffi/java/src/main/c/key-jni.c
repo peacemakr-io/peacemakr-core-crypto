@@ -13,6 +13,7 @@ extern "C" {
 #include <jni.h>
 
 #include <stdlib.h>
+#include <string.h>
 
 #include "common-jni.h"
 #include "crypto.h"
@@ -99,7 +100,14 @@ Java_io_peacemakr_corecrypto_AsymmetricKey_getPubPemStr(JNIEnv *env,
     LOGE("%s\n", "Problem with exporting the public key to pem");
   }
 
-  return (*env)->NewStringUTF(env, pub_pem);
+  // Gotta copy over the string so we get it null-terminated
+  char *out_str = calloc(pub_pem_len + 1, sizeof(char));
+  memcpy(out_str, pub_pem, pub_pem_len);
+  free(pub_pem);
+
+  jstring out = (*env)->NewStringUTF(env, out_str);
+  free(out_str);
+  return out;
 }
 
 JNIEXPORT jstring JNICALL
@@ -115,8 +123,13 @@ Java_io_peacemakr_corecrypto_AsymmetricKey_getPrivPemStr(JNIEnv *env,
     LOGE("%s\n", "Problem with exporting the private key to pem");
   }
 
-  jstring out = (*env)->NewStringUTF(env, priv_pem);
+  // Gotta copy over the string so we get it null-terminated
+  char *out_str = calloc(priv_pem_len + 1, sizeof(char));
+  memcpy(out_str, priv_pem, priv_pem_len);
   free(priv_pem);
+
+  jstring out = (*env)->NewStringUTF(env, out_str);
+  free(out_str);
   return out;
 }
 
