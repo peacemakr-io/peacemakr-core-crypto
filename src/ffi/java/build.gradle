@@ -32,7 +32,13 @@ task makeInstall(type:Exec) {
     dependsOn += 'cmake'
 }
 compileJava.dependsOn += 'makeInstall'
-test.dependsOn += 'makeInstall'
+
+test {
+    useJUnit()
+    failFast = true
+    reports.html.enabled = true
+    dependsOn += 'makeInstall'
+}
 
 task removeInstall(type:Exec) {
     commandLine 'rm', '-rf', 'src/main/resources/include', 'src/main/resources/lib'

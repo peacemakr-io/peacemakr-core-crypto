@@ -257,12 +257,16 @@ Java_io_peacemakr_corecrypto_Crypto_decryptAsymmetric(JNIEnv *env, jclass clazz,
   return out;
 }
 
+static void log_cb(const char *msg) { LOGE("%s\n", msg); }
+
 JNIEXPORT void JNICALL
 Java_io_peacemakr_corecrypto_Crypto_nativeInit(JNIEnv *env, jclass clazz) {
   if (!peacemakr_init()) {
     (*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Exception"),
                      "Failed to initialize native lib");
   }
+
+  peacemakr_set_log_callback(&log_cb);
 }
 
 #ifdef __cplusplus
