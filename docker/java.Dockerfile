@@ -27,11 +27,5 @@ ADD src/ffi/java/src/test /opt/src/ffi/java/src/test
 ADD src/ffi/CMakeLists.txt /opt/src/ffi/CMakeLists.txt
 ADD cmake /opt/cmake
 
-ARG CMAKE_BUILD_TYPE=Release
-RUN mkdir -p build && cd build \
-&& cmake .. -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
-   -DPEACEMAKR_BUILD_JAVA=ON \
-&& make check
-
 WORKDIR /opt/src/ffi/java
 RUN ./gradlew clean && ./gradlew test --info
