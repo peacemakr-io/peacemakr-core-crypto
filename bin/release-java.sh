@@ -15,7 +15,11 @@ rm -rf *.jar || true
 # Actually build it.
 #
 cd src/ffi/java
-./gradlew jar
+if [[ "${2}" == "release" ]]; then
+    ./gradlew jar -Prelease=true
+else
+    ./gradlew jar
+fi
 cd ../../..
 
 #

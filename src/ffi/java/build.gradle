@@ -14,13 +14,22 @@ task setupNativeDir(type:Exec) {
 
 task cmake(type:Exec) {
     workingDir buildDir.path + "/native"
-    
-    // Has to be a release build because otherwise ASAN gets loaded too late
-    commandLine 'cmake', '../../../../..',
-            '-DCMAKE_BUILD_TYPE=Release',
-            '-DCMAKE_INSTALL_PREFIX=../../src/main/resources',
-            '-DOPENSSL_ROOT_DIR=/usr/local/opt/openssl@1.1',
-            '-DPEACEMAKR_BUILD_JAVA=ON'
+
+    if (project.hasProperty("release")) {
+        commandLine 'cmake', '../../../../..',
+                '-DCMAKE_BUILD_TYPE=Release',
+                '-DCMAKE_INSTALL_PREFIX=../../src/main/resources',
+                '-DOPENSSL_ROOT_DIR=/usr/local/opt/openssl@1.1',
+                '-DPEACEMAKR_BUILD_JAVA=ON'
+    } else {
+        commandLine 'cmake', '../../../../..',
+                '-DCMAKE_BUILD_TYPE=Debug',
+                // Disable ASAN because otherwise it gets loaded late. You can enable this with some manual work.
+                '-DNO_ASAN=ON',
+                '-DCMAKE_INSTALL_PREFIX=../../src/main/resources',
+                '-DOPENSSL_ROOT_DIR=/usr/local/opt/openssl@1.1',
+                '-DPEACEMAKR_BUILD_JAVA=ON'
+    }
 
     dependsOn += 'setupNativeDir'
 }

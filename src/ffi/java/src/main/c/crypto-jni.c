@@ -257,7 +257,7 @@ Java_io_peacemakr_corecrypto_Crypto_decryptAsymmetric(JNIEnv *env, jclass clazz,
   return out;
 }
 
-static void log_cb(const char *msg) { LOGE("%s\n", msg); }
+static void log_cb(const char *msg) { LOGE("%s", msg); }
 
 JNIEXPORT void JNICALL
 Java_io_peacemakr_corecrypto_Crypto_nativeInit(JNIEnv *env, jclass clazz) {
