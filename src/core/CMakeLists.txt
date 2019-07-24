@@ -42,10 +42,13 @@ target_include_directories(peacemakr-core-crypto
 )
 
 # Compile core crypto lib under asan if we're running in debug mode
-if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" AND (CMAKE_BUILD_TYPE MATCHES DEBUG) OR (CMAKE_BUILD_TYPE MATCHES Debug))
-    message(STATUS "Setting AddressSanitizer for Debug build")
-    target_compile_options(peacemakr-core-crypto PUBLIC -fsanitize=address -fno-omit-frame-pointer)
-    target_link_libraries(peacemakr-core-crypto PUBLIC -fsanitize=address)
+option(NO_ASAN "Turn off ASAN" OFF)
+if(("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang") AND ((CMAKE_BUILD_TYPE MATCHES DEBUG) OR (CMAKE_BUILD_TYPE MATCHES Debug)))
+    if (NOT NO_ASAN)
+        message(STATUS "Setting AddressSanitizer for Debug build")
+        target_compile_options(peacemakr-core-crypto PUBLIC -fsanitize=address -fno-omit-frame-pointer)
+        target_link_libraries(peacemakr-core-crypto PUBLIC -fsanitize=address)
+    endif()
 endif()
 
 target_link_libraries(peacemakr-core-crypto

@@ -29,4 +29,6 @@ xcuserdata/
 *.xcscmblueprint
 *.xcworkspacedata
 
+local.properties
+
 *.DS_Store

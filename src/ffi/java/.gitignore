@@ -1,0 +1,12 @@
+*.class
+openssl*.tar.gz
+openssl-build/
+openssl-*/
+.gradle/
+local.properties
+io_peacemakr_corecrypto_*.h
+Manifest.txt
+.idea/
+src/main/resources
+build/
+out/

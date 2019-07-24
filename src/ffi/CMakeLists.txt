@@ -1,7 +1,7 @@
 set(CORE_LIB_INCLUDE ${CMAKE_SOURCE_DIR}/src/core/include)
 set(CORE_LIB_DIR ${CMAKE_BINARY_DIR}/src/core)
 
-option(PEACEMAKR_BUILD_GO "Whether to build the Golang bindings" ON)
+option(PEACEMAKR_BUILD_GO "Whether to build the Golang bindings" OFF)
 if (PEACEMAKR_BUILD_GO)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/go/crypto.go.in ${CMAKE_CURRENT_SOURCE_DIR}/go/src/peacemakr/crypto/crypto.go @ONLY)
 
@@ -18,7 +18,7 @@ if (PEACEMAKR_BUILD_GO)
 endif (PEACEMAKR_BUILD_GO)
 
 # Swift-specific stuff #####
-option(PEACEMAKR_BUILD_IOS "Whether to build the iOS bindings" ON)
+option(PEACEMAKR_BUILD_IOS "Whether to build the iOS bindings" OFF)
 
 if (PEACEMAKR_BUILD_IOS)
     set(SOURCE_CMAKE_DIR ${CMAKE_SOURCE_DIR})
@@ -43,8 +43,24 @@ if (PEACEMAKR_BUILD_IOS)
     ")
 endif(PEACEMAKR_BUILD_IOS)
 
+# Android-specific stuff #####
+option(PEACEMAKR_BUILD_ANDROID "Whether to build the Android bindings" OFF)
+if (PEACEMAKR_BUILD_ANDROID)
+    message(FATAL_ERROR "Android build currently unsupported")
+    set(OPENSSL_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/android/openssl/openssl-build/${ANDROID_ABI})
+    set(OPENSSL_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/android/openssl/openssl-build/${ANDROID_ABI}/lib)
+
+    add_subdirectory(android/src/main/native)
+endif(PEACEMAKR_BUILD_ANDROID)
+
+# Java-specific stuff #####
+option(PEACEMAKR_BUILD_JAVA "Whether to build the Java bindings" OFF)
+if (PEACEMAKR_BUILD_JAVA)
+    add_subdirectory(java/src/main/c)
+endif(PEACEMAKR_BUILD_JAVA)
+
 # C++-specific stuff #####
-option(PEACEMAKR_BUILD_CPP "Whether to build the C++ bindings" ON)
+option(PEACEMAKR_BUILD_CPP "Whether to build the C++ bindings" OFF)
 
 if (PEACEMAKR_BUILD_CPP)
     add_subdirectory(cpp)
@@ -53,7 +69,7 @@ endif(PEACEMAKR_BUILD_CPP)
 set(ALL_C_SOURCE_FILES ${SOURCES_C} ${SOURCES_H} ${INCLUDES} ${ALL_C_SOURCE_FILES} PARENT_SCOPE)
 
 # Web-specfic stuff #####
-option(PEACEMAKR_BUILD_WEB "Whether to build the WASM bindings" ON)
+option(PEACEMAKR_BUILD_WEB "Whether to build the WASM bindings" OFF)
 
 if (PEACEMAKR_BUILD_WEB)
     set(SOURCE_CMAKE_DIR ${CMAKE_SOURCE_DIR})
