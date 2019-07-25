@@ -49,6 +49,7 @@ public class AsymmetricKeyTest {
                 "O3Ks+BF4VYGGx4QHp82jyLQ1pSvJNWAAAAAgAAAAAM4oJerNH9Vj3mQHp+jRsSPg6ncz2b9S\n" +
                 "7kH8OVSwQJ4y";
         byte[] aad = Crypto.getCiphertextAAD(validCiphertextFromKD.getBytes());
+        Assert.assertTrue(aad != null);
     }
 
     @Test
@@ -70,6 +71,7 @@ public class AsymmetricKeyTest {
                 "O3Ks+BF4VYGGx4QHp82jyLQ1pSvJNWAAAAAgAAAAAM4oJerNH9Vj3mQHp+jRsSPg6ncz2b9S" +
                 "7kH8OVSwQJ4y";
         byte[] aad = Crypto.getCiphertextAAD(validCiphertextFromKD.getBytes());
+        Assert.assertTrue(aad != null);
     }
 
 
