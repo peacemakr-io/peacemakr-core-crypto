@@ -36,6 +36,7 @@ add_ctest(sign)
 add_ctest(garbage)
 add_ctest(dh_keygen)
 add_ctest(encrypt_dh_pem)
+add_ctest(regressions)
 
 # This test doesn't work with a release version because it uses internal symbols
 if ((CMAKE_BUILD_TYPE MATCHES DEBUG) OR (CMAKE_BUILD_TYPE MATCHES Debug))
