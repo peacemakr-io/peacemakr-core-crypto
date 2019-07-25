@@ -36,7 +36,7 @@ task cmake(type:Exec) {
 
 task makeInstall(type:Exec) {
     workingDir buildDir.path + "/native"
-    commandLine 'make', 'install'
+    commandLine 'make', 'check', 'install'
 
     dependsOn += 'cmake'
 }
@@ -88,6 +88,8 @@ jar {
             'Implementation-Vendor': 'Peacemakr Crypto Systems',
         )
     }
+
+    dependsOn += 'test'
 }
 
 repositories {

@@ -15,7 +15,7 @@ rm -rf *.jar || true
 # Actually build it.
 #
 cd src/ffi/java
-./gradlew test
+# gradle's jar target will run the tests before creating the jar
 if [[ "${2}" == "release" ]]; then
     ./gradlew jar -Prelease=true
 else
