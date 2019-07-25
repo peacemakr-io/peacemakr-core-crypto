@@ -31,7 +31,7 @@ public class AsymmetricKeyTest {
     }
 
     @Test
-    public void reproBug() throws Exception {
+    public void usesOldCoreCrypto() throws Exception {
         String validCiphertextFromKD = "AAAEHgAAAwsAAAAAAgAAAAEBBAEAAAEAAAAAAJVkfmpiAYBoCnczS0c2GS2p2foFJhPnfAM2" +
                 "T1vBpxJP3m969yQsjBhJoEl9tzXf3Mv/64t67WiC5j1pUez306bMmivI9eK75S0+bGYpAQnm" +
                 "lRauvETENzmLCvCuYCr8NxfAheCvEnJx83WGxW2rXpIqlDXh9r/UUGE9W0MnTTBeAv+Ef/Jy" +
@@ -49,7 +49,7 @@ public class AsymmetricKeyTest {
                 "O3Ks+BF4VYGGx4QHp82jyLQ1pSvJNWAAAAAgAAAAAM4oJerNH9Vj3mQHp+jRsSPg6ncz2b9S" +
                 "7kH8OVSwQJ4y";
         byte[] aad = Crypto.getCiphertextAAD(validCiphertextFromKD.getBytes());
-        Assert.assertNotNull(aad);
+        Assert.assertNull(aad);
     }
 
 
@@ -66,6 +66,22 @@ public class AsymmetricKeyTest {
         byte[] encrypted = Crypto.encryptSymmetric(symmKey, SymmetricCipher.CHACHA20_POLY1305, key, plaintext, aad, MessageDigest.SHA_256);
         byte[] gotAAD = Crypto.getCiphertextAAD(encrypted);
         Assert.assertArrayEquals(aad, gotAAD);
+
+        byte[] decrypted = Crypto.decryptSymmetric(symmKey, key, encrypted);
+        Assert.assertArrayEquals(plaintext, decrypted);
+    }
+
+    @Test
+    public void encryptNoAAD() throws Exception {
+        AsymmetricKey key = AsymmetricKey.fromPRNG(AsymmetricCipher.ECDH_P256, SymmetricCipher.SYMMETRIC_UNSPECIFIED);
+
+        AsymmetricKey peerKey = AsymmetricKey.fromPRNG(AsymmetricCipher.ECDH_P256, SymmetricCipher.SYMMETRIC_UNSPECIFIED);
+        byte[] symmKey = key.ecdhKeygen(SymmetricCipher.CHACHA20_POLY1305, peerKey);
+
+        byte[] plaintext = "Hello, world!".getBytes();
+        byte[] aad = new byte[]{};
+
+        byte[] encrypted = Crypto.encryptSymmetric(symmKey, SymmetricCipher.CHACHA20_POLY1305, key, plaintext, aad, MessageDigest.SHA_256);
 
         byte[] decrypted = Crypto.decryptSymmetric(symmKey, key, encrypted);
         Assert.assertArrayEquals(plaintext, decrypted);
