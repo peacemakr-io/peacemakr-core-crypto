@@ -32,28 +32,6 @@ public class AsymmetricKeyTest {
 
     @Test
     public void reproBug() throws Exception {
-        String validCiphertextFromKD = "AAAEHgAAAwsAAAAAAgAAAAEBBAEAAAEAAAAAAJVkfmpiAYBoCnczS0c2GS2p2foFJhPnfAM2\n" +
-                "T1vBpxJP3m969yQsjBhJoEl9tzXf3Mv/64t67WiC5j1pUez306bMmivI9eK75S0+bGYpAQnm\n" +
-                "lRauvETENzmLCvCuYCr8NxfAheCvEnJx83WGxW2rXpIqlDXh9r/UUGE9W0MnTTBeAv+Ef/Jy\n" +
-                "o8HTwUYez4LgRk7I47dqYHcCqb8OZ0TCAjVMSECjlKNwZ7iTOqo0h+IQVAsOaGF1HUUh73jM\n" +
-                "feOx4M16s9UlS5LI7/TH9UY4D20C7nG7FguRvQsPnCWD+6Du1KeELeLOpZpEoL1HPVCXI67l\n" +
-                "TOU4dlopObYJuFINShgAAAAQAAAAAIp+RsLFQCaRoQ0CSwAAAAAAAAAQAAAAAHLIqUwVG5Ce\n" +
-                "ZbAwya3XFUYAAABPAAAAAHsiY3J5cHRvS2V5SUQiOiIiLCJzZW5kZXJLZXlJRCI6IjNacEx1\n" +
-                "VDR1djhUTHFSTHlHTXFVQ09xelhQRjQwVldKREF1M1dqaDgrdTA9In0AAABYAAAAABvS1+k5\n" +
-                "CLtBSWuDKVW/Rxbygr5aioJQT2lPsptxSMxwtfWDSqHOqkdoOyx6m+iIX9UPJt72y2TeWWVD\n" +
-                "TFrH+mmHNsOfok83qcP7MYhxnfqsgjlnPrCj2/cAAAEAAAAAAGXL48F/0Z8NRBtHpjVPM0KS\n" +
-                "UBVkZU0Dl0sivWjlGpofTBWBiTXWrkE2LlnyNsLiLexTJVCMkyXRsOPjC9xMztTO3tirO+Ue\n" +
-                "ygfvRuEJBj9s1hKrVO+3ynTgpMGMPXaRvrBQaRmyqZsdY4ALciyEMaXSBEbIPIExxubBuH11\n" +
-                "YUO3YCyopO7DZmyv1gUQXsj+v6ETTxjNZtR+3RgUm4pwaVoE0+U49FZBxcLhSk+CtAZrnJ9Q\n" +
-                "zp6T5GSjcP5e1SaUwRahW2CksF6IEn+15aekL8hkfw2ymdaHgT9tReqoCHi6aAtqIFePa56t\n" +
-                "O3Ks+BF4VYGGx4QHp82jyLQ1pSvJNWAAAAAgAAAAAM4oJerNH9Vj3mQHp+jRsSPg6ncz2b9S\n" +
-                "7kH8OVSwQJ4y";
-        byte[] aad = Crypto.getCiphertextAAD(validCiphertextFromKD.getBytes());
-        Assert.assertTrue(aad != null);
-    }
-
-    @Test
-    public void reproBug2() throws Exception {
         String validCiphertextFromKD = "AAAEHgAAAwsAAAAAAgAAAAEBBAEAAAEAAAAAAJVkfmpiAYBoCnczS0c2GS2p2foFJhPnfAM2" +
                 "T1vBpxJP3m969yQsjBhJoEl9tzXf3Mv/64t67WiC5j1pUez306bMmivI9eK75S0+bGYpAQnm" +
                 "lRauvETENzmLCvCuYCr8NxfAheCvEnJx83WGxW2rXpIqlDXh9r/UUGE9W0MnTTBeAv+Ef/Jy" +
@@ -71,7 +49,7 @@ public class AsymmetricKeyTest {
                 "O3Ks+BF4VYGGx4QHp82jyLQ1pSvJNWAAAAAgAAAAAM4oJerNH9Vj3mQHp+jRsSPg6ncz2b9S" +
                 "7kH8OVSwQJ4y";
         byte[] aad = Crypto.getCiphertextAAD(validCiphertextFromKD.getBytes());
-        Assert.assertTrue(aad != null);
+        Assert.assertNotNull(aad);
     }
 
 
