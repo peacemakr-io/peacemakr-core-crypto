@@ -26,7 +26,7 @@ function(add_ctest test_name)
     add_dependencies(check test_${test_name})
 endfunction(add_ctest)
 
-add_definitions(-DPEACEMAKR_TEST_PEM_LOCATION="${CMAKE_CURRENT_SOURCE_DIR}/resources")
+add_definitions(-DPEACEMAKR_TEST_PEM_DIRECTORY="${CMAKE_CURRENT_SOURCE_DIR}/resources")
 
 add_ctest(encrypt_symmetric)
 add_ctest(encrypt_asymmetric)

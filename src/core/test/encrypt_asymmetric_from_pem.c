@@ -12,8 +12,8 @@
 
 #include "utils/helper.h"
 
-#ifndef PEACEMAKR_TEST_PEM_LOCATION
-#error "Must define PEACEMAKR_TEST_PEM_LOCATION"
+#ifndef PEACEMAKR_TEST_PEM_DIRECTORY
+#error "Must define PEACEMAKR_TEST_PEM_DIRECTORY"
 #endif
 
 const char *message = "Hello, world! I'm testing encryption."; // 37 + 1
@@ -67,7 +67,7 @@ int main() {
   size_t priv_len, pub_len;
 
   FILE *priv =
-      fopen(PEACEMAKR_TEST_PEM_LOCATION "/test_keypair.pem", "r");
+      fopen(PEACEMAKR_TEST_PEM_DIRECTORY "/test_keypair.pem", "r");
 
   if (priv) {
     // Seek the last byte of the file
@@ -92,7 +92,7 @@ int main() {
   }
 
   FILE *pub =
-      fopen(PEACEMAKR_TEST_PEM_LOCATION "/test_publickey.pem", "r");
+      fopen(PEACEMAKR_TEST_PEM_DIRECTORY "/test_publickey.pem", "r");
 
   if (pub) {
     // Seek the last byte of the file
