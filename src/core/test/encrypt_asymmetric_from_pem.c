@@ -66,8 +66,7 @@ int main() {
 
   size_t priv_len, pub_len;
 
-  FILE *priv =
-      fopen(PEACEMAKR_TEST_PEM_DIRECTORY "/test_keypair.pem", "r");
+  FILE *priv = fopen(PEACEMAKR_TEST_PEM_DIRECTORY "/test_keypair.pem", "r");
 
   if (priv) {
     // Seek the last byte of the file
@@ -91,8 +90,7 @@ int main() {
     return 1;
   }
 
-  FILE *pub =
-      fopen(PEACEMAKR_TEST_PEM_DIRECTORY "/test_publickey.pem", "r");
+  FILE *pub = fopen(PEACEMAKR_TEST_PEM_DIRECTORY "/test_publickey.pem", "r");
 
   if (pub) {
     // Seek the last byte of the file
