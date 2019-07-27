@@ -7,7 +7,7 @@
 #
 
 cmake_minimum_required(VERSION 3.10)
-project(peacemakr_core_crypto C)
+project(peacemakr_core_crypto C CXX)
 
 set(PEACEMAKR_CORE_CRYPTO_MAJOR_VERSION 0)
 set(PEACEMAKR_CORE_CRYPTO_MINOR_VERSION 1)

@@ -33,6 +33,7 @@ Java_io_peacemakr_corecrypto_Crypto_encryptSymmetric(
       (const uint8_t *)raw_key, keylen);
   if (native_key == NULL) {
     LOGE("%s\n", "Error creating symmetric key");
+    (*env)->ReleaseByteArrayElements(env, key, raw_key, JNI_ABORT);
     return NULL;
   }
 
@@ -41,6 +42,8 @@ Java_io_peacemakr_corecrypto_Crypto_encryptSymmetric(
     sign_native_key = getNativeKey(env, sign_key);
     if (sign_native_key == NULL) {
       LOGE("%s\n", "Error creating signing key");
+      peacemakr_key_free(native_key);
+      (*env)->ReleaseByteArrayElements(env, key, raw_key, JNI_ABORT);
       return NULL;
     }
   }
@@ -62,6 +65,9 @@ Java_io_peacemakr_corecrypto_Crypto_encryptSymmetric(
   ciphertext_blob_t *encrypted = peacemakr_encrypt(native_key, &plain, &rand);
   if (encrypted == NULL) {
     LOGE("%s\n", "Error encrypting message");
+    (*env)->ReleaseByteArrayElements(env, key, raw_key, JNI_ABORT);
+    (*env)->ReleaseByteArrayElements(env, plaintext, raw_data, JNI_ABORT);
+    (*env)->ReleaseByteArrayElements(env, aad, rawAAD, JNI_ABORT);
     peacemakr_key_free(native_key);
     return NULL;
   }
@@ -75,11 +81,20 @@ Java_io_peacemakr_corecrypto_Crypto_encryptSymmetric(
 
   size_t out_len = 0;
   uint8_t *serialized = peacemakr_serialize(digest_algo, encrypted, &out_len);
+  if (serialized == NULL) {
+    LOGE("%s\n", "Failed to serialize");
+    (*env)->ReleaseByteArrayElements(env, key, raw_key, JNI_ABORT);
+    (*env)->ReleaseByteArrayElements(env, plaintext, raw_data, JNI_ABORT);
+    (*env)->ReleaseByteArrayElements(env, aad, rawAAD, JNI_ABORT);
+    peacemakr_key_free(native_key);
+    free(serialized);
+  }
 
   jbyteArray out = (*env)->NewByteArray(env, out_len);
   (*env)->SetByteArrayRegion(env, out, 0, out_len, (const jbyte *)serialized);
 
   // clean up
+  (*env)->ReleaseByteArrayElements(env, key, raw_key, JNI_ABORT);
   (*env)->ReleaseByteArrayElements(env, plaintext, raw_data, JNI_ABORT);
   (*env)->ReleaseByteArrayElements(env, aad, rawAAD, JNI_ABORT);
   peacemakr_key_free(native_key);
@@ -99,6 +114,7 @@ Java_io_peacemakr_corecrypto_Crypto_getCiphertextAAD(JNIEnv *env, jclass clazz,
       peacemakr_deserialize((uint8_t *)raw_data, data_len, &cfg);
   if (deserialized == NULL) {
     LOGE("%s\n", "Deserialization of the message failed");
+    (*env)->ReleaseByteArrayElements(env, ciphertext, raw_data, JNI_ABORT);
     return NULL;
   }
 
@@ -109,8 +125,8 @@ Java_io_peacemakr_corecrypto_Crypto_getCiphertextAAD(JNIEnv *env, jclass clazz,
   (*env)->SetByteArrayRegion(env, out, 0, plain.aad_len,
                              (const jbyte *)plain.aad);
 
-  // Don't release the ciphertext byte array elements in case we need them later
-  // for a decrypt operation
+  // Clean up
+  (*env)->ReleaseByteArrayElements(env, ciphertext, raw_data, JNI_ABORT);
   free((void *)plain.data);
   free((void *)plain.aad);
 
@@ -129,6 +145,8 @@ Java_io_peacemakr_corecrypto_Crypto_decryptSymmetric(JNIEnv *env, jclass clazz,
       SYMMETRIC_UNSPECIFIED, (const uint8_t *)raw_key, keylen);
   if (native_key == NULL) {
     LOGE("%s\n", "Error creating symmetric key");
+    peacemakr_key_free(native_key);
+    (*env)->ReleaseByteArrayElements(env, key, raw_key, JNI_ABORT);
     return NULL;
   }
 
@@ -136,6 +154,7 @@ Java_io_peacemakr_corecrypto_Crypto_decryptSymmetric(JNIEnv *env, jclass clazz,
   if (verify_native_key == NULL) {
     LOGE("%s\n", "Error creating verification key");
     peacemakr_key_free(native_key);
+    (*env)->ReleaseByteArrayElements(env, key, raw_key, JNI_ABORT);
     return NULL;
   }
 
@@ -147,6 +166,8 @@ Java_io_peacemakr_corecrypto_Crypto_decryptSymmetric(JNIEnv *env, jclass clazz,
       peacemakr_deserialize((uint8_t *)raw_data, data_len, &cfg);
   if (deserialized == NULL) {
     LOGE("%s\n", "Deserialization of the message failed");
+    (*env)->ReleaseByteArrayElements(env, key, raw_key, JNI_ABORT);
+    (*env)->ReleaseByteArrayElements(env, ciphertext, raw_data, JNI_ABORT);
     peacemakr_key_free(native_key);
     return NULL;
   }
@@ -157,6 +178,8 @@ Java_io_peacemakr_corecrypto_Crypto_decryptSymmetric(JNIEnv *env, jclass clazz,
   if (did_succeed == DECRYPT_NEED_VERIFY) {
     if (!peacemakr_verify(verify_native_key, &plaintext, deserialized)) {
       LOGE("%s\n", "Verification of the message failed");
+      (*env)->ReleaseByteArrayElements(env, key, raw_key, JNI_ABORT);
+      (*env)->ReleaseByteArrayElements(env, ciphertext, raw_data, JNI_ABORT);
       peacemakr_key_free(native_key);
       return NULL;
     }
@@ -168,19 +191,15 @@ Java_io_peacemakr_corecrypto_Crypto_decryptSymmetric(JNIEnv *env, jclass clazz,
     return NULL;
   }
 
-  // We only want to release the byte array elements once we've successfully
-  // decrypted the message
-  (*env)->ReleaseByteArrayElements(env, ciphertext, raw_data, JNI_ABORT);
-
-  // clean up the key, don't free the asymmetric key yet
-  peacemakr_key_free(native_key);
-
   // re-pack the plaintext
   jbyteArray out = (*env)->NewByteArray(env, plaintext.data_len);
   (*env)->SetByteArrayRegion(env, out, 0, plaintext.data_len,
                              (const jbyte *)plaintext.data);
 
-  // Clean up the C plaintext
+  // Clean up
+  (*env)->ReleaseByteArrayElements(env, key, raw_key, JNI_ABORT);
+  (*env)->ReleaseByteArrayElements(env, ciphertext, raw_data, JNI_ABORT);
+  peacemakr_key_free(native_key);
   free((void *)plaintext.data);
   free((void *)plaintext.aad);
 
@@ -200,14 +219,12 @@ Java_io_peacemakr_corecrypto_Crypto_decryptAsymmetric(JNIEnv *env, jclass clazz,
     LOGE("%s\n", "Cannot call decryptAsymmetric with non-RSA key. For EC keys "
                  "call ecdhKeygen to create the symmetric encryption key and "
                  "use the symmetric functions.");
-    peacemakr_key_free(native_key);
     return NULL;
   }
 
   peacemakr_key_t *verify_native_key = getNativeKey(env, verify_key);
   if (verify_native_key == NULL) {
     LOGE("%s\n", "Error creating verification key");
-    peacemakr_key_free(native_key);
     return NULL;
   }
 
@@ -219,7 +236,7 @@ Java_io_peacemakr_corecrypto_Crypto_decryptAsymmetric(JNIEnv *env, jclass clazz,
       peacemakr_deserialize((uint8_t *)raw_data, data_len, &cfg);
   if (deserialized == NULL) {
     LOGE("%s\n", "Deserialization of the message failed");
-    peacemakr_key_free(native_key);
+    (*env)->ReleaseByteArrayElements(env, ciphertext, raw_data, JNI_ABORT);
     return NULL;
   }
 
@@ -229,21 +246,20 @@ Java_io_peacemakr_corecrypto_Crypto_decryptAsymmetric(JNIEnv *env, jclass clazz,
   if (did_succeed == DECRYPT_NEED_VERIFY) {
     if (!peacemakr_verify(verify_native_key, &plaintext, deserialized)) {
       LOGE("%s\n", "Verification of the message failed");
-      peacemakr_key_free(native_key);
+      (*env)->ReleaseByteArrayElements(env, ciphertext, raw_data, JNI_ABORT);
       return NULL;
     }
   }
 
   if (did_succeed == DECRYPT_FAILED) {
     LOGE("%s\n", "Decryption of the message failed");
-    peacemakr_key_free(native_key);
+    (*env)->ReleaseByteArrayElements(env, ciphertext, raw_data, JNI_ABORT);
     return NULL;
   }
 
   // We only want to release the byte array elements once we've successfully
   // decrypted the message
   (*env)->ReleaseByteArrayElements(env, ciphertext, raw_data, JNI_ABORT);
-  peacemakr_key_free(native_key);
 
   // re-pack the plaintext
   jbyteArray out = (*env)->NewByteArray(env, plaintext.data_len);

@@ -15,7 +15,8 @@ extern "C" {
 uint32_t unwrapEnumToInt(JNIEnv *env, jobject asymm_cipher, const char *class) {
   jclass clazz = (*env)->FindClass(env, class);
   jmethodID getOrdinalValue = (*env)->GetMethodID(env, clazz, "ordinal", "()I");
-  jint value = (*env)->CallIntMethod(env, asymm_cipher, getOrdinalValue);
+  int value = (*env)->CallIntMethod(env, asymm_cipher, getOrdinalValue);
+  (*env)->DeleteLocalRef(env, clazz);
   if (value < 0) {
     LOGE("Invalid value for %s: %d", class, value);
     return 0; // maps to ASYMMETRIC_UNSPECIFIED and SYMMETRIC_UNSPECIFIED
@@ -39,6 +40,7 @@ bool setNativeKey(JNIEnv *env, jobject this, peacemakr_key_t *ptr) {
   }
 
   (*env)->SetLongField(env, this, fieldID, (long)ptr);
+  (*env)->DeleteLocalRef(env, clazz);
   return true;
 }
 
@@ -47,12 +49,15 @@ void clearNativeKey(JNIEnv *env, jobject this) {
   jfieldID fieldID = (*env)->GetFieldID(env, clazz, "nativeKey", "J");
 
   (*env)->SetLongField(env, this, fieldID, 0);
+  (*env)->DeleteLocalRef(env, clazz);
 }
 
 peacemakr_key_t *getNativeKey(JNIEnv *env, jobject this) {
   jclass clazz = (*env)->GetObjectClass(env, this);
   jfieldID fieldID = (*env)->GetFieldID(env, clazz, "nativeKey", "J");
-  return (peacemakr_key_t *)(*env)->GetLongField(env, this, fieldID);
+  peacemakr_key_t *out = (peacemakr_key_t *)(*env)->GetLongField(env, this, fieldID);
+  (*env)->DeleteLocalRef(env, clazz);
+  return out;
 }
 
 #ifdef __cplusplus
