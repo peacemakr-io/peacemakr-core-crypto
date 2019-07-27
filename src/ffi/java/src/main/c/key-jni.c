@@ -42,8 +42,7 @@ JNIEXPORT jobject JNICALL Java_io_peacemakr_corecrypto_AsymmetricKey_fromPRNG(
 JNIEXPORT jobject JNICALL Java_io_peacemakr_corecrypto_AsymmetricKey_fromPubPem(
     JNIEnv *env, jclass clazz, jobject symm_cipher, jstring pub_pem) {
 
-  jboolean is_copy = false;
-  const char *raw_buf = (*env)->GetStringUTFChars(env, pub_pem, &is_copy);
+  const char *raw_buf = (*env)->GetStringUTFChars(env, pub_pem, NULL);
   const jsize buf_len = (*env)->GetStringLength(env, pub_pem);
 
   peacemakr_key_t *asymm_key = peacemakr_key_new_pem_pub(
@@ -67,8 +66,7 @@ Java_io_peacemakr_corecrypto_AsymmetricKey_fromPrivPem(JNIEnv *env,
                                                        jclass clazz,
                                                        jobject symm_cipher,
                                                        jstring priv_pem) {
-  jboolean is_copy = false;
-  const char *raw_buf = (*env)->GetStringUTFChars(env, priv_pem, &is_copy);
+  const char *raw_buf = (*env)->GetStringUTFChars(env, priv_pem, NULL);
   const jsize buf_len = (*env)->GetStringLength(env, priv_pem);
 
   peacemakr_key_t *asymm_key = peacemakr_key_new_pem_priv(
