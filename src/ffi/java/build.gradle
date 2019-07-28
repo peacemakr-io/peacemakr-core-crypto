@@ -36,10 +36,29 @@ task cmake(type:Exec) {
 
 task makeInstall(type:Exec) {
     workingDir buildDir.path + "/native"
-    commandLine 'make', 'check', 'install'
+    commandLine 'make', 'install'
 
     dependsOn += 'cmake'
 }
+
+task makeCheck(type:Exec) {
+    workingDir buildDir.path + "/native"
+    commandLine 'make', 'check'
+
+    dependsOn += 'cmake'
+}
+
+task buildLinux(type:Exec) {
+    workingDir buildDir.path + "/../../../.."
+    if (project.hasProperty("release")) {
+        commandLine "/bin/bash", "-c", "./bin/build-java-linux.sh release"
+    } else {
+        commandLine "/bin/bash", "-c", "./bin/build-java-linux.sh"
+    }
+
+    dependsOn += 'makeInstall'
+}
+
 compileJava.dependsOn += 'makeInstall'
 
 test {
@@ -90,6 +109,8 @@ jar {
     }
 
     dependsOn += 'test'
+    dependsOn += 'makeCheck'
+    dependsOn += 'buildLinux'
 }
 
 repositories {
