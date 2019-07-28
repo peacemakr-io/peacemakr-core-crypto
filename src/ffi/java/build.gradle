@@ -65,7 +65,7 @@ test {
     useJUnit()
     failFast = true
     reports.html.enabled = true
-    dependsOn += 'makeInstall'
+    dependsOn += 'makeCheck'
 }
 
 task removeInstall(type:Exec) {
@@ -109,7 +109,6 @@ jar {
     }
 
     dependsOn += 'test'
-    dependsOn += 'makeCheck'
     dependsOn += 'buildLinux'
 }
 
