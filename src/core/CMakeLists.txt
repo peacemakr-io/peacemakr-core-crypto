@@ -54,7 +54,7 @@ endif()
 target_link_libraries(peacemakr-core-crypto
         PRIVATE OpenSSL::SSL OpenSSL::Crypto)
 
-if (NOT APPLE)
+if (STATIC_LIBC)
     target_link_libraries(peacemakr-core-crypto PRIVATE -static-libgcc -Wl,-static c)
 endif()
 
