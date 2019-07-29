@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 BUILD_ARG="BUILD_TYPE=debug"
 
 if [[ "${1}" == "release" ]]; then

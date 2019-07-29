@@ -1,6 +1,6 @@
 FROM openjdk:12-alpine
 
-RUN apk add --no-cache git alpine-sdk perl cmake linux-headers
+RUN apk add --no-cache git alpine-sdk perl cmake linux-headers libgcc musl-dev
 
 WORKDIR /opt
 RUN git clone -b OpenSSL_1_1_1-stable --single-branch https://github.com/openssl/openssl.git
