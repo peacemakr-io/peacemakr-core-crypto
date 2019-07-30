@@ -1,6 +1,6 @@
 FROM openjdk:12-alpine
 
-RUN apk add --no-cache git alpine-sdk perl cmake linux-headers
+RUN apk add --no-cache git alpine-sdk perl cmake linux-headers libgcc musl-dev
 
 WORKDIR /opt
 RUN git clone -b OpenSSL_1_1_1-stable --single-branch https://github.com/openssl/openssl.git
@@ -28,4 +28,5 @@ ADD src/ffi/CMakeLists.txt /opt/src/ffi/CMakeLists.txt
 ADD cmake /opt/cmake
 
 WORKDIR /opt/src/ffi/java
-RUN ./gradlew clean && ./gradlew test
+ARG BUILD_TYPE
+RUN ./gradlew clean && ./gradlew makeInstall -P${BUILD_TYPE}

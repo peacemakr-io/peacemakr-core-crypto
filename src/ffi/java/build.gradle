@@ -18,12 +18,14 @@ task cmake(type:Exec) {
     if (project.hasProperty("release")) {
         commandLine 'cmake', '../../../../..',
                 '-DCMAKE_BUILD_TYPE=Release',
+                '-DSTATIC_LIBC=ON',
                 '-DCMAKE_INSTALL_PREFIX=../../src/main/resources',
                 '-DOPENSSL_ROOT_DIR=/usr/local/opt/openssl@1.1',
                 '-DPEACEMAKR_BUILD_JAVA=ON'
     } else {
         commandLine 'cmake', '../../../../..',
                 '-DCMAKE_BUILD_TYPE=Debug',
+                '-DSTATIC_LIBC=ON',
                 // Disable ASAN because otherwise it gets loaded late. You can enable this with some manual work.
                 '-DASAN=OFF',
                 '-DCMAKE_INSTALL_PREFIX=../../src/main/resources',
@@ -31,22 +33,42 @@ task cmake(type:Exec) {
                 '-DPEACEMAKR_BUILD_JAVA=ON'
     }
 
+
     dependsOn += 'setupNativeDir'
 }
 
 task makeInstall(type:Exec) {
     workingDir buildDir.path + "/native"
-    commandLine 'make', 'check', 'install'
+    commandLine 'make', 'install'
 
     dependsOn += 'cmake'
 }
+
+task makeCheck(type:Exec) {
+    workingDir buildDir.path + "/native"
+    commandLine 'make', 'check'
+
+    dependsOn += 'cmake'
+}
+
+task buildLinux(type:Exec) {
+    workingDir buildDir.path + "/../../../.."
+    if (project.hasProperty("release")) {
+        commandLine "/bin/bash", "-c", "./bin/build-java-linux.sh release"
+    } else {
+        commandLine "/bin/bash", "-c", "./bin/build-java-linux.sh"
+    }
+
+    dependsOn += 'makeInstall'
+}
+
 compileJava.dependsOn += 'makeInstall'
 
 test {
     useJUnit()
     failFast = true
     reports.html.enabled = true
-    dependsOn += 'makeInstall'
+    dependsOn += 'makeCheck'
 }
 
 task removeInstall(type:Exec) {
@@ -90,6 +112,7 @@ jar {
     }
 
     dependsOn += 'test'
+    dependsOn += 'buildLinux'
 }
 
 repositories {

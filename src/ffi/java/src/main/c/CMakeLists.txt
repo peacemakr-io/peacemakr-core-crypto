@@ -14,7 +14,7 @@ if (APPLE)
             PRIVATE peacemakr-core-crypto)
 else()
     target_link_libraries(peacemakr-core-crypto-jni
-            PRIVATE peacemakr-core-crypto -ldl -Wl,-rpath=$ORIGIN)
+            PRIVATE peacemakr-core-crypto -static-libgcc -Wl,-static c -Wl,-rpath=$ORIGIN)
 endif()
 
 if (DEFINED ANDROID_ABI)
