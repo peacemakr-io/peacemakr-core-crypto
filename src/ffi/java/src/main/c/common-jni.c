@@ -55,7 +55,8 @@ void clearNativeKey(JNIEnv *env, jobject this) {
 peacemakr_key_t *getNativeKey(JNIEnv *env, jobject this) {
   jclass clazz = (*env)->GetObjectClass(env, this);
   jfieldID fieldID = (*env)->GetFieldID(env, clazz, "nativeKey", "J");
-  peacemakr_key_t *out = (peacemakr_key_t *)(*env)->GetLongField(env, this, fieldID);
+  peacemakr_key_t *out =
+      (peacemakr_key_t *)(*env)->GetLongField(env, this, fieldID);
   (*env)->DeleteLocalRef(env, clazz);
   return out;
 }
