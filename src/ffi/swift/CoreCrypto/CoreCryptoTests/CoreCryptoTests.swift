@@ -39,7 +39,7 @@ class CoreCryptoTests: XCTestCase {
     }
 
     // TODO: doesn't work for ECDH yet
-    var encrypted = UnwrapCall(CryptoContext.encrypt(recipientKey: key!, plaintext: plaintextIn, rand: device), onError: assertFalse)!
+    var encrypted = UnwrapCall(CryptoContext.encrypt(key: key!, plaintext: plaintextIn, rand: device), onError: assertFalse)!
     
     CryptoContext.sign(senderKey: key!, plaintext: plaintextIn, digest: digest, ciphertext: &(encrypted))
     let serialized = UnwrapCall(CryptoContext.serialize(digest, encrypted), onError: assertFalse)!
@@ -54,7 +54,7 @@ class CoreCryptoTests: XCTestCase {
     // Mostly because the mode is technically SYMMETRIC for ECDH-based crypto, and the asymmetric algorithm
     // won't be set for the generated key
     XCTAssert(cfg.symmCipher == outCfg.symmCipher && cfg.digestAlgorithm == outCfg.digestAlgorithm)
-    let (decrypted, needVerify) = UnwrapCall(CryptoContext.decrypt(recipientKey: key!, ciphertext: deserialized), onError: assertFalse)!
+    let (decrypted, needVerify) = UnwrapCall(CryptoContext.decrypt(key: key!, ciphertext: deserialized), onError: assertFalse)!
     
     
     if needVerify {
