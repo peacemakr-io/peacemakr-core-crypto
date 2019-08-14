@@ -38,6 +38,7 @@ public class Plaintext {
   }
 
   init(cstyle: plaintext_t) {
+    // This makes a copy of the data in the C buffer
     data = Data(buffer: UnsafeBufferPointer(start: cstyle.data, count: cstyle.data_len))
     aad = Data(buffer: UnsafeBufferPointer(start: cstyle.aad, count: cstyle.aad_len))
   }

@@ -26,7 +26,6 @@ class CoreCryptoTests: XCTestCase {
     let device = DefaultRandomDevice()
 
     let plaintextIn = Plaintext(data: "Hello from swift!", aad: "And I'm AAD")!
-    let context = CryptoContext()!
     
     var key: PeacemakrKey? = nil
     
@@ -40,26 +39,26 @@ class CoreCryptoTests: XCTestCase {
     }
 
     // TODO: doesn't work for ECDH yet
-    var encrypted = UnwrapCall(context.encrypt(key: key!, plaintext: plaintextIn, rand: device), onError: assertFalse)!
+    var encrypted = UnwrapCall(CryptoContext.encrypt(recipientKey: key!, plaintext: plaintextIn, rand: device), onError: assertFalse)!
     
-    context.sign(senderKey: key!, plaintext: plaintextIn, digest: digest, ciphertext: &(encrypted))
-    let serialized = UnwrapCall(context.serialize(digest, encrypted), onError: assertFalse)!
+    CryptoContext.sign(senderKey: key!, plaintext: plaintextIn, digest: digest, ciphertext: &(encrypted))
+    let serialized = UnwrapCall(CryptoContext.serialize(digest, encrypted), onError: assertFalse)!
     
-    let unverfiedAAD = UnwrapCall(context.extractUnverifiedAAD(serialized), onError: assertFalse)!
+    let unverfiedAAD = UnwrapCall(CryptoContext.extractUnverifiedAAD(serialized), onError: assertFalse)!
     
     XCTAssert(unverfiedAAD.authenticatableData == plaintextIn.authenticatableData, "Something failed in ExtractUnverfiedAAD")
 
-    var (deserialized, outCfg) = UnwrapCall(context.deserialize(serialized), onError: assertFalse)!
+    var (deserialized, outCfg) = UnwrapCall(CryptoContext.deserialize(serialized), onError: assertFalse)!
     
     // The asymmetric ciphers may not match if it's ECDH, and the modes won't either, and that's OK
     // Mostly because the mode is technically SYMMETRIC for ECDH-based crypto, and the asymmetric algorithm
     // won't be set for the generated key
     XCTAssert(cfg.symmCipher == outCfg.symmCipher && cfg.digestAlgorithm == outCfg.digestAlgorithm)
-    let (decrypted, needVerify) = UnwrapCall(context.decrypt(key: key!, ciphertext: deserialized), onError: assertFalse)!
+    let (decrypted, needVerify) = UnwrapCall(CryptoContext.decrypt(recipientKey: key!, ciphertext: deserialized), onError: assertFalse)!
     
     
     if needVerify {
-      let success = UnwrapCall(context.verify(senderKey: key!, plaintext: decrypted, ciphertext: &(deserialized)), onError: assertFalse)!
+      let success = UnwrapCall(CryptoContext.verify(senderKey: key!, plaintext: decrypted, ciphertext: &(deserialized)), onError: assertFalse)!
       XCTAssert(success, "Verification failed")
     }
     XCTAssert(decrypted.encryptableData == plaintextIn.encryptableData)

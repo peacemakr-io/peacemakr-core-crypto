@@ -44,11 +44,11 @@ public protocol CryptoContextProtocol {
   /// Signs the plaintext
   ///
   /// - Parameters:
-  ///     - recipientKey: symmetric or asymmetric key
+  ///     - senderKey: symmetric or asymmetric key
   ///     - plaintext: Plaintext to sign
   ///     - digest: the OpenSSL digest algorithm
   ///     - ciphertext: mutable signed message Ciphertext
-  static func sign(recipientKey: PeacemakrKey, plaintext: Plaintext, digest: MessageDigestAlgorithm, ciphertext: inout Ciphertext) -> Void
+  static func sign(senderKey: PeacemakrKey, plaintext: Plaintext, digest: MessageDigestAlgorithm, ciphertext: inout Ciphertext) -> Void
   
   
   ///MARK: - Data serialization and deserialization
