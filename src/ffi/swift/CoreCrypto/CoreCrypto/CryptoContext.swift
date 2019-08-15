@@ -21,18 +21,19 @@ public class CryptoContext: CryptoContextProtocol {
   
   /// MARK: - CoreCrypto encryption and decryption
   
-  public class func encrypt(recipientKey key: PeacemakrKey, plaintext: Plaintext, rand: RandomDevice) -> Result<Ciphertext> {
+  public class func encrypt(key: PeacemakrKey, plaintext: Plaintext, rand: RandomDevice) -> Result<Ciphertext> {
     var innerRand = rand.getInternal()
     var innerPlaintext = plaintext.getInternal()
     
-    destroyPlaintext(cstyle: innerPlaintext)
-    
     guard let ciphertext_blob = peacemakr_encrypt(key.getInternal(), &innerPlaintext, &innerRand) else {
+      destroyPlaintext(cstyle: innerPlaintext)
       return .error(CoreCryptoError.encryptionFailed)
     }
+    
+    destroyPlaintext(cstyle: innerPlaintext)
     return .result(ciphertext_blob)
   }
-  public class func decrypt(recipientKey key: PeacemakrKey, ciphertext: Ciphertext) -> Result<(Plaintext, Bool)> {
+  public class func decrypt(key: PeacemakrKey, ciphertext: Ciphertext) -> Result<(Plaintext, Bool)> {
     var out = plaintext_t(data: nil, data_len: 0, aad: nil, aad_len: 0)
     let success = peacemakr_decrypt(key.getInternal(), ciphertext, &out)
     
@@ -50,7 +51,7 @@ public class CryptoContext: CryptoContextProtocol {
   
   /// MARK: - Signing
   
-  public class func sign(recipientKey senderKey: PeacemakrKey, plaintext: Plaintext, digest: MessageDigestAlgorithm, ciphertext: inout Ciphertext) -> Void {
+  public class func sign(senderKey: PeacemakrKey, plaintext: Plaintext, digest: MessageDigestAlgorithm, ciphertext: inout Ciphertext) -> Void {
     var innerPlaintext = plaintext.getInternal()
     peacemakr_sign(senderKey.getInternal(), &innerPlaintext, message_digest_algorithm(rawValue: digest.rawValue), ciphertext);
     destroyPlaintext(cstyle: innerPlaintext)
@@ -109,6 +110,7 @@ public class CryptoContext: CryptoContextProtocol {
     
     return out
   }
+  
   public class func extractUnverifiedAAD(_ serialized: Data) -> Result<Plaintext> {
     var out: Result<Plaintext> = .error(CoreCryptoError.deserializationFailed)
     

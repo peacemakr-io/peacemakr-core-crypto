@@ -24,19 +24,19 @@ public protocol CryptoContextProtocol {
   ///Performs the encryption operation.
   ///
   /// - Parameters:
-  ///     - recipientKey: symmetric or asymmetric key
+  ///     - key: symmetric or asymmetric key
   ///     - plaintext: plain text to encrypt
   ///     - rand: uses to generate the IV/nonce
   /// - Returns: ciphertext blob on success, else returns a non-nil error.
-  static func encrypt(recipientKey: PeacemakrKey, plaintext: Plaintext, rand: RandomDevice) -> Result<Ciphertext>
+  static func encrypt(key: PeacemakrKey, plaintext: Plaintext, rand: RandomDevice) -> Result<Ciphertext>
   
   ///Performs the decryption operation.
   ///
   /// - Parameters:
-  ///     - recipientKey: symmetric or asymmetric key
+  ///     - key: symmetric or asymmetric key
   ///     - ciphertext: plain text to encrypt
   /// - Returns: decrypted message Plaintext on success, else returns a non-nil error.
-  static func decrypt(recipientKey: PeacemakrKey, ciphertext: Ciphertext) -> Result<(Plaintext, Bool)>
+  static func decrypt(key: PeacemakrKey, ciphertext: Ciphertext) -> Result<(Plaintext, Bool)>
 
   
   /// MARK: - Signing
@@ -44,11 +44,11 @@ public protocol CryptoContextProtocol {
   /// Signs the plaintext
   ///
   /// - Parameters:
-  ///     - recipientKey: symmetric or asymmetric key
+  ///     - senderKey: symmetric or asymmetric key
   ///     - plaintext: Plaintext to sign
   ///     - digest: the OpenSSL digest algorithm
   ///     - ciphertext: mutable signed message Ciphertext
-  static func sign(recipientKey: PeacemakrKey, plaintext: Plaintext, digest: MessageDigestAlgorithm, ciphertext: inout Ciphertext) -> Void
+  static func sign(senderKey: PeacemakrKey, plaintext: Plaintext, digest: MessageDigestAlgorithm, ciphertext: inout Ciphertext) -> Void
   
   
   ///MARK: - Data serialization and deserialization
