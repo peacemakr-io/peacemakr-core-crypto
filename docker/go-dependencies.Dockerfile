@@ -21,16 +21,16 @@ ENV GOPATH=/go
 
 ARG CMAKE_BUILD_TYPE=DEBUG
 RUN mkdir -p build && cd build \
-&& cmake .. -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
-   -DPEACEMAKR_BUILD_GO=ON \
-&& make check install
+&& cmake .. \
+-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
+-DCMAKE_INSTALL_PREFIX=/go/src/peacemakr/crypto \
+&& make check install \
+&& cp -r /usr/include/openssl /go/src/peacemakr/crypto/include/openssl
 
 ENV GOPATH=/go
-ENV LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
 
 RUN apk add --no-cache gcc musl-dev
 RUN cp -r /opt/src/ffi/go/src /go
 WORKDIR /go/src
 
 RUN go test -v peacemakr/crypto
-
