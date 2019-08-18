@@ -8,7 +8,7 @@
 
 FROM corecrypto-dependencies:latest as builder
 
-FROM alpine
+FROM alpine:3.10
 
 RUN apk add --no-cache
 
