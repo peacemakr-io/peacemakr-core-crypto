@@ -72,7 +72,7 @@ public class PeacemakrKey {
     peacemakr_key_free(internalRepr)
   }
 
-  func getConfig() -> CryptoConfig {
+  public func getConfig() -> CryptoConfig {
     return CryptoConfig(cfg: peacemakr_key_get_config(internalRepr))
   }
 
@@ -80,7 +80,7 @@ public class PeacemakrKey {
     return internalRepr
   }
   
-  func getBytes() -> Data {
+  public func getBytes() -> Data {
     var out: UnsafeMutablePointer<UInt8>?
     var outsize: CLong = 0
     if !peacemakr_key_get_bytes(internalRepr, &out, &outsize) {
