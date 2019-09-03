@@ -54,4 +54,7 @@ tar -xzvf peacemakr-core-crypto-go-musl.tar.gz
 cp peacemakr/crypto/lib/*.so ./crypto/lib
 rm -rf crypto/lib/cmake
 rm -rf peacemakr peacemakr-core-crypto-go-macos.tar.gz peacemakr-core-crypto-go-musl.tar.gz
+echo "package keeplib" > crypto/lib/keep.go
+echo "package keeppeacemakr" > crypto/include/peacemakr/keep.go
+echo "package keepopenssl" > crypto/include/openssl/keep.go
 popd
