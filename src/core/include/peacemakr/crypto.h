@@ -56,6 +56,7 @@ typedef enum {
   ECDH_P256 = 3,
   ECDH_P384 = 4,
   ECDH_P521 = 5,
+  ECDH_SECP256K1 = 6,
 } asymmetric_cipher;
 
 /**

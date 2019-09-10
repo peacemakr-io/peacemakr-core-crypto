@@ -57,6 +57,7 @@ typedef enum {
   P256,
   P384,
   P521,
+  SECP256K1,
 } curve_t;
 
 static bool dh_keygen_inner(EVP_PKEY **pkey, curve_t curve) {
@@ -87,6 +88,10 @@ static bool dh_keygen_inner(EVP_PKEY **pkey, curve_t curve) {
   }
   case P521: {
     rc = EVP_PKEY_CTX_set_ec_paramgen_curve_nid(pctx, NID_secp521r1);
+    break;
+  }
+  case SECP256K1: {
+    rc = EVP_PKEY_CTX_set_ec_paramgen_curve_nid(pctx, NID_secp256k1);
     break;
   }
   default:
@@ -204,6 +209,14 @@ peacemakr_key_t *peacemakr_key_new_asymmetric(asymmetric_cipher cipher,
   }
   case ECDH_P521: {
     if (dh_keygen_inner(&out->m_contents_.asymm, P521) == false) {
+      PEACEMAKR_ERROR("keygen failed\n");
+      peacemakr_key_free(out);
+      return NULL;
+    }
+    break;
+  }
+  case ECDH_SECP256K1: {
+    if (dh_keygen_inner(&out->m_contents_.asymm, SECP256K1) == false) {
       PEACEMAKR_ERROR("keygen failed\n");
       peacemakr_key_free(out);
       return NULL;
@@ -414,6 +427,8 @@ peacemakr_key_t *peacemakr_key_new_pem(symmetric_cipher symm_cipher,
       out->m_cfg_.asymm_cipher = ECDH_P384;
     } else if (curve_name == NID_secp521r1) {
       out->m_cfg_.asymm_cipher = ECDH_P521;
+    } else if (curve_name == NID_secp256k1) {
+      out->m_cfg_.asymm_cipher = ECDH_SECP256K1;
     } else {
       PEACEMAKR_ERROR("Unknown EC key size\n");
       BIO_free(bo);

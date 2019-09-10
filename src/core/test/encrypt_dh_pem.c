@@ -128,7 +128,7 @@ int main() {
     return 1;
   }
 
-  for (int curve = ECDH_P256; curve <= ECDH_P521; ++curve) {
+  for (int curve = ECDH_P256; curve <= ECDH_SECP256K1; ++curve) {
 
     random_device_t rand = get_default_random_device();
 

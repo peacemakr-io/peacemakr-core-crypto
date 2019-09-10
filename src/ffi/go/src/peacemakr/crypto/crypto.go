@@ -111,6 +111,7 @@ const (
 	ECDH_P256 AsymmetricCipher = 3
 	ECDH_P384 AsymmetricCipher = 4
 	ECDH_P521 AsymmetricCipher = 5
+	ECDH_SECP256K1 AsymmetricCipher = 6
 )
 
 type MessageDigestAlgorithm int

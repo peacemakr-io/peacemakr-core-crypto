@@ -55,7 +55,11 @@ target_link_libraries(peacemakr-core-crypto
         PRIVATE OpenSSL::SSL OpenSSL::Crypto)
 
 if (STATIC_LIBC)
-    target_link_libraries(peacemakr-core-crypto PRIVATE -static-libgcc -Wl,-static c)
+    if (APPLE)
+        # Apple doesn't support linking static libc
+    else()
+        target_link_libraries(peacemakr-core-crypto PRIVATE -static-libgcc -Wl,-static c)
+    endif()
 endif()
 
 set_target_properties(peacemakr-core-crypto PROPERTIES

@@ -41,4 +41,4 @@ For a debug build
 Make sure you have the [Android NDK installed](https://developer.android.com/ndk/guides): 
 
 ## Build - Java
-`./bin/release_java.sh -release 1.0.0`
+`./bin/release_java.sh /path/to/java/sdk release`
