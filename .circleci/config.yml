@@ -6,6 +6,7 @@ jobs:
      - checkout
      - run: docker build -t corecrypto-dependencies:latest . -f docker/go-dependencies.Dockerfile --build-arg="CMAKE_BUILD_TYPE=DEBUG"
      - run: docker build -t corecrypto-java:latest . -f docker/java.Dockerfile --build-arg="BUILD_TYPE=debug"
+     - run: docker build -t corecrypto-python:latest . -f docker/python.Dockerfile --build-arg="BUILD_TYPE=debug"
      # - run: docker build -t corecrypto-wasm:latest . -f docker/wasm.Dockerfile
      - run: docker build -t corecrypto:latest . -f docker/go.Dockerfile
      - run: |
