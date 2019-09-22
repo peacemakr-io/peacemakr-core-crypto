@@ -44,7 +44,7 @@ if (PEACEMAKR_BUILD_JAVA)
 endif(PEACEMAKR_BUILD_JAVA)
 
 # C++-specific and Python-specific stuff #####
-option(PEACEMAKR_BUILD_CPP "Whether to build the C++ bindings" ON)
+option(PEACEMAKR_BUILD_CPP "Whether to build the C++ bindings" OFF)
 option(PEACEMAKR_BUILD_PYTHON "Whether to build the Python bindings" OFF)
 
 if (PEACEMAKR_BUILD_CPP OR PEACEMAKR_BUILD_PYTHON)
