@@ -30,3 +30,11 @@ Make sure you have the [Android NDK installed](https://developer.android.com/ndk
 
 ## Build - Java
 `./bin/release_java.sh -release 1.0.0`
+
+## Build - Python
+Docker:
+`cd /path/to/peacemakr-core-crypto/bin && ./release-python release`
+Local (install into virtualenv):
+`cd /path/to/peacemakr-core-crypto/bin && ./release-python local /path/to/virtualenv/lib/site-packages release`
+Local (install into machine python):
+`cd /path/to/peacemakr-core-crypto/bin && ./release-python local none release`
