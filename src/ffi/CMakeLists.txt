@@ -43,12 +43,17 @@ if (PEACEMAKR_BUILD_JAVA)
     add_subdirectory(java/src/main/c)
 endif(PEACEMAKR_BUILD_JAVA)
 
-# C++-specific stuff #####
-option(PEACEMAKR_BUILD_CPP "Whether to build the C++ bindings" OFF)
+# C++-specific and Python-specific stuff #####
+option(PEACEMAKR_BUILD_CPP "Whether to build the C++ bindings" ON)
+option(PEACEMAKR_BUILD_PYTHON "Whether to build the Python bindings" OFF)
 
-if (PEACEMAKR_BUILD_CPP)
+if (PEACEMAKR_BUILD_CPP OR PEACEMAKR_BUILD_PYTHON)
     add_subdirectory(cpp)
-endif(PEACEMAKR_BUILD_CPP)
+endif()
+
+if (PEACEMAKR_BUILD_PYTHON)
+    add_subdirectory(python)
+endif()
 
 set(ALL_C_SOURCE_FILES ${SOURCES_C} ${SOURCES_H} ${INCLUDES} ${ALL_C_SOURCE_FILES} PARENT_SCOPE)
 
@@ -61,4 +66,3 @@ if (PEACEMAKR_BUILD_WEB)
     set(OPENSSL_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/web/openssl/build/lib)
     configure_file(${CMAKE_SOURCE_DIR}/src/ffi/web/build-core-crypto.sh.in ${CMAKE_SOURCE_DIR}/src/ffi/web/build-core-crypto.sh @ONLY)
 endif()
-
