@@ -54,6 +54,12 @@ endif()
 target_link_libraries(peacemakr-core-crypto
         PRIVATE OpenSSL::SSL OpenSSL::Crypto)
 
+if (UNIX AND NOT APPLE)
+    set(THREADS_PREFER_PTHREAD_FLAG TRUE)
+    find_package(Threads)
+    target_link_libraries(peacemakr-core-crypto PRIVATE dl Threads::Threads)
+endif()
+
 if (STATIC_LIBC)
     target_link_libraries(peacemakr-core-crypto PRIVATE -static-libgcc -Wl,-static c)
 endif()
