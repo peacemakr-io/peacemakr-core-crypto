@@ -11,14 +11,9 @@
 
 extern "C" {
 #include "crypto.h"
-
-#ifdef linux
-#include <bsd/stdlib.h>
-#else
-#include <stdlib.h>
-#endif
 }
 
+#include <cstdlib>
 #include <functional>
 #include <string>
 #include <vector>
@@ -29,7 +24,7 @@ extern "C" {
  */
 
 namespace peacemakr {
-typedef ciphertext_blob_t Ciphertext;
+typedef void *Ciphertext;
 
 /**
  * @class RandomDevice
@@ -70,6 +65,7 @@ public:
 
   Key(symmetric_cipher cipher, const uint8_t *bytes, const size_t num);
   Key(symmetric_cipher cipher, const std::vector<uint8_t> &bytes);
+  Key(symmetric_cipher cipher, const std::string &bytes);
 
   Key(symmetric_cipher cipher, message_digest_algorithm digest,
       const uint8_t *password, const size_t password_len, const uint8_t *salt,
@@ -77,12 +73,17 @@ public:
   Key(symmetric_cipher cipher, message_digest_algorithm digest,
       const std::vector<uint8_t> &password, const std::vector<uint8_t> &salt,
       const size_t iteration_count);
+  Key(symmetric_cipher cipher, message_digest_algorithm digest,
+      const std::string &password, const std::string &salt,
+      const size_t iteration_count);
 
   Key(symmetric_cipher cipher, message_digest_algorithm digest,
       const peacemakr::Key &master, const uint8_t *bytes,
       const size_t bytes_len);
   Key(symmetric_cipher cipher, message_digest_algorithm digest,
       const Key &master, const std::vector<uint8_t> &bytes);
+  Key(symmetric_cipher cipher, message_digest_algorithm digest,
+      const Key &master, const std::string &bytes);
 
   Key(symmetric_cipher symm_cipher, const std::string &pem, bool priv);
 
@@ -158,8 +159,8 @@ public:
    * peacemakr::Ciphertext* that can be used in calls to CryptoContext::Sign and
    * CryptoContext::Serialize.
    */
-  Ciphertext *Encrypt(const Key &key, const Plaintext &plaintext,
-                      RandomDevice &rand);
+  Ciphertext Encrypt(const Key &key, const Plaintext &plaintext,
+                     RandomDevice &rand);
 
   /**
    * Signs the plaintext in \p plaintext with key \p senderKey. If the
@@ -169,12 +170,12 @@ public:
    * stores it in \p blob.
    */
   void Sign(const Key &senderKey, const Plaintext &plaintext,
-            message_digest_algorithm digest, Ciphertext *blob);
+            message_digest_algorithm digest, Ciphertext blob);
 
   /**
    * Serializes \p blob into a \returns Base64 encoded buffer.
    */
-  std::string Serialize(message_digest_algorithm digest, Ciphertext *blob);
+  std::string Serialize(message_digest_algorithm digest, Ciphertext blob);
 
   /**
    * Extracts unverified AAD from a serialized peacemakr::Ciphertext. Note that
@@ -188,18 +189,19 @@ public:
    * peacemakr::Ciphertext* that may be passed to CryptoContext::Decrypt and
    * CryptoContext::Verify.
    */
-  Ciphertext *Deserialize(const std::string &serialized,
-                          crypto_config_t *out_cfg);
+  std::pair<Ciphertext, crypto_config_t>
+  Deserialize(const std::string &serialized);
 
   /**
    * Performs the decryption operation using the configuration and the
    * (symmetric or asymmetric) key in \p key. The operation is performed over \p
    * blob and \returns the result. If the message is signed and needs to be
-   * verified with CryptoContext::Verify, then the last parameter should be set
-   * to true so that the ciphertext structure is not freed. It will be freed
-   * after message verification.
+   * verified with CryptoContext::Verify, then the ciphertext structure will
+   * not be freed. It will be freed after message verification. The caller will
+   * know if the message needs verification by checking the second item of
+   * the returned pair.
    */
-  Plaintext Decrypt(const Key &key, Ciphertext *blob, bool &needVerify);
+  std::pair<Plaintext, bool> Decrypt(const Key &key, Ciphertext blob);
 
   /**
    * Verifies the plaintext in \p plain with key \p senderKey. If the
@@ -209,7 +211,7 @@ public:
    * asymmetric verification of \p plain against the signature in \p blob.
    * \returns false if verification is unsuccessful.
    */
-  bool Verify(const Key &senderKey, const Plaintext &plain, Ciphertext *blob);
+  bool Verify(const Key &senderKey, const Plaintext &plain, Ciphertext blob);
 
 private:
   LogFunctionType m_log_;
