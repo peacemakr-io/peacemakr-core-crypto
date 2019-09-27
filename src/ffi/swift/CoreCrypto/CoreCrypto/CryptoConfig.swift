@@ -48,6 +48,7 @@ public enum AsymmetricCipher: UInt32, CaseIterable {
   case ECDH_P256 = 3
   case ECDH_P384 = 4
   case ECDH_P521 = 5
+  case ECDH_SECP256K1 = 6
 }
 
 /**

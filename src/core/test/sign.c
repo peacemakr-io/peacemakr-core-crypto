@@ -265,7 +265,7 @@ int main() {
     test_symmetric_algo_x_sign(i);
   }
 
-  for (int i = RSA_2048; i <= ECDH_P521; ++i) {
+  for (int i = RSA_2048; i <= ECDH_SECP256K1; ++i) {
     for (int j = AES_128_GCM; j <= CHACHA20_POLY1305; ++j) {
       test_asymmetric_algo(j, i);
     }

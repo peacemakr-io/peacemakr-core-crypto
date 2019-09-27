@@ -625,7 +625,7 @@ func TestECDHSerialize(t *testing.T) {
 	}
 	for j := AES_128_GCM; j <= CHACHA20_POLY1305; j++ {
 		for k := SHA_224; k <= SHA_512; k++ {
-			for curve := ECDH_P256; curve <= ECDH_P521; curve++ {
+			for curve := ECDH_P256; curve <= ECDH_SECP256K1; curve++ {
 				go func(j, k, curve int) {
 
 					plaintextIn := SetUpPlaintext()

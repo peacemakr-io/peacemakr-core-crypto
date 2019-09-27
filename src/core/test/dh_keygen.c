@@ -60,7 +60,7 @@ int main() {
   if (!peacemakr_init()) {
     return 1;
   }
-  for (int curve = ECDH_P256; curve <= ECDH_P521; ++curve) {
+  for (int curve = ECDH_P256; curve <= ECDH_SECP256K1; ++curve) {
     for (int j = AES_128_GCM; j <= CHACHA20_POLY1305; ++j) {
       test_symmetric_algo(j, curve);
     }
