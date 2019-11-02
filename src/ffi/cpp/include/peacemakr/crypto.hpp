@@ -112,6 +112,23 @@ public:
   bool isValid() const;
 
   /**
+   * Get the key's private component represented as a PEM file
+   * if it's an asymmetric key
+   */
+  std::string getPrivPem() const;
+
+  /**
+   * Get the key's public component represented as a PEM file
+   * if it's an asymmetric key
+   */
+  std::string getPubPem() const;
+
+  /**
+   * Get the key's raw bytes if it's a symmetric key
+   */
+  std::string getBytes() const;
+
+  /**
    * Get the peacemakr_key_t internal representation for use with other crypto
    * lib calls.
    */

@@ -14,8 +14,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <pybind11/pybind11.h>
 #include "peacemakr/crypto.hpp"
+#include <pybind11/pybind11.h>
 
 namespace py = pybind11;
 
@@ -28,8 +28,8 @@ void logFn(const std::string &s) {
   warnLog(s);
 }
 
-}
-}
+} // namespace python
+} // namespace peacemakr
 
 using namespace peacemakr;
 
@@ -76,33 +76,40 @@ PYBIND11_MODULE(peacemakr_core_crypto_python, m) {
 
   py::class_<Key>(m, "Key")
       // Asymmetric key
-      .def(py::init<asymmetric_cipher, symmetric_cipher, RandomDevice&>())
+      .def(py::init<asymmetric_cipher, symmetric_cipher, RandomDevice &>())
       // Symmetric key
-      .def(py::init<symmetric_cipher, RandomDevice&>())
+      .def(py::init<symmetric_cipher, RandomDevice &>())
       // From bytes
       .def(py::init<symmetric_cipher, const std::string &>())
       // From password and salt
-      .def(py::init<symmetric_cipher, message_digest_algorithm, const std::string &, const std::string &, const size_t>())
+      .def(py::init<symmetric_cipher, message_digest_algorithm,
+                    const std::string &, const std::string &, const size_t>())
       // From master
-      .def(py::init<symmetric_cipher, message_digest_algorithm, const Key &, const std::string &>())
+      .def(py::init<symmetric_cipher, message_digest_algorithm, const Key &,
+                    const std::string &>())
       // From pem
       .def(py::init<symmetric_cipher, const std::string &, bool>())
       // ECDH keygen
-      .def(py::init<symmetric_cipher , const Key &, const Key &>())
+      .def(py::init<symmetric_cipher, const Key &, const Key &>())
 
       // Methods available for calling
       .def("get_config", &Key::getConfig)
-      .def("is_valid", &Key::isValid);
+      .def("is_valid", &Key::isValid)
+      .def("get_priv_pem", &Key::getPrivPem)
+      .def("get_pub_pem", &Key::getPubPem)
+      .def("get_bytes", [](const Key &k) { return py::bytes(k.getBytes()); });
 
   py::class_<Plaintext>(m, "Plaintext")
-      .def(py::init([](const py::bytes &data, const py::bytes &aad) -> std::unique_ptr<Plaintext> {
+      .def(py::init([](const py::bytes &data,
+                       const py::bytes &aad) -> std::unique_ptr<Plaintext> {
         auto p = std::make_unique<Plaintext>();
         p->data = data;
         p->aad = aad;
 
         return p;
       }))
-      .def(py::init([](const std::string &data, const std::string &aad) -> std::unique_ptr<Plaintext> {
+      .def(py::init([](const std::string &data,
+                       const std::string &aad) -> std::unique_ptr<Plaintext> {
         auto p = std::make_unique<Plaintext>();
         p->data = data;
         p->aad = aad;
@@ -116,9 +123,8 @@ PYBIND11_MODULE(peacemakr_core_crypto_python, m) {
       .def_readwrite("aad", &Plaintext::aad);
 
   py::class_<CryptoContext>(m, "CryptoContext")
-      .def(py::init([]() {
-        return std::make_unique<CryptoContext>(&python::logFn);
-      }))
+      .def(py::init(
+          []() { return std::make_unique<CryptoContext>(&python::logFn); }))
       .def("encrypt", &CryptoContext::Encrypt)
       .def("sign", &CryptoContext::Sign)
       .def("serialize", &CryptoContext::Serialize)

@@ -109,9 +109,43 @@ crypto_config_t peacemakr::Key::getConfig() const {
   return peacemakr_key_get_config(m_key_);
 }
 
-const peacemakr_key_t *peacemakr::Key::getKey() const { return m_key_; }
-
 bool peacemakr::Key::isValid() const { return m_key_ != nullptr; }
+
+std::string peacemakr::Key::getPrivPem() const {
+  char *buf;
+  size_t bufsize;
+  bool success = peacemakr_key_priv_to_pem(m_key_, &buf, &bufsize);
+  if (!success) {
+    return "";
+  }
+
+  return std::string(buf, buf + bufsize);
+}
+
+std::string peacemakr::Key::getPubPem() const {
+  char *buf;
+  size_t bufsize;
+  bool success = peacemakr_key_pub_to_pem(m_key_, &buf, &bufsize);
+  if (!success) {
+    return "";
+  }
+
+  return std::string(buf, buf + bufsize);
+}
+
+std::string peacemakr::Key::getBytes() const {
+  uint8_t *buf;
+  size_t bufsize;
+  bool success = peacemakr_key_get_bytes(m_key_, &buf, &bufsize);
+
+  if (!success) {
+    return {};
+  }
+
+  return std::string(buf, buf + bufsize);
+}
+
+const peacemakr_key_t *peacemakr::Key::getKey() const { return m_key_; }
 
 namespace {
 void setContents(peacemakr::Plaintext &plain, plaintext_t &cstyle) {
