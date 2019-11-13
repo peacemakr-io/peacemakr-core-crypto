@@ -9,8 +9,34 @@ From the repository base directory,
 `./bin/serve-docs.sh` will set up a docker image that serves the doxygen docs on `localhost:3000`
 
 ## Make sure you have OpenSSL 1.1 or greater installed:
-
+### On Mac:
 `brew install openssl@1.1`
+
+### On Debian distros (tried on Ubuntu 18.04 and debian10)
+On debian distros the maximum version that apt getable is 1.0.x, so you need to manually install. 
+Go to `https://www.openssl.org/source/` and download the tar.gz
+
+Then run the following to install the package:
+`tar -zxf [openssl_archive].tar.gz && cd [openssl_archive];`
+`./config && make && make test && make install`
+
+Verify your openssl install with:
+`openssl version`
+
+## Make sure you have CMake 3.15+
+### On Mac:
+`brew install cmake`
+
+### On Debian distros (tried on Ubuntu 18.04 and debian10)
+On debian distros the maximum version that apt getable is 3.10.x, which is not good. 
+Go to `https://cmake.org/download/` and download a minimum of version 3.15.x in a tar.gz format
+
+Then run the following to install the package:
+`tar -zxf [cmake_archive].tar.gz && cd [cmake_archive];`
+`./bootstrap && make && make install`
+
+Verify your openssl install with:
+`cmake --version`
 
 ## Integrate and release to your local peacemakr-go-sdk clone - Golang:
 `./bin/release-golang.sh /path/to/peacemakr-go-sdk release`
@@ -33,8 +59,10 @@ Make sure you have the [Android NDK installed](https://developer.android.com/ndk
 
 ## Build - Python
 Docker:
-`cd /path/to/peacemakr-core-crypto/bin && ./release-python release`
+`cd /path/to/peacemakr-core-crypto/bin && ./release-python.sh release`
+
 Local (install into virtualenv):
-`cd /path/to/peacemakr-core-crypto/bin && ./release-python local /path/to/virtualenv/lib/site-packages release`
+`cd /path/to/peacemakr-core-crypto/bin && ./release-python.sh local /path/to/virtualenv/lib/site-packages release`
+
 Local (install into machine python):
-`cd /path/to/peacemakr-core-crypto/bin && ./release-python local none release`
+`cd /path/to/peacemakr-core-crypto/bin && ./release-python.sh local none release`
