@@ -35,7 +35,7 @@ Then run the following to install the package:
 `tar -zxf [cmake_archive].tar.gz && cd [cmake_archive];`
 `./bootstrap && make && make install`
 
-Verify your openssl install with:
+Verify your cmake install with:
 `cmake --version`
 
 ## Integrate and release to your local peacemakr-go-sdk clone - Golang:
@@ -66,3 +66,8 @@ Local (install into virtualenv):
 
 Local (install into machine python):
 `cd /path/to/peacemakr-core-crypto/bin && ./release-python.sh local none release`
+
+## Potential errors in tests when compiling:
+If you get an error informing you that the system does not find the pthread lib (during the testing phase), go to `src/ffi/cpp/tests/CmakeList.txt` and change the line containing `set(CMAKE_CXX_STANDARD 11)` to `set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -pthread")`.
+
+Then run the following `export LD_LIBRARY_PATH=/usr/local/lib` and rerun your script.
