@@ -69,5 +69,3 @@ Local (install into machine python):
 
 ## Potential errors in tests when compiling:
 If you get an error informing you that the system does not find the pthread lib (during the testing phase), go to `src/ffi/cpp/tests/CmakeList.txt` and change the line containing `set(CMAKE_CXX_STANDARD 11)` to `set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -pthread")`.
-
-Then run the following `export LD_LIBRARY_PATH=/usr/local/lib` and rerun your script.
