@@ -17,26 +17,26 @@
 #include <openssl/evp.h>
 #include <string.h>
 
-static void asymmetric_sign(const peacemakr_key_t *sender_key,
+static bool asymmetric_sign(const peacemakr_key_t *sender_key,
                             const uint8_t *plaintext,
                             const size_t plaintext_len, const uint8_t *aad,
                             const size_t aad_len, ciphertext_blob_t *cipher) {
 
   EVP_MD_CTX *md_ctx;
   EVP_PKEY *sign_key = peacemakr_key_asymmetric(sender_key);
-  EXPECT_NOT_NULL_RET_NONE(
-      sign_key, "can't sign the message with a NULL asymmetric key\n")
+  EXPECT_NOT_NULL_RET_VALUE(
+      sign_key, false, "can't sign the message with a NULL asymmetric key\n")
 
   const EVP_MD *digest_algo = parse_digest(ciphertext_blob_digest_algo(cipher));
 
   md_ctx = EVP_MD_CTX_new();
-  EXPECT_NOT_NULL_RET_NONE(md_ctx, "md_ctx_new failed\n");
+  EXPECT_NOT_NULL_RET_VALUE(md_ctx, false, "md_ctx_new failed\n");
 
   if (1 != EVP_DigestSignInit(md_ctx, NULL, digest_algo, NULL, sign_key)) {
     PEACEMAKR_OPENSSL_LOG;
     PEACEMAKR_ERROR("DigestSignInit failed\n");
     EVP_MD_CTX_free(md_ctx);
-    return;
+    return false;
   }
 
   EVP_MD_CTX_set_flags(md_ctx, EVP_MD_CTX_FLAG_PAD_PKCS1);
@@ -46,7 +46,7 @@ static void asymmetric_sign(const peacemakr_key_t *sender_key,
       PEACEMAKR_OPENSSL_LOG;
       PEACEMAKR_ERROR("DigestSignUpdate failed\n");
       EVP_MD_CTX_free(md_ctx);
-      return;
+      return false;
     }
   }
 
@@ -55,7 +55,7 @@ static void asymmetric_sign(const peacemakr_key_t *sender_key,
       PEACEMAKR_OPENSSL_LOG;
       PEACEMAKR_ERROR("DigestSignUpdate failed\n");
       EVP_MD_CTX_free(md_ctx);
-      return;
+      return false;
     }
   }
 
@@ -65,7 +65,7 @@ static void asymmetric_sign(const peacemakr_key_t *sender_key,
     PEACEMAKR_OPENSSL_LOG;
     PEACEMAKR_ERROR("DigestSignFinal failed\n");
     EVP_MD_CTX_free(md_ctx);
-    return;
+    return false;
   }
   // Realloc if necessary and sign
   buffer_t *digest_buf = ciphertext_blob_mutable_signature(cipher);
@@ -75,18 +75,23 @@ static void asymmetric_sign(const peacemakr_key_t *sender_key,
     PEACEMAKR_OPENSSL_LOG;
     PEACEMAKR_ERROR("DigestSignFinal failed\n");
     EVP_MD_CTX_free(md_ctx);
-    return;
+    return false;
   }
   buffer_set_size(digest_buf, signature_len);
 
   EVP_MD_CTX_free(md_ctx);
+  return true;
 }
 
-void symmetric_sign(const peacemakr_key_t *key, const uint8_t *plaintext,
+static bool symmetric_sign(const peacemakr_key_t *key, const uint8_t *plaintext,
                     const size_t plaintext_len, const uint8_t *aad,
                     const size_t aad_len, ciphertext_blob_t *cipher) {
 
   uint8_t *concat_buf = calloc(plaintext_len + aad_len, sizeof(uint8_t));
+  if (concat_buf == NULL) {
+    PEACEMAKR_ERROR("calloc failed\n");
+    return false;
+  }
 
   if (plaintext != NULL && plaintext_len > 0) {
     memcpy(concat_buf, plaintext, plaintext_len);
@@ -99,6 +104,12 @@ void symmetric_sign(const peacemakr_key_t *key, const uint8_t *plaintext,
   uint8_t *hmac =
       peacemakr_hmac(ciphertext_blob_digest_algo(cipher), key, concat_buf,
                      plaintext_len + aad_len, &out_size);
+  if (hmac == NULL) {
+    free(concat_buf);
+    PEACEMAKR_OPENSSL_LOG; // the openssl call in peacemakr_hmac
+    PEACEMAKR_ERROR("HMAC failed\n");
+    return false;
+  }
 
   buffer_t *digest_buf = ciphertext_blob_mutable_signature(cipher);
   buffer_set_size(digest_buf, out_size);
@@ -106,16 +117,18 @@ void symmetric_sign(const peacemakr_key_t *key, const uint8_t *plaintext,
 
   free(concat_buf);
   free(hmac);
+
+  return true;
 }
 
-void peacemakr_sign(const peacemakr_key_t *sender_key, const plaintext_t *plain,
+bool peacemakr_sign(const peacemakr_key_t *sender_key, const plaintext_t *plain,
                     message_digest_algorithm digest,
                     ciphertext_blob_t *cipher) {
 
-  EXPECT_NOT_NULL_RET_NONE(sender_key, false, "Cannot verify with a NULL key\n")
-  EXPECT_NOT_NULL_RET_NONE(cipher, false,
+  EXPECT_NOT_NULL_RET_VALUE(sender_key, false, "Cannot verify with a NULL key\n")
+  EXPECT_NOT_NULL_RET_VALUE(cipher, false,
                            "Cannot verify with nothing to compare against\n")
-  EXPECT_NOT_NULL_RET_NONE(plain, false, "Cannot verify an empty plaintext\n")
+  EXPECT_NOT_NULL_RET_VALUE(plain, false, "Cannot verify an empty plaintext\n")
 
   if (ciphertext_blob_digest_algo(cipher) == DIGEST_UNSPECIFIED) {
     ciphertext_blob_set_digest_algo(cipher, digest);

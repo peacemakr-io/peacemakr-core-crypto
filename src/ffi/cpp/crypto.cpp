@@ -182,7 +182,7 @@ peacemakr::CryptoContext::Encrypt(const Key &key, const Plaintext &plaintext,
   return blob;
 }
 
-void peacemakr::CryptoContext::Sign(const peacemakr::Key &senderKey,
+bool peacemakr::CryptoContext::Sign(const peacemakr::Key &senderKey,
                                     const peacemakr::Plaintext &plaintext,
                                     message_digest_algorithm digest,
                                     Ciphertext blob) {

@@ -51,10 +51,12 @@ public class CryptoContext: CryptoContextProtocol {
   
   /// MARK: - Signing
   
-  public class func sign(senderKey: PeacemakrKey, plaintext: Plaintext, digest: MessageDigestAlgorithm, ciphertext: inout Ciphertext) -> Void {
+  public class func sign(senderKey: PeacemakrKey, plaintext: Plaintext, digest: MessageDigestAlgorithm, ciphertext: inout Ciphertext) -> Bool {
     var innerPlaintext = plaintext.getInternal()
-    peacemakr_sign(senderKey.getInternal(), &innerPlaintext, message_digest_algorithm(rawValue: digest.rawValue), ciphertext);
+    let didSign = peacemakr_sign(senderKey.getInternal(), &innerPlaintext, message_digest_algorithm(rawValue: digest.rawValue), ciphertext)
     destroyPlaintext(cstyle: innerPlaintext)
+
+    return didSign
   }
   
   ///MARK: - Data serialization and deserialization

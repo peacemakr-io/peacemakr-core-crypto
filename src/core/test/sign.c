@@ -33,7 +33,7 @@ void test_symmetric_algo(symmetric_cipher cipher) {
   peacemakr_key_t *key = peacemakr_key_new_symmetric(cipher, &rand);
 
   ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, &plaintext_in, &rand);
-  peacemakr_sign(key, &plaintext_in, SHA_512, ciphertext);
+  assert(peacemakr_sign(key, &plaintext_in, SHA_512, ciphertext));
   assert(ciphertext != NULL);
 
   size_t out_size = 0;
@@ -93,9 +93,9 @@ void test_asymmetric_algo(symmetric_cipher cipher,
   ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, &plaintext_in, &rand);
   assert(ciphertext != NULL);
   if (asymmcipher >= ECDH_P256) {
-    peacemakr_sign(mykey, &plaintext_in, SHA_512, ciphertext);
+    assert(peacemakr_sign(mykey, &plaintext_in, SHA_512, ciphertext));
   } else {
-    peacemakr_sign(key, &plaintext_in, SHA_512, ciphertext);
+    assert(peacemakr_sign(key, &plaintext_in, SHA_512, ciphertext));
   }
 
   size_t out_size = 0;
@@ -163,7 +163,7 @@ void test_symmetric_algo_x_sign(symmetric_cipher cipher) {
 
   ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, &plaintext_in, &rand);
   // Sign with asymmetric key
-  peacemakr_sign(sign_key, &plaintext_in, SHA_512, ciphertext);
+  assert(peacemakr_sign(sign_key, &plaintext_in, SHA_512, ciphertext));
   assert(ciphertext != NULL);
 
   size_t out_size = 0;
@@ -220,7 +220,7 @@ void test_x_sign() {
 
   ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, &plaintext_in, &rand);
   // Sign with asymmetric key
-  peacemakr_sign(sign_key, &plaintext_in, SHA_512, ciphertext);
+  assert(peacemakr_sign(sign_key, &plaintext_in, SHA_512, ciphertext));
   assert(ciphertext != NULL);
 
   size_t out_size = 0;

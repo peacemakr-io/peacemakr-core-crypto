@@ -581,7 +581,10 @@ func Sign(senderKey *PeacemakrKey, plaintext Plaintext, digest MessageDigestAlgo
 	cPlaintext := plaintextToInternal(plaintext)
 	defer freeInternalPlaintext(&cPlaintext)
 
-	C.peacemakr_sign(senderKey.key, (*C.plaintext_t)(unsafe.Pointer(&cPlaintext)), (C.message_digest_algorithm)(digest), ciphertext.blob)
+	if !C.peacemakr_sign(senderKey.key, (*C.plaintext_t)(unsafe.Pointer(&cPlaintext)), (C.message_digest_algorithm)(digest), ciphertext.blob) {
+	  return errors.New("signing failed")
+	}
+
 	return nil
 }
 
