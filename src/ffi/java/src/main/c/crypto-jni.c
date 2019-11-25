@@ -76,7 +76,14 @@ Java_io_peacemakr_corecrypto_Crypto_encryptSymmetric(
       unwrapEnumToInt(env, digest, "io/peacemakr/corecrypto/MessageDigest");
 
   if (sign_native_key != NULL) {
-    peacemakr_sign(sign_native_key, &plain, digest_algo, encrypted);
+    if (!peacemakr_sign(sign_native_key, &plain, digest_algo, encrypted)) {
+      LOGE("%s\n", "Failed to sign");
+      (*env)->ReleaseByteArrayElements(env, key, raw_key, JNI_ABORT);
+      (*env)->ReleaseByteArrayElements(env, plaintext, raw_data, JNI_ABORT);
+      (*env)->ReleaseByteArrayElements(env, aad, rawAAD, JNI_ABORT);
+      peacemakr_key_free(native_key);
+      return NULL;
+    }
   }
 
   size_t out_len = 0;
@@ -88,6 +95,7 @@ Java_io_peacemakr_corecrypto_Crypto_encryptSymmetric(
     (*env)->ReleaseByteArrayElements(env, aad, rawAAD, JNI_ABORT);
     peacemakr_key_free(native_key);
     free(serialized);
+    return NULL;
   }
 
   jbyteArray out = (*env)->NewByteArray(env, out_len);

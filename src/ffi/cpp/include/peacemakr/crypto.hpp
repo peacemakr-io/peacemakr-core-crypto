@@ -186,7 +186,7 @@ public:
    * EVP_DigestSign* functions to do asymmetric signing of \p plaintext and
    * stores it in \p blob.
    */
-  void Sign(const Key &senderKey, const Plaintext &plaintext,
+  bool Sign(const Key &senderKey, const Plaintext &plaintext,
             message_digest_algorithm digest, Ciphertext blob);
 
   /**

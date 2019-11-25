@@ -24,7 +24,7 @@ class TestCoreCrypto(unittest.TestCase):
             key = p.Key(p.SymmetricCipher.__members__[cipher], rand)
 
             encrypted = context.encrypt(key, plaintext, rand)
-            context.sign(key, plaintext, p.DigestAlgorithm.SHA_256, encrypted)
+            self.assertTrue(context.sign(key, plaintext, p.DigestAlgorithm.SHA_256, encrypted))
             serialized = context.serialize(p.DigestAlgorithm.SHA_256, encrypted)
             self.assertNotEqual(serialized, plaintext.data)
 
@@ -66,7 +66,7 @@ class TestCoreCrypto(unittest.TestCase):
                     key = p.Key(p.SymmetricCipher.__members__[symmCipher], myKey, peerKey)
 
                 encrypted = context.encrypt(key, plaintext, rand)
-                context.sign(key, plaintext, p.DigestAlgorithm.SHA_256, encrypted)
+                self.assertTrue(context.sign(key, plaintext, p.DigestAlgorithm.SHA_256, encrypted))
                 serialized = context.serialize(p.DigestAlgorithm.SHA_256, encrypted)
                 self.assertNotEqual(serialized, plaintext.data)
 

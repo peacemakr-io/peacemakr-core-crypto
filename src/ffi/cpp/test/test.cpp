@@ -128,7 +128,7 @@ void test_sign_symmetric(symmetric_cipher symm_cipher,
   } else {
     assert(encrypted != nullptr);
   }
-  ctx.Sign(key, plaintext_in, digest, encrypted);
+  assert(ctx.Sign(key, plaintext_in, digest, encrypted));
 
   std::string serialized = ctx.Serialize(digest, encrypted);
   assert(!serialized.empty());
@@ -169,7 +169,7 @@ void test_sign_asymmetric(symmetric_cipher symm_cipher,
   } else {
     assert(encrypted != nullptr);
   }
-  ctx.Sign(key, plaintext_in, digest, encrypted);
+  assert(ctx.Sign(key, plaintext_in, digest, encrypted));
 
   std::string serialized = ctx.Serialize(digest, encrypted);
   assert(!serialized.empty());
@@ -258,7 +258,7 @@ void test_dh_symmetric(symmetric_cipher symm_cipher,
   } else {
     assert(encrypted != nullptr);
   }
-  ctx.Sign(sharedKey, plaintext_in, digest, encrypted);
+  assert(ctx.Sign(sharedKey, plaintext_in, digest, encrypted));
 
   std::string serialized = ctx.Serialize(digest, encrypted);
   assert(!serialized.empty());
