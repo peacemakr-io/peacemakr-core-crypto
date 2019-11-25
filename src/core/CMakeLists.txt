@@ -6,7 +6,7 @@
 # Full license at peacemakr-core-crypto/LICENSE.txt
 #
 
-include(CheckFunctionExists)
+include(CheckSymbolExists)
 include(CheckCCompilerFlag)
 
 if((CMAKE_BUILD_TYPE MATCHES RELEASE) OR (CMAKE_BUILD_TYPE MATCHES Release))
@@ -14,13 +14,14 @@ if((CMAKE_BUILD_TYPE MATCHES RELEASE) OR (CMAKE_BUILD_TYPE MATCHES Release))
     add_definitions(-DPEACEMAKR_LOG_LEVEL=1)
 endif()
 
-check_function_exists(memset_s HAS_MEMSET_S)
+set(CMAKE_REQUIRED_DEFINITIONS -D__STDC_WANT_LIB_EXT1__=1)
+check_symbol_exists(memset_s string.h HAS_MEMSET_S)
 if (NOT HAS_MEMSET_S)
     message(WARNING "memset_s function does not exist in this compiler, zeroing secure memory may be optimized away")
     add_definitions(-DPEACEMAKR_NO_MEMSET_S)
 endif (NOT HAS_MEMSET_S)
 
-check_function_exists(arc4random_buf HAS_BSD)
+check_symbol_exists(arc4random_buf stdlib.h HAS_BSD)
 if (NOT HAS_BSD)
     add_definitions(-DPEACEMAKR_NEEDS_BSD)
 endif()
