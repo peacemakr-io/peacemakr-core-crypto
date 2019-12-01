@@ -4,15 +4,21 @@
 ## About
 This package defines the core crypto functionality for peacemakr.
 
-## Documentation
-From the repository base directory,
-`./bin/serve-docs.sh` will set up a docker image that serves the doxygen docs on `localhost:3000`
+## Install
+Assuming you have [OpenSSL 1.1+](#openssl-11) and [CMake 3.15+](#cmake-315) 
+```bash
+git clone https://github.com/peacemakr-io/peacemakr-core-crypto.git
+mkdir -p build && cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release
+make check install
+```
 
-## Make sure you have OpenSSL 1.1 or greater installed:
-### On Mac:
+## Dependencies
+### OpenSSL 1.1+:
+#### On Mac:
 `brew install openssl@1.1`
 
-### On Debian distros (tried on Ubuntu 18.04 and debian10)
+#### On Debian distros (tried on Ubuntu 18.04 and debian10):
 On debian distros the maximum version that apt getable is 1.0.x, so you need to manually install. 
 Go to `https://www.openssl.org/source/` and download the tar.gz
 
@@ -23,11 +29,11 @@ Then run the following to install the package:
 Verify your openssl install with:
 `openssl version`
 
-## Make sure you have CMake 3.15+
-### On Mac:
+### CMake 3.15+:
+#### On Mac:
 `brew install cmake`
 
-### On Debian distros (tried on Ubuntu 18.04 and debian10)
+#### On Debian distros (tried on Ubuntu 18.04 and debian10):
 On debian distros the maximum version that apt getable is 3.10.x, which is not good. 
 Go to `https://cmake.org/download/` and download a minimum of version 3.15.x in a tar.gz format
 
@@ -38,18 +44,22 @@ Then run the following to install the package:
 Verify your cmake install with:
 `cmake --version`
 
-## Integrate and release to your local peacemakr-go-sdk clone - Golang:
+## Documentation
+From the repository base directory,
+`./bin/serve-docs.sh` will set up a docker image that serves the doxygen docs on `localhost:3000`
+
+## Build - Golang:
 `./bin/release-golang.sh /path/to/peacemakr-go-sdk release`
 
 For a debug build
 
 `./bin/release-golang.sh /path/to/peacemakr-go-sdk`
 
-## Build - For iOS
+## Build - iOS
 `cd /path/to/peacemakr-core-crypto/bin && ./release-ios.sh /where/to/put/build/artifacts [is_first_build]`
 
 
-## Build - For Android (doesn't work yet)
+## Build - Android (doesn't work yet)
 `cd /path/to/peacemakr-core-crypto/bin && ANDROID_NDK_ROOT=/path/to/android/ndk-bundle ./release-android.sh /where/to/put/build/artifacts [is_first_build]`
 
 Make sure you have the [Android NDK installed](https://developer.android.com/ndk/guides): 
@@ -66,6 +76,3 @@ Local (install into virtualenv):
 
 Local (install into machine python):
 `cd /path/to/peacemakr-core-crypto/bin && ./release-python.sh local none release`
-
-## Potential errors in tests when compiling:
-If you get an error informing you that the system does not find the pthread lib (during the testing phase), go to `src/ffi/cpp/tests/CmakeList.txt` and change the line containing `set(CMAKE_CXX_STANDARD 11)` to `set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -pthread")`.
