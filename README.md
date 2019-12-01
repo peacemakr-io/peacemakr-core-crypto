@@ -8,6 +8,7 @@ This package defines the core crypto functionality for peacemakr.
 Assuming you have [OpenSSL 1.1+](#openssl-11) and [CMake 3.15+](#cmake-315) 
 ```bash
 git clone https://github.com/peacemakr-io/peacemakr-core-crypto.git
+cd peacemakr-core-crypto
 mkdir -p build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
 make check install
