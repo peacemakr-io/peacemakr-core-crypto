@@ -28,6 +28,7 @@ function get_crypto_file_mac {
     pushd build
     cmake .. -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl@1.1 -D${build_type} -DCMAKE_INSTALL_PREFIX=/tmp/peacemakr/crypto
     make check install
+    # Ubuntu has openssl stored in /usr/local/include/openssl/, mac has it in  /usr/local/opt/openssl@1.1/include/openssl
     cp -R /usr/local/opt/openssl@1.1/include/openssl /tmp/peacemakr/crypto/include/
     cp -R ../src/ffi/go/src/peacemakr/crypto/ /tmp/peacemakr/crypto/
     tar -czvf ${out_dir}/peacemakr-core-crypto-go-macos.tar.gz -C /tmp peacemakr
@@ -52,6 +53,7 @@ tar -xzvf peacemakr-core-crypto-go-macos.tar.gz
 cp -R peacemakr/crypto ./
 tar -xzvf peacemakr-core-crypto-go-musl.tar.gz
 cp peacemakr/crypto/lib/*.so ./crypto/lib
+cp peacemakr/crypto/lib/*.a ./crypto/lib
 rm -rf crypto/lib/cmake
 rm -rf peacemakr peacemakr-core-crypto-go-macos.tar.gz peacemakr-core-crypto-go-musl.tar.gz
 echo "package keeplib" > crypto/lib/keep.go
