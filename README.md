@@ -13,7 +13,7 @@ mkdir -p build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
 make check install
 # To helps runtime dependencies find the library
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
+echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib' >> ~/.bashrc
 ```
 
 # Development Setup
