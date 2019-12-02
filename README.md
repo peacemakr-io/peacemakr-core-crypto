@@ -4,7 +4,7 @@
 ## About
 This package defines the core crypto functionality for peacemakr.
 
-## Install
+## Install Library from Source
 Assuming you have [OpenSSL 1.1+](#openssl-11) and [CMake 3.15+](#cmake-315) 
 ```bash
 git clone https://github.com/peacemakr-io/peacemakr-core-crypto.git
@@ -14,7 +14,7 @@ cmake .. -DCMAKE_BUILD_TYPE=Release
 make check install
 ```
 
-## Dependencies
+# Development Setup
 ### OpenSSL 1.1+:
 #### On Mac:
 `brew install openssl@1.1`
