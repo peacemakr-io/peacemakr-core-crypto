@@ -1,10 +1,10 @@
-# peacemakr-core-crypto
+# Peacemakr CoreCrypto Library
 [![CircleCI](https://circleci.com/gh/notasecret/peacemakr-core-crypto/tree/master.svg?style=svg&circle-token=a5e0dd516384638b6e97cd79c7963d8081873df2)](https://circleci.com/gh/notasecret/peacemakr-core-crypto/tree/master)
 
 ## About
 This package defines the core crypto functionality for peacemakr.
 
-## Install Library from Source
+# Install Library from Source
 Assuming you have [OpenSSL 1.1+](#openssl-11) and [CMake 3.15+](#cmake-315) 
 ```bash
 git clone https://github.com/peacemakr-io/peacemakr-core-crypto.git
