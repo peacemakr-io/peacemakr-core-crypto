@@ -4,7 +4,14 @@
 ## About
 This package defines the core crypto functionality for peacemakr.
 
-# Install Library from Source
+# Download and Install Library for Ubuntu
+Assuming you have [OpenSSL 1.1+](#openssl-11) and [CMake 3.15+](#cmake-315) 
+```bash
+wget ... -O /usr/local/lib
+echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib' >> ~/.bashrc
+```
+
+# Build and Install Library from Source
 Assuming you have [OpenSSL 1.1+](#openssl-11) and [CMake 3.15+](#cmake-315) 
 ```bash
 git clone https://github.com/peacemakr-io/peacemakr-core-crypto.git
