@@ -1,0 +1,76 @@
+on: [pull_request]
+
+name: Build and Test
+
+jobs:
+  build_ubuntu:
+    name: Build and Test - Ubuntu
+    runs-on: ubuntu-latest
+    steps:
+      # TODO: we should really figure out how to cache this build per-os and use it that way...
+      # We export the openssl root dir in all cases because it is just ignored on linux
+      - name: Install OpenSSL
+        run: |
+          sudo apt-get install libssl-dev
+
+      - name: Checkout code
+        uses: actions/checkout@v1
+
+      - name: Build and Test C/C++
+        # We run install here so that we can re-use the results from this step in the go step
+        run: |
+          mkdir -p cpp-build && pushd cpp-build
+          cmake .. -DPEACEMAKR_BUILD_CPP=ON -DCMAKE_INSTALL_PREFIX=../src/ffi/go/src/peacemakr/crypto
+          make check install
+          popd
+      - name: Build and Test Go
+        run: |
+          mkdir -p src/ffi/go/src/peacemakr/crypto/include/openssl
+          cp -r /usr/include/openssl src/ffi/go/src/peacemakr/crypto/include/openssl
+          pushd src/ffi/go/src/peacemakr/crypto
+          go test -v .
+          popd
+      - name: Build and Test Python
+        run: |
+          mkdir -p py-build && pushd py-build
+          cmake .. -DPEACEMAKR_BUILD_PYTHON=ON -DASAN=OFF
+          make check
+          popd
+
+  build_macos:
+    name: Build and Test - macOS
+    runs-on: macos-latest
+    steps:
+      # TODO: we should really figure out how to cache this build per-os and use it that way...
+      # We export the openssl root dir in all cases because it is just ignored on linux
+      - name: Install OpenSSL
+        run: |
+          brew install openssl@1.1
+
+      - name: Checkout code
+        uses: actions/checkout@v1
+
+      - name: Build and Test C/C++
+        # We run install here so that we can re-use the results from this step in the go step
+        run: |
+          mkdir -p cpp-build && pushd cpp-build
+          cmake .. -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl@1.1 -DPEACEMAKR_BUILD_CPP=ON -DCMAKE_INSTALL_PREFIX=../src/ffi/go/src/peacemakr/crypto
+          make check install
+          popd
+      - name: Build and Test Go
+        run: |
+          mkdir -p src/ffi/go/src/peacemakr/crypto/include/openssl
+          cp -r /usr/local/opt/openssl@1.1/include/openssl src/ffi/go/src/peacemakr/crypto/include/openssl
+          pushd src/ffi/go/src/peacemakr/crypto
+          go test -v .
+          popd
+      - name: Build and Test Python
+        run: |
+          mkdir -p py-build && pushd py-build
+          cmake .. -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl@1.1 -DPEACEMAKR_BUILD_PYTHON=ON -DASAN=OFF
+          make check
+          popd
+      - name: Build and Test Java
+        run: |
+          cd src/ffi/java
+          ./gradlew clean && ./gradlew test -Pdebug
