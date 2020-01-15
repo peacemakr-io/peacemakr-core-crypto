@@ -58,7 +58,7 @@ target_link_libraries(peacemakr-core-crypto
 if (UNIX AND NOT APPLE)
     set(THREADS_PREFER_PTHREAD_FLAG TRUE)
     find_package(Threads)
-    target_link_libraries(peacemakr-core-crypto PRIVATE dl Threads::Threads)
+    target_link_libraries(peacemakr-core-crypto PUBLIC dl Threads::Threads)
 endif()
 
 if (STATIC_LIBC)

@@ -5,7 +5,7 @@ import peacemakr_core_crypto_python as p
 
 
 def get_random_data():
-    length = random.randint(0, 1000)
+    length = random.randint(1, 1000)
     letters = string.ascii_lowercase
     return ''.join(random.choice(letters) for _ in range(length))
 

@@ -1,13 +1,13 @@
 # Peacemakr CoreCrypto Library
-[![CircleCI](https://circleci.com/gh/notasecret/peacemakr-core-crypto/tree/master.svg?style=svg&circle-token=a5e0dd516384638b6e97cd79c7963d8081873df2)](https://circleci.com/gh/notasecret/peacemakr-core-crypto/tree/master)
+[![CircleCI](https://circleci.com/gh/notasecret/peacemakr-core-crypto/tree/master.svg?style=svg&circle-token=a5e0dd516384638b6e97cd79c7963d8081873df2)](https://circleci.com/gh/notasecret/peacemakr-core-crypto/tree/master) ![](https://github.com/peacemakr-io/peacemakr-core-crypto/workflows/Build%20and%20Test/badge.svg) ![](https://github.com/peacemakr-io/peacemakr-core-crypto/workflows/Upload%20Release%20Asset/badge.svg)
 
 ## About
 This package defines the core crypto functionality for peacemakr.
 
-# Download and Install Library for Ubuntu
+# Download and Install Binaries
 Assuming you have [OpenSSL 1.1+](#openssl-11) and [CMake 3.15+](#cmake-315) 
 ```bash
-wget ... -O /usr/local/lib
+wget https://github.com/peacemakr-io/peacemakr-core-crypto/releases/download/v0.1.0/libpeacemakr-core-crypto-<os>-<arch>.tar.gz -O /usr/local
 echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib' >> ~/.bashrc
 ```
 
