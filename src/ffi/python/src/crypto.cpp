@@ -119,8 +119,12 @@ PYBIND11_MODULE(peacemakr_core_crypto_python, m) {
       .def(py::init([]() -> std::unique_ptr<Plaintext> {
         return std::make_unique<Plaintext>();
       }))
-      .def_readwrite("data", &Plaintext::data)
-      .def_readwrite("aad", &Plaintext::aad);
+      .def_property(
+          "data", [](const Plaintext &p) { return py::bytes(p.data); },
+          [](Plaintext &p, py::bytes data) { p.data = std::move(data); })
+      .def_property(
+          "aad", [](const Plaintext &p) { return py::bytes(p.aad); },
+          [](Plaintext &p, py::bytes aad) { p.aad = std::move(aad); });
 
   py::class_<CryptoContext>(m, "CryptoContext")
       .def(py::init(
