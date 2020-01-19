@@ -2,7 +2,9 @@
 ![](https://github.com/peacemakr-io/peacemakr-core-crypto/workflows/Build%20and%20Test/badge.svg) ![](https://github.com/peacemakr-io/peacemakr-core-crypto/workflows/Upload%20Release%20Asset/badge.svg)
 
 ## About
-This package defines the core crypto functionality for peacemakr.
+Peacemakr's Core Cryptography SDK. Defines crypto functionality for all Peacemakr SDKs
+
+We take security and trust very seriously. If you believe you have found a security issue, please responsibly disclose by [contacting us](mailto:security@peacemakr.io).
 
 # Download and Install Binaries
 ```bash
