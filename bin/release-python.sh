@@ -22,7 +22,7 @@ if [[ "${1}" == "local" ]]; then
       CMAKE_BUILD_TYPE=RELEASE
   fi
 
-  PYTHON_INSTALL="-DPYTHON_INSTALL_DIR=${2}"
+  PYTHON_INSTALL="-DPYTHON_INSTALL_DIR=${2} -DCMAKE_INSTALL_PREFIX=${2}"
   if [[ "${2}" == "none" ]]; then
     PYTHON_INSTALL=""
   fi

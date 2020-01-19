@@ -7,50 +7,48 @@ name: Upload Release Asset
 
 jobs:
   build_ubuntu:
-    name: Upload Release Asset - Ubuntu
+    name: Build Release Asset - Ubuntu
     runs-on: ubuntu-latest
     steps:
       - name: Install OpenSSL
         run: |
           sudo apt-get install libssl-dev
 
+      - name: Get the version
+        id: get_version
+        run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
+
       - name: Checkout code
         uses: actions/checkout@v1
 
       - name: Build project
         run: |
-          mkdir -p build && cd build
+          mkdir -p build && pushd build
           cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/tmp/peacemakr.io/install
           make check install
-          tar -czf /tmp/peacemakr.io/release_objects/peacemakr-core-crypto-ubuntu-x86_64.tar.gz /tmp/peacemakr.io/install/
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1.0.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }} Ubuntu
-          draft: false
-          prerelease: false
+          popd
+          tar -czf peacemakr-core-crypto-ubuntu-x86_64.tar.gz -C /tmp/peacemakr.io/install/ .
+
       - name: Upload Release Asset
         id: upload-release-asset
-        uses: actions/upload-release-asset@v1.0.1
+        uses: actions/upload-artifact@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
-          asset_path: ./tmp/peacemakr.io/release_objects/peacemakr-core-crypto-ubuntu-x86_64.tar.gz
-          asset_name: peacemakr-core-crypto-ubuntu-x86_64.tar.gz
-          asset_content_type: application/gzip
+          path: ./peacemakr-core-crypto-ubuntu-x86_64.tar.gz
+          name: peacemakr-core-crypto-ubuntu-x86_64.tar.gz
 
   build_macos:
-    name: Upload Release Asset - macOS
+    name: Build Release Asset - macOS
     runs-on: macos-latest
     steps:
       - name: Install OpenSSL
         run: |
           brew install openssl@1.1
+
+      - name: Get the version
+        id: get_version
+        run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
 
       - name: Checkout code
         uses: actions/checkout@v1
@@ -59,73 +57,71 @@ jobs:
         run: |
           mkdir -p /tmp/peacemakr.io/install
           mkdir -p build && pushd build
-          cmake .. -DPEACEMAKR_BUILD_CPP=ON -DCMAKE_INSTALL_PREFIX=/tmp/peacemakr.io/install
+          cmake .. -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl@1.1 -DPEACEMAKR_BUILD_CPP=ON -DCMAKE_INSTALL_PREFIX=/tmp/peacemakr.io/install
           make check install
           popd
-          tar -czf peacemakr-core-crypto-macos-x86_64.tar.gz /tmp/peacemakr.io/install/
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1.0.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }} macOS
-          draft: false
-          prerelease: false
+          tar -czf peacemakr-core-crypto-macos-x86_64.tar.gz -C /tmp/peacemakr.io/install/ .
+
       - name: Upload Release Asset
         id: upload-release-asset
-        uses: actions/upload-release-asset@v1.0.1
+        uses: actions/upload-artifact@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
-          asset_path: ./peacemakr-core-crypto-macos-x86_64.tar.gz
-          asset_name: peacemakr-core-crypto-macos-x86_64.tar.gz
-          asset_content_type: application/gzip
+          path: ./peacemakr-core-crypto-macos-x86_64.tar.gz
+          name: peacemakr-core-crypto-macos-x86_64.tar.gz
 
-  build_jar:
-    name: Upload Release Asset - JAR
-    runs-on: macos-latest
-    steps:
-      - name: Install OpenSSL
-        run: |
-          brew install openssl@1.1
-
-      - name: Checkout code
-        uses: actions/checkout@v1
-
-      - name: Build project
-        run: |
-          ./bin/release-java.sh . release
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1.0.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }} JAR
-          draft: false
-          prerelease: false
-      - name: Upload Release Asset
-        id: upload-release-asset
-        uses: actions/upload-release-asset@v1.0.1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
-          asset_path: ./PeacemakrCoreCrypto-0.0.1.jar
-          asset_name: PeacemakrCoreCrypto-0.0.1.jar
-          asset_content_type: application/gzip
+#  TODO: macos runners don't have docker...
+#  build_jar:
+#    name: Upload Release Asset - JAR
+#    runs-on: macos-latest
+#    steps:
+#      - name: Install OpenSSL
+#        run: |
+#          brew install openssl@1.1
+#
+#      - name: Get the version
+#        id: get_version
+#        run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
+#
+#      - name: Checkout code
+#        uses: actions/checkout@v1
+#
+#      - name: Build project
+#        run: |
+#          ./bin/release-java.sh . release
+#      - name: Create Release
+#        id: create_release
+#        uses: actions/create-release@v1.0.0
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        with:
+#          tag_name: ${{ steps.get_version.outputs.VERSION }}
+#          release_name: Release ${{ steps.get_version.outputs.VERSION }} JAR
+#          draft: false
+#          prerelease: false
+#      - name: Upload Release Asset
+#        id: upload-release-asset
+#        uses: actions/upload-release-asset@v1.0.1
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        with:
+#          upload_url: https://github.com/peacemakr-io/peacemakr-core-crypto/releases/latest/assets{?name,label}
+#          asset_path: ./PeacemakrCoreCrypto-0.0.1.jar
+#          asset_name: PeacemakrCoreCrypto-0.0.1.jar
+#          asset_content_type: application/gzip
 
   build_python_mac:
-    name: Upload Release Asset - Python/macOS
+    name: Build Release Asset - Python/macOS
     runs-on: macos-latest
     steps:
       - name: Install OpenSSL
         run: |
           brew install openssl@1.1
+
+      - name: Get the version
+        id: get_version
+        run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
 
       - name: Checkout code
         uses: actions/checkout@v1
@@ -133,63 +129,133 @@ jobs:
       - name: Build project
         run: |
           mkdir -p /tmp/peacemakr.io/install
-          ./bin/release-python.sh local /tmp/peacemakr.io/install release
-          tar -czf peacemakr-core-crypto-python-macos-x86_64.tar.gz /tmp/peacemakr.io/install/
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1.0.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }} Python/macOS
-          draft: false
-          prerelease: false
+          pushd bin
+          ./release-python.sh local /tmp/peacemakr.io/install release
+          popd
+          tar -czf peacemakr-core-crypto-python-macos-x86_64.tar.gz -C /tmp/peacemakr.io/install/ .
+
       - name: Upload Release Asset
         id: upload-release-asset
-        uses: actions/upload-release-asset@v1.0.1
+        uses: actions/upload-artifact@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
-          asset_path: ./peacemakr-core-crypto-python-macos-x86_64.tar.gz
-          asset_name: peacemakr-core-crypto-python-macos-x86_64.tar.gz
-          asset_content_type: application/gzip
+          path: ./peacemakr-core-crypto-python-macos-x86_64.tar.gz
+          name: peacemakr-core-crypto-python-macos-x86_64.tar.gz
 
   build_python_ubuntu:
-    name: Upload Release Asset - Python/Ubuntu
+    name: Build Release Asset - Python/Ubuntu
     runs-on: ubuntu-latest
     steps:
       - name: Install OpenSSL
         run: |
           sudo apt-get install libssl-dev
 
+      - name: Get the version
+        id: get_version
+        run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
+
       - name: Checkout code
         uses: actions/checkout@v1
 
       - name: Build project
         run: |
           mkdir -p /tmp/peacemakr.io/install
-          ./bin/release-python.sh local /tmp/peacemakr.io/install release
-          tar -czf peacemakr-core-crypto-python-ubuntu-x86_64.tar.gz /tmp/peacemakr.io/install/
+          pushd bin
+          ./release-python.sh local /tmp/peacemakr.io/install release
+          popd
+          tar -czf peacemakr-core-crypto-python-ubuntu-x86_64.tar.gz -C /tmp/peacemakr.io/install/ .
+          
+      - name: Upload Release Asset
+        id: upload-release-asset
+        uses: actions/upload-artifact@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          path: ./peacemakr-core-crypto-python-ubuntu-x86_64.tar.gz
+          name: peacemakr-core-crypto-python-ubuntu-x86_64.tar.gz
+
+  upload_release:
+    name: Create and Upload Release
+    needs: [build_ubuntu, build_macos, build_python_ubuntu, build_python_mac]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get the version
+        id: get_version
+        run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
+
+      - name: Download macOS
+        uses: actions/download-artifact@v1
+        with:
+          name: peacemakr-core-crypto-macos-x86_64.tar.gz
+          path: /tmp/peacemakr-core-crypto-macos-x86_64.tar.gz
+
+      - name: Download Ubuntu
+        uses: actions/download-artifact@v1
+        with:
+          name: peacemakr-core-crypto-ubuntu-x86_64.tar.gz
+          path: /tmp/peacemakr-core-crypto-ubuntu-x86_64.tar.gz
+
+      - name: Download macOS Python
+        uses: actions/download-artifact@v1
+        with:
+          name: peacemakr-core-crypto-python-macos-x86_64.tar.gz
+          path: /tmp/peacemakr-core-crypto-python-macos-x86_64.tar.gz
+
+      - name: Download Ubuntu Python
+        uses: actions/download-artifact@v1
+        with:
+          name: peacemakr-core-crypto-python-ubuntu-x86_64.tar.gz
+          path: /tmp/peacemakr-core-crypto-python-ubuntu-x86_64.tar.gz
+
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }} Python/Ubuntu
+          tag_name: ${{ steps.get_version.outputs.VERSION }}
+          release_name: Release ${{ steps.get_version.outputs.VERSION }}
           draft: false
           prerelease: false
-      - name: Upload Release Asset
-        id: upload-release-asset
+
+      - name: Upload Release Asset - macOS
         uses: actions/upload-release-asset@v1.0.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
-          asset_path: ./peacemakr-core-crypto-python-ubuntu-x86_64.tar.gz
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: /tmp/peacemakr-core-crypto-macos-x86_64.tar.gz/peacemakr-core-crypto-macos-x86_64.tar.gz
+          asset_name: peacemakr-core-crypto-macos-x86_64.tar.gz
+          asset_content_type: application/gzip
+
+      - name: Upload Release Asset - Ubuntu
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: /tmp/peacemakr-core-crypto-ubuntu-x86_64.tar.gz/peacemakr-core-crypto-ubuntu-x86_64.tar.gz
+          asset_name: peacemakr-core-crypto-ubuntu-x86_64.tar.gz
+          asset_content_type: application/gzip
+
+      - name: Upload Release Asset - macOS Python
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: /tmp/peacemakr-core-crypto-python-macos-x86_64.tar.gz/peacemakr-core-crypto-python-macos-x86_64.tar.gz
+          asset_name: peacemakr-core-crypto-python-macos-x86_64.tar.gz
+          asset_content_type: application/gzip
+
+      - name: Upload Release Asset - Ubuntu Python
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: /tmp/peacemakr-core-crypto-python-ubuntu-x86_64.tar.gz/peacemakr-core-crypto-python-ubuntu-x86_64.tar.gz
           asset_name: peacemakr-core-crypto-python-ubuntu-x86_64.tar.gz
           asset_content_type: application/gzip
 
@@ -197,12 +263,22 @@ jobs:
     name: Build and Release Docker containers
     runs-on: ubuntu-latest
     steps:
+      - name: Get the version
+        id: get_version
+        run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
+
+      - name: Checkout code
+        uses: actions/checkout@v1
+
       - name: Publish docker images
         run: |
-          docker build -t docker.pkg.github.com/peacemakr-io/peacemakr-core-crypto/corecrypto-dependencies:${{ github.ref }} . -f docker/go-dependencies.Dockerfile --build-arg="CMAKE_BUILD_TYPE=RELEASE"
-          docker build -t docker.pkg.github.com/peacemakr-io/peacemakr-core-crypto/corecrypto:${{ github.ref }} . -f docker/go.Dockerfile
+          docker build -t corecrypto-dependencies:latest . -f docker/go-dependencies.Dockerfile --build-arg="CMAKE_BUILD_TYPE=RELEASE"
+          docker tag corecrypto-dependencies:latest docker.pkg.github.com/peacemakr-io/peacemakr-core-crypto/corecrypto-dependencies:${{ steps.get_version.outputs.VERSION }}
+
+          docker build -t corecrypto:latest . -f docker/go.Dockerfile
+          docker tag corecrypto:latest docker.pkg.github.com/peacemakr-io/peacemakr-core-crypto/corecrypto:${{ steps.get_version.outputs.VERSION }}
 
           docker login docker.pkg.github.com -u peacemakr-io -p ${{ secrets.GITHUB_TOKEN }}
 
-          docker push docker.pkg.github.com/peacemakr-io/peacemakr-core-crypto/corecrypto-dependencies:${{ github.ref }}
-          docker push corecrypto:latest docker.pkg.github.com/peacemakr-io/peacemakr-core-crypto/corecrypto:${{ github.ref }}
+          docker push docker.pkg.github.com/peacemakr-io/peacemakr-core-crypto/corecrypto-dependencies:${{ steps.get_version.outputs.VERSION }}
+          docker push docker.pkg.github.com/peacemakr-io/peacemakr-core-crypto/corecrypto:${{ steps.get_version.outputs.VERSION }}

@@ -73,15 +73,16 @@ set_target_properties(peacemakr-core-crypto PROPERTIES
         PUBLIC_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/include/peacemakr/crypto.h;${CMAKE_CURRENT_SOURCE_DIR}/include/peacemakr/random.h"
 )
 
+# TODO: older versions of cmake don't have target_link_options, switch back at some point
 if ((CMAKE_BUILD_TYPE MATCHES RELEASE) OR (CMAKE_BUILD_TYPE MATCHES Release))
     message(STATUS "Stripping library of dead symbols")
     if (APPLE)
-        target_link_options(peacemakr-core-crypto PRIVATE -Wl,-dead_strip)
+        target_link_libraries(peacemakr-core-crypto PRIVATE "-Wl,-dead_strip")
 
         add_custom_command(TARGET peacemakr-core-crypto POST_BUILD
                 COMMAND ${CMAKE_STRIP} -x $<TARGET_FILE:peacemakr-core-crypto>)
     else()
-        target_link_options(peacemakr-core-crypto PRIVATE -Wl,--gc-sections)
+        target_link_libraries(peacemakr-core-crypto PRIVATE "-Wl,--gc-sections")
 
         add_custom_command(TARGET peacemakr-core-crypto POST_BUILD
                 COMMAND ${CMAKE_STRIP} $<TARGET_FILE:peacemakr-core-crypto>)
