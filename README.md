@@ -88,6 +88,23 @@ Local (install into virtualenv):
 Local (install into machine python):
 `cd /path/to/peacemakr-core-crypto/bin && ./release-python.sh local none release`
 
+## macOS 10.15
+Due to the new security requirements for macOS Catalina, you may run into an issue where `dlopen` fails because macOS
+could not identify the developer.
+
+There are several solutions (temporary):
+
+### Manually sign 
+```bash
+xattr -cr /path/to/peacemakr_core_crypto.dylib
+codesign --force --deep --sign - /path/to/peacemakr_core_crypto.dylib
+``` 
+
+### Developer tools override
+Install Xcode and in System Preferences navigate to `Security & Privacy -> Privacy -> Developer Tools` and allow 
+Terminal to run software locally. If you do not have Xcode installed, you will not see the `Developer Tools` entry 
+in the list on the left hand side.
+
 ## Under development
 ### Build - iOS
 `cd /path/to/peacemakr-core-crypto/bin && ./release-ios.sh /where/to/put/build/artifacts [is_first_build]`
