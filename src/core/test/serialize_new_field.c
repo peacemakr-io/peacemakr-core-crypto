@@ -140,11 +140,14 @@ static uint8_t *serialize_headers(const ciphertext_blob_t *blob,
       offset_table_end + config_size + iv_offset + tag_offset +
       /* sizeof([4]) */
       buffer_get_serialized_size(ciphertext_blob_encrypted_key(blob)) +
-      /* sizeof([7]) */ buffer_get_serialized_size(ciphertext_blob_aad(blob)) +
+      /* sizeof([7]) */
+      buffer_get_serialized_size(ciphertext_blob_aad(blob)) +
       /* sizeof([8]) */
       buffer_get_serialized_size(ciphertext_blob_ciphertext(blob)) +
       /* sizeof([9]) */
-      buffer_get_serialized_size(ciphertext_blob_signature(blob)));
+      buffer_get_serialized_size(ciphertext_blob_signature(blob)) +
+      /* new field size */
+      60);
 
   return out;
 }

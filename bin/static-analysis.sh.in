@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+set -ex
+
+pushd ..
+if [ -d "cmake-build-debug" ]; then
+    cd cmake-build-debug
+elif [ -d "build" ]; then
+    cd build
+fi
+rm -rf CMakeFiles/ CMakeCache.txt;
+@CLANG_ANALYZER@ "@CMAKE_COMMAND@" .. -G @CMAKE_GENERATOR@ -DOPENSSL_ROOT_DIR="@OPENSSL_ROOT_DIR@" -DCMAKE_PROGRAM_PATH="@CMAKE_PROGRAM_PATH@"
+@CLANG_ANALYZER@ "@CMAKE_BUILD_TOOL@"
+"@CMAKE_COMMAND@" .. -G @CMAKE_GENERATOR@ -DOPENSSL_ROOT_DIR="@OPENSSL_ROOT_DIR@" -DCMAKE_PROGRAM_PATH="@CMAKE_PROGRAM_PATH@"
+popd
