@@ -47,12 +47,22 @@ jobs:
     steps:
       # TODO: we should really figure out how to cache this build per-os and use it that way...
       # We export the openssl root dir in all cases because it is just ignored on linux
-      - name: Install OpenSSL
+      - name: Install Dependencies
         run: |
           brew install openssl@1.1
+          brew install llvm@9
+          brew install ninja
 
       - name: Checkout code
         uses: actions/checkout@v1
+
+      - name: Static Analysis
+        run: |
+          mkdir -p build && pushd build
+          SCAN_BUILD_PATH=$(echo $(brew list llvm | grep "/usr/local/Cellar/llvm/[0-9]\..*[0-9]/bin/scan-build") | xargs dirname)
+          cmake .. -G Ninja -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl@1.1 -DCMAKE_PROGRAM_PATH="${SCAN_BUILD_PATH};"
+          ninja clang-analyzer
+          popd
 
       - name: Build and Test C/C++
         # We run install here so that we can re-use the results from this step in the go step
