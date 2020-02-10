@@ -21,6 +21,8 @@ CMakeFiles/
 **/Doxyfile.doxygen
 **/CMakeDoxyfile.in
 
+bin/static-analysis.sh
+
 xcuserdata/
 *.dSYM
 

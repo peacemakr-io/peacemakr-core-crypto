@@ -11,6 +11,7 @@ if (NOT __CLANG_ANALYZER_INCLUDED)
 
     find_program(CLANG_ANALYZER "scan-build")
     if(CLANG_ANALYZER)
+        configure_file(${CMAKE_SOURCE_DIR}/bin/static-analysis.sh.in ${CMAKE_SOURCE_DIR}/bin/static-analysis.sh @ONLY)
         add_custom_target(
                 clang-analyzer
                 COMMAND ${CMAKE_SOURCE_DIR}/bin/static-analysis.sh
