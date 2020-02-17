@@ -523,6 +523,7 @@ func (k *PeacemakrKey) Destroy() {
 		return
 	}
 	C.peacemakr_key_free((*C.peacemakr_key_t)(k.key))
+	k.key = nil
 }
 
 // ========================= Core APIs =========================
