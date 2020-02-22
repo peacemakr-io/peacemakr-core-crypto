@@ -96,6 +96,8 @@ sourceSets {
     }
 }
 
+sourceCompatibility = 1.7
+
 jar {
     baseName = "PeacemakrCoreCrypto"
     version = "0.0.1"

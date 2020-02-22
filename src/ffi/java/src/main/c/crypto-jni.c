@@ -158,14 +158,6 @@ Java_io_peacemakr_corecrypto_Crypto_decryptSymmetric(JNIEnv *env, jclass clazz,
     return NULL;
   }
 
-  peacemakr_key_t *verify_native_key = getNativeKey(env, verify_key);
-  if (verify_native_key == NULL) {
-    LOGE("%s\n", "Error creating verification key");
-    peacemakr_key_free(native_key);
-    (*env)->ReleaseByteArrayElements(env, key, raw_key, JNI_ABORT);
-    return NULL;
-  }
-
   jbyte *raw_data = (*env)->GetByteArrayElements(env, ciphertext, NULL);
   const jsize data_len = (*env)->GetArrayLength(env, ciphertext);
 
@@ -184,6 +176,15 @@ Java_io_peacemakr_corecrypto_Crypto_decryptSymmetric(JNIEnv *env, jclass clazz,
   decrypt_code did_succeed =
       peacemakr_decrypt(native_key, deserialized, &plaintext);
   if (did_succeed == DECRYPT_NEED_VERIFY) {
+    // Only set up the key if we need to
+    peacemakr_key_t *verify_native_key = getNativeKey(env, verify_key);
+    if (verify_native_key == NULL) {
+      LOGE("%s\n", "Error creating verification key");
+      peacemakr_key_free(native_key);
+      (*env)->ReleaseByteArrayElements(env, key, raw_key, JNI_ABORT);
+      return NULL;
+    }
+
     if (!peacemakr_verify(verify_native_key, &plaintext, deserialized)) {
       LOGE("%s\n", "Verification of the message failed");
       (*env)->ReleaseByteArrayElements(env, key, raw_key, JNI_ABORT);
