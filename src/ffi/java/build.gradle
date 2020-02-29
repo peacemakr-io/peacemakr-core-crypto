@@ -1,6 +1,10 @@
 plugins {
     id 'java'
+    id 'maven-publish'
+    id 'signing'
 }
+
+def release_version = "0.0.2"
 
 task setupBuildDir(type:Exec) {
     commandLine 'mkdir', '-p', buildDir.path
@@ -99,17 +103,17 @@ sourceSets {
 sourceCompatibility = 1.7
 
 jar {
-    baseName = "PeacemakrCoreCrypto"
-    version = "0.0.1"
+    baseName = "peacemakr-core-crypto"
+    version = release_version
     manifest {
         attributes (
-            'Name': 'corecrypto',
-            'Specification-Title': 'Peacemakr Core Crypto Library',
-            'Specification-Version': '1.0',
-            'Specification-Vendor': 'Peacemakr Crypto Systems',
-            'Implementation-Title': 'io.peacemakr.corecrypto',
-            'Implementation-Version': '0',
-            'Implementation-Vendor': 'Peacemakr Crypto Systems',
+                'Name': 'corecrypto',
+                'Specification-Title': 'Peacemakr Secure Data Platform',
+                'Specification-Version': '1.0',
+                'Specification-Vendor': 'Peacemakr Secure Data Platform',
+                'Implementation-Title': 'io.peacemakr.corecrypto',
+                'Implementation-Version': '0',
+                'Implementation-Vendor': 'Peacemakr Secure Data Platform',
         )
     }
 
@@ -123,4 +127,147 @@ repositories {
 
 dependencies {
     testCompile "junit:junit:4.12"
+}
+
+// Publish to Maven Central
+task sourceJar(type: Jar) {
+    classifier "sources"
+    from sourceSets.main.allJava
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier "javadoc"
+    from javadoc.destinationDir
+}
+
+artifacts {
+    archives jar
+    archives sourceJar
+    archives javadocJar
+}
+
+signing {
+    sign configurations.archives
+}
+
+publishing {
+    // Get secret properties
+    ext["signing.keyId"] = ''
+    ext["signing.password"] = ''
+    ext["signing.secretKeyRingFile"] = ''
+    ext["ossrhUsername"] = ''
+    ext["ossrhPassword"] = ''
+
+    File secretPropsFile = project.rootProject.file(System.properties['user.home'] + "/.gradle/gradle.properties")
+    if (secretPropsFile.exists()) {
+        println "Found secret props file, loading props"
+        Properties p = new Properties()
+        p.load(new FileInputStream(secretPropsFile))
+        p.each { name, value ->
+            ext[name] = value
+        }
+    } else {
+        println "No props file, loading env vars"
+        ext["signing.keyId"] = System.getenv('SIGNING_KEY_ID')
+        ext["signing.password"] = System.getenv('SIGNING_PASSWORD')
+        ext["signing.secretKeyRingFile"] = System.getenv('SIGNING_SECRET_KEY_RING_FILE')
+        ext["ossrhUsername"] = System.getenv('OSSRH_USERNAME')
+        ext["ossrhPassword"] = System.getenv('OSSRH_PASSWORD')
+    }
+
+    publications {
+        mavenJava(MavenPublication) {
+            customizePom(pom)
+            groupId 'io.peacemakr'
+            artifactId 'peacemakr-core-crypto'
+            version release_version
+
+            from components.java
+
+            // create the sign pom artifact
+            pom.withXml {
+                def pomFile = file("${project.buildDir}/generated-pom.xml")
+                writeTo(pomFile)
+                def pomAscFile = signing.sign(pomFile).signatureFiles[0]
+                artifact(pomAscFile) {
+                    classifier = null
+                    extension = 'pom.asc'
+                }
+            }
+
+            artifact(sourceJar) {
+                classifier = 'sources'
+            }
+            artifact(javadocJar) {
+                classifier = 'javadoc'
+            }
+
+            // create the signed artifacts
+            project.tasks.signArchives.signatureFiles.each {
+                artifact(it) {
+                    def matcher = it.file =~ /-(sources|javadoc)\.jar\.asc$/
+                    if (matcher.find()) {
+                        classifier = matcher.group(1)
+                    } else {
+                        classifier = null
+                    }
+                    extension = 'jar.asc'
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            url "https://oss.sonatype.org/service/local/staging/deploy/maven2"
+            credentials {
+                username ossrhUsername
+                password ossrhPassword
+            }
+        }
+    }
+}
+
+def customizePom(pom) {
+    pom.withXml {
+        def root = asNode()
+        root.children().last() + {
+            resolveStrategy = Closure.DELEGATE_FIRST
+
+            name 'Peaceamakr Core Crypto'
+            description 'The opensource Peacemakr Core Crypto'
+            url 'http://maven.apache.org'
+            organization {
+                name 'io.peacemakr'
+                url 'https://peacemakr.io/'
+            }
+            licenses {
+                license {
+                    name 'Apache License, Version 2.0'
+                    url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    distribution 'repo'
+                }
+            }
+            scm {
+                url 'https://github.com/peacemakr-io/peacemakr-core-crypto/tree/master'
+                connection 'scm:git:git://github.com/peacemakr-io/peacemakr-core-crypto.git'
+                developerConnection 'scm:git:ssh://github.com:peacemakr-io/peacemakr-core-crypto.git'
+            }
+            developers {
+                developer {
+                    name 'Peacemakr'
+                    email 'info@peacemakr.io'
+                    organization 'Peacemakr'
+                    organizationUrl 'https://peacemakr.io/'
+                }
+            }
+        }
+    }
+}
+model {
+    tasks.publishMavenJavaPublicationToMavenLocal {
+        dependsOn project.tasks.signArchives
+    }
+    tasks.publishMavenJavaPublicationToMavenRepository {
+        dependsOn project.tasks.signArchives
+    }
 }
