@@ -80,6 +80,21 @@ For a debug build
 
 `./bin/release-java.sh /path/to/java/sdk`
 
+Prepare release of core-crypto-crypto jar to maven:
+`cd ../peacemakr-core-crypto/src/ffi/java`
+
+- View a list of tasks:
+`./gradlew tasks`
+
+- Build peacemakr-core-crypto jar:
+`./gradlew build`
+
+- Build and release core-crypto-crypto jar to local maven (~/.m2/repository/io/peacemakr/peacemakr-core-crypto):
+`./gradlew publishMavenJavaPublicationToMavenLocal -Prelease`
+
+- Build and push core-crypto-crypto jar to OSSRH:
+`./gradlew publishMavenJavaPublicationToMavenRepository -Prelease`
+
 ## Release - Python
 Docker:
 `cd /path/to/peacemakr-core-crypto/bin && ./release-python.sh release`
