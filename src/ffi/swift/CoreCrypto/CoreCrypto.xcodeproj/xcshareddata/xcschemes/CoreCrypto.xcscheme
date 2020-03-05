@@ -110,26 +110,6 @@
          </AdditionalOption>
       </AdditionalOptions>
    </LaunchAction>
-   <ProfileAction
-      buildConfiguration = "Debug"
-      shouldUseLaunchSchemeArgsEnv = "YES"
-      savedToolIdentifier = ""
-      useCustomWorkingDirectory = "NO"
-      debugDocumentVersioning = "YES">
-      <PathRunnable
-         runnableDebuggingMode = "0"
-         FilePath = "/Users/aman/Library/Developer/Xcode/DerivedData/CoreCrypto-duscjfrrhnrtztcnespplnbiezry/Build/Products/Debug-iphonesimulator/CoreCrypto.framework/CoreCrypto">
-      </PathRunnable>
-      <MacroExpansion>
-         <BuildableReference
-            BuildableIdentifier = "primary"
-            BlueprintIdentifier = "075623F4218CECAA0066BF29"
-            BuildableName = "CoreCrypto.framework"
-            BlueprintName = "CoreCrypto"
-            ReferencedContainer = "container:CoreCrypto.xcodeproj">
-         </BuildableReference>
-      </MacroExpansion>
-   </ProfileAction>
    <AnalyzeAction
       buildConfiguration = "Debug">
    </AnalyzeAction>
