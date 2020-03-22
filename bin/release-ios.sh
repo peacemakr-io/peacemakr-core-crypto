@@ -45,7 +45,7 @@ popd
 pushd ${PROJECT_SRC}/src/ffi/swift/CoreCrypto
 xcodebuild -project CoreCrypto.xcodeproj -scheme CoreCrypto -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 8,OS=13.3' test
 xcodebuild -project CoreCrypto.xcodeproj ONLY_ACTIVE_ARCH=NO -configuration Release -miphoneos-version-min=8.1 -sdk iphoneos build
-xcodebuild -project CoreCrypto.xcodeproj ONLY_ACTIVE_ARCH=NO -configuration Release -miphoneos-version-min=8.1 -sdk iphonesimulator build
+xcodebuild -project CoreCrypto.xcodeproj VALID_ARCHS="x86_64" ONLY_ACTIVE_ARCH=NO -configuration Release -miphoneos-version-min=8.1 -sdk iphonesimulator build
 popd
 
 mkdir -p ${OUTPUT_DIR}
