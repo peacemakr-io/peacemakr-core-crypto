@@ -16,9 +16,7 @@ void test_algo(plaintext_t plaintext_in, const peacemakr_key_t *key) {
 
   plaintext_t plaintext_out;
 
-  random_device_t rand = get_default_random_device();
-
-  ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, &plaintext_in, &rand);
+  ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, &plaintext_in, NULL);
   assert(ciphertext != NULL);
 
   decrypt_code success = peacemakr_decrypt(key, ciphertext, &plaintext_out);

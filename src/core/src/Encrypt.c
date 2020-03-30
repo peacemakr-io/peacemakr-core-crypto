@@ -453,7 +453,15 @@ ciphertext_blob_t *peacemakr_encrypt(const peacemakr_key_t *recipient_key,
 
   EXPECT_NOT_NULL_RET(recipient_key, "recipient key was null\n")
   EXPECT_NOT_NULL_RET(plain, "plain was null\n")
-  EXPECT_NOT_NULL_RET(rand, "rand was null\n")
+
+  random_device_t rng;
+  if (rand == NULL) {
+    PEACEMAKR_LOG("rand was NULL, using default random device\n");
+    rng = get_default_random_device();
+  } else {
+    rng = *rand;
+  }
+
   EXPECT_TRUE_RET(plain->data_len <= INT_MAX,
                   "Data was too big, needs to be broken up\n")
   EXPECT_TRUE_RET(plain->aad_len <= INT_MAX,
@@ -502,7 +510,7 @@ ciphertext_blob_t *peacemakr_encrypt(const peacemakr_key_t *recipient_key,
   EXPECT_NOT_NULL_RET(out, "Creating the ciphertext blob failed\n")
 
   // always init the iv...worst case you seed the random state
-  ciphertext_blob_init_iv(out, rand);
+  ciphertext_blob_init_iv(out, &rng);
 
   bool success = false;
   switch (cfg.mode) {
@@ -515,6 +523,10 @@ ciphertext_blob_t *peacemakr_encrypt(const peacemakr_key_t *recipient_key,
     success = asymmetric_encrypt(recipient_key, out, plain->data,
                                  plain->data_len, plain->aad, plain->aad_len);
     break;
+  }
+  case MODE_UNSPECIFIED: {
+    EXPECT_TRUE_CLEANUP_RET(false, ciphertext_blob_free(out),
+                            "Unspecified key mode\n")
   }
   }
 
@@ -546,6 +558,10 @@ decrypt_code peacemakr_decrypt(const peacemakr_key_t *recipient_key,
   case ASYMMETRIC: {
     success = asymmetric_decrypt(recipient_key, cipher, &plaintext, &aad);
     break;
+  }
+  case MODE_UNSPECIFIED: {
+    PEACEMAKR_ERROR("Unspecified key mode\n");
+    return DECRYPT_FAILED;
   }
   }
 

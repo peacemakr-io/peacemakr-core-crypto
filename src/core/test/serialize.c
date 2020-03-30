@@ -29,12 +29,10 @@ void test_serialize(symmetric_cipher symm_cipher, asymmetric_cipher cipher,
 
   plaintext_t plaintext_out;
 
-  random_device_t rand = get_default_random_device();
-
   peacemakr_key_t *key =
-      peacemakr_key_new_asymmetric(cipher, symm_cipher, &rand);
+      peacemakr_key_new_asymmetric(cipher, symm_cipher, NULL);
 
-  ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, &plaintext_in, &rand);
+  ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, &plaintext_in, NULL);
   assert(ciphertext != NULL);
 
   size_t out_size = 0;

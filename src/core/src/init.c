@@ -20,6 +20,14 @@ void arc4random_buf(void *buf, size_t n) {
 #endif
 #include <stdlib.h>
 
+uint32_t get_max_version() {
+  return PEACEMAKR_CORE_CRYPTO_VERSION_MAX;
+}
+
+uint32_t get_version() {
+  return PEACEMAKR_CORE_CRYPTO_VERSION;
+}
+
 bool peacemakr_init() {
   size_t bufsize = 512; // larger than any key size in bytes
   volatile void *random_buf = alloca(bufsize);

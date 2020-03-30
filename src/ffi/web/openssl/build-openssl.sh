@@ -2,12 +2,12 @@
 
 set -ex
 
-if [[ ! -z "${EMSCRIPTEN_SDK}" ]]; then
-    . ${EMSCRIPTEN_SDK}/emsdk_env.sh
+if [[ ! -z "${EMSDK}" ]]; then
+    . ${EMSDK}/emsdk_set_env.sh
 elif [[ -f ~/.emscripten ]]; then
     echo "Emscripten already set-up"
 else
-    echo "Must define EMSCRIPTEN_SDK environment variable"
+    echo "Must define EMSDK environment variable"
     exit 1
 fi
 
@@ -25,9 +25,9 @@ fi
 
 pushd openssl-${OPENSSL_VERSION}
 
-CC=emcc CXX=em++ AR=emar RANLIB=emranlib ./Configure linux-generic64 no-asm no-ssl3 no-comp no-hw no-engine no-async -D__STDC_NO_ATOMICS__ --prefix=${INSTALL_DIR}
+emconfigure ./Configure linux-generic64 no-asm no-ssl3 no-comp no-hw no-engine no-async -static -D__STDC_NO_ATOMICS__ --prefix=${INSTALL_DIR}
 
-sed 's/^CROSS_COMPILE.*$/CROSS_COMPILE=/g' Makefile
+sed -i 's/^CROSS_COMPILE.*$/CROSS_COMPILE=/g' Makefile
 
 emmake make -j build_generated libssl.a libcrypto.a
 rm -rf ${INSTALL_DIR}/include/* ${INSTALL_DIR}/lib/*

@@ -77,7 +77,7 @@ typedef enum {
 /**
  * @brief Peacemakr supported encryption modes
  */
-typedef enum { SYMMETRIC, ASYMMETRIC } encryption_mode;
+typedef enum { SYMMETRIC, ASYMMETRIC, MODE_UNSPECIFIED } encryption_mode;
 
 /**
  * @brief Configures the crypto library calls
@@ -116,16 +116,12 @@ typedef struct PeacemakrKey peacemakr_key_t;
 /**
  * Get max supported version by this library. Compile time constant.
  */
-PEACEMAKR_EXPORT inline uint32_t get_max_version() {
-  return PEACEMAKR_CORE_CRYPTO_VERSION_MAX;
-}
+PEACEMAKR_EXPORT uint32_t get_max_version();
 
 /**
  * Get the current version of this library. Compile time constant.
  */
-PEACEMAKR_EXPORT inline uint32_t get_version() {
-  return PEACEMAKR_CORE_CRYPTO_VERSION;
-}
+PEACEMAKR_EXPORT uint32_t get_version();
 
 /**
  * Should be called once on startup. Ensures that the system's random number
@@ -149,7 +145,8 @@ PEACEMAKR_EXPORT void peacemakr_set_log_callback(peacemakr_log_cb log_fn);
 /**
  * Create a new asymmetric peacemakr_key_t from scratch \p rand. It is
  * recommended that \p rand come from /dev/urandom or similar. \p symm_cipher is
- * only used for encryption operations.
+ * only used for encryption operations. If \p rand is NULL then it uses the
+ * default random device provided in random.h.
  */
 PEACEMAKR_EXPORT peacemakr_key_t *
 peacemakr_key_new_asymmetric(asymmetric_cipher asymm_cipher,
@@ -158,8 +155,9 @@ peacemakr_key_new_asymmetric(asymmetric_cipher asymm_cipher,
 
 /**
  * Create a new symmetric peacemakr_key_t from scratch \p rand. It is
- * recommended that \p rand come from /dev/urandom or similar. \returns A newly
- * created peacemakr key for use in other library calls.
+ * recommended that \p rand come from /dev/urandom or similar. If \p rand is
+ * NULL then it uses the default random device provided in random.h. \returns A
+ * newly created peacemakr key for use in other library calls.
  */
 PEACEMAKR_EXPORT peacemakr_key_t *
 peacemakr_key_new_symmetric(symmetric_cipher cipher, random_device_t *rand);
@@ -239,6 +237,31 @@ PEACEMAKR_EXPORT crypto_config_t
 peacemakr_key_get_config(const peacemakr_key_t *key);
 
 /**
+ * Gets the encryption mode of \p key.
+ */
+PEACEMAKR_EXPORT encryption_mode
+peacemakr_key_get_mode(const peacemakr_key_t *key);
+
+/**
+ * Gets the symmetric cipher of \p key.
+ */
+PEACEMAKR_EXPORT symmetric_cipher
+peacemakr_key_get_symmetric_cipher(const peacemakr_key_t *key);
+
+/**
+ * Gets the asymmetric cipher of \p key. If ASYMMETRIC_UNKNOWN is returned, the
+ * key is not an asymmetric key.
+ */
+PEACEMAKR_EXPORT asymmetric_cipher
+peacemakr_key_get_asymmetric_cipher(const peacemakr_key_t *key);
+
+/**
+ * Gets the digest algorithm of \p key.
+ */
+PEACEMAKR_EXPORT message_digest_algorithm
+peacemakr_key_get_digest_algorithm(const peacemakr_key_t *key);
+
+/**
  * Serializes private key \p key into \p buf in PEM format and places its size
  * into \p bufsize. The caller is responsible for memory returned from this
  * function via \p buf.
@@ -273,8 +296,9 @@ PEACEMAKR_EXPORT void ciphertext_blob_free(ciphertext_blob_t *ciphertext);
 /**
  * Performs the encryption operation using the configuration and the (symmetric
  * or asymmetric) key in \p recipient_key. The operation is
- * performed over \p plain and uses \p rand to generate the IV/nonce. Returns a
- * ciphertext_blob_t that can be used in calls to peacemakr_sign,
+ * performed over \p plain and uses \p rand to generate the IV/nonce. If \p rand
+ * is NULL then it uses the default random device provided in random.h. \returns
+ * a ciphertext_blob_t that can be used in calls to peacemakr_sign,
  * peacemakr_serialize, peacemakr_decrypt, and peacemakr_verify
  */
 PEACEMAKR_EXPORT ciphertext_blob_t *

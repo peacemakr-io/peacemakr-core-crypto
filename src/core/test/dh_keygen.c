@@ -25,18 +25,16 @@ void test_symmetric_algo(symmetric_cipher symm_cipher,
 
   plaintext_t plaintext_out;
 
-  random_device_t rand = get_default_random_device();
-
   peacemakr_key_t *my_key =
-      peacemakr_key_new_asymmetric(curve, symm_cipher, &rand);
+      peacemakr_key_new_asymmetric(curve, symm_cipher, NULL);
   peacemakr_key_t *peer_key =
-      peacemakr_key_new_asymmetric(curve, symm_cipher, &rand);
+      peacemakr_key_new_asymmetric(curve, symm_cipher, NULL);
 
   peacemakr_key_t *symm_key =
       peacemakr_key_dh_generate(symm_cipher, my_key, peer_key);
 
   ciphertext_blob_t *ciphertext =
-      peacemakr_encrypt(symm_key, &plaintext_in, &rand);
+      peacemakr_encrypt(symm_key, &plaintext_in, NULL);
   assert(ciphertext != NULL);
 
   decrypt_code success =

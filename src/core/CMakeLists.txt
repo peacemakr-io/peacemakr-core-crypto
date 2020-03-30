@@ -74,7 +74,7 @@ set_target_properties(peacemakr-core-crypto PROPERTIES
 )
 
 # TODO: older versions of cmake don't have target_link_options, switch back at some point
-if ((CMAKE_BUILD_TYPE MATCHES RELEASE) OR (CMAKE_BUILD_TYPE MATCHES Release))
+if ((CMAKE_BUILD_TYPE MATCHES RELEASE) OR (CMAKE_BUILD_TYPE MATCHES Release) AND (NOT PEACEMAKR_BUILD_WEB))
     message(STATUS "Stripping library of dead symbols")
     if (APPLE)
         target_link_libraries(peacemakr-core-crypto PRIVATE "-Wl,-dead_strip")

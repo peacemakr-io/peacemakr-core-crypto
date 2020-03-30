@@ -146,8 +146,14 @@ typedef struct PeacemakrKey peacemakr_key_t;
 peacemakr_key_t *peacemakr_key_new_asymmetric(asymmetric_cipher cipher,
                                               symmetric_cipher symm_cipher,
                                               random_device_t *rand) {
-  EXPECT_NOT_NULL_RET(
-      rand, "Cannot create a new key without a source of randomness\n")
+  random_device_t rng;
+  if (rand == NULL) {
+    PEACEMAKR_LOG("rand was NULL, using default random device\n");
+    rng = get_default_random_device();
+  } else {
+    rng = *rand;
+  }
+  (void)rng;
 
   peacemakr_key_t *out = malloc(sizeof(peacemakr_key_t));
   EXPECT_NOT_NULL_RET(out, "Malloc failed\n")
@@ -234,8 +240,14 @@ peacemakr_key_t *peacemakr_key_new_asymmetric(asymmetric_cipher cipher,
 
 peacemakr_key_t *peacemakr_key_new_symmetric(symmetric_cipher cipher,
                                              random_device_t *rand) {
-  EXPECT_NOT_NULL_RET(
-      rand, "Cannot create a new key without a source of randomness\n")
+
+  random_device_t rng;
+  if (rand == NULL) {
+    PEACEMAKR_LOG("rand was NULL, using default random device\n");
+    rng = get_default_random_device();
+  } else {
+    rng = *rand;
+  }
 
   peacemakr_key_t *out = malloc(sizeof(peacemakr_key_t));
   EXPECT_NOT_NULL_RET(out, "Malloc failed\n")
@@ -251,7 +263,7 @@ peacemakr_key_t *peacemakr_key_new_symmetric(symmetric_cipher cipher,
   size_t keylen = (size_t)EVP_CIPHER_key_length(evp_cipher);
 
   out->m_contents_.symm = buffer_new(keylen);
-  buffer_init_rand(out->m_contents_.symm, rand);
+  buffer_init_rand(out->m_contents_.symm, &rng);
   return out;
 }
 
@@ -545,13 +557,59 @@ void peacemakr_key_free(peacemakr_key_t *key) {
     EVP_PKEY_free(key->m_contents_.asymm);
     break;
   }
+  case MODE_UNSPECIFIED: {
+    break;
+  }
   }
   free(key);
   key = NULL;
 }
 
 crypto_config_t peacemakr_key_get_config(const peacemakr_key_t *key) {
+  if (key == NULL) {
+    PEACEMAKR_ERROR("key was null, aborting\n");
+    crypto_config_t out = {.mode = MODE_UNSPECIFIED,
+                           .symm_cipher = SYMMETRIC_UNSPECIFIED,
+                           .asymm_cipher = ASYMMETRIC_UNSPECIFIED,
+                           .digest_algorithm = DIGEST_UNSPECIFIED};
+    return out;
+  }
   return key->m_cfg_;
+}
+
+encryption_mode peacemakr_key_get_mode(const peacemakr_key_t *key) {
+  if (key == NULL) {
+    PEACEMAKR_ERROR("key was null, aborting\n");
+    return MODE_UNSPECIFIED;
+  }
+  return key->m_cfg_.mode;
+}
+
+symmetric_cipher
+peacemakr_key_get_symmetric_cipher(const peacemakr_key_t *key) {
+  if (key == NULL) {
+    PEACEMAKR_ERROR("key was null, aborting\n");
+    return SYMMETRIC_UNSPECIFIED;
+  }
+  return key->m_cfg_.symm_cipher;
+}
+
+asymmetric_cipher
+peacemakr_key_get_asymmetric_cipher(const peacemakr_key_t *key) {
+  if (key == NULL) {
+    PEACEMAKR_ERROR("key was null, aborting\n");
+    return ASYMMETRIC_UNSPECIFIED;
+  }
+  return key->m_cfg_.asymm_cipher;
+}
+
+message_digest_algorithm
+peacemakr_key_get_digest_algorithm(const peacemakr_key_t *key) {
+  if (key == NULL) {
+    PEACEMAKR_ERROR("key was null, aborting\n");
+    return DIGEST_UNSPECIFIED;
+  }
+  return key->m_cfg_.digest_algorithm;
 }
 
 bool peacemakr_key_set_symmetric_cipher(peacemakr_key_t *key,
@@ -671,6 +729,11 @@ bool peacemakr_key_pub_to_pem(const peacemakr_key_t *key, char **buf,
 
 bool peacemakr_key_get_bytes(const peacemakr_key_t *key, uint8_t **buf,
                              size_t *bufsize) {
+  EXPECT_NOT_NULL_RET_VALUE(buf, false,
+                            "buf was NULL, cannot store key bytes\n")
+  EXPECT_NOT_NULL_RET_VALUE(bufsize, false,
+                            "buf was NULL, cannot store key bytes\n")
+
   if (key->m_cfg_.mode != SYMMETRIC) {
     PEACEMAKR_ERROR("Cannot export bytes of asymmetric key\n");
     return false;

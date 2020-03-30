@@ -58,6 +58,11 @@ ciphertext_blob_new(const crypto_config_t cfg, const size_t iv_len,
   out->m_asymm_cipher_ = cfg.asymm_cipher;
   out->m_digest_algorithm_ = cfg.digest_algorithm;
   switch (out->m_encryption_mode_) {
+  case MODE_UNSPECIFIED: {
+    EXPECT_TRUE_CLEANUP_RET(false, ciphertext_blob_free(out),
+                            "Unspecified mode, error detected\n");
+    return NULL;
+  }
   case SYMMETRIC:
     break;
   case ASYMMETRIC:
