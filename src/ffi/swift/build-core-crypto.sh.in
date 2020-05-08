@@ -6,12 +6,14 @@ rm -rf build-sim build-ios include lib
 
 mkdir -p build-sim && pushd build-sim
 cmake -G Xcode @SOURCE_CMAKE_DIR@ -DCMAKE_BUILD_TYPE=RELEASE -DOPENSSL_ROOT_DIR=@OPENSSL_ROOT_DIR@ -DOPENSSL_LIBRARIES=@OPENSSL_LIB_DIR@ -DPEACEMAKR_BUILD_IOS=ON -DCMAKE_TOOLCHAIN_FILE=@CMAKE_IOS_TOOLCHAIN_FILE@ -DIOS_PLATFORM="SIMULATOR"
-xcodebuild CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO ONLY_ACTIVE_ARCH=NO -configuration Release OTHER_CFLAGS="-miphoneos-version-min=8.1" OTHER_LDFLAGS="-miphoneos-version-min=8.1 -L@OPENSSL_LIB_DIR@ -lssl -lcrypto"
+xcodebuild BUILD_LIBRARY_FOR_DISTRIBUTION=YES CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO ONLY_ACTIVE_ARCH=NO -configuration Release OTHER_CFLAGS="-miphoneos-version-min=8.1" OTHER_LDFLAGS="-miphoneos-version-min=8.1 -L@OPENSSL_LIB_DIR@ -lssl -lcrypto"
+install_name_tool -id "@rpath/libpeacemakr-core-crypto.dylib" src/core/Release-iphonesimulator/libpeacemakr-core-crypto.dylib
 popd
 
 mkdir -p build-ios && pushd build-ios
 cmake -G Xcode @SOURCE_CMAKE_DIR@ -DCMAKE_BUILD_TYPE=RELEASE -DOPENSSL_ROOT_DIR=@OPENSSL_ROOT_DIR@ -DOPENSSL_LIBRARIES=@OPENSSL_LIB_DIR@ -DPEACEMAKR_BUILD_IOS=ON -DCMAKE_TOOLCHAIN_FILE=@CMAKE_IOS_TOOLCHAIN_FILE@ -DIOS_PLATFORM="OS"
-xcodebuild CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO ONLY_ACTIVE_ARCH=NO -configuration Release OTHER_CFLAGS="-miphoneos-version-min=8.1" OTHER_LDFLAGS="-miphoneos-version-min=8.1 -L@OPENSSL_LIB_DIR@ -lssl -lcrypto"
+xcodebuild BUILD_LIBRARY_FOR_DISTRIBUTION=YES CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO ONLY_ACTIVE_ARCH=NO -configuration Release OTHER_CFLAGS="-miphoneos-version-min=8.1" OTHER_LDFLAGS="-miphoneos-version-min=8.1 -L@OPENSSL_LIB_DIR@ -lssl -lcrypto"
+install_name_tool -id "@rpath/libpeacemakr-core-crypto.dylib" src/core/Release-iphoneos/libpeacemakr-core-crypto.dylib
 popd
 
 function pack_for ()
@@ -23,6 +25,7 @@ function pack_for ()
 	$(pwd)/build-sim/src/core/${FOLDER_PREFIX}-iphonesimulator/lib${LIBNAME}.dylib \
 	$(pwd)/build-ios/src/core/${FOLDER_PREFIX}-iphoneos/lib${LIBNAME}.dylib \
 	-output @FAT_CORE_LIB_DIR@/lib${LIBNAME}.dylib -create
+	/usr/bin/codesign --force --sign - --timestamp=none @FAT_CORE_LIB_DIR@/lib${LIBNAME}.dylib
 }
 
 pack_for peacemakr-core-crypto Release || exit 1

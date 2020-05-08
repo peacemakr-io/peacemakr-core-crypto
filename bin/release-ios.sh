@@ -44,9 +44,8 @@ popd
 
 pushd ${PROJECT_SRC}/src/ffi/swift/CoreCrypto
 xcodebuild -project CoreCrypto.xcodeproj -scheme CoreCrypto -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 8,OS=13.4.1' test
-# install_name_tool -id "@rpath/CoreCrypto.framework/libpeacemakr-core-crypto.dylib" ../libCoreCrypto/lib/libpeacemakr-core-crypto.dylib
-xcodebuild -project CoreCrypto.xcodeproj CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO ONLY_ACTIVE_ARCH=NO -configuration Release -miphoneos-version-min=8.1 -sdk iphoneos
-xcodebuild -project CoreCrypto.xcodeproj CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO VALID_ARCHS="x86_64" ONLY_ACTIVE_ARCH=NO -configuration Release -miphoneos-version-min=8.1 -sdk iphonesimulator
+xcodebuild -project CoreCrypto.xcodeproj BUILD_LIBRARY_FOR_DISTRIBUTION=YES CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO ONLY_ACTIVE_ARCH=NO -configuration Release -miphoneos-version-min=8.1 -sdk iphoneos
+xcodebuild -project CoreCrypto.xcodeproj BUILD_LIBRARY_FOR_DISTRIBUTION=YES CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO VALID_ARCHS="x86_64" ONLY_ACTIVE_ARCH=NO -configuration Release -miphoneos-version-min=8.1 -sdk iphonesimulator
 popd
 
 mkdir -p ${OUTPUT_DIR}
@@ -56,12 +55,11 @@ cp -R ${PROJECT_SRC}/src/ffi/swift/CoreCrypto/build/Release-iphoneos/CoreCrypto.
 cp -R ${PROJECT_SRC}/src/ffi/swift/CoreCrypto/build/Release-iphonesimulator/CoreCrypto.framework/Modules/CoreCrypto.swiftmodule/ ${OUTPUT_DIR}/CoreCrypto.framework/Modules/CoreCrypto.swiftmodule
 defaults write ${OUTPUT_DIR}/CoreCrypto.framework/Info.plist CFBundleSupportedPlatforms -array-add "iPhoneSimulator"
 lipo -create -output "CoreCrypto.framework/CoreCrypto" "${PROJECT_SRC}/src/ffi/swift/CoreCrypto/build/Release-iphoneos/CoreCrypto.framework/CoreCrypto" "${PROJECT_SRC}/src/ffi/swift/CoreCrypto/build/Release-iphonesimulator/CoreCrypto.framework/CoreCrypto"
+install_name_tool -id "@rpath/CoreCrypto.framework/CoreCrypto" CoreCrypto.framework/CoreCrypto
 
 # copy debug info
 cp -R ${PROJECT_SRC}/src/ffi/swift/CoreCrypto/build/Release-iphoneos/CoreCrypto.framework.dSYM .
 lipo -create -output "CoreCrypto.framework.dSYM/Contents/Resources/DWARF/CoreCrypto" "${PROJECT_SRC}/src/ffi/swift/CoreCrypto/build/Release-iphoneos/CoreCrypto.framework.dSYM/Contents/Resources/DWARF/CoreCrypto" "${PROJECT_SRC}/src/ffi/swift/CoreCrypto/build/Release-iphonesimulator/CoreCrypto.framework.dSYM/Contents/Resources/DWARF/CoreCrypto"
-
-install_name_tool -change ${PROJECT_SRC}/src/ffi/swift/libCoreCrypto/build-sim/src/core/Release-iphonesimulator/libpeacemakr-core-crypto.dylib @rpath/CoreCrypto.framework/libpeacemakr-core-crypto.dylib CoreCrypto.framework/CoreCrypto
 
 rm -rf ${PROJECT_SRC}/src/ffi/swift/CoreCrypto/build
 popd
