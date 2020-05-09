@@ -7,7 +7,7 @@
 //
 import Foundation
 
-import libCoreCrypto
+import CoreCrypto.libCoreCrypto
 
 public typealias Ciphertext = OpaquePointer
 

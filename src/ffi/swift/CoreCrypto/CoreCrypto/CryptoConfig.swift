@@ -8,7 +8,7 @@
 
 import Foundation
 
-import libCoreCrypto
+import CoreCrypto.libCoreCrypto
 
 /**
  Configures the encryption mode for the Peacemakr CoreCrypto library. Selects

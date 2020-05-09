@@ -53,7 +53,8 @@ pushd ${OUTPUT_DIR}
 rm -rf CoreCrypto.framework || true
 cp -R ${PROJECT_SRC}/src/ffi/swift/CoreCrypto/build/Release-iphoneos/CoreCrypto.framework .
 cp -R ${PROJECT_SRC}/src/ffi/swift/CoreCrypto/build/Release-iphonesimulator/CoreCrypto.framework/Modules/CoreCrypto.swiftmodule/ ${OUTPUT_DIR}/CoreCrypto.framework/Modules/CoreCrypto.swiftmodule
-defaults write ${OUTPUT_DIR}/CoreCrypto.framework/Info.plist CFBundleSupportedPlatforms -array-add "iPhoneSimulator"
+plutil -insert CFBundleSupportedPlatforms.1 -string 'iPhoneSimulator'  ${OUTPUT_DIR}/CoreCrypto.framework/Info.plist
+# defaults write ${OUTPUT_DIR}/CoreCrypto.framework/Info.plist CFBundleSupportedPlatforms -array-add "iPhoneSimulator"
 lipo -create -output "CoreCrypto.framework/CoreCrypto" "${PROJECT_SRC}/src/ffi/swift/CoreCrypto/build/Release-iphoneos/CoreCrypto.framework/CoreCrypto" "${PROJECT_SRC}/src/ffi/swift/CoreCrypto/build/Release-iphonesimulator/CoreCrypto.framework/CoreCrypto"
 install_name_tool -id "@rpath/CoreCrypto.framework/CoreCrypto" CoreCrypto.framework/CoreCrypto
 
