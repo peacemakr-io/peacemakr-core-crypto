@@ -1,0 +1,13 @@
+framework module CoreCrypto {
+    exclude header "CoreCrypto-Swift.h"
+
+    module libCoreCrypto {
+
+          header "crypto.h"
+          header "random.h"
+
+          link "peacemakr-core-crypto"
+
+          export *
+    }
+}
