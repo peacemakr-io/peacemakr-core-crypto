@@ -56,6 +56,15 @@ cp -R ${PROJECT_SRC}/src/ffi/swift/CoreCrypto/build/Release-iphonesimulator/Core
 defaults write ${OUTPUT_DIR}/CoreCrypto.framework/Info.plist CFBundleSupportedPlatforms -array-add "iPhoneSimulator"
 lipo -create -output "CoreCrypto.framework/CoreCrypto" "${PROJECT_SRC}/src/ffi/swift/CoreCrypto/build/Release-iphoneos/CoreCrypto.framework/CoreCrypto" "${PROJECT_SRC}/src/ffi/swift/CoreCrypto/build/Release-iphonesimulator/CoreCrypto.framework/CoreCrypto"
 install_name_tool -id "@rpath/CoreCrypto.framework/CoreCrypto" CoreCrypto.framework/CoreCrypto
+# Important: Link the libpeacemakr-core-crypto.dylib in the framework file.
+# There are two options to link: via loader_path or rpath.
+#
+# loader_path is the path relative to the plug-in aka CoreCrypto here.
+# we use loader_path here assuming dylib will always be on the same folder as CoreCrypto binary
+#
+# rpath tells the dynamic linker to look for the files in a list of folders
+# we can also get this working by install_name_tool -add_rpath @loader_path/. CoreCrypto
+install_name_tool -change @rpath/libpeacemakr-core-crypto.dylib @loader_path/libpeacemakr-core-crypto.dylib CoreCrypto.framework/CoreCrypto
 
 # copy debug info
 cp -R ${PROJECT_SRC}/src/ffi/swift/CoreCrypto/build/Release-iphoneos/CoreCrypto.framework.dSYM .

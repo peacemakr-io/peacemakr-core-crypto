@@ -3,7 +3,7 @@
 //
 
 import Foundation
-import libCoreCrypto
+import CoreCrypto.libCoreCrypto
 
 /**
  Thin Swift wrapper around the peacemakr C type plaintext_t. Uses

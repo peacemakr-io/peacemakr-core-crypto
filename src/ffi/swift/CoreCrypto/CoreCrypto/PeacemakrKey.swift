@@ -8,7 +8,7 @@
 
 import Foundation
 
-import libCoreCrypto
+import CoreCrypto.libCoreCrypto
 
 public class PeacemakrKey {
   let internalRepr: OpaquePointer
