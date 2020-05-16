@@ -65,7 +65,7 @@ install_name_tool -id "@rpath/CoreCrypto.framework/CoreCrypto" CoreCrypto.framew
 # rpath tells the dynamic linker to look for the files in a list of folders
 # we can also get this working by install_name_tool -add_rpath @loader_path/. CoreCrypto
 install_name_tool -change @rpath/libpeacemakr-core-crypto.dylib @loader_path/libpeacemakr-core-crypto.dylib CoreCrypto.framework/CoreCrypto
-
+/usr/bin/codesign --force --sign - --timestamp=none CoreCrypto.framework/CoreCrypto
 # copy debug info
 cp -R ${PROJECT_SRC}/src/ffi/swift/CoreCrypto/build/Release-iphoneos/CoreCrypto.framework.dSYM .
 lipo -create -output "CoreCrypto.framework.dSYM/Contents/Resources/DWARF/CoreCrypto" "${PROJECT_SRC}/src/ffi/swift/CoreCrypto/build/Release-iphoneos/CoreCrypto.framework.dSYM/Contents/Resources/DWARF/CoreCrypto" "${PROJECT_SRC}/src/ffi/swift/CoreCrypto/build/Release-iphonesimulator/CoreCrypto.framework.dSYM/Contents/Resources/DWARF/CoreCrypto"
