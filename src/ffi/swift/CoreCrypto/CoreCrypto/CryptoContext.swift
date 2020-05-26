@@ -7,7 +7,7 @@
 //
 import Foundation
 
-import libCoreCrypto
+import CoreCrypto.libCoreCrypto
 
 public typealias Ciphertext = OpaquePointer
 
@@ -98,20 +98,6 @@ public class CryptoContext: CryptoContextProtocol {
     }
     return .result(true)
   }
-
-  public class func HMAC(digestAlgorithm: MessageDigestAlgorithm, key: PeacemakrKey, buf: Data) -> Result<Data> {
-    var out: Result<Data> = .error(CoreCryptoError.HMACFailed)
-    buf.withUnsafeBytes { (bufBytes: UnsafePointer<UInt8>) -> Void in
-      var outLen = 0
-      let outPtr = peacemakr_hmac(message_digest_algorithm(digestAlgorithm.rawValue), key.getInternal(), bufBytes, buf.count, &outLen)
-      if outPtr == nil {
-        out = .error(CoreCryptoError.HMACFailed)
-      }
-      out = .result(Data(buffer: UnsafeBufferPointer(start: outPtr, count: outLen)))
-    }
-    
-    return out
-  }
   
   public class func extractUnverifiedAAD(_ serialized: Data) -> Result<Plaintext> {
     var out: Result<Plaintext> = .error(CoreCryptoError.deserializationFailed)
@@ -133,6 +119,20 @@ public class CryptoContext: CryptoContextProtocol {
       return
     }
     
+    return out
+  }
+
+  public class func HMAC(digestAlgorithm: MessageDigestAlgorithm, key: PeacemakrKey, buf: Data) -> Result<Data> {
+    var out: Result<Data> = .error(CoreCryptoError.HMACFailed)
+    buf.withUnsafeBytes { (bufBytes: UnsafePointer<UInt8>) -> Void in
+      var outLen = 0
+      let outPtr = peacemakr_hmac(message_digest_algorithm(digestAlgorithm.rawValue), key.getInternal(), bufBytes, buf.count, &outLen)
+      if outPtr == nil {
+        out = .error(CoreCryptoError.HMACFailed)
+      }
+      out = .result(Data(buffer: UnsafeBufferPointer(start: outPtr, count: outLen)))
+    }
+
     return out
   }
 }

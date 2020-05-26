@@ -12,7 +12,7 @@ if (PEACEMAKR_BUILD_IOS)
     set(FAT_CORE_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/swift/libCoreCrypto/lib)
     set(CORE_LIB_INCLUDE ${CMAKE_CURRENT_SOURCE_DIR}/swift/libCoreCrypto/include)
 
-    configure_file(${CMAKE_SOURCE_DIR}/src/ffi/swift/module.map.in ${CMAKE_SOURCE_DIR}/src/ffi/swift/CoreCrypto/CoreCrypto/module.map @ONLY)
+    # configure_file(${CMAKE_SOURCE_DIR}/src/ffi/swift/module.map.in ${CMAKE_SOURCE_DIR}/src/ffi/swift/CoreCrypto/CoreCrypto/module.map @ONLY)
     configure_file(${CMAKE_SOURCE_DIR}/src/ffi/swift/build-core-crypto.sh.in ${CMAKE_SOURCE_DIR}/src/ffi/swift/libCoreCrypto/build-core-crypto.sh @ONLY)
 
     install(CODE
@@ -23,7 +23,7 @@ if (PEACEMAKR_BUILD_IOS)
     set(CORE_LIB_DIR ${CMAKE_INSTALL_PREFIX}/lib)
     set(FAT_CORE_LIB_DIR ${CMAKE_INSTALL_PREFIX}/lib)
 
-    configure_file(${CMAKE_SOURCE_DIR}/src/ffi/swift/module.map.in ${CMAKE_SOURCE_DIR}/src/ffi/swift/CoreCrypto/CoreCrypto/module.map @ONLY)
+    # configure_file(${CMAKE_SOURCE_DIR}/src/ffi/swift/module.map.in ${CMAKE_SOURCE_DIR}/src/ffi/swift/CoreCrypto/CoreCrypto/module.map @ONLY)
     ")
 endif(PEACEMAKR_BUILD_IOS)
 

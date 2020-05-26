@@ -48,7 +48,7 @@ public protocol CryptoContextProtocol {
   ///     - plaintext: Plaintext to sign
   ///     - digest: the OpenSSL digest algorithm
   ///     - ciphertext: mutable signed message Ciphertext
-  static func sign(senderKey: PeacemakrKey, plaintext: Plaintext, digest: MessageDigestAlgorithm, ciphertext: inout Ciphertext) -> Void
+  static func sign(senderKey: PeacemakrKey, plaintext: Plaintext, digest: MessageDigestAlgorithm, ciphertext: inout Ciphertext) -> Bool
   
   
   ///MARK: - Data serialization and deserialization

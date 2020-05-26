@@ -4,7 +4,7 @@
 
 import Foundation
 
-import libCoreCrypto
+import CoreCrypto.libCoreCrypto
 
 public typealias RNGBuf = rng_buf
 public typealias RNGErr = rng_err
