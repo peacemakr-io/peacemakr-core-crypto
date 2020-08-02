@@ -16,17 +16,21 @@ ADD src/core /opt/src/core
 # Gradle
 ADD src/ffi/java/gradle /opt/src/ffi/java/gradle
 ADD src/ffi/java/gradlew /opt/src/ffi/java/gradlew
+# Project build.gradle
 ADD src/ffi/java/build.gradle /opt/src/ffi/java/build.gradle
+# Plain java (not-android) build.gradle
+ADD src/ffi/java/java/build.gradle /opt/src/ffi/java/java/build.gradle
+RUN echo "include 'java'" >> /opt/src/ffi/java/settings.gradle
 # C code
-ADD src/ffi/java/src/main/c /opt/src/ffi/java/src/main/c
+ADD src/ffi/java/java/src/main/c /opt/src/ffi/java/java/src/main/c
 # Java code
-ADD src/ffi/java/src/main/java /opt/src/ffi/java/src/main/java
+ADD src/ffi/java/java/src/main/java /opt/src/ffi/java/java/src/main/java
 # Test code
-ADD src/ffi/java/src/test /opt/src/ffi/java/src/test
+ADD src/ffi/java/java/src/test /opt/src/ffi/java/java/src/test
 # Build requirements
 ADD src/ffi/CMakeLists.txt /opt/src/ffi/CMakeLists.txt
 ADD cmake /opt/cmake
 
 WORKDIR /opt/src/ffi/java
 ARG BUILD_TYPE
-RUN ./gradlew clean && ./gradlew makeInstall -P${BUILD_TYPE}
+RUN ./gradlew java:clean && ./gradlew java:makeInstall -P${BUILD_TYPE}

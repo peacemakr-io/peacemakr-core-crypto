@@ -17,13 +17,13 @@ rm -rf *.jar || true
 cd src/ffi/java
 # gradle's jar target will run the tests before creating the jar
 if [[ "${2}" == "release" ]]; then
-    ./gradlew jar -Prelease
+    ./gradlew java:clean java:jar -Prelease
 else
-    ./gradlew jar
+    ./gradlew java:clean java:jar
 fi
 cd ../../..
 
 #
 # Make it obvious where the artifact is.
 #
-cp src/ffi/java/build/libs/*.jar ${1}
+cp src/ffi/java/java/build/libs/*.jar ${1}

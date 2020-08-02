@@ -29,7 +29,23 @@ set(ALL_C_SOURCE_FILES "")
 
 set(CMAKE_FIND_LIBRARY_SUFFIXES .a)
 set(OPENSSL_USE_STATIC_LIBS TRUE)
-find_package(OpenSSL 1.1 REQUIRED)
+
+# Have to set up openssl cause android is special
+if (DEFINED ANDROID_ABI)
+    message(${ANDROID_ABI})
+    set(OPENSSL_ROOT_DIR ${OPENSSL_ROOT}/${ANDROID_ABI})
+    add_library(OpenSSL::SSL STATIC IMPORTED)
+    add_library(OpenSSL::Crypto STATIC IMPORTED)
+    set_target_properties(OpenSSL::SSL PROPERTIES
+            IMPORTED_LOCATION ${OPENSSL_ROOT_DIR}/lib/libssl.a
+            INTERFACE_INCLUDE_DIRECTORIES ${OPENSSL_ROOT_DIR}/include)
+    set_target_properties(OpenSSL::Crypto PROPERTIES
+            IMPORTED_LOCATION ${OPENSSL_ROOT_DIR}/lib/libcrypto.a
+            INTERFACE_INCLUDE_DIRECTORIES ${OPENSSL_ROOT_DIR}/include)
+else()
+    find_package(OpenSSL 1.1 REQUIRED)
+endif()
+
 
 add_subdirectory(src/core)
 add_subdirectory(src/ffi)

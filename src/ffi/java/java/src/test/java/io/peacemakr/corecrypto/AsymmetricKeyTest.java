@@ -10,6 +10,7 @@ public class AsymmetricKeyTest {
     @Before
     public void setUp() throws Exception {
         Crypto.init();
+        System.out.println("Successful setup!");
     }
 
     @After

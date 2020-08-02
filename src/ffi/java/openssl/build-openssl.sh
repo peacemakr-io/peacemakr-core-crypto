@@ -1,11 +1,13 @@
 #!/bin/sh
 
+set -ex
+
 if [[ -z "${ANDROID_NDK_ROOT}" ]]; then
     echo "Must define ANDROID_NDK_ROOT"
     exit 128
 fi
 
-OPENSSL_VERSION=1.1.1b
+OPENSSL_VERSION=1.1.1
 ANDROID_API_LEVEL=21
 
 OUT_DIR=$(pwd)/openssl-build
@@ -34,11 +36,8 @@ elif [[ "$unamestr" == 'Darwin' ]]; then
    PLATFORM='darwin'
 fi
 
-BASE_OPTIONS="no-asm no-ssl3 no-comp no-hw no-engine no-async CC=clang"
+BASE_OPTIONS="no-asm no-ssl3 no-comp no-hw no-engine no-async no-threads no-ui CC=clang"
 BINDIR="${ANDROID_NDK_ROOT}/toolchains/llvm/prebuilt/${PLATFORM}-x86_64"
-MAKE_CC="${BINDIR}/bin/clang"
-MAKE_CXX="${BINDIR}/bin/clang++"
-MAKE_AR="${BINDIR}/bin/llvm-ar"
 
 
 ###### build-function #####
@@ -47,15 +46,20 @@ build_the_thing() {
     PATH=${BINDIR}/bin:${PATH} \
     ./Configure ${SSL_TARGET} ${OPTIONS}
 
+    MAKE_CC="${BINDIR}/bin/clang"
+    MAKE_CXX="${BINDIR}/bin/clang++"
+    MAKE_AR="${BINDIR}/bin/${TRIBLE}-ar"
+    MAKE_RANLIB="${BINDIR}/bin/${TRIBLE}-ranlib"
+
     make clean
 
     ANDROID_NDK=${ANDROID_NDK_ROOT} \
     PATH=${BINDIR}/bin:${PATH} \
-    make CC=${MAKE_CC} CXX=${MAKE_CXX} AR=${MAKE_AR}
+    make CC=${MAKE_CC} CXX=${MAKE_CXX} AR=${MAKE_AR} RANLIB=${MAKE_RANLIB} build_libs || exit 128
 
     ANDROID_NDK=${ANDROID_NDK_ROOT} \
     PATH=${BINDIR}/bin:${PATH} \
-    make CC=${MAKE_CC} CXX=${MAKE_CXX} AR=${MAKE_AR} install_sw DESTDIR=${BINDIR} || exit 128
+    make CC=${MAKE_CC} CXX=${MAKE_CXX} AR=${MAKE_AR} RANLIB=${MAKE_RANLIB} install_dev DESTDIR=${BINDIR} || exit 128
 }
 
 ###### set variables according to build-target #####
@@ -65,35 +69,35 @@ do
     armeabi)
         TRIBLE="arm-linux-androideabi"
         TC_NAME="arm-linux-androideabi-4.9"
-        OPTIONS="--target=armv5te-linux-androideabi -mthumb -fPIC -latomic -D__ANDROID_API__=$ANDROID_API_LEVEL ${BASE_OPTIONS}"
+        OPTIONS="-mfloat-abi=softfp --target=armv5te-linux-androideabi -mthumb -fPIC -latomic -D__ANDROID_API__=$ANDROID_API_LEVEL ${BASE_OPTIONS}"
         ARCH="arm"
         SSL_TARGET="android-arm"
     ;;
     armeabi-v7a)
         TRIBLE="arm-linux-androideabi"
         TC_NAME="arm-linux-androideabi-4.9"
-        OPTIONS="--target=armv7a-linux-androideabi -Wl,--fix-cortex-a8 -fPIC -D__ANDROID_API__=$ANDROID_API_LEVEL ${BASE_OPTIONS}"
+        OPTIONS="-mfloat-abi=softfp --target=armv7a-linux-androideabi -Wl,--fix-cortex-a8 -fPIC -D__ANDROID_API__=$ANDROID_API_LEVEL ${BASE_OPTIONS}"
         ARCH="arm"
         SSL_TARGET="android-arm"
     ;;
     x86)
         TRIBLE="i686-linux-android"
         TC_NAME="x86-4.9"
-        OPTIONS="-fPIC -D__ANDROID_API__=${ANDROID_API_LEVEL} ${BASE_OPTIONS}"
+        OPTIONS="-mfloat-abi=softfp -fPIC -D__ANDROID_API__=${ANDROID_API_LEVEL} ${BASE_OPTIONS}"
         ARCH="x86"
         SSL_TARGET="android-x86"
     ;;
     x86_64)
         TRIBLE="x86_64-linux-android"
         TC_NAME="x86_64-4.9"
-        OPTIONS="-fPIC -D__ANDROID_API__=${ANDROID_API_LEVEL} ${BASE_OPTIONS}"
+        OPTIONS="-mfloat-abi=softfp -fPIC -D__ANDROID_API__=${ANDROID_API_LEVEL} ${BASE_OPTIONS}"
         ARCH="x86_64"
         SSL_TARGET="android-x86_64"
     ;;
     arm64-v8a)
         TRIBLE="aarch64-linux-android"
         TC_NAME="aarch64-linux-android-4.9"
-        OPTIONS="-fPIC -D__ANDROID_API__=${ANDROID_API_LEVEL} ${BASE_OPTIONS}"
+        OPTIONS="-mfloat-abi=softfp -fPIC -D__ANDROID_API__=${ANDROID_API_LEVEL} ${BASE_OPTIONS}"
         ARCH="arm64"
         SSL_TARGET="android-arm64"
     ;;
