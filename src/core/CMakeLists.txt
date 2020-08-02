@@ -79,8 +79,10 @@ if ((CMAKE_BUILD_TYPE MATCHES RELEASE) OR (CMAKE_BUILD_TYPE MATCHES Release))
     if (APPLE)
         target_link_libraries(peacemakr-core-crypto PRIVATE "-Wl,-dead_strip")
 
-        add_custom_command(TARGET peacemakr-core-crypto POST_BUILD
-                COMMAND ${CMAKE_STRIP} -x $<TARGET_FILE:peacemakr-core-crypto>)
+        if (NOT PEACEMAKR_BUILD_IOS)
+            add_custom_command(TARGET peacemakr-core-crypto POST_BUILD
+                    COMMAND ${CMAKE_STRIP} -x $<TARGET_FILE:peacemakr-core-crypto>)
+        endif()
     else()
         target_link_libraries(peacemakr-core-crypto PRIVATE "-Wl,--gc-sections")
 

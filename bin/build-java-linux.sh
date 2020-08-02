@@ -8,8 +8,8 @@ if [[ "${1}" == "release" ]]; then
     BUILD_ARG="BUILD_TYPE=release"
 fi
 
-CONTAINER_PATH=/opt/src/ffi/java/src/main/resources/lib/
-LOCAL_PATH=$(pwd)/src/ffi/java/src/main/resources/lib
+CONTAINER_PATH=/opt/src/ffi/java/java/src/main/resources/lib/
+LOCAL_PATH=$(pwd)/src/ffi/java/java/src/main/resources/lib
 
 # Just in case the path doesn't exist
 mkdir -p "${LOCAL_PATH}"
