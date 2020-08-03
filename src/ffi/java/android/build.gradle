@@ -12,14 +12,18 @@ task copyTests(type: Copy) {
 }
 
 android {
-    compileSdkVersion 26
+    compileSdkVersion 30
+
+   // Depending on what NDK you have locally, you may
+   // need to update this.
+   ndkVersion "21.3.6528147"
 
     defaultConfig {
         // Defines the minimum API level required to run the app.
-        minSdkVersion 26
+        minSdkVersion 21
 
         // Specifies the API level used to test the app.
-        targetSdkVersion 26
+        targetSdkVersion 30
 
         // Defines the version number of your app.
         versionCode 1
