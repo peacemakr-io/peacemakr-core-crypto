@@ -42,18 +42,6 @@ android {
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
 
-    buildTypes {
-
-        /**
-         * By default, Android Studio configures the release build type to enable code
-         * shrinking, using minifyEnabled, and specifies the default Proguard rules file.
-         */
-
-        release {
-            minifyEnabled true // Enables code shrinking for the release build type.
-        }
-    }
-
     externalNativeBuild {
         cmake {
             path "../../../../CMakeLists.txt"
