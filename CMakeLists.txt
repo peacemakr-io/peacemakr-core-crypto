@@ -67,7 +67,8 @@ export(TARGETS peacemakr-core-crypto FILE ${CMAKE_BINARY_DIR}/peacemakr_core_cry
 export(PACKAGE peacemakr-core-crypto)
 export(PACKAGE peacemakr-core-crypto-cpp)
 
-# Create the FooBarConfig.cmake and FooBarConfigVersion files
+# Create the peacemakr-core-crypto-config.cmake and peacemakr-core-crypto-config-version files
+set(CONF_INCLUDE_DIRS "${CMAKE_INSTALL_PREFIX}/include")
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/peacemakr-core-crypto-config.cmake.in
         "${CMAKE_BINARY_DIR}/peacemakr-core-crypto-config.cmake" @ONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/peacemakr-core-crypto-config.cmake.in
