@@ -40,11 +40,12 @@ jobs:
 
   build_macos:
     name: Build Release Asset - macOS
-    runs-on: macos-latest
+    runs-on: macos-10.15
     steps:
       - name: Install OpenSSL
         run: |
           brew install openssl@1.1
+          openssl version
 
       - name: Get the version
         id: get_version
