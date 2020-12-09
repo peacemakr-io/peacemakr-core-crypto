@@ -123,6 +123,11 @@ jobs:
         with:
           xcode-version: '11.5'
 
+      - name: Set up Python
+        uses: actions/setup-python@v1
+        with:
+            python-version: '3.x'
+
       - name: Install OpenSSL
         run: |
           brew install openssl@1.1
