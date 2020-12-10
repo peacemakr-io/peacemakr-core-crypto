@@ -177,12 +177,12 @@ peacemakr::CryptoContext::CryptoContext(LogFunctionType logger)
 }
 
 namespace {
-void log(const std::string &msg) { printf("%s", msg.c_str()); }
+void log_msg(const std::string &msg) { printf("%s", msg.c_str()); }
 } // namespace
 
-peacemakr::CryptoContext::CryptoContext() : m_log_(log) {
+peacemakr::CryptoContext::CryptoContext() : m_log_(log_msg) {
   peacemakr_set_log_callback([](const char *msg) {
-    log({msg, msg + strlen(msg)});
+    log_msg({msg, msg + strlen(msg)});
   });
 
   if (!peacemakr_init()) {

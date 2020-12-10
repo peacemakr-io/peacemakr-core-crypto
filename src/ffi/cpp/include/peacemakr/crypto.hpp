@@ -148,7 +148,7 @@ struct Plaintext {
   std::string aad;
 };
 
-typedef std::function<void(const std::string &)> LogFunctionType;
+using LogFunctionType = std::function<void(const std::string &)>;
 
 /**
  * @class CryptoContext

@@ -45,9 +45,6 @@ jobs:
     name: Build and Test - macOS
     runs-on: macos-latest
     steps:
-      - uses: maxim-lobanov/setup-xcode@v1
-        with:
-          xcode-version: '11.5'
       # TODO: we should really figure out how to cache this build per-os and use it that way...
       # We export the openssl root dir in all cases because it is just ignored on linux
       - name: Install Dependencies
