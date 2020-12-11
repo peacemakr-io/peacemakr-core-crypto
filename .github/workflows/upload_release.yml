@@ -40,8 +40,9 @@ jobs:
 
   build_macos:
     name: Build Release Asset - macOS
-    runs-on: macos-latest
+    runs-on: macos-10.15
     steps:
+
       - name: Install OpenSSL
         run: |
           brew install openssl@1.1
@@ -57,7 +58,7 @@ jobs:
         run: |
           mkdir -p /tmp/peacemakr.io/install
           mkdir -p build && pushd build
-          cmake .. -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl@1.1 -DPEACEMAKR_BUILD_CPP=ON -DCMAKE_INSTALL_PREFIX=/tmp/peacemakr.io/install
+          cmake .. -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl@1.1 -DPEACEMAKR_BUILD_CPP=ON -DCMAKE_INSTALL_PREFIX=/tmp/peacemakr.io/install
           make check install
           popd
           tar -czf peacemakr-core-crypto-macos-x86_64.tar.gz -C /tmp/peacemakr.io/install/ .
@@ -115,6 +116,12 @@ jobs:
     name: Build Release Asset - Python/macOS
     runs-on: macos-latest
     steps:
+
+      - name: Set up Python
+        uses: actions/setup-python@v1
+        with:
+            python-version: '3.x'
+
       - name: Install OpenSSL
         run: |
           brew install openssl@1.1
@@ -165,7 +172,7 @@ jobs:
           ./release-python.sh local /tmp/peacemakr.io/install release
           popd
           tar -czf peacemakr-core-crypto-python-ubuntu-x86_64.tar.gz -C /tmp/peacemakr.io/install/ .
-          
+
       - name: Upload Release Asset
         id: upload-release-asset
         uses: actions/upload-artifact@v1

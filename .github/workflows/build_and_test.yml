@@ -53,16 +53,21 @@ jobs:
           brew install llvm@9
           brew install ninja
 
+      - name: Set up Python
+        uses: actions/setup-python@v1
+        with:
+            python-version: '3.x'
+
       - name: Checkout code
         uses: actions/checkout@v1
 
-      - name: Static Analysis
-        run: |
-          mkdir -p build && pushd build
-          SCAN_BUILD_PATH=$(echo $(brew list llvm | grep "/usr/local/Cellar/llvm/[0-9]\..*[0-9]/bin/scan-build") | xargs dirname)
-          cmake .. -G Ninja -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl@1.1 -DCMAKE_PROGRAM_PATH="${SCAN_BUILD_PATH};"
-          ninja clang-analyzer
-          popd
+      # - name: Static Analysis
+      #   run: |
+      #     mkdir -p build && pushd build
+      #     SCAN_BUILD_PATH=$(echo $(brew list llvm | grep "/usr/local/Cellar/llvm/[0-9]\..*[0-9]/bin/scan-build") | xargs dirname)
+      #     cmake .. -G Ninja -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl@1.1 -DCMAKE_PROGRAM_PATH="${SCAN_BUILD_PATH};"
+      #     ninja clang-analyzer
+      #     popd
 
       - name: Build and Test C/C++
         # We run install here so that we can re-use the results from this step in the go step
