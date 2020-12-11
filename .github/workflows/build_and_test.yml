@@ -53,6 +53,11 @@ jobs:
           brew install llvm@9
           brew install ninja
 
+      - name: Set up Python
+        uses: actions/setup-python@v1
+        with:
+            python-version: '3.x'
+
       - name: Checkout code
         uses: actions/checkout@v1
 
