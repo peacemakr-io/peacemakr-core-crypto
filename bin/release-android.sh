@@ -3,7 +3,7 @@
 set -ex
 
 function usage {
-    echo "Usage: ANDROID_NDK_ROOT=/path/to/ndk-bundle ./release-java.sh [path to peacemakr-ios folder] [optional: first]"
+    echo "Usage: ANDROID_NDK_ROOT=/path/to/ndk-bundle ./release-android.sh [path to peacemakr-android folder] [optional: first]"
 }
 
 if [[ "$#" -gt 2 ]]; then
@@ -18,19 +18,19 @@ if [[ -z "${1}" ]]; then
     exit 1
 fi
 
-OUTPUT_DIR=${1}
-
-pushd ..
-
-PROJECT_SRC=$(pwd)
-
 if [[ ! -z "${2}" ]]; then
-    pushd src/ffi/android/openssl
+    pushd src/ffi/java/openssl
     ./build-openssl.sh
     popd
 fi
 
-mkdir -p ${OUTPUT_DIR}
-pushd ${OUTPUT_DIR}
-    # TODO: copy files to destination
-popd
+cd src/ffi/java
+# gradle's jar target will run the tests before creating the jar
+if [[ "${2}" == "release" ]]; then
+    ./gradlew android:clean android:bundleReleaseAar
+    cp android/build/outputs/aar/android-release.aar ${1}
+else
+    ./gradlew android:clean android:bundleDebugAar
+    cp android/build/outputs/aar/android-debug.aar ${1}
+fi
+cd ../../..

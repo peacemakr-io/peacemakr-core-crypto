@@ -113,4 +113,20 @@ in the list on the left hand side.
 ### Build - Android
 Make sure you have the [Android NDK installed](https://developer.android.com/ndk/guides)
 
-`cd /path/to/peacemakr-core-crypto/bin && ANDROID_NDK_ROOT=/path/to/android/ndk-bundle ./release-android.sh /where/to/put/build/artifacts [is_first_build]`
+Required Environment Variable updates:
+```bash
+export PATH=$PATH:/Users/jonmclachlan/Library/Android/sdk/tools/bin
+export PATH=/usr/local/Cellar/openssl\@1.1/1.1.1c/bin/:$PATH
+export ANDROID_SDK_ROOT=/Users/jonmclachlan/Library/Android/sdk
+export ANDROID_NDK_ROOT=/Users/jonmclachlan/Library/Android/sdk/ndk/21.3.6528147
+export OPENSSL_ROOT_DIR=/usr/local/Cellar/openssl@1.1/1.1.1c
+```
+
+Debug with openssl built:
+`./release-android.sh /where/to/put/build/artifacts [is_first_build]`
+
+Debug without openssl built:
+`./release-android.sh /where/to/put/build/artifacts`
+
+Release without openssl built:
+`./release-android.sh /where/to/put/build/artifacts release`

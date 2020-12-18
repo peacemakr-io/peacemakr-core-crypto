@@ -12,10 +12,15 @@ target_include_directories(peacemakr-core-crypto-jni PRIVATE ${JNI_INCLUDE_DIRS}
 if (APPLE)
     target_link_libraries(peacemakr-core-crypto-jni
             PRIVATE peacemakr-core-crypto)
-else()
+elseif(DEFINED ANDROID_ABI)
     target_link_libraries(peacemakr-core-crypto-jni
-            PRIVATE peacemakr-core-crypto -static-libgcc -Wl,-static c -Wl,-rpath=$ORIGIN)
-endif()
+            PRIVATE peacemakr-core-crypto)
+    # This is necessary because otherwise all float args are 0: https://groups.google.com/forum/#!msg/android-ndk/NbUq9FDDZOo/TJJsAS6nM7wJ
+    target_compile_options(peacemakr-core-crypto-jni PRIVATE -mfloat-abi=softfp)
+else ()
+    target_link_libraries(peacemakr-core-crypto-jni
+            PRIVATE peacemakr-core-crypto -static-libgcc -Wl,-static c)
+endif ()
 
 if (DEFINED ANDROID_ABI)
     target_link_libraries(peacemakr-core-crypto-jni PUBLIC android log)
@@ -26,4 +31,4 @@ install(TARGETS peacemakr-core-crypto-jni
         LIBRARY DESTINATION lib
         PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_PREFIX}/include/peacemakr"
         COMPONENT dev
-)
+        )
