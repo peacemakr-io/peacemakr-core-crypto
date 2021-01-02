@@ -8,7 +8,7 @@
 
 #include "Buffer.h"
 #include "Logging.h"
-#include "crypto.h"
+#include "peacemakr/crypto.h"
 
 #include "CiphertextBlob.h"
 #include "EVPHelper.h"

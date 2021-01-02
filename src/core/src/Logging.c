@@ -7,9 +7,8 @@
 //
 
 #include "Logging.h"
-#include "crypto.h"
+#include "peacemakr/crypto.h"
 
-#include <assert.h>
 #include <memory.h>
 #include <openssl/err.h>
 

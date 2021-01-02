@@ -10,7 +10,7 @@
 #define PEACEMAKR_CORE_CRYPTO_CIPHERTEXT_H
 
 #include "Buffer.h"
-#include "crypto.h"
+#include "peacemakr/crypto.h"
 
 #include <stdint.h>
 

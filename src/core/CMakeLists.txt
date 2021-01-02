@@ -37,10 +37,10 @@ endif()
 add_library(peacemakr-core-crypto SHARED ${SOURCES_C} ${SOURCES_H} ${INCLUDES})
 add_definitions(-DOPENSSL_MIN_API=0x10100000L)
 target_include_directories(peacemakr-core-crypto
-        PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/peacemakr>
-               $<INSTALL_INTERFACE:include>
+        PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
         PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src
-)
+        )
 
 # Compile core crypto lib under asan if we're running in debug mode
 option(ASAN "Turn off ASAN" ON)

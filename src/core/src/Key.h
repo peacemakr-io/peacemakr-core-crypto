@@ -10,7 +10,7 @@
 #define PEACEMAKR_CORE_CRYPTO_KEY_H
 
 #include "Buffer.h"
-#include "crypto.h"
+#include "peacemakr/crypto.h"
 
 #include <openssl/ossl_typ.h>
 #include <stddef.h>

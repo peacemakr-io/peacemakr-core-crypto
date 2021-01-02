@@ -12,7 +12,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include <random.h>
+#include "peacemakr/random.h"
 
 #include "Endian.h"
 

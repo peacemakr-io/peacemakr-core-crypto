@@ -7,7 +7,7 @@
 //
 
 #include "Logging.h"
-#include "crypto.h"
+#include "peacemakr/crypto.h"
 
 #include "Buffer.h"
 #include "EVPHelper.h"

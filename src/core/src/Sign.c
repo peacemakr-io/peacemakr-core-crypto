@@ -6,7 +6,7 @@
 // Full license at peacemakr-core-crypto/LICENSE.txt
 //
 
-#include "crypto.h"
+#include "peacemakr/crypto.h"
 
 #include "CiphertextBlob.h"
 #include "EVPHelper.h"
