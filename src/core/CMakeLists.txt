@@ -34,7 +34,12 @@ if (DEFINED ENV{EMSCRIPTEN_BUILD})
     set(CMAKE_SHARED_LIBRARY_SUFFIX .bc)
 endif()
 
-add_library(peacemakr-core-crypto SHARED ${SOURCES_C} ${SOURCES_H} ${INCLUDES})
+if (BUILD_SHARED_LIBS)
+    add_library(peacemakr-core-crypto SHARED ${SOURCES_C} ${SOURCES_H} ${INCLUDES})
+else()
+    add_library(peacemakr-core-crypto STATIC ${SOURCES_C} ${SOURCES_H} ${INCLUDES})
+endif()
+
 add_definitions(-DOPENSSL_MIN_API=0x10100000L)
 target_include_directories(peacemakr-core-crypto
         PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
