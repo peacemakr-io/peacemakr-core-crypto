@@ -15,8 +15,8 @@ extern "C" {
 #include <stdlib.h>
 
 #include "common-jni.h"
-#include "crypto.h"
-#include "random.h"
+#include "peacemakr/crypto.h"
+#include "peacemakr/random.h"
 
 JNIEXPORT jbyteArray JNICALL
 Java_io_peacemakr_corecrypto_Crypto_encryptSymmetric(
