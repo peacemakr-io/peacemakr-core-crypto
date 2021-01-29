@@ -7,7 +7,7 @@
 #
 
 enable_testing()
-add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} -j4 --schedule-random -V)
+add_custom_target(check-peacemakr-core-crypto COMMAND ${CMAKE_CTEST_COMMAND} -j4 --schedule-random -V)
 
 file(GLOB HELPERS ${CMAKE_CURRENT_SOURCE_DIR}/utils/*)
 
@@ -23,7 +23,7 @@ function(add_ctest test_name)
     set(ALL_C_SOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/${test_name}.c ${ALL_C_SOURCE_FILES} PARENT_SCOPE)
 
     add_test(NAME test_${test_name} COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_${test_name})
-    add_dependencies(check test_${test_name})
+    add_dependencies(check-peacemakr-core-crypto test_${test_name})
 endfunction(add_ctest)
 
 add_definitions(-DPEACEMAKR_TEST_PEM_DIRECTORY="${CMAKE_CURRENT_SOURCE_DIR}/resources")

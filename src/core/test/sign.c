@@ -255,6 +255,55 @@ void test_x_sign() {
   peacemakr_key_free(sign_key);
 }
 
+void test_sign_only() {
+  plaintext_t plaintext_in = {.data = (const unsigned char *)message,
+                              .data_len = strlen(message) + 1,
+                              .aad = (const unsigned char *)message_aad,
+                              .aad_len = strlen(message_aad) + 1};
+
+  plaintext_t plaintext_out;
+
+  ciphertext_blob_t *pblob = peacemakr_get_plaintext_blob(&plaintext_in);
+  assert(pblob);
+
+  random_device_t rand = get_default_random_device();
+  peacemakr_key_t *key =
+      peacemakr_key_new_asymmetric(RSA_4096, CHACHA20_POLY1305, &rand);
+
+  bool sgn = peacemakr_sign(key, &plaintext_in, SHA_256, pblob);
+  assert(sgn);
+
+  size_t out_size = 0;
+  uint8_t *serialized = peacemakr_serialize(SHA_512, pblob, &out_size);
+  assert(serialized != NULL);
+
+  crypto_config_t out_cfg;
+
+  ciphertext_blob_t *deserialized =
+      peacemakr_deserialize(serialized, out_size, &out_cfg);
+
+  free(serialized);
+
+  // Make sure decrypt fails appropriately
+  decrypt_code code = peacemakr_decrypt(key, deserialized, &plaintext_out);
+  assert(code == DECRYPT_FAILED);
+
+  bool extr = peacemakr_extract_plaintext_blob(deserialized, &plaintext_out);
+  assert(extr);
+
+  bool vrf = peacemakr_verify(key, &plaintext_out, deserialized);
+  assert(vrf);
+
+  assert(strncmp((const char *)plaintext_out.data,
+                 (const char *)plaintext_in.data, plaintext_in.data_len) == 0);
+  free((void *)plaintext_out.data);
+  assert(strncmp((const char *)plaintext_out.aad,
+                 (const char *)plaintext_in.aad, plaintext_in.aad_len) == 0);
+  free((void *)plaintext_out.aad);
+
+  peacemakr_key_free(key);
+}
+
 int main() {
   if (!peacemakr_init()) {
     return 1;
