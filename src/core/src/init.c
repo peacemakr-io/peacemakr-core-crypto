@@ -7,7 +7,7 @@
 //
 
 #include "Logging.h"
-#include "crypto.h"
+#include "peacemakr/crypto.h"
 
 #ifdef PEACEMAKR_NEEDS_BSD
 #include <openssl/rand.h>

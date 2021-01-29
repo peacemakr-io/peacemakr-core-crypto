@@ -10,10 +10,10 @@
 #include "Buffer.h"
 #include "EVPHelper.h"
 #include "Logging.h"
+#include "peacemakr/crypto.h"
 
 #include <memory.h>
 
-#include <crypto.h>
 #include <openssl/dh.h>
 #include <openssl/ecdh.h>
 #include <openssl/evp.h>

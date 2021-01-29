@@ -9,7 +9,7 @@
 #ifndef PEACEMAKR_CORE_CRYPTO_EVPHELPER_H
 #define PEACEMAKR_CORE_CRYPTO_EVPHELPER_H
 
-#include "crypto.h"
+#include "peacemakr/crypto.h"
 
 #include <openssl/evp.h>
 

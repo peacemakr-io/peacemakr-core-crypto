@@ -34,13 +34,20 @@ if (DEFINED ENV{EMSCRIPTEN_BUILD})
     set(CMAKE_SHARED_LIBRARY_SUFFIX .bc)
 endif()
 
-add_library(peacemakr-core-crypto SHARED ${SOURCES_C} ${SOURCES_H} ${INCLUDES})
+# Default to shared libs
+option(PEACEMAKR_STATIC_BUILD "Build peacemakr-core-crypto as a static lib" OFF)
+if (PEACEMAKR_STATIC_BUILD)
+    add_library(peacemakr-core-crypto STATIC ${SOURCES_C} ${SOURCES_H} ${INCLUDES})
+else()
+    add_library(peacemakr-core-crypto SHARED ${SOURCES_C} ${SOURCES_H} ${INCLUDES})
+endif()
+
 add_definitions(-DOPENSSL_MIN_API=0x10100000L)
 target_include_directories(peacemakr-core-crypto
-        PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/peacemakr>
-               $<INSTALL_INTERFACE:include>
+        PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
         PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src
-)
+        )
 
 # Compile core crypto lib under asan if we're running in debug mode
 option(ASAN "Turn off ASAN" ON)
@@ -74,7 +81,7 @@ set_target_properties(peacemakr-core-crypto PROPERTIES
 )
 
 # TODO: older versions of cmake don't have target_link_options, switch back at some point
-if ((CMAKE_BUILD_TYPE MATCHES RELEASE) OR (CMAKE_BUILD_TYPE MATCHES Release))
+if (((CMAKE_BUILD_TYPE MATCHES RELEASE) OR (CMAKE_BUILD_TYPE MATCHES Release)) AND BUILD_SHARED_LIBS)
     message(STATUS "Stripping library of dead symbols")
     if (APPLE)
         target_link_libraries(peacemakr-core-crypto PRIVATE "-Wl,-dead_strip")

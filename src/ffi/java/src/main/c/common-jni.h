@@ -17,7 +17,7 @@ extern "C" {
 
 #include <stdlib.h>
 
-#include "crypto.h"
+#include "peacemakr/crypto.h"
 
 #ifdef __ANDROID__
 static const char *kTAG = "peacemakr-core-crypto";

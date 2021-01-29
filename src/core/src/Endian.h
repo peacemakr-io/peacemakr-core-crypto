@@ -17,7 +17,7 @@ typedef uint32_t length_t;
 length_t bswap(length_t input);
 
 // Check for endianness
-#if defined(BYTE_ORDER) & defined(LITTLE_ENDIAN)
+#if defined(BYTE_ORDER) && defined(LITTLE_ENDIAN)
 #define IS_LITTLE_ENDIAN BYTE_ORDER == LITTLE_ENDIAN
 #else
 #define IS_LITTLE_ENDIAN                                                       \

@@ -16,8 +16,8 @@ extern "C" {
 #include <string.h>
 
 #include "common-jni.h"
-#include "crypto.h"
-#include "random.h"
+#include "peacemakr/crypto.h"
+#include "peacemakr/random.h"
 
 JNIEXPORT jobject JNICALL Java_io_peacemakr_corecrypto_AsymmetricKey_fromPRNG(
     JNIEnv *env, jclass clazz, jobject asymm_cipher, jobject symm_cipher) {
