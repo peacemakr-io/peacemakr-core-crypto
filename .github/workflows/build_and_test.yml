@@ -24,7 +24,7 @@ jobs:
         # We run install here so that we can re-use the results from this step in the go step
         run: |
           mkdir -p cpp-build && pushd cpp-build
-          cmake .. -DPEACEMAKR_BUILD_CPP=ON -DCMAKE_INSTALL_PREFIX=../src/ffi/go/src/peacemakr/crypto
+          cmake .. -DBUILD_SHARED_LIBS=ON -DPEACEMAKR_BUILD_CPP=ON -DCMAKE_INSTALL_PREFIX=../src/ffi/go/src/peacemakr/crypto
           make check install
           popd
       - name: Build and Test Go
@@ -73,7 +73,7 @@ jobs:
         # We run install here so that we can re-use the results from this step in the go step
         run: |
           mkdir -p cpp-build && pushd cpp-build
-          cmake .. -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl@1.1 -DPEACEMAKR_BUILD_CPP=ON -DCMAKE_INSTALL_PREFIX=../src/ffi/go/src/peacemakr/crypto
+          cmake .. -DBUILD_SHARED_LIBS=ON -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl@1.1 -DPEACEMAKR_BUILD_CPP=ON -DCMAKE_INSTALL_PREFIX=../src/ffi/go/src/peacemakr/crypto
           make check install
           popd
       - name: Build and Test Go
