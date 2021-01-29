@@ -13,7 +13,7 @@ target_include_directories(test_cpp PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../inclu
 set(ALL_C_SOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/test.cpp ${ALL_C_SOURCE_FILES} PARENT_SCOPE)
 
 add_test(NAME test_cpp COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_cpp)
-add_dependencies(check test_cpp)
+add_dependencies(check-peacemakr-core-crypto test_cpp)
 
 enable_language(CXX)
 set(CMAKE_CXX_STANDARD 11)

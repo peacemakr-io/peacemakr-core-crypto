@@ -841,3 +841,53 @@ func TestIssueNumber27FailToDecrypt(t *testing.T) {
 		t.Fatalf("Did not fail to deserialize")
 	}
 }
+
+func TestSignOnly(t *testing.T) {
+  if !PeacemakrInit() {
+    t.Fatalf("Unable to successfully start and seed the CSPRNG")
+  }
+
+  randomDevice := NewRandomDevice()
+
+  key := NewPeacemakrKeyAsymmetric(AsymmetricCipher(i), SymmetricCipher(j), randomDevice)
+  defer key.Destroy()
+
+  plaintextIn := SetUpPlaintext()
+  pblob, err := GetPlaintextBlob(plaintextIn)
+  if err != nil {
+    t.Fatalf("%v", err)
+  }
+
+  err := Sign(key, plaintextIn, SHA_256, pblob)
+  if err != nil {
+    t.Fatalf("%v", err)
+  }
+
+  serialized, err := Serialize(MessageDigestAlgorithm(k), ciphertext)
+  if err != nil {
+    t.Fatalf("%v", err)
+  }
+
+  deserialized, _, err := Deserialize(serialized)
+  if err != nil {
+    t.Fatalf("%v", err)
+  }
+
+  plaintextOut, err := ExtractPlaintextFromBlob(deserialized)
+  if err != nil {
+    t.Fatalf("%v", err)
+  }
+
+  err := Verify(key, plaintextOut, deserialized)
+  if err != nil {
+    t.Fatalf("%v", err)
+  }
+
+  if !bytes.Equal(plaintextIn.Data, plaintextOut.Data) {
+    t.Fatalf("plaintext data did not match")
+  }
+
+  if !bytes.Equal(plaintextIn.Aad, plaintextOut.Aad) {
+    t.Fatalf("plaintext data did not match")
+  }
+}

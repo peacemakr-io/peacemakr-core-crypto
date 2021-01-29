@@ -216,6 +216,38 @@ peacemakr::CryptoContext::Encrypt(const Key &key, const Plaintext &plaintext,
   return blob;
 }
 
+peacemakr::Ciphertext
+peacemakr::CryptoContext::GetPlaintextBlob(const Plaintext &plaintext) {
+  plaintext_t plain = {
+      .data = plaintext.data.empty()
+                  ? nullptr
+                  : (const unsigned char *)plaintext.data.c_str(),
+      .data_len = plaintext.data.empty() ? 0 : (size_t)plaintext.data.size(),
+      .aad = plaintext.aad.empty()
+                 ? nullptr
+                 : (const unsigned char *)plaintext.aad.c_str(),
+      .aad_len = plaintext.aad.empty() ? 0 : (size_t)plaintext.aad.size()};
+  ciphertext_blob_t *blob = peacemakr_get_plaintext_blob(&plain);
+  return blob;
+}
+
+peacemakr::Plaintext peacemakr::CryptoContext::ExtractPlaintextBlob(
+    peacemakr::Ciphertext const blob) {
+
+  plaintext_t out;
+  bool success =
+      peacemakr_extract_plaintext_blob((ciphertext_blob_t *)blob, &out);
+  if (!success) {
+    m_log_("extraction failed");
+    return Plaintext{};
+  }
+
+  Plaintext plain{};
+  setContents(plain, out);
+
+  return plain;
+}
+
 bool peacemakr::CryptoContext::Sign(const peacemakr::Key &senderKey,
                                     const peacemakr::Plaintext &plaintext,
                                     message_digest_algorithm digest,

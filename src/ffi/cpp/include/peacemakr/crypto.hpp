@@ -180,6 +180,18 @@ public:
                      RandomDevice &rand);
 
   /**
+   * Constructs a "plaintext" Ciphertext blob that can be used in the
+   * Sign/Verify API functions.
+   */
+  Ciphertext GetPlaintextBlob(const Plaintext &plaintext);
+
+  /**
+   * Extracts the plaintext from a given "plaintext" Ciphertext blob that
+   * can be used for the Sign/Verify API functions.
+   */
+  Plaintext ExtractPlaintextBlob(const Ciphertext blob);
+
+  /**
    * Signs the plaintext in \p plaintext with key \p senderKey. If the
    * configuration in \p senderKey is SYMMETRIC then this method stores an HMAC
    * in \p blob. If the configuration is ASYMMETRIC then this method uses the

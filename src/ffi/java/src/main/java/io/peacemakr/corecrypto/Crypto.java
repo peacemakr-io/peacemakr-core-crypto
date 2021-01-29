@@ -55,6 +55,11 @@ public class Crypto {
                                                  byte[] aad, // have to pack the key IDs in here on your own
                                                  MessageDigest digestType);
 
+    public native static byte[] signAsymmetric(AsymmetricKey signingKey,
+                                               byte[] plaintext,
+                                               byte[] aad, // have to pack the key IDs in here on your own
+                                               MessageDigest digestType);
+
     public native static byte[] getCiphertextAAD(byte[] ciphertext);
 
     public native static byte[] decryptSymmetric(byte[] key,
@@ -64,6 +69,9 @@ public class Crypto {
     public native static byte[] decryptAsymmetric(AsymmetricKey key,
                                                   AsymmetricKey verificationKey,
                                                   byte[] ciphertext);
+
+    public native static byte[] verifyAsymmetric(AsymmetricKey verificationKey,
+                                                 byte[] ciphertext);
 
     private native static void nativeInit();
 }
