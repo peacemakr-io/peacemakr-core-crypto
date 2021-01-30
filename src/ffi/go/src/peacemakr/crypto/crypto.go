@@ -565,12 +565,12 @@ func ExtractPlaintextFromBlob(blob *CiphertextBlob) (Plaintext, error) {
   var plaintext C.plaintext_t
   defer freeInternalPlaintext(&plaintext)
 
-  if !C.peacemakr_extract_plaintext_blob(ciphertext.blob, (*C.plaintext_t)(unsafe.Pointer(&plaintext))) {
-    return nil, errors.New("failed to extract plaintext blob")
+  if !C.peacemakr_extract_plaintext_blob(blob.blob, (*C.plaintext_t)(unsafe.Pointer(&plaintext))) {
+    return Plaintext{}, errors.New("failed to extract plaintext blob")
   }
 
     // the C.GoBytes functions make copies of the underlying data so it's OK to free the original ptr
-  return &Plaintext{
+  return Plaintext{
     Data: C.GoBytes(unsafe.Pointer(plaintext.data), C.int(plaintext.data_len)),
     Aad:  C.GoBytes(unsafe.Pointer(plaintext.aad), C.int(plaintext.aad_len)),
   }, nil

@@ -849,7 +849,7 @@ func TestSignOnly(t *testing.T) {
 
   randomDevice := NewRandomDevice()
 
-  key := NewPeacemakrKeyAsymmetric(AsymmetricCipher(i), SymmetricCipher(j), randomDevice)
+  key := NewPeacemakrKeyAsymmetric(ECDH_P256, CHACHA20_POLY1305, randomDevice)
   defer key.Destroy()
 
   plaintextIn := SetUpPlaintext()
@@ -858,12 +858,12 @@ func TestSignOnly(t *testing.T) {
     t.Fatalf("%v", err)
   }
 
-  err := Sign(key, plaintextIn, SHA_256, pblob)
+  err = Sign(key, plaintextIn, SHA_256, pblob)
   if err != nil {
     t.Fatalf("%v", err)
   }
 
-  serialized, err := Serialize(MessageDigestAlgorithm(k), ciphertext)
+  serialized, err := Serialize(SHA_256, pblob)
   if err != nil {
     t.Fatalf("%v", err)
   }
@@ -878,7 +878,7 @@ func TestSignOnly(t *testing.T) {
     t.Fatalf("%v", err)
   }
 
-  err := Verify(key, plaintextOut, deserialized)
+  err = Verify(key, &plaintextOut, deserialized)
   if err != nil {
     t.Fatalf("%v", err)
   }
