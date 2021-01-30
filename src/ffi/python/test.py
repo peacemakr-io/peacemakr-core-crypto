@@ -93,7 +93,7 @@ class TestCoreCrypto(unittest.TestCase):
         key = p.Key(p.RSA_2048, p.SymmetricCipher.UNSPECIFIED, rand)
 
         plaintext = p.Plaintext(get_random_data(), get_random_data())
-        blob = p.get_plaintext_blob(plaintext)
+        blob = context.get_plaintext_blob(plaintext)
         self.assertTrue(context.sign(key, plaintext, p.DigestAlgorithm.SHA_256, blob))
 
         serialized = context.serialize(p.DigestAlgorithm.SHA_256, blob)
