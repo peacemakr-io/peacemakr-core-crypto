@@ -90,7 +90,7 @@ class TestCoreCrypto(unittest.TestCase):
     def test_sign_only(self):
         rand = p.RandomDevice()
         context = p.CryptoContext()
-        key = p.Key(p.RSA_2048, p.SymmetricCipher.UNSPECIFIED, rand)
+        key = p.Key(p.RSA_2048, p.SymmetricCipher.CHACHA20_POLY1305, rand)
 
         plaintext = p.Plaintext(get_random_data(), get_random_data())
         blob = context.get_plaintext_blob(plaintext)
