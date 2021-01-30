@@ -282,6 +282,22 @@ peacemakr_encrypt(const peacemakr_key_t *recipient_key,
                   const plaintext_t *plain, random_device_t *rand);
 
 /**
+ * Create a ciphertext blob that contains the plaintext in \p plain. This blob
+ * should only be used for the peacemakr_sign and peacemakr_verify functions.
+ */
+PEACEMAKR_EXPORT ciphertext_blob_t *
+peacemakr_get_plaintext_blob(const plaintext_t *plain);
+
+/**
+ * Extract the plaintext from a ciphertext blob. Note that this is different
+ * from peacemakr_encrypt in that it does not perform decryption. This blob
+ * should only be used for the peacemakr_sign and peacemakr_verify functions.
+ */
+PEACEMAKR_EXPORT bool
+peacemakr_extract_plaintext_blob(const ciphertext_blob_t *blob,
+                                 plaintext_t *plain);
+
+/**
  * Signs the plaintext in \p plain with key \p sender_key. If the configuration
  * in \p sender_key is SYMMETRIC then this method stores an HMAC in \p cipher.
  * If the configuration is ASYMMETRIC then this method uses the EVP_DigestSign*

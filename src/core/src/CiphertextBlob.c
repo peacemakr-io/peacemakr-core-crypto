@@ -149,6 +149,58 @@ void ciphertext_blob_free(ciphertext_blob_t *ciphertext) {
   ciphertext = NULL;
 }
 
+ciphertext_blob_t *peacemakr_get_plaintext_blob(const plaintext_t *plain) {
+  crypto_config_t cfg = {.symm_cipher = SYMMETRIC_UNSPECIFIED,
+                         .asymm_cipher = ASYMMETRIC_UNSPECIFIED,
+                         .digest_algorithm = DIGEST_UNSPECIFIED,
+                         .mode = SYMMETRIC};
+
+  ciphertext_blob_t *out =
+      ciphertext_blob_new(cfg, 0, 0, plain->aad_len, plain->data_len, 1);
+
+  if (plain->data != NULL && plain->data_len != 0) {
+    buffer_t *ciphertext = ciphertext_blob_mutable_ciphertext(out);
+    EXPECT_NOT_NULL_RET(ciphertext,
+                        "Ciphertext blob ciphertext field was null\n");
+    memcpy(buffer_mutable_bytes(ciphertext), plain->data, plain->data_len);
+  }
+
+  if (plain->aad != NULL && plain->aad_len != 0) {
+    buffer_t *aad = ciphertext_blob_mutable_aad(out);
+    EXPECT_NOT_NULL_RET(aad, "Ciphertext blob aad field was null\n");
+    memcpy(buffer_mutable_bytes(aad), plain->aad, plain->aad_len);
+  }
+
+  return out;
+}
+
+bool peacemakr_extract_plaintext_blob(const ciphertext_blob_t *blob,
+                                      plaintext_t *plain) {
+
+  const buffer_t *ciphertext = ciphertext_blob_ciphertext(blob);
+  if (ciphertext != NULL) {
+    plain->data_len = buffer_get_size(ciphertext);
+    plain->data = calloc(plain->data_len, sizeof(uint8_t));
+    memcpy((void *)plain->data, buffer_get_bytes(ciphertext, NULL),
+           plain->data_len);
+  } else {
+    plain->data_len = 0;
+    plain->data = NULL;
+  }
+
+  const buffer_t *aad = ciphertext_blob_aad(blob);
+  if (aad != NULL) {
+    plain->aad_len = buffer_get_size(aad);
+    plain->aad = calloc(plain->aad_len, sizeof(uint8_t));
+    memcpy((void *)plain->aad, buffer_get_bytes(aad, NULL), plain->aad_len);
+  } else {
+    plain->aad_len = 0;
+    plain->aad = NULL;
+  }
+
+  return true;
+}
+
 void ciphertext_blob_set_version(ciphertext_blob_t *ciphertext,
                                  uint32_t version) {
   EXPECT_NOT_NULL_RET_NONE(ciphertext, "ciphertext was NULL\n")

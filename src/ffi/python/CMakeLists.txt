@@ -17,7 +17,7 @@ add_custom_target(python-test
         DEPENDS peacemakr_core_crypto_python
 )
 
-add_dependencies(check python-test)
+add_dependencies(check-peacemakr-core-crypto python-test)
 
 if (NOT DEFINED PYTHON_INSTALL_DIR)
     install(TARGETS peacemakr_core_crypto_python

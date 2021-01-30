@@ -135,5 +135,7 @@ PYBIND11_MODULE(peacemakr_core_crypto_python, m) {
       .def("decrypt", &CryptoContext::Decrypt)
       .def("verify", &CryptoContext::Verify)
       .def("deserialize", &CryptoContext::Deserialize)
+      .def("get_plaintext_blob", &CryptoContext::GetPlaintextBlob)
+      .def("extract_plaintext_blob", &CryptoContext::ExtractPlaintextBlob)
       .def("extract_unverified_aad", &CryptoContext::ExtractUnverifiedAAD);
 }

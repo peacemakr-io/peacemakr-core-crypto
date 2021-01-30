@@ -111,6 +111,67 @@ Java_io_peacemakr_corecrypto_Crypto_encryptSymmetric(
   return out;
 }
 
+JNIEXPORT jbyteArray JNICALL Java_io_peacemakr_corecrypto_Crypto_signAsymmetric(
+    JNIEnv *env, jclass clazz, jobject sign_key, jbyteArray plaintext,
+    jbyteArray aad, jobject digest) {
+
+  peacemakr_key_t *sign_native_key = getNativeKey(env, sign_key);
+  if (sign_native_key == NULL) {
+    LOGE("%s\n", "Error creating signing key");
+    return NULL;
+  }
+
+  // now do the encrypt
+  jbyte *raw_data = (*env)->GetByteArrayElements(env, plaintext, NULL);
+  const jsize data_len = (*env)->GetArrayLength(env, plaintext);
+
+  jbyte *rawAAD = (*env)->GetByteArrayElements(env, aad, NULL);
+  const jsize aad_len = (*env)->GetArrayLength(env, aad);
+
+  plaintext_t plain = {.data = (const uint8_t *)raw_data,
+                       .data_len = data_len,
+                       .aad = (const uint8_t *)rawAAD,
+                       .aad_len = aad_len};
+
+  ciphertext_blob_t *blob = peacemakr_get_plaintext_blob(&plain);
+  if (blob == NULL) {
+    LOGE("%s\n", "Error getting plaintext blob");
+    (*env)->ReleaseByteArrayElements(env, plaintext, raw_data, JNI_ABORT);
+    (*env)->ReleaseByteArrayElements(env, aad, rawAAD, JNI_ABORT);
+    return NULL;
+  }
+
+  message_digest_algorithm digest_algo =
+      unwrapEnumToInt(env, digest, "io/peacemakr/corecrypto/MessageDigest");
+
+  if (!peacemakr_sign(sign_native_key, &plain, digest_algo, blob)) {
+    LOGE("%s\n", "Failed to sign");
+    (*env)->ReleaseByteArrayElements(env, plaintext, raw_data, JNI_ABORT);
+    (*env)->ReleaseByteArrayElements(env, aad, rawAAD, JNI_ABORT);
+    return NULL;
+  }
+
+  size_t out_len = 0;
+  uint8_t *serialized = peacemakr_serialize(digest_algo, blob, &out_len);
+  if (serialized == NULL) {
+    LOGE("%s\n", "Failed to serialize");
+    (*env)->ReleaseByteArrayElements(env, plaintext, raw_data, JNI_ABORT);
+    (*env)->ReleaseByteArrayElements(env, aad, rawAAD, JNI_ABORT);
+    free(serialized);
+    return NULL;
+  }
+
+  jbyteArray out = (*env)->NewByteArray(env, out_len);
+  (*env)->SetByteArrayRegion(env, out, 0, out_len, (const jbyte *)serialized);
+
+  // clean up
+  (*env)->ReleaseByteArrayElements(env, plaintext, raw_data, JNI_ABORT);
+  (*env)->ReleaseByteArrayElements(env, aad, rawAAD, JNI_ABORT);
+  free(serialized);
+
+  return out;
+}
+
 JNIEXPORT jbyteArray JNICALL
 Java_io_peacemakr_corecrypto_Crypto_getCiphertextAAD(JNIEnv *env, jclass clazz,
                                                      jbyteArray ciphertext) {
@@ -256,6 +317,8 @@ Java_io_peacemakr_corecrypto_Crypto_decryptAsymmetric(JNIEnv *env, jclass clazz,
     if (!peacemakr_verify(verify_native_key, &plaintext, deserialized)) {
       LOGE("%s\n", "Verification of the message failed");
       (*env)->ReleaseByteArrayElements(env, ciphertext, raw_data, JNI_ABORT);
+      free((void *)plaintext.data);
+      free((void *)plaintext.aad);
       return NULL;
     }
   }
@@ -268,6 +331,60 @@ Java_io_peacemakr_corecrypto_Crypto_decryptAsymmetric(JNIEnv *env, jclass clazz,
 
   // We only want to release the byte array elements once we've successfully
   // decrypted the message
+  (*env)->ReleaseByteArrayElements(env, ciphertext, raw_data, JNI_ABORT);
+
+  // re-pack the plaintext
+  jbyteArray out = (*env)->NewByteArray(env, plaintext.data_len);
+  (*env)->SetByteArrayRegion(env, out, 0, plaintext.data_len,
+                             (const jbyte *)plaintext.data);
+
+  // Clean up the C plaintext
+  free((void *)plaintext.data);
+  free((void *)plaintext.aad);
+
+  return out;
+}
+
+JNIEXPORT jbyteArray JNICALL
+Java_io_peacemakr_corecrypto_Crypto_verifyAsymmetric(JNIEnv *env, jclass clazz,
+                                                      jobject verify_key,
+                                                      jbyteArray ciphertext) {
+  peacemakr_key_t *verify_native_key = getNativeKey(env, verify_key);
+  if (verify_native_key == NULL) {
+    LOGE("%s\n", "Error creating verification key");
+    return NULL;
+  }
+
+  jbyte *raw_data = (*env)->GetByteArrayElements(env, ciphertext, NULL);
+  const jsize data_len = (*env)->GetArrayLength(env, ciphertext);
+
+  crypto_config_t cfg;
+  ciphertext_blob_t *deserialized =
+      peacemakr_deserialize((uint8_t *)raw_data, data_len, &cfg);
+  if (deserialized == NULL) {
+    LOGE("%s\n", "Deserialization of the message failed");
+    (*env)->ReleaseByteArrayElements(env, ciphertext, raw_data, JNI_ABORT);
+    return NULL;
+  }
+
+  plaintext_t plaintext;
+  bool did_succeed = peacemakr_extract_plaintext_blob(deserialized, &plaintext);
+  if (!did_succeed) {
+    LOGE("%s\n", "Extraction of the message failed");
+    (*env)->ReleaseByteArrayElements(env, ciphertext, raw_data, JNI_ABORT);
+    return NULL;
+  }
+
+  if (!peacemakr_verify(verify_native_key, &plaintext, deserialized)) {
+    LOGE("%s\n", "Verification of the message failed");
+    (*env)->ReleaseByteArrayElements(env, ciphertext, raw_data, JNI_ABORT);
+    free((void *)plaintext.data);
+    free((void *)plaintext.aad);
+    return NULL;
+  }
+
+  // We only want to release the byte array elements once we've successfully
+  // verified the message
   (*env)->ReleaseByteArrayElements(env, ciphertext, raw_data, JNI_ABORT);
 
   // re-pack the plaintext

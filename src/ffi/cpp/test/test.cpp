@@ -237,6 +237,44 @@ void test_uninit_crash() {
          "symmetric encrypt-decrypt failed");
 }
 
+void test_sign_only() {
+  peacemakr::Plaintext plaintext_in;
+  plaintext_in.data = "Hello world!";
+  plaintext_in.aad = "AAD";
+
+  peacemakr::RandomDevice rand;
+
+  peacemakr::Key key(RSA_2048, AES_128_GCM, rand);
+  assert(key.isValid());
+
+  peacemakr::CryptoContext ctx(log_fn);
+  peacemakr::Ciphertext encrypted = ctx.GetPlaintextBlob(plaintext_in);
+  if (encrypted == nullptr && plaintext_in.data.empty()) {
+    return;
+  } else {
+    assert(encrypted != nullptr);
+  }
+
+  bool didSign = ctx.Sign(key, plaintext_in, SHA_256, encrypted);
+  assert(didSign);
+
+  std::string serialized = ctx.Serialize(SHA_256, encrypted);
+  assert(!serialized.empty());
+
+  std::pair<peacemakr::Ciphertext, crypto_config_t> deserialized =
+      ctx.Deserialize(serialized);
+
+  peacemakr::Plaintext extracted = ctx.ExtractPlaintextBlob(deserialized.first);
+
+  bool verif = ctx.Verify(key, extracted, deserialized.first);
+  assert(verif);
+
+  assert(plaintext_in.data == extracted.data &&
+         "asymmetric sign-verify failed");
+  assert(plaintext_in.aad == extracted.aad &&
+         "asymmetric sign-verify failed");
+}
+
 void test_dh_symmetric(symmetric_cipher symm_cipher,
                        message_digest_algorithm digest) {
 
@@ -312,4 +350,5 @@ int main() {
                 [](std::thread &t) { t.join(); });
 
   test_uninit_crash();
+  test_sign_only();
 }

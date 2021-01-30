@@ -547,6 +547,35 @@ func Encrypt(key *PeacemakrKey, plaintext Plaintext, rand RandomDevice) (*Cipher
 	}, nil
 }
 
+func GetPlaintextBlob(plaintext Plaintext) (*CiphertextBlob, error) {
+  cPlaintext := plaintextToInternal(plaintext)
+  defer freeInternalPlaintext(&cPlaintext)
+
+  blob := C.peacemakr_get_plaintext_blob((*C.plaintext_t)(unsafe.Pointer(&cPlaintext)))
+  if blob == nil {
+    return nil, errors.New("unable to get plaintext blob")
+  }
+
+  return &CiphertextBlob{
+    blob: blob,
+  }, nil
+}
+
+func ExtractPlaintextFromBlob(blob *CiphertextBlob) (Plaintext, error) {
+  var plaintext C.plaintext_t
+  defer freeInternalPlaintext(&plaintext)
+
+  if !C.peacemakr_extract_plaintext_blob(blob.blob, (*C.plaintext_t)(unsafe.Pointer(&plaintext))) {
+    return Plaintext{}, errors.New("failed to extract plaintext blob")
+  }
+
+    // the C.GoBytes functions make copies of the underlying data so it's OK to free the original ptr
+  return Plaintext{
+    Data: C.GoBytes(unsafe.Pointer(plaintext.data), C.int(plaintext.data_len)),
+    Aad:  C.GoBytes(unsafe.Pointer(plaintext.aad), C.int(plaintext.aad_len)),
+  }, nil
+}
+
 func Serialize(digest MessageDigestAlgorithm, blob *CiphertextBlob) ([]byte, error) {
 	var cSize C.size_t
 	serialized := C.peacemakr_serialize((C.message_digest_algorithm)(digest), blob.blob, (*C.size_t)(unsafe.Pointer(&cSize)))

@@ -87,6 +87,24 @@ class TestCoreCrypto(unittest.TestCase):
                 verified = context.verify(key, result[0], deserialized[0])
                 self.assertTrue(verified)
 
+    def test_sign_only(self):
+        rand = p.RandomDevice()
+        context = p.CryptoContext()
+        key = p.Key(p.RSA_2048, p.SymmetricCipher.CHACHA20_POLY1305, rand)
+
+        plaintext = p.Plaintext(get_random_data(), get_random_data())
+        blob = context.get_plaintext_blob(plaintext)
+        self.assertTrue(context.sign(key, plaintext, p.DigestAlgorithm.SHA_256, blob))
+
+        serialized = context.serialize(p.DigestAlgorithm.SHA_256, blob)
+        self.assertNotEqual(serialized, plaintext.data)
+
+        deserialized = context.deserialize(serialized)
+
+        result = context.extract_plaintext_blob(deserialized[0])
+
+        self.assertTrue(context.verify(key, result, deserialized[0]))
+
 
 if __name__ == '__main__':
     unittest.main()
