@@ -101,9 +101,9 @@ class TestCoreCrypto(unittest.TestCase):
 
         deserialized = context.deserialize(serialized)
 
-        result = context.extract_plaintext_blob(deserialized)
+        result = context.extract_plaintext_blob(deserialized[0])
 
-        self.assertTrue(context.verify(key, result, deserialized))
+        self.assertTrue(context.verify(key, result, deserialized[0]))
 
 
 if __name__ == '__main__':
