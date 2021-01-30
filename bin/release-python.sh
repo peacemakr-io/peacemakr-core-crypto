@@ -31,7 +31,7 @@ if [[ "${1}" == "local" ]]; then
   mkdir -p build && cd build
   cmake .. -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl@1.1 -DPEACEMAKR_BUILD_PYTHON=ON \
            -DASAN=OFF -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} ${PYTHON_INSTALL}
-  make check install
+  make check-peacemakr-core-crypto install
   cd .. && rm -rf build
   popd
 

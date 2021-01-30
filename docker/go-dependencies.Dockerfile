@@ -24,7 +24,7 @@ RUN mkdir -p build && cd build \
 && cmake .. \
 -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
 -DCMAKE_INSTALL_PREFIX=/go/src/peacemakr/crypto \
-&& make check install \
+&& make check-peacemakr-core-crypto install \
 && cp -r /usr/include/openssl /go/src/peacemakr/crypto/include/openssl
 
 ENV GOPATH=/go

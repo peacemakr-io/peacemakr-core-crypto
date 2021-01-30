@@ -29,4 +29,4 @@ RUN mkdir -p build && cd build \
 -DPEACEMAKR_BUILD_PYTHON=ON \
 -DASAN=OFF \
 -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
-&& make check install
+&& make check-peacemakr-core-crypto install
