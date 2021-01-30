@@ -565,7 +565,7 @@ func ExtractPlaintextFromBlob(blob *CiphertextBlob) (Plaintext, error) {
   var plaintext C.plaintext_t
   defer freeInternalPlaintext(&plaintext)
 
-  if !C.peacemakr_extract_plaintext_blob(ciphertext.blob, (*C.plaintext_t)(unsafe.Pointer(&plaintext)))) {
+  if !C.peacemakr_extract_plaintext_blob(ciphertext.blob, (*C.plaintext_t)(unsafe.Pointer(&plaintext))) {
     return nil, errors.New("failed to extract plaintext blob")
   }
 
