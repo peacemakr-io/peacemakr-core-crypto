@@ -46,7 +46,7 @@ task makeInstall(type:Exec) {
 
 task makeCheck(type:Exec) {
     workingDir buildDir.path + "/native"
-    commandLine 'make', 'check'
+    commandLine 'make', 'check-peacemakr-core-crypto'
 
     dependsOn += 'cmake'
 }

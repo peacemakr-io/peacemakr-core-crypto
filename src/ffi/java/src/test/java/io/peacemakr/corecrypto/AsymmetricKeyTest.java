@@ -78,11 +78,11 @@ public class AsymmetricKeyTest {
         byte[] plaintext = "Hello, world!".getBytes();
         byte[] aad = "AAD".getBytes();
 
-        byte[] encrypted = Crypto.signAsymmetric(key, plaintext, aad, MessageDigest.SHA_256);
-        byte[] gotAAD = Crypto.getCiphertextAAD(encrypted);
+        byte[] signed = Crypto.signAsymmetric(key, plaintext, aad, MessageDigest.SHA_256);
+        byte[] gotAAD = Crypto.getCiphertextAAD(signed);
         Assert.assertArrayEquals(aad, gotAAD);
 
-        byte[] verified = Crypto.verifyAsymmetric(symmKey, key, encrypted);
+        byte[] verified = Crypto.verifyAsymmetric(key, signed);
         Assert.assertArrayEquals(plaintext, verified);
     }
 

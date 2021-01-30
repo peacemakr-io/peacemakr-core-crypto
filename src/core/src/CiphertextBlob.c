@@ -191,6 +191,9 @@ bool peacemakr_extract_plaintext_blob(const ciphertext_blob_t *blob,
     plain->aad_len = buffer_get_size(aad);
     plain->aad = calloc(plain->aad_len, sizeof(uint8_t));
     memcpy((void *)plain->aad, buffer_get_bytes(aad, NULL), plain->aad_len);
+  } else {
+    plain->aad_len = 0;
+    plain->aad = NULL;
   }
 
   return true;
