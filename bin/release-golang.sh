@@ -27,7 +27,7 @@ function get_crypto_file_mac {
     mkdir -p build
     pushd build
     cmake .. -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl@1.1 -D${build_type} -DCMAKE_INSTALL_PREFIX=/tmp/peacemakr/crypto
-    make check install
+    make check-peacemakr-core-crypto install
     cp -R /usr/local/opt/openssl@1.1/include/openssl /tmp/peacemakr/crypto/include/
     cp -R ../src/ffi/go/src/peacemakr/crypto/ /tmp/peacemakr/crypto/
     tar -czvf ${out_dir}/peacemakr-core-crypto-go-macos.tar.gz -C /tmp peacemakr

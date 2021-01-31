@@ -19,7 +19,7 @@ git clone https://github.com/peacemakr-io/peacemakr-core-crypto.git
 cd peacemakr-core-crypto
 mkdir -p build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
-make check install
+make check-peacemakr-core-crypto install
 # To helps runtime dependencies find the library
 echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib' >> ~/.bashrc
 ```
