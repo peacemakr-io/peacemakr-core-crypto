@@ -108,7 +108,7 @@ jar {
     manifest {
         attributes (
                 'Name': 'corecrypto',
-                'Specification-Title': 'Peacemakr Secure Data Platform',
+                'Specification-Title': 'Peacemakr Core Crypto Library',
                 'Specification-Version': '1.0',
                 'Specification-Vendor': 'Peacemakr Secure Data Platform',
                 'Implementation-Title': 'io.peacemakr.corecrypto',
