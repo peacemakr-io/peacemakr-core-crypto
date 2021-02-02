@@ -108,8 +108,8 @@ jobs:
 #          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 #        with:
 #          upload_url: https://github.com/peacemakr-io/peacemakr-core-crypto/releases/latest/assets{?name,label}
-#          asset_path: ./PeacemakrCoreCrypto-0.0.1.jar
-#          asset_name: PeacemakrCoreCrypto-0.0.1.jar
+#          asset_path: ./peacemakr-core-crypto-0.2.2.jar
+#          asset_name: peacemakr-core-crypto-0.2.2.jar
 #          asset_content_type: application/gzip
 
   build_python_mac:

@@ -18,6 +18,8 @@ Assuming you have [OpenSSL 1.1+](#openssl-11) and [CMake 3.15+](#cmake-315)
 git clone https://github.com/peacemakr-io/peacemakr-core-crypto.git
 cd peacemakr-core-crypto
 mkdir -p build && cd build
+# Use Java8 for compilation, JavaSDK is compiled using Java8 
+export JAVA_HOME=/Library/Java/JavaVirtualMachines/<JAVA_RELEASE_VERSION>/Contents/Home
 cmake .. -DCMAKE_BUILD_TYPE=Release
 make check-peacemakr-core-crypto install
 # To helps runtime dependencies find the library
@@ -72,11 +74,11 @@ For a debug build
 `./bin/release-golang.sh /path/to/peacemakr-go-sdk`
 
 ## Release - Java
-`./bin/release_java.sh /path/to/java/sdk release`
+`./bin/release-java.sh /path/to/java/sdk release`
 
 For a debug build
 
-`./bin/release_java.sh /path/to/java/sdk`
+`./bin/release-java.sh /path/to/java/sdk`
 
 ## Release - Python
 Docker:
