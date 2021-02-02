@@ -18,7 +18,7 @@ Assuming you have [OpenSSL 1.1+](#openssl-11) and [CMake 3.15+](#cmake-315)
 git clone https://github.com/peacemakr-io/peacemakr-core-crypto.git
 cd peacemakr-core-crypto
 mkdir -p build && cd build
-# Use Java8 for compilation, JavaSDK is compiled using Java8 
+# JAVA_HOME needs to be set prior to running cmake(). Use Java8 for compilation, JavaSDK is compiled using Java8 
 export JAVA_HOME=/Library/Java/JavaVirtualMachines/<JAVA_RELEASE_VERSION>/Contents/Home
 cmake .. -DCMAKE_BUILD_TYPE=Release
 make check-peacemakr-core-crypto install
