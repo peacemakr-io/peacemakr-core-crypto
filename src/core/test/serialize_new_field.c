@@ -68,7 +68,7 @@ static uint8_t *serialize_headers(const ciphertext_blob_t *blob,
 
   *final_len = buffer_len;
 
-  uint8_t *out = calloc(buffer_len, sizeof(uint8_t));
+  uint8_t *out = peacemakr_global_calloc(buffer_len, sizeof(uint8_t));
 
   const uint32_t iv_offset =
       buffer_get_serialized_size(ciphertext_blob_iv(blob));

@@ -40,7 +40,7 @@ ciphertext_blob_t *
 ciphertext_blob_new(const crypto_config_t cfg, const size_t iv_len,
                     const size_t tag_len, const size_t aad_len,
                     const size_t ciphertext_len, const size_t digest_len) {
-  ciphertext_blob_t *out = malloc(sizeof(ciphertext_blob_t));
+  ciphertext_blob_t *out = peacemakr_global_malloc(sizeof(ciphertext_blob_t));
   EXPECT_NOT_NULL_RET(out, "malloc returned nullptr\n")
 
   out->m_encrypted_key_ = NULL;
@@ -111,7 +111,7 @@ ciphertext_blob_t *
 ciphertext_blob_from_buffers(const crypto_config_t cfg, buffer_t *encrypted_key,
                              buffer_t *iv, buffer_t *tag, buffer_t *aad,
                              buffer_t *ciphertext, buffer_t *signature) {
-  ciphertext_blob_t *out = malloc(sizeof(ciphertext_blob_t));
+  ciphertext_blob_t *out = peacemakr_global_malloc(sizeof(ciphertext_blob_t));
   EXPECT_NOT_NULL_RET(out, "malloc returned nullptr\n")
   // set constants
   out->m_version_ = PEACEMAKR_CORE_CRYPTO_VERSION;
@@ -145,7 +145,7 @@ void ciphertext_blob_free(ciphertext_blob_t *ciphertext) {
   buffer_free(ciphertext->m_aad_);
   buffer_free(ciphertext->m_ciphertext_);
   buffer_free(ciphertext->m_signature_);
-  free(ciphertext);
+  peacemakr_global_free(ciphertext);
   ciphertext = NULL;
 }
 
@@ -180,7 +180,7 @@ bool peacemakr_extract_plaintext_blob(const ciphertext_blob_t *blob,
   const buffer_t *ciphertext = ciphertext_blob_ciphertext(blob);
   if (ciphertext != NULL) {
     plain->data_len = buffer_get_size(ciphertext);
-    plain->data = calloc(plain->data_len, sizeof(uint8_t));
+    plain->data = peacemakr_global_calloc(plain->data_len, sizeof(uint8_t));
     memcpy((void *)plain->data, buffer_get_bytes(ciphertext, NULL),
            plain->data_len);
   } else {
@@ -191,7 +191,7 @@ bool peacemakr_extract_plaintext_blob(const ciphertext_blob_t *blob,
   const buffer_t *aad = ciphertext_blob_aad(blob);
   if (aad != NULL) {
     plain->aad_len = buffer_get_size(aad);
-    plain->aad = calloc(plain->aad_len, sizeof(uint8_t));
+    plain->aad = peacemakr_global_calloc(plain->aad_len, sizeof(uint8_t));
     memcpy((void *)plain->aad, buffer_get_bytes(aad, NULL), plain->aad_len);
   } else {
     plain->aad_len = 0;

@@ -6,8 +6,8 @@
 // Full license at peacemakr-core-crypto/LICENSE.txt
 //
 
-#ifndef PEACEMAKR_CORE_CRYPTO_MEMORY_H
-#define PEACEMAKR_CORE_CRYPTO_MEMORY_H
+#ifndef PEACEMAKR_CORE_CRYPTO_BUFFER_H
+#define PEACEMAKR_CORE_CRYPTO_BUFFER_H
 
 #include <stddef.h>
 #include <stdint.h>
@@ -36,4 +36,4 @@ length_t buffer_serialize(const buffer_t *buf, uint8_t *serialized);
 buffer_t *buffer_deserialize(const uint8_t *serialized);
 length_t buffer_get_serialized_size(const buffer_t *buf);
 
-#endif // PEACEMAKR_CORE_CRYPTO_MEMORY_H
+#endif // PEACEMAKR_CORE_CRYPTO_BUFFER_H

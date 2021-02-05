@@ -12,6 +12,7 @@
 #include <memory.h>
 #include <stdlib.h>
 
+#include "peacemakr/memory.h"
 #include "Buffer.h"
 #include "Logging.h"
 
@@ -62,13 +63,13 @@ buffer_t *buffer_new(const size_t size) {
     return NULL;
   }
 
-  buffer_t *ret = malloc(sizeof(buffer_t));
+  buffer_t *ret = peacemakr_global_malloc(sizeof(buffer_t));
   EXPECT_NOT_NULL_RET(ret, "Malloc failed!\n")
 
   ret->m_size_bytes_ = size;
 
   ret->m_mem_ = calloc(ret->m_size_bytes_, sizeof(uint8_t));
-  EXPECT_NOT_NULL_CLEANUP_RET(ret->m_mem_, free(ret),
+  EXPECT_NOT_NULL_CLEANUP_RET(ret->m_mem_, peacemakr_global_free(ret),
                               "malloc returned nullptr\n")
 
   return ret;
@@ -83,10 +84,10 @@ void buffer_free(buffer_t *buf) {
   EXPECT_TRUE_RET_NONE((err == 0),
                        "memset failed, aborting (memory NOT freed)\n")
 
-  free(buf->m_mem_);
+  peacemakr_global_free(buf->m_mem_);
   buf->m_mem_ = NULL;
 
-  free(buf);
+  peacemakr_global_free(buf);
   buf = NULL;
 }
 
@@ -147,7 +148,7 @@ void buffer_set_size(buffer_t *buf, const size_t size) {
     return;
   }
 
-  void *tmp = realloc((void *)buf->m_mem_, size);
+  void *tmp = peacemakr_global_realloc((void *)buf->m_mem_, size);
   if (tmp == NULL) {
     PEACEMAKR_ERROR("realloc failed, clearing buf\n");
     buffer_free(buf);

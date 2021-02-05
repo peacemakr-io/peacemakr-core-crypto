@@ -87,7 +87,7 @@ static bool symmetric_sign(const peacemakr_key_t *key, const uint8_t *plaintext,
                     const size_t plaintext_len, const uint8_t *aad,
                     const size_t aad_len, ciphertext_blob_t *cipher) {
 
-  uint8_t *concat_buf = calloc(plaintext_len + aad_len, sizeof(uint8_t));
+  uint8_t *concat_buf = peacemakr_global_calloc(plaintext_len + aad_len, sizeof(uint8_t));
   if (concat_buf == NULL) {
     PEACEMAKR_ERROR("calloc failed\n");
     return false;
@@ -105,7 +105,7 @@ static bool symmetric_sign(const peacemakr_key_t *key, const uint8_t *plaintext,
       peacemakr_hmac(ciphertext_blob_digest_algo(cipher), key, concat_buf,
                      plaintext_len + aad_len, &out_size);
   if (hmac == NULL) {
-    free(concat_buf);
+    peacemakr_global_free(concat_buf);
     PEACEMAKR_OPENSSL_LOG; // the openssl call in peacemakr_hmac
     PEACEMAKR_ERROR("HMAC failed\n");
     return false;
@@ -115,8 +115,8 @@ static bool symmetric_sign(const peacemakr_key_t *key, const uint8_t *plaintext,
   buffer_set_size(digest_buf, out_size);
   buffer_set_bytes(digest_buf, hmac, out_size);
 
-  free(concat_buf);
-  free(hmac);
+  peacemakr_global_free(concat_buf);
+  peacemakr_global_free(hmac);
 
   return true;
 }
@@ -212,7 +212,7 @@ static bool symmetric_verify(const peacemakr_key_t *key,
                              const size_t aad_len,
                              const ciphertext_blob_t *cipher) {
 
-  uint8_t *concat_buf = calloc(plaintext_len + aad_len, sizeof(uint8_t));
+  uint8_t *concat_buf = peacemakr_global_calloc(plaintext_len + aad_len, sizeof(uint8_t));
   if (plaintext != NULL && plaintext_len > 0) {
     memcpy(concat_buf, plaintext, plaintext_len);
   }
@@ -230,20 +230,20 @@ static bool symmetric_verify(const peacemakr_key_t *key,
   const uint8_t *stored_hmac = buffer_get_bytes(digest_buf, &stored_size);
 
   if (stored_size != out_size) {
-    free(concat_buf);
-    free(hmac);
+    peacemakr_global_free(concat_buf);
+    peacemakr_global_free(hmac);
     return false;
   }
 
   if (0 != CRYPTO_memcmp(hmac, stored_hmac, out_size)) {
     // failed
-    free(concat_buf);
-    free(hmac);
+    peacemakr_global_free(concat_buf);
+    peacemakr_global_free(hmac);
     return false;
   }
 
-  free(concat_buf);
-  free(hmac);
+  peacemakr_global_free(concat_buf);
+  peacemakr_global_free(hmac);
   return true;
 }
 

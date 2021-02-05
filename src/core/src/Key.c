@@ -149,7 +149,7 @@ peacemakr_key_t *peacemakr_key_new_asymmetric(asymmetric_cipher cipher,
   EXPECT_NOT_NULL_RET(
       rand, "Cannot create a new key without a source of randomness\n")
 
-  peacemakr_key_t *out = malloc(sizeof(peacemakr_key_t));
+  peacemakr_key_t *out = peacemakr_global_malloc(sizeof(peacemakr_key_t));
   EXPECT_NOT_NULL_RET(out, "Malloc failed\n")
 
   out->m_cfg_.mode = ASYMMETRIC;
@@ -237,7 +237,7 @@ peacemakr_key_t *peacemakr_key_new_symmetric(symmetric_cipher cipher,
   EXPECT_NOT_NULL_RET(
       rand, "Cannot create a new key without a source of randomness\n")
 
-  peacemakr_key_t *out = malloc(sizeof(peacemakr_key_t));
+  peacemakr_key_t *out = peacemakr_global_malloc(sizeof(peacemakr_key_t));
   EXPECT_NOT_NULL_RET(out, "Malloc failed\n")
 
   out->m_cfg_.mode = SYMMETRIC;
@@ -270,7 +270,7 @@ peacemakr_key_t *peacemakr_key_new_bytes(symmetric_cipher cipher,
     keylen = buf_len;
   }
 
-  peacemakr_key_t *out = malloc(sizeof(peacemakr_key_t));
+  peacemakr_key_t *out = peacemakr_global_malloc(sizeof(peacemakr_key_t));
   EXPECT_NOT_NULL_RET(out, "Malloc failed!\n")
 
   out->m_cfg_.mode = SYMMETRIC;
@@ -382,7 +382,7 @@ peacemakr_key_t *peacemakr_key_new_pem(symmetric_cipher symm_cipher,
   EXPECT_TRUE_RET((buflen <= INT_MAX),
                   "Length of passed pem file is greater than INT_MAX\n")
 
-  peacemakr_key_t *out = malloc(sizeof(peacemakr_key_t));
+  peacemakr_key_t *out = peacemakr_global_malloc(sizeof(peacemakr_key_t));
   EXPECT_NOT_NULL_RET(out, "Malloc failed!\n")
 
   out->m_cfg_.mode = ASYMMETRIC;
@@ -531,7 +531,7 @@ void peacemakr_key_free(peacemakr_key_t *key) {
   EXPECT_NOT_NULL_RET_NONE(key, "key was null\n")
 
   if (key->m_contents_.symm == NULL) {
-    free(key);
+    peacemakr_global_free(key);
     key = NULL;
     return;
   }
@@ -546,7 +546,7 @@ void peacemakr_key_free(peacemakr_key_t *key) {
     break;
   }
   }
-  free(key);
+  peacemakr_global_free(key);
   key = NULL;
 }
 
@@ -627,7 +627,7 @@ bool peacemakr_key_priv_to_pem(const peacemakr_key_t *key, char **buf,
     PEACEMAKR_ERROR("Failed to get memdata from bio\n");
     return false;
   }
-  *buf = calloc(*bufsize, sizeof(char));
+  *buf = peacemakr_global_calloc(*bufsize, sizeof(char));
   memcpy(*buf, memdata, *bufsize);
   BIO_free(bio);
   return true;
@@ -663,7 +663,7 @@ bool peacemakr_key_pub_to_pem(const peacemakr_key_t *key, char **buf,
     PEACEMAKR_ERROR("Failed to get memdata from bio\n");
     return false;
   }
-  *buf = calloc(*bufsize, sizeof(char));
+  *buf = peacemakr_global_calloc(*bufsize, sizeof(char));
   memcpy(*buf, memdata, *bufsize);
   BIO_free(bio);
   return true;
@@ -677,7 +677,7 @@ bool peacemakr_key_get_bytes(const peacemakr_key_t *key, uint8_t **buf,
   }
 
   *bufsize = buffer_get_size(key->m_contents_.symm);
-  *buf = calloc(*bufsize, sizeof(uint8_t));
+  *buf = peacemakr_global_calloc(*bufsize, sizeof(uint8_t));
   EXPECT_NOT_NULL_RET_VALUE(*buf, false, "calloc failed\n")
 
   memcpy(*buf, buffer_get_bytes(key->m_contents_.symm, NULL), *bufsize);

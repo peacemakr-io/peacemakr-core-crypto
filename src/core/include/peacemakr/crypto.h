@@ -9,6 +9,7 @@
 #ifndef PEACEMAKR_CORE_CRYPTO_CRYPTO_H
 #define PEACEMAKR_CORE_CRYPTO_CRYPTO_H
 
+#include "memory.h"
 #include "random.h"
 
 #include <stdbool.h>
@@ -132,6 +133,17 @@ PEACEMAKR_EXPORT inline uint32_t get_version() {
  * generator is well seeded and any numbers generated have sufficient entropy.
  */
 PEACEMAKR_EXPORT bool peacemakr_init();
+
+/**
+ * Perform startup initialization and set the memory functions to use for
+ * allocating and freeing memory. If any of the callbacks is NULL the callback
+ * will not be overwritten. All callbacks default to C standard library
+ * functions (malloc, calloc, realloc, free)
+ */
+PEACEMAKR_EXPORT bool peacemakr_init_memory(peacemakr_malloc_cb malloc_cb,
+                                            peacemakr_calloc_cb calloc_cb,
+                                            peacemakr_realloc_cb realloc_cb,
+                                            peacemakr_free_cb free_cb);
 
 /**
  * Logging callback that takes a C string and does something with it.

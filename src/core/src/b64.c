@@ -10,6 +10,7 @@
 #include <stdlib.h>
 
 #include "b64.h"
+#include "peacemakr/memory.h"
 
 static const uint8_t base64_table[65] =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
@@ -23,7 +24,7 @@ uint8_t *b64_encode(const uint8_t *src, size_t len, size_t *out_len) {
   olen++;                 /* nul termination */
   if (olen < len)
     return NULL; /* integer overflow */
-  out = malloc(olen);
+  out = peacemakr_global_malloc(olen);
   if (out == NULL)
     return NULL;
 
@@ -76,7 +77,7 @@ uint8_t *b64_decode(const uint8_t *src, size_t len, size_t *out_len) {
     return NULL;
 
   olen = count / 4 * 3;
-  pos = out = malloc(olen);
+  pos = out = peacemakr_global_malloc(olen);
   if (out == NULL)
     return NULL;
 
@@ -102,7 +103,7 @@ uint8_t *b64_decode(const uint8_t *src, size_t len, size_t *out_len) {
           pos -= 2;
         else {
           /* Invalid padding */
-          free(out);
+          peacemakr_global_free(out);
           return NULL;
         }
         break;
