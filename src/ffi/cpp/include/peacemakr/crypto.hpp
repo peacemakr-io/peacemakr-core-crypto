@@ -6,8 +6,8 @@
 // Full license at peacemakr_core_crypto/LICENSE.txt
 //
 
-#ifndef PEACEMAKR_CORE_CRYPTO_KEY_HPP
-#define PEACEMAKR_CORE_CRYPTO_KEY_HPP
+#ifndef PEACEMAKR_CORE_CRYPTO_CRYPTO_HPP
+#define PEACEMAKR_CORE_CRYPTO_CRYPTO_HPP
 
 extern "C" {
 #include "peacemakr/crypto.h"
@@ -65,6 +65,9 @@ public:
 
   Key(symmetric_cipher cipher, const uint8_t *bytes, const size_t num);
   Key(symmetric_cipher cipher, const std::vector<uint8_t> &bytes);
+  // The string could be a string of bytes or it could be a pem-encoded file.
+  // The function decides based on the size of the string, <= 32 bytes is likely
+  // a symmetric key, larger is probably a private key in PEM format.
   Key(symmetric_cipher cipher, const std::string &bytes);
 
   Key(symmetric_cipher cipher, message_digest_algorithm digest,
@@ -85,8 +88,11 @@ public:
   Key(symmetric_cipher cipher, message_digest_algorithm digest,
       const Key &master, const std::string &bytes);
 
-  Key(symmetric_cipher symm_cipher, const std::string &pem, bool priv);
+  // Public keys may or may not have a trust store
+  Key(symmetric_cipher symm_cipher, const std::string &pem,
+      const std::string &truststore_path);
 
+  // Key exchange
   Key(symmetric_cipher cipher, const Key &my_key, const Key &peer_key);
 
   /**
@@ -112,16 +118,33 @@ public:
   bool isValid() const;
 
   /**
+   * Get a PEM encoded CSR for this key.
+   */
+  std::string getCSR(const std::string &org, const std::string &cn) const;
+
+  /**
+   * Add an X509 certificate that you got by using the getCSR() function to this
+   * key.
+   */
+  bool addCertificate(const std::string &pem);
+
+  /**
    * Get the key's private component represented as a PEM file
    * if it's an asymmetric key
    */
   std::string getPrivPem() const;
 
   /**
-   * Get the key's public component represented as a PEM file
-   * if it's an asymmetric key
+   * Get the key's public component represented as a PEM file, if it's an
+   * asymmetric key
    */
   std::string getPubPem() const;
+
+  /**
+   * Get the key's associated certificate represented as a PEM file, if it's an
+   * asymmetric key with an X509 certificate added.
+   */
+  std::string getCertificate() const;
 
   /**
    * Get the key's raw bytes if it's a symmetric key
@@ -135,6 +158,8 @@ public:
   const peacemakr_key_t *getKey() const;
 
 private:
+  Key(peacemakr_key_t *key) : m_key_(key) {}
+
   peacemakr_key_t *m_key_;
 };
 
@@ -247,4 +272,4 @@ private:
 };
 }; // namespace peacemakr
 
-#endif // PEACEMAKR_CORE_CRYPTO_KEY_HPP
+#endif // PEACEMAKR_CORE_CRYPTO_CRYPTO_HPP

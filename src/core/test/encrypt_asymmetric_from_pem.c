@@ -33,7 +33,7 @@ void test_symmetric_algo(symmetric_cipher symm_cipher, const char *pubkey_buf,
   random_device_t rand = get_default_random_device();
 
   peacemakr_key_t *pubkey =
-      peacemakr_key_new_pem_pub(symm_cipher, pubkey_buf, pubkey_len);
+      peacemakr_key_new_pem_pub(symm_cipher, pubkey_buf, pubkey_len, NULL, 0);
   peacemakr_key_t *privkey =
       peacemakr_key_new_pem_priv(symm_cipher, privkey_buf, privkey_len);
 
@@ -78,7 +78,7 @@ int main() {
 
     privkey = alloca(priv_len + 1);
 
-    long read_size = fread(privkey, sizeof(char), priv_len, priv);
+    size_t read_size = fread(privkey, sizeof(char), priv_len, priv);
 
     assert(read_size == priv_len);
 
@@ -102,7 +102,7 @@ int main() {
 
     pubkey = alloca(pub_len + 1);
 
-    long read_size = fread(pubkey, sizeof(char), pub_len, pub);
+    size_t read_size = fread(pubkey, sizeof(char), pub_len, pub);
 
     assert(read_size == pub_len);
 

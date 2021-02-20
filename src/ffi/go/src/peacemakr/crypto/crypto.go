@@ -240,11 +240,15 @@ func newPeacemakrKeyFromPassword(cipher SymmetricCipher, digest MessageDigestAlg
 	}
 }
 
-func newPeacemakrKeyFromPubPem(symm SymmetricCipher, contents []byte) *PeacemakrKey {
+func newPeacemakrKeyFromPubPem(symm SymmetricCipher, contents []byte, trustStorePath []byte) *PeacemakrKey {
 	cBytes := (*C.char)(C.CBytes(contents))
 	defer C.free(unsafe.Pointer(cBytes))
+
+	tsBytes := (*C.char)(C.CBytes(trustStorePath))
+  defer C.free(unsafe.Pointer(tsBytes))
+
 	return &PeacemakrKey{
-		key: C.peacemakr_key_new_pem_pub((C.symmetric_cipher)(symm), cBytes, C.size_t(len(contents))),
+		key: C.peacemakr_key_new_pem_pub((C.symmetric_cipher)(symm), cBytes, C.size_t(len(contents)), tsBytes, C.size_t(len(trustStorePath))),
 	}
 }
 
@@ -459,8 +463,8 @@ func SymmetricKeyFromPasswordAndSalt(keylenBits int, passwordStr string, salt []
 }
 
 
-func NewPublicKeyFromPEM(symm SymmetricCipher, contents string) (*PeacemakrKey, error) {
-	return newPeacemakrKeyFromPubPem(symm, []byte(contents)), nil
+func NewPublicKeyFromPEM(symm SymmetricCipher, contents string, trustStorePath string) (*PeacemakrKey, error) {
+	return newPeacemakrKeyFromPubPem(symm, []byte(contents), []byte(trustStorePath)), nil
 }
 
 func NewPrivateKeyFromPEM(symm SymmetricCipher, contents string) (*PeacemakrKey, error) {
@@ -471,6 +475,45 @@ func NewPrivateKeyFromPEM(symm SymmetricCipher, contents string) (*PeacemakrKey,
 
 func (k *PeacemakrKey) IsValid() bool {
 	return k.key != nil
+}
+
+func (k *PeacemakrKey) GetCSR(org, commonName []byte) ([]byte, error) {
+  if !k.IsValid() {
+    return nil, errors.New("invalid key")
+  }
+
+  orgBytes := (*C.uint8_t)(C.CBytes(contents))
+  defer C.free(unsafe.Pointer(orgBytes))
+
+  cnBytes := (*C.uint8_t)(C.CBytes(commonName))
+  defer C.free(unsafe.Pointer(cnBytes))
+
+  var buf *byte
+  defer C.free(unsafe.Pointer(buf))
+  var bufSize C.size_t
+
+  success := C.peacemakr_key_generate_csr(k.key, orgBytes, C.size_t(len(org)), cnBytes, C.size_t(len(commonName)), (**C.uint8_t)(unsafe.Pointer(&buf)), (*C.size_t)(&bufSize))
+  if !success {
+    return nil, errors.New("failed to get bytes from peacemakr key")
+  }
+
+  return C.GoBytes(unsafe.Pointer(buf), C.int(bufSize)), nil
+}
+
+func (k *PeacemakrKey) AddCertificate(cert []byte) error {
+  if !k.IsValid() {
+    return errors.New("invalid key")
+  }
+
+  cBytes := (*C.char)(C.CBytes(cert))
+  defer C.free(unsafe.Pointer(cBytes))
+
+  success := C.peacemakr_key_add_certificate(k.key, cBytes, C.size_t(len(cert)))
+  if !success {
+    return errors.New("failed to get bytes from peacemakr key")
+  }
+
+  return nil
 }
 
 func (k *PeacemakrKey) ECDHKeygen(cipher SymmetricCipher, peerKey *PeacemakrKey) *PeacemakrKey {
@@ -502,12 +545,12 @@ func (k *PeacemakrKey) Config() (CryptoConfig, error) {
 }
 
 func (k *PeacemakrKey) Bytes() ([]byte, error) {
-    if !k.IsValid() {
-        return []byte{}, errors.New("invalid key passed to GetKeyConfig")
-    }
+  if !k.IsValid() {
+      return []byte{}, errors.New("invalid key passed to GetKeyConfig")
+  }
 
 	var buf *byte
-    defer C.free(unsafe.Pointer(buf))
+  defer C.free(unsafe.Pointer(buf))
 	var bufSize C.size_t
 
 	success := C.peacemakr_key_get_bytes(k.key, (**C.uint8_t)(unsafe.Pointer(&buf)), (*C.size_t)(&bufSize))
@@ -516,6 +559,23 @@ func (k *PeacemakrKey) Bytes() ([]byte, error) {
 	}
 
 	return C.GoBytes(unsafe.Pointer(buf), C.int(bufSize)), nil
+}
+
+func (k *PeacemakrKey) Certificate() ([]byte, error) {
+  if !k.IsValid() {
+      return nil, errors.New("invalid key passed to GetKeyConfig")
+  }
+
+  var buf *byte
+  defer C.free(unsafe.Pointer(buf))
+  var bufSize C.size_t
+
+  success := C.peacemakr_key_to_certificate(k.key, (**C.char)(unsafe.Pointer(&buf)), (*C.size_t)(&bufSize))
+  if !success {
+    return nil, errors.New("failed to get certificate from peacemakr key")
+  }
+
+  return C.GoBytes(unsafe.Pointer(buf), C.int(bufSize)), nil
 }
 
 func (k *PeacemakrKey) Destroy() {

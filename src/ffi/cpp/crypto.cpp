@@ -41,8 +41,14 @@ peacemakr::Key::Key(symmetric_cipher cipher,
 }
 
 peacemakr::Key::Key(symmetric_cipher cipher, const std::string &bytes) {
-  m_key_ =
-      peacemakr_key_new_bytes(cipher, (uint8_t *)bytes.data(), bytes.size());
+  // If the key size is small it's probably a symmetric key, otherwise it's
+  // probably a PEM file
+  if (bytes.size() <= 32) {
+    m_key_ =
+        peacemakr_key_new_bytes(cipher, (uint8_t *)bytes.data(), bytes.size());
+  } else {
+    m_key_ = peacemakr_key_new_pem_priv(cipher, bytes.c_str(), bytes.size());
+  }
 }
 
 peacemakr::Key::Key(symmetric_cipher cipher, message_digest_algorithm digest,
@@ -90,12 +96,10 @@ peacemakr::Key::Key(symmetric_cipher cipher, message_digest_algorithm digest,
 }
 
 peacemakr::Key::Key(symmetric_cipher symm_cipher, const std::string &pem,
-                    bool priv) {
-  if (priv) {
-    m_key_ = peacemakr_key_new_pem_priv(symm_cipher, pem.c_str(), pem.size());
-  } else {
-    m_key_ = peacemakr_key_new_pem_pub(symm_cipher, pem.c_str(), pem.size());
-  }
+                    const std::string &truststore_path) {
+  m_key_ = peacemakr_key_new_pem_pub(symm_cipher, pem.c_str(), pem.size(),
+                                     truststore_path.c_str(),
+                                     truststore_path.size());
 }
 
 peacemakr::Key::Key(symmetric_cipher cipher, const peacemakr::Key &my_key,
@@ -110,6 +114,25 @@ crypto_config_t peacemakr::Key::getConfig() const {
 }
 
 bool peacemakr::Key::isValid() const { return m_key_ != nullptr; }
+
+std::string peacemakr::Key::getCSR(const std::string &org,
+                                   const std::string &cn) const {
+  uint8_t *buf;
+  size_t bufsize;
+  bool success = peacemakr_key_generate_csr(m_key_, (uint8_t *)org.data(),
+                                            org.size(), (uint8_t *)cn.data(),
+                                            cn.size(), &buf, &bufsize);
+  if (!success) {
+    return "";
+  }
+
+  return std::string(buf, buf + bufsize);
+}
+
+bool peacemakr::Key::addCertificate(const std::string &pem) {
+  return peacemakr_key_add_certificate(m_key_, (const uint8_t *)pem.data(),
+                                       pem.size());
+}
 
 std::string peacemakr::Key::getPrivPem() const {
   char *buf;
@@ -126,6 +149,17 @@ std::string peacemakr::Key::getPubPem() const {
   char *buf;
   size_t bufsize;
   bool success = peacemakr_key_pub_to_pem(m_key_, &buf, &bufsize);
+  if (!success) {
+    return "";
+  }
+
+  return std::string(buf, buf + bufsize);
+}
+
+std::string peacemakr::Key::getCertificate() const {
+  char *buf;
+  size_t bufsize;
+  bool success = peacemakr_key_to_certificate(m_key_, &buf, &bufsize);
   if (!success) {
     return "";
   }

@@ -40,18 +40,24 @@ JNIEXPORT jobject JNICALL Java_io_peacemakr_corecrypto_AsymmetricKey_fromPRNG(
 }
 
 JNIEXPORT jobject JNICALL Java_io_peacemakr_corecrypto_AsymmetricKey_fromPubPem(
-    JNIEnv *env, jclass clazz, jobject symm_cipher, jstring pub_pem) {
+    JNIEnv *env, jclass clazz, jobject symm_cipher, jstring pub_pem,
+    jstring trust_store_path) {
 
   const char *raw_buf = (*env)->GetStringUTFChars(env, pub_pem, NULL);
   const jsize buf_len = (*env)->GetStringLength(env, pub_pem);
 
+  const char *raw_ts_path =
+      (*env)->GetStringUTFChars(env, trust_store_path, NULL);
+  const jsize raw_ts_path_len = (*env)->GetStringLength(env, trust_store_path);
+
   peacemakr_key_t *asymm_key = peacemakr_key_new_pem_pub(
       unwrapEnumToInt(env, symm_cipher,
                       "io/peacemakr/corecrypto/SymmetricCipher"),
-      raw_buf, buf_len);
+      raw_buf, buf_len, raw_ts_path, raw_ts_path_len);
 
   // Clean up
   (*env)->ReleaseStringUTFChars(env, pub_pem, raw_buf);
+  (*env)->ReleaseStringUTFChars(env, trust_store_path, raw_ts_path);
 
   jobject out = constructObject(env, clazz);
   if (!setNativeKey(env, out, asymm_key)) {
@@ -92,9 +98,9 @@ Java_io_peacemakr_corecrypto_AsymmetricKey_getPubPemStr(JNIEnv *env,
 
   char *pub_pem;
   size_t pub_pem_len;
-  peacemakr_key_pub_to_pem(native_key, &pub_pem, &pub_pem_len);
+  bool success = peacemakr_key_pub_to_pem(native_key, &pub_pem, &pub_pem_len);
 
-  if (pub_pem_len <= 0) {
+  if (!success || pub_pem_len == 0) {
     LOGE("%s\n", "Problem with exporting the public key to pem");
   }
 
@@ -115,9 +121,10 @@ Java_io_peacemakr_corecrypto_AsymmetricKey_getPrivPemStr(JNIEnv *env,
 
   char *priv_pem;
   size_t priv_pem_len = 0;
-  peacemakr_key_priv_to_pem(native_key, &priv_pem, &priv_pem_len);
+  bool success =
+      peacemakr_key_priv_to_pem(native_key, &priv_pem, &priv_pem_len);
 
-  if (priv_pem_len <= 0) {
+  if (!success || priv_pem_len == 0) {
     LOGE("%s\n", "Problem with exporting the private key to pem");
   }
 
@@ -129,6 +136,89 @@ Java_io_peacemakr_corecrypto_AsymmetricKey_getPrivPemStr(JNIEnv *env,
   jstring out = (*env)->NewStringUTF(env, out_str);
   free(out_str);
   return out;
+}
+
+JNIEXPORT jstring JNICALL Java_io_peacemakr_corecrypto_AsymmetricKey_getCertStr(
+    JNIEnv *env, jobject this) {
+  peacemakr_key_t *native_key = getNativeKey(env, this);
+
+  char *cert_pem;
+  size_t cert_pem_len;
+  bool success =
+      peacemakr_key_to_certificate(native_key, &cert_pem, &cert_pem_len);
+
+  if (!success || cert_pem_len == 0) {
+    LOGE("%s\n", "Problem with exporting the public key to pem");
+  }
+
+  // Gotta copy over the string so we get it null-terminated
+  char *out_str = calloc(cert_pem_len + 1, sizeof(char));
+  memcpy(out_str, cert_pem, cert_pem_len);
+  free(cert_pem);
+
+  jstring out = (*env)->NewStringUTF(env, out_str);
+  free(out_str);
+  return out;
+}
+
+JNIEXPORT jstring JNICALL Java_io_peacemakr_corecrypto_AsymmetricKey_getCSR(
+    JNIEnv *env, jobject this, jstring org, jstring cn) {
+  peacemakr_key_t *native_key = getNativeKey(env, this);
+
+  // Grab the Org and CN
+  const uint8_t *org_buf =
+      (const uint8_t *)(*env)->GetStringUTFChars(env, org, NULL);
+  const jsize org_len = (*env)->GetStringLength(env, org);
+
+  const uint8_t *cn_buf =
+      (const uint8_t *)(*env)->GetStringUTFChars(env, cn, NULL);
+  const jsize cn_len = (*env)->GetStringLength(env, cn);
+
+  uint8_t *csr_pem;
+  size_t csr_pem_len;
+  bool success = peacemakr_key_generate_csr(
+      native_key, org_buf, org_len, cn_buf, cn_len, &csr_pem, &csr_pem_len);
+
+  if (!success || csr_pem_len == 0) {
+    LOGE("%s\n", "Problem with generating the CSR");
+  }
+
+  // Clean up
+  (*env)->ReleaseStringUTFChars(env, org, (const char *)org_buf);
+  (*env)->ReleaseStringUTFChars(env, cn, (const char *)cn_buf);
+
+  // Return the output string
+  char *out_str = calloc(csr_pem_len + 1, sizeof(char));
+  memcpy(out_str, csr_pem, csr_pem_len);
+  free(csr_pem);
+
+  jstring out = (*env)->NewStringUTF(env, out_str);
+  free(out_str);
+  return out;
+}
+
+JNIEXPORT jboolean JNICALL
+Java_io_peacemakr_corecrypto_AsymmetricKey_addCertificate(JNIEnv *env,
+                                                          jobject this,
+                                                          jstring cert) {
+  peacemakr_key_t *native_key = getNativeKey(env, this);
+
+  // Grab the cert buffer
+  const uint8_t *cert_buf =
+      (const uint8_t *)(*env)->GetStringUTFChars(env, cert, NULL);
+  const jsize cert_len = (*env)->GetStringLength(env, cert);
+
+  bool success = peacemakr_key_add_certificate(native_key, cert_buf, cert_len);
+  if (!success) {
+    LOGE("%s", "Failed to add the certificate to the key");
+    return JNI_FALSE;
+  }
+
+  // Cleanup
+  (*env)->ReleaseStringUTFChars(env, cert, (const char *)cert_buf);
+
+  // And we're done
+  return JNI_TRUE;
 }
 
 JNIEXPORT jbyteArray JNICALL
