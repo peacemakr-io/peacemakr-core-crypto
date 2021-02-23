@@ -43,10 +43,10 @@ void test_symmetric_algo(symmetric_cipher symm_cipher, const char *pubkey_buf,
 
   assert(strncmp((const char *)plaintext_out.data,
                  (const char *)plaintext_in.data, plaintext_in.data_len) == 0);
-  free((void *)plaintext_out.data);
+  peacemakr_global_free((void *)plaintext_out.data);
   assert(strncmp((const char *)plaintext_out.aad,
                  (const char *)plaintext_in.aad, plaintext_in.aad_len) == 0);
-  free((void *)plaintext_out.aad);
+  peacemakr_global_free((void *)plaintext_out.aad);
 
   peacemakr_key_free(pubkey);
   peacemakr_key_free(privkey);
@@ -74,8 +74,8 @@ int main() {
     test_symmetric_algo(i, pubkey, pub_len, privkey, priv_len);
   }
 
-  free(privkey);
-  free(pubkey);
+  peacemakr_global_free(privkey);
+  peacemakr_global_free(pubkey);
 
   peacemakr_key_free(asym_key);
 }

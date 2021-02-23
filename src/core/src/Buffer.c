@@ -58,7 +58,7 @@ typedef struct Buffer buffer_t;
 
 buffer_t *buffer_new(const size_t size) {
   // Allocate nothing if size is <= 0
-  if (size <= 0) {
+  if (size == 0) {
     PEACEMAKR_LOG("size passed was <= 0\n");
     return NULL;
   }
@@ -68,7 +68,7 @@ buffer_t *buffer_new(const size_t size) {
 
   ret->m_size_bytes_ = size;
 
-  ret->m_mem_ = calloc(ret->m_size_bytes_, sizeof(uint8_t));
+  ret->m_mem_ = peacemakr_global_calloc(ret->m_size_bytes_, sizeof(uint8_t));
   EXPECT_NOT_NULL_CLEANUP_RET(ret->m_mem_, peacemakr_global_free(ret),
                               "malloc returned nullptr\n")
 

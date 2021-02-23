@@ -9,8 +9,8 @@
 #ifndef PEACEMAKR_CORE_CRYPTO_CRYPTO_H
 #define PEACEMAKR_CORE_CRYPTO_CRYPTO_H
 
-#include "memory.h"
-#include "random.h"
+#include "peacemakr/memory.h"
+#include "peacemakr/random.h"
 
 #include <stdbool.h>
 #include <stddef.h>
