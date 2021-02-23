@@ -33,11 +33,8 @@ void test_algo(plaintext_t plaintext_in, const peacemakr_key_t *key) {
   peacemakr_global_free((void *)plaintext_out.aad);
 }
 
-void *my_malloc(size_t sz) { return calloc(sz, 1); }
-
 int main() {
-  // Make this test also check that the init_memory thing works.
-  if (!peacemakr_init_memory(&my_malloc, NULL, NULL, NULL)) {
+  if (!peacemakr_init()) {
     printf("Error initializing");
     return 1;
   }
