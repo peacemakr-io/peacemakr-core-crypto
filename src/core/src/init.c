@@ -49,9 +49,16 @@ bool peacemakr_init() {
   volatile void *random_buf = alloca(bufsize);
   arc4random_buf((void *)random_buf, bufsize);
 
+  // Short-circuit if we don't need to update the mem functions
+  if (peacemakr_global_malloc == &malloc &&
+      peacemakr_global_calloc == &calloc &&
+      peacemakr_global_realloc == &realloc && peacemakr_global_free == &free) {
+    return true;
+  }
+
   // Init openssl callbacks
-  if (1 != CRYPTO_set_mem_functions(&openssl_peacemakr_global_malloc_cb, &openssl_realloc_cb,
-                                    &openssl_free_cb)) {
+  if (1 != CRYPTO_set_mem_functions(&openssl_peacemakr_global_malloc_cb,
+                                    &openssl_realloc_cb, &openssl_free_cb)) {
     PEACEMAKR_OPENSSL_LOG;
     return false;
   }
