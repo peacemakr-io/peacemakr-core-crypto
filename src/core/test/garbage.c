@@ -44,7 +44,7 @@ void test_deserialize_b64_garbage() {
   ciphertext_blob_t *deserialized =
       peacemakr_deserialize(b64_msg, outlen, &out_cfg);
   assert(deserialized == NULL);
-  free(b64_msg);
+  peacemakr_global_free(b64_msg);
 }
 
 void test_deserialize_b64_with_magic_garbage() {
@@ -64,7 +64,7 @@ void test_deserialize_b64_with_magic_garbage() {
   ciphertext_blob_t *deserialized =
       peacemakr_deserialize(b64_msg, outlen, &out_cfg);
   assert(deserialized == NULL);
-  free(b64_msg);
+  peacemakr_global_free(b64_msg);
 }
 
 void test_deserialize_b64_with_magic_and_correct_len_garbage() {
@@ -87,7 +87,7 @@ void test_deserialize_b64_with_magic_and_correct_len_garbage() {
   ciphertext_blob_t *deserialized =
       peacemakr_deserialize(b64_msg, outlen, &out_cfg);
   assert(deserialized == NULL);
-  free(b64_msg);
+  peacemakr_global_free(b64_msg);
 }
 
 int main() {

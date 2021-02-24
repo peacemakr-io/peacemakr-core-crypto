@@ -28,7 +28,7 @@ uint8_t *peacemakr_hmac(const message_digest_algorithm digest_algorithm,
                   "buf is null or its length was 0\n")
 
   // Generate the output
-  uint8_t *result = calloc(get_digest_len(digest_algorithm) / sizeof(uint8_t),
+  uint8_t *result = peacemakr_global_calloc(get_digest_len(digest_algorithm) / sizeof(uint8_t),
                            sizeof(uint8_t));
   uint32_t result_len = 0;
 

@@ -27,10 +27,10 @@ void test_algo(plaintext_t plaintext_in, const peacemakr_key_t *key) {
 
   assert(strncmp((const char *)plaintext_out.data,
                  (const char *)plaintext_in.data, plaintext_in.data_len) == 0);
-  free((void *)plaintext_out.data);
+  peacemakr_global_free((void *)plaintext_out.data);
   assert(strncmp((const char *)plaintext_out.aad,
                  (const char *)plaintext_in.aad, plaintext_in.aad_len) == 0);
-  free((void *)plaintext_out.aad);
+  peacemakr_global_free((void *)plaintext_out.aad);
 }
 
 int main() {
@@ -41,10 +41,8 @@ int main() {
 
   size_t bigsize = 1 << 25;
 
-  char *message = calloc(bigsize + 1, sizeof(char));
-  message[bigsize] = '\0';
-  char *aad = calloc(bigsize + 1, sizeof(char));
-  aad[bigsize] = '\0';
+  char *message = peacemakr_global_calloc(bigsize + 1, sizeof(char));
+  char *aad = peacemakr_global_calloc(bigsize + 1, sizeof(char));
 
   arc4random_buf(message, bigsize);
   arc4random_buf(aad, bigsize);
@@ -69,6 +67,6 @@ int main() {
   peacemakr_key_free(asymm_key);
   peacemakr_key_free(symm_key);
 
-  free(message);
-  free(aad);
+  peacemakr_global_free(message);
+  peacemakr_global_free(aad);
 }

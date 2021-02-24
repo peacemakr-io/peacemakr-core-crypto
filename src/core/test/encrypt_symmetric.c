@@ -33,7 +33,7 @@ void test_symmetric_algo(symmetric_cipher cipher) {
   assert(peacemakr_key_get_bytes(original_key, &key_bytes, &key_size));
 
   peacemakr_key_t *key = peacemakr_key_new_bytes(cipher, key_bytes, key_size);
-  free(key_bytes);
+  peacemakr_global_free(key_bytes);
 
   ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, &plaintext_in, &rand);
   assert(ciphertext != NULL);
@@ -41,7 +41,7 @@ void test_symmetric_algo(symmetric_cipher cipher) {
   plaintext_t aad;
   assert(peacemakr_get_unverified_aad(ciphertext, &aad));
   assert(memcmp(aad.aad, plaintext_in.aad, plaintext_in.aad_len) == 0);
-  free((void *)aad.aad);
+  peacemakr_global_free((void *)aad.aad);
 
   decrypt_code success = peacemakr_decrypt(key, ciphertext, &plaintext_out);
 
@@ -49,10 +49,10 @@ void test_symmetric_algo(symmetric_cipher cipher) {
 
   assert(memcmp(plaintext_out.data, plaintext_in.data, plaintext_in.data_len) ==
          0);
-  free((void *)plaintext_out.data);
+  peacemakr_global_free((void *)plaintext_out.data);
   assert(memcmp(plaintext_out.aad, plaintext_in.aad, plaintext_in.aad_len) ==
          0);
-  free((void *)plaintext_out.aad);
+  peacemakr_global_free((void *)plaintext_out.aad);
 
   peacemakr_key_free(original_key);
   peacemakr_key_free(key);
@@ -81,12 +81,12 @@ void test_symmetric_algo_wrong_decrypt_cipher(symmetric_cipher cipher) {
 
   peacemakr_key_t *key =
       peacemakr_key_new_bytes(SYMMETRIC_UNSPECIFIED, key_bytes, key_size);
-  free(key_bytes);
+  peacemakr_global_free(key_bytes);
 
   plaintext_t aad;
   assert(peacemakr_get_unverified_aad(ciphertext, &aad));
   assert(memcmp(aad.aad, plaintext_in.aad, plaintext_in.aad_len) == 0);
-  free((void *)aad.aad);
+  peacemakr_global_free((void *)aad.aad);
 
   decrypt_code success = peacemakr_decrypt(key, ciphertext, &plaintext_out);
 
@@ -94,10 +94,10 @@ void test_symmetric_algo_wrong_decrypt_cipher(symmetric_cipher cipher) {
 
   assert(memcmp(plaintext_out.data, plaintext_in.data, plaintext_in.data_len) ==
          0);
-  free((void *)plaintext_out.data);
+  peacemakr_global_free((void *)plaintext_out.data);
   assert(memcmp(plaintext_out.aad, plaintext_in.aad, plaintext_in.aad_len) ==
          0);
-  free((void *)plaintext_out.aad);
+  peacemakr_global_free((void *)plaintext_out.aad);
 
   peacemakr_key_free(original_key);
   peacemakr_key_free(key);
@@ -138,11 +138,11 @@ void test_password_symmetric_algo(symmetric_cipher cipher,
   assert(memcmp(key_buf, key2_buf, key_buf_len) != 0);
 
   peacemakr_key_free(key);
-  free(key_buf);
+  peacemakr_global_free(key_buf);
   peacemakr_key_free(key_dup);
-  free(key_dup_buf);
+  peacemakr_global_free(key_dup_buf);
   peacemakr_key_free(key2);
-  free(key2_buf);
+  peacemakr_global_free(key2_buf);
 }
 
 void test_master_key_symmetric_algo(peacemakr_key_t *master_key,
@@ -170,10 +170,10 @@ void test_master_key_symmetric_algo(peacemakr_key_t *master_key,
 
   assert(strncmp((const char *)plaintext_out.data,
                  (const char *)plaintext_in.data, plaintext_in.data_len) == 0);
-  free((void *)plaintext_out.data);
+  peacemakr_global_free((void *)plaintext_out.data);
   assert(strncmp((const char *)plaintext_out.aad,
                  (const char *)plaintext_in.aad, plaintext_in.aad_len) == 0);
-  free((void *)plaintext_out.aad);
+  peacemakr_global_free((void *)plaintext_out.aad);
 
   peacemakr_key_free(key);
 }
@@ -201,7 +201,7 @@ void test_wrong_key(symmetric_cipher cipher) {
   key_bytes[0] += 1;
 
   peacemakr_key_t *key = peacemakr_key_new_bytes(cipher, key_bytes, key_size);
-  free(key_bytes);
+  peacemakr_global_free(key_bytes);
 
   decrypt_code success = peacemakr_decrypt(key, ciphertext, &plaintext_out);
 

@@ -136,7 +136,7 @@ static uint8_t *serialize_headers(const ciphertext_blob_t *blob,
 
   *final_len = buffer_len;
 
-  uint8_t *out = calloc(buffer_len, sizeof(uint8_t));
+  uint8_t *out = peacemakr_global_calloc(buffer_len, sizeof(uint8_t));
 
   const length_t iv_offset =
       buffer_get_serialized_size(ciphertext_blob_iv(blob));
@@ -505,13 +505,13 @@ static void serialize_hmac(uint8_t *buf, const size_t buf_size,
                      &digest_out_size);
 
   EXPECT_TRUE_CLEANUP_RET_NONE(digest_out_size == get_digest_len(blob_digest),
-                               free(raw_digest),
+                               peacemakr_global_free(raw_digest),
                                "Computed HMAC was of the incorrect size\n")
 
   // HMAC length determined by the config of the message blob.
   memcpy(buf_start, raw_digest, digest_out_size);
 
-  free(raw_digest);
+  peacemakr_global_free(raw_digest);
   peacemakr_key_free(hmac_key);
 }
 
@@ -565,7 +565,7 @@ static bool deserialize_hmac(const uint8_t *buf, const size_t buf_size) {
     int memcmp_ret = CRYPTO_memcmp(computed_raw_digest,
                                    buffer_get_bytes(out, NULL), digestlen);
 
-    free(computed_raw_digest);
+    peacemakr_global_free(computed_raw_digest);
     buffer_free(out);
 
     // Compare the HMACs
@@ -608,7 +608,7 @@ uint8_t *peacemakr_serialize(message_digest_algorithm digest,
   uint8_t *b64_buf = b64_encode(raw_out, outlen, b64_size);
 
   // Clean up the workspace
-  free(raw_out);
+  peacemakr_global_free(raw_out);
 
   return b64_buf;
 }
@@ -632,11 +632,11 @@ ciphertext_blob_t *peacemakr_deserialize(const uint8_t *b64_serialized_cipher,
 
   uint32_t version = deserialize_headers(serialized_cipher, serialized_len);
   EXPECT_TRUE_CLEANUP_RET((version <= PEACEMAKR_CORE_CRYPTO_VERSION_MAX),
-                          free(serialized_cipher),
+                          peacemakr_global_free(serialized_cipher),
                           "version greater than max supported\n")
 
   bool valid_message = deserialize_hmac(serialized_cipher, serialized_len);
-  EXPECT_TRUE_CLEANUP_RET(valid_message, free(serialized_cipher),
+  EXPECT_TRUE_CLEANUP_RET(valid_message, peacemakr_global_free(serialized_cipher),
                           "HMAC verification failed, aborting\n")
 
   *cfg = deserialize_crypto_config(serialized_cipher, serialized_len);
@@ -655,7 +655,7 @@ ciphertext_blob_t *peacemakr_deserialize(const uint8_t *b64_serialized_cipher,
 
   ciphertext_blob_set_version(out, version);
 
-  free(serialized_cipher);
+  peacemakr_global_free(serialized_cipher);
 
   return out;
 }

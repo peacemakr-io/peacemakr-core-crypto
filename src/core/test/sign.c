@@ -45,7 +45,7 @@ void test_symmetric_algo(symmetric_cipher cipher) {
   ciphertext_blob_t *deserialized =
       peacemakr_deserialize(serialized, out_size, &out_cfg);
 
-  free(serialized);
+  peacemakr_global_free(serialized);
 
   decrypt_code success = peacemakr_decrypt(key, deserialized, &plaintext_out);
   assert(success == DECRYPT_NEED_VERIFY);
@@ -60,10 +60,10 @@ void test_symmetric_algo(symmetric_cipher cipher) {
 
   assert(strncmp((const char *)plaintext_out.data,
                  (const char *)plaintext_in.data, plaintext_in.data_len) == 0);
-  free((void *)plaintext_out.data);
+  peacemakr_global_free((void *)plaintext_out.data);
   assert(strncmp((const char *)plaintext_out.aad,
                  (const char *)plaintext_in.aad, plaintext_in.aad_len) == 0);
-  free((void *)plaintext_out.aad);
+  peacemakr_global_free((void *)plaintext_out.aad);
 
   peacemakr_key_free(key);
 }
@@ -107,7 +107,7 @@ void test_asymmetric_algo(symmetric_cipher cipher,
   ciphertext_blob_t *deserialized =
       peacemakr_deserialize(serialized, out_size, &out_cfg);
 
-  free(serialized);
+  peacemakr_global_free(serialized);
 
   decrypt_code success = peacemakr_decrypt(key, deserialized, &plaintext_out);
 
@@ -132,10 +132,10 @@ void test_asymmetric_algo(symmetric_cipher cipher,
 
   assert(strncmp((const char *)plaintext_out.data,
                  (const char *)plaintext_in.data, plaintext_in.data_len) == 0);
-  free((void *)plaintext_out.data);
+  peacemakr_global_free((void *)plaintext_out.data);
   assert(strncmp((const char *)plaintext_out.aad,
                  (const char *)plaintext_in.aad, plaintext_in.aad_len) == 0);
-  free((void *)plaintext_out.aad);
+  peacemakr_global_free((void *)plaintext_out.aad);
 
   peacemakr_key_free(mykey);
   peacemakr_key_free(peerkey);
@@ -175,7 +175,7 @@ void test_symmetric_algo_x_sign(symmetric_cipher cipher) {
   ciphertext_blob_t *deserialized =
       peacemakr_deserialize(serialized, out_size, &out_cfg);
 
-  free(serialized);
+  peacemakr_global_free(serialized);
 
   decrypt_code success = peacemakr_decrypt(key, deserialized, &plaintext_out);
   assert(success == DECRYPT_NEED_VERIFY);
@@ -189,10 +189,10 @@ void test_symmetric_algo_x_sign(symmetric_cipher cipher) {
 
   assert(strncmp((const char *)plaintext_out.data,
                  (const char *)plaintext_in.data, plaintext_in.data_len) == 0);
-  free((void *)plaintext_out.data);
+  peacemakr_global_free((void *)plaintext_out.data);
   assert(strncmp((const char *)plaintext_out.aad,
                  (const char *)plaintext_in.aad, plaintext_in.aad_len) == 0);
-  free((void *)plaintext_out.aad);
+  peacemakr_global_free((void *)plaintext_out.aad);
 
   peacemakr_key_free(key);
   peacemakr_key_free(sign_key);
@@ -232,7 +232,7 @@ void test_x_sign() {
   ciphertext_blob_t *deserialized =
       peacemakr_deserialize(serialized, out_size, &out_cfg);
 
-  free(serialized);
+  peacemakr_global_free(serialized);
 
   decrypt_code success = peacemakr_decrypt(key, deserialized, &plaintext_out);
   assert(success == DECRYPT_NEED_VERIFY);
@@ -246,10 +246,10 @@ void test_x_sign() {
 
   assert(strncmp((const char *)plaintext_out.data,
                  (const char *)plaintext_in.data, plaintext_in.data_len) == 0);
-  free((void *)plaintext_out.data);
+  peacemakr_global_free((void *)plaintext_out.data);
   assert(strncmp((const char *)plaintext_out.aad,
                  (const char *)plaintext_in.aad, plaintext_in.aad_len) == 0);
-  free((void *)plaintext_out.aad);
+  peacemakr_global_free((void *)plaintext_out.aad);
 
   peacemakr_key_free(key);
   peacemakr_key_free(sign_key);
@@ -282,7 +282,7 @@ void test_sign_only(asymmetric_cipher asymm) {
   ciphertext_blob_t *deserialized =
       peacemakr_deserialize(serialized, out_size, &out_cfg);
 
-  free(serialized);
+  peacemakr_global_free(serialized);
 
   // Make sure decrypt fails appropriately
   decrypt_code code = peacemakr_decrypt(key, deserialized, &plaintext_out);
@@ -296,10 +296,10 @@ void test_sign_only(asymmetric_cipher asymm) {
 
   assert(strncmp((const char *)plaintext_out.data,
                  (const char *)plaintext_in.data, plaintext_in.data_len) == 0);
-  free((void *)plaintext_out.data);
+  peacemakr_global_free((void *)plaintext_out.data);
   assert(strncmp((const char *)plaintext_out.aad,
                  (const char *)plaintext_in.aad, plaintext_in.aad_len) == 0);
-  free((void *)plaintext_out.aad);
+  peacemakr_global_free((void *)plaintext_out.aad);
 
   peacemakr_key_free(key);
 }

@@ -556,7 +556,7 @@ decrypt_code peacemakr_decrypt(const peacemakr_key_t *recipient_key,
   if (aad != NULL) {
     const unsigned char *tmp_aad = buffer_get_bytes(aad, &plain->aad_len);
 
-    plain->aad = calloc(plain->aad_len, sizeof(unsigned char));
+    plain->aad = peacemakr_global_calloc(plain->aad_len, sizeof(unsigned char));
     if (plain->aad == NULL) {
       PEACEMAKR_ERROR("calloc (aad) failed on successful decrypt, aborting\n");
       return DECRYPT_FAILED;
@@ -571,7 +571,7 @@ decrypt_code peacemakr_decrypt(const peacemakr_key_t *recipient_key,
   const unsigned char *tmp_plain =
       buffer_get_bytes(plaintext, &plain->data_len);
 
-  plain->data = calloc(plain->data_len, sizeof(unsigned char));
+  plain->data = peacemakr_global_calloc(plain->data_len, sizeof(unsigned char));
   if (plain->data == NULL) {
     PEACEMAKR_ERROR("calloc (data) failed on successful decrypt, aborting\n");
     return DECRYPT_FAILED;
@@ -600,7 +600,7 @@ bool peacemakr_get_unverified_aad(const ciphertext_blob_t *cipher,
   EXPECT_NOT_NULL_RET_VALUE(aad_buf, true, "No AAD in ciphertext\n")
 
   const unsigned char *tmp_aad = buffer_get_bytes(aad_buf, &plain->aad_len);
-  plain->aad = calloc(plain->aad_len, sizeof(unsigned char));
+  plain->aad = peacemakr_global_calloc(plain->aad_len, sizeof(unsigned char));
   memcpy((void *)plain->aad, tmp_aad, plain->aad_len);
 
   // Initialize the data to NULL

@@ -68,7 +68,7 @@ static uint8_t *serialize_headers(const ciphertext_blob_t *blob,
 
   *final_len = buffer_len;
 
-  uint8_t *out = calloc(buffer_len, sizeof(uint8_t));
+  uint8_t *out = peacemakr_global_calloc(buffer_len, sizeof(uint8_t));
 
   const uint32_t iv_offset =
       buffer_get_serialized_size(ciphertext_blob_iv(blob));
@@ -369,13 +369,13 @@ static void serialize_hmac(uint8_t *buf, const size_t buf_size,
                      &digest_out_size);
 
   EXPECT_TRUE_CLEANUP_RET_NONE(digest_out_size == get_digest_len(blob_digest),
-                               free(raw_digest),
+                               peacemakr_global_free(raw_digest),
                                "Computed HMAC was of the incorrect size\n")
 
   // HMAC length determined by the config of the message blob.
   memcpy(buf_start, raw_digest, digest_out_size);
 
-  free(raw_digest);
+  peacemakr_global_free(raw_digest);
   peacemakr_key_free(hmac_key);
 }
 
@@ -406,7 +406,7 @@ uint8_t *test_serialize(ciphertext_blob_t *cipher, size_t *outlen) {
   uint8_t *b64_buf = b64_encode(raw_out, *outlen, outlen);
 
   // Clean up the workspace
-  free(raw_out);
+  peacemakr_global_free(raw_out);
 
   return b64_buf;
 }
@@ -453,14 +453,14 @@ int main() {
   decrypt_code success = peacemakr_decrypt(key, deserialized, &plaintext_out);
 
   assert(success == DECRYPT_SUCCESS);
-  free(serialized);
+  peacemakr_global_free(serialized);
 
   assert(strncmp((const char *)plaintext_out.data,
                  (const char *)plaintext_in.data, plaintext_in.data_len) == 0);
-  free((void *)plaintext_out.data);
+  peacemakr_global_free((void *)plaintext_out.data);
   assert(strncmp((const char *)plaintext_out.aad,
                  (const char *)plaintext_in.aad, plaintext_in.data_len) == 0);
-  free((void *)plaintext_out.aad);
+  peacemakr_global_free((void *)plaintext_out.aad);
 
   ciphertext_blob_free(ciphertext);
 
