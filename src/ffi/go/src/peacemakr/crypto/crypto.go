@@ -482,7 +482,7 @@ func (k *PeacemakrKey) GetCSR(org, commonName []byte) ([]byte, error) {
     return nil, errors.New("invalid key")
   }
 
-  orgBytes := (*C.uint8_t)(C.CBytes(contents))
+  orgBytes := (*C.uint8_t)(C.CBytes(org))
   defer C.free(unsafe.Pointer(orgBytes))
 
   cnBytes := (*C.uint8_t)(C.CBytes(commonName))
@@ -505,7 +505,7 @@ func (k *PeacemakrKey) AddCertificate(cert []byte) error {
     return errors.New("invalid key")
   }
 
-  cBytes := (*C.char)(C.CBytes(cert))
+  cBytes := (*C.uint8_t)(C.CBytes(cert))
   defer C.free(unsafe.Pointer(cBytes))
 
   success := C.peacemakr_key_add_certificate(k.key, cBytes, C.size_t(len(cert)))
