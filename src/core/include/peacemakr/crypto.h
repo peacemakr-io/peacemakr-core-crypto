@@ -169,9 +169,34 @@ peacemakr_key_new_asymmetric(asymmetric_cipher asymm_cipher,
                              random_device_t *rand);
 
 /**
+ * Generates a PEM encoded CSR based on \p key and places the bytes in \p buf
+ * and the size of the buffer in \p buflen. Returns true for success, false for
+ * failure. Uses \p org (if present) for the "O" parameter of the CSR, and uses
+ * \p cn (if present) for the "CN" parameter of the CSR. Uses SHA-256 to sign
+ * the CSR. The caller is responsible for freeing \p buf. Inside the Peacemakr
+ * system, use the key ID as the CN so that the key ID is within the signed data
+ * of the certificate.
+ */
+PEACEMAKR_EXPORT bool
+peacemakr_key_generate_csr(peacemakr_key_t *key, const uint8_t *org,
+                           const size_t org_len, const uint8_t *cn,
+                           const size_t cn_len, uint8_t **buf, size_t *buflen);
+
+/**
+ * Takes a PEM encoded certificate in \p cert (with length in bytes passed as \p
+ * cert_len) and attaches it to \p key. Returns true for success, false for
+ * failure. The caller is responsible for freeing \p cert; after this function
+ * completes successfully it's no longer needed, the X509 structure is stored
+ * inside \p key for future use.
+ */
+PEACEMAKR_EXPORT bool peacemakr_key_add_certificate(peacemakr_key_t *key,
+                                                    const uint8_t *cert,
+                                                    const size_t cert_len);
+
+/**
  * Create a new symmetric peacemakr_key_t from scratch \p rand. It is
- * recommended that \p rand come from /dev/urandom or similar. \returns A newly
- * created peacemakr key for use in other library calls.
+ * recommended that \p rand come from /dev/urandom or similar. \returns A
+ * newly created peacemakr key for use in other library calls.
  */
 PEACEMAKR_EXPORT peacemakr_key_t *
 peacemakr_key_new_symmetric(symmetric_cipher cipher, random_device_t *rand);
@@ -217,10 +242,25 @@ peacemakr_key_new_from_master(symmetric_cipher cipher,
  * the key being created. \returns A newly created peacemakr key for use
  * in other library calls. \p symm_cipher is ignored if the asymmetric
  * algorithm specified is not an RSA algorithm.
+ *
+ * If \p truststore_path is specified, then two conditions must be met:
+ *   1) pathlen == strlen(truststore_path)
+ *   2) truststore_path must point to a file containing trust anchors in PEM or
+ *      DER textual format, readable by OpenSSL
+ *
+ * \p truststore_path and \p pathlen may be NULL and 0, respectively. In this
+ * case, if an X509 certificate is presented in \p buf the public key of the
+ * certificate will be extracted WITHOUT VALIDATION.
+ *
+ * The trust store must contain enough certificates to validate the certificate
+ * passed in \p buf. That means that given a certificate chain CA ->
+ * Intermediate -> End-Entity, if End-Entity is passed in \p buf then the trust
+ * store must contain at least Intermediate.
  */
 PEACEMAKR_EXPORT peacemakr_key_t *
 peacemakr_key_new_pem_pub(symmetric_cipher symm_cipher, const char *buf,
-                          size_t buflen);
+                          size_t buflen, const char *truststore_path,
+                          size_t pathlen);
 
 /**
  * Create a new peacemakr_key_t from a pem file generated externally. This
@@ -259,10 +299,25 @@ PEACEMAKR_EXPORT bool peacemakr_key_priv_to_pem(const peacemakr_key_t *key,
                                                 char **buf, size_t *bufsize);
 
 /**
- * @copydoc peacemakr_key_priv_to_pem
+ * Serializes public key \p key into \p buf in PEM format and places its size
+ * into \p bufsize. The caller is responsible for memory returned from this
+ * function via \p buf. If the key has a certificate attached, this function
+ * will serialize the certificate instead of the public key. The certificate is
+ * always preferred over the 'raw' public key.
  */
 PEACEMAKR_EXPORT bool peacemakr_key_pub_to_pem(const peacemakr_key_t *key,
                                                char **buf, size_t *bufsize);
+
+/**
+ * Serializes certificate in \p key into \p buf in PEM format and places its
+ * size into \p bufsize. The caller is responsible for memory returned from this
+ * function via \p buf. In practice, it calls peacemakr_key_pub_to_pem but it
+ * first ensures that the key has a certificate attached. If the key has no
+ * certificate, this function will return false instead of serializing the
+ * public key to PEM.
+ */
+PEACEMAKR_EXPORT bool peacemakr_key_to_certificate(const peacemakr_key_t *key,
+                                                   char **buf, size_t *bufsize);
 
 /**
  * Copies the bytes of \p key into \p buf and copies the size of \p buf into \p

@@ -23,7 +23,7 @@ public class AsymmetricKeyTest {
         String pubPem = key.getPubPemStr();
         String privPem = key.getPrivPemStr();
 
-        AsymmetricKey pubFromPem = AsymmetricKey.fromPubPem(SymmetricCipher.CHACHA20_POLY1305, pubPem);
+        AsymmetricKey pubFromPem = AsymmetricKey.fromPubPem(SymmetricCipher.CHACHA20_POLY1305, pubPem, "");
         AsymmetricKey privFromPem = AsymmetricKey.fromPrivPem(SymmetricCipher.CHACHA20_POLY1305, privPem);
 
         Assert.assertEquals(pubPem, pubFromPem.getPubPemStr());

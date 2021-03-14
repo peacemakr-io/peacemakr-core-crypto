@@ -29,7 +29,7 @@ void test_symmetric_algo(symmetric_cipher symm_cipher, const char *pubkey_buf,
   random_device_t rand = get_default_random_device();
 
   peacemakr_key_t *pubkey =
-      peacemakr_key_new_pem_pub(symm_cipher, pubkey_buf, pubkey_len);
+      peacemakr_key_new_pem_pub(symm_cipher, pubkey_buf, pubkey_len, NULL, 0);
   peacemakr_key_t *privkey =
       peacemakr_key_new_pem_priv(symm_cipher, privkey_buf, privkey_len);
 

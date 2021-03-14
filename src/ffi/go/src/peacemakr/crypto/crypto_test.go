@@ -227,7 +227,7 @@ func TestAsymmetricEncryptFromPem(t *testing.T) {
 
 	randomDevice := NewRandomDevice()
 
-	pubkey, err := NewPublicKeyFromPEM(AES_256_GCM, GetPubKey())
+	pubkey, err := NewPublicKeyFromPEM(AES_256_GCM, GetPubKey(), "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -317,7 +317,7 @@ func TestAsymmetricEncryptFromRandomPem(t *testing.T) {
 			}
 			defer privkey.Destroy()
 
-			pubkey, err := NewPublicKeyFromPEM(AES_256_GCM, pub)
+			pubkey, err := NewPublicKeyFromPEM(AES_256_GCM, pub, "")
 			if err != nil {
 				t.Fatal(err)
 			}

@@ -79,7 +79,7 @@ PYBIND11_MODULE(peacemakr_core_crypto_python, m) {
       .def(py::init<asymmetric_cipher, symmetric_cipher, RandomDevice &>())
       // Symmetric key
       .def(py::init<symmetric_cipher, RandomDevice &>())
-      // From bytes
+      // From bytes/priv pem
       .def(py::init<symmetric_cipher, const std::string &>())
       // From password and salt
       .def(py::init<symmetric_cipher, message_digest_algorithm,
@@ -87,16 +87,20 @@ PYBIND11_MODULE(peacemakr_core_crypto_python, m) {
       // From master
       .def(py::init<symmetric_cipher, message_digest_algorithm, const Key &,
                     const std::string &>())
-      // From pem
-      .def(py::init<symmetric_cipher, const std::string &, bool>())
+      // From pub pem/cert (second arg is the trust store)
+      .def(py::init<symmetric_cipher, const std::string &,
+                    const std::string &>())
       // ECDH keygen
       .def(py::init<symmetric_cipher, const Key &, const Key &>())
 
       // Methods available for calling
       .def("get_config", &Key::getConfig)
       .def("is_valid", &Key::isValid)
+      .def("get_csr", &Key::getCSR)
+      .def("add_certificate", &Key::addCertificate)
       .def("get_priv_pem", &Key::getPrivPem)
       .def("get_pub_pem", &Key::getPubPem)
+      .def("get_certificate", &Key::getCertificate)
       .def("get_bytes", [](const Key &k) { return py::bytes(k.getBytes()); });
 
   py::class_<Plaintext>(m, "Plaintext")
