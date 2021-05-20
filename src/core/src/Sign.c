@@ -142,6 +142,9 @@ bool peacemakr_sign(const peacemakr_key_t *sender_key, const plaintext_t *plain,
     return asymmetric_sign(sender_key, plain->data, plain->data_len, plain->aad,
                            plain->aad_len, cipher);
   }
+
+  PEACEMAKR_ERROR("Unknown symmetric key config\n");
+  return false;
 }
 
 static bool asymmetric_verify(const peacemakr_key_t *sender_key,

@@ -24,9 +24,10 @@ typedef void *(*peacemakr_calloc_cb)(size_t, size_t);
 typedef void *(*peacemakr_realloc_cb)(void *, size_t);
 typedef void (*peacemakr_free_cb)(void *);
 
-extern peacemakr_malloc_cb peacemakr_global_malloc;
-extern peacemakr_calloc_cb peacemakr_global_calloc;
-extern peacemakr_realloc_cb peacemakr_global_realloc;
-extern peacemakr_free_cb peacemakr_global_free;
+#define PEACEMAKR_MEM_EXPORT __attribute__((visibility("default")))
+PEACEMAKR_MEM_EXPORT extern peacemakr_malloc_cb peacemakr_global_malloc;
+PEACEMAKR_MEM_EXPORT extern peacemakr_calloc_cb peacemakr_global_calloc;
+PEACEMAKR_MEM_EXPORT extern peacemakr_realloc_cb peacemakr_global_realloc;
+PEACEMAKR_MEM_EXPORT extern peacemakr_free_cb peacemakr_global_free;
 
 #endif // PEACEMAKR_CORE_CRYPTO_MEMORY_H

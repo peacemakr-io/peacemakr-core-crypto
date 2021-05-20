@@ -106,7 +106,7 @@ void test_symmetric_algo_wrong_decrypt_cipher(symmetric_cipher cipher) {
 void test_password_symmetric_algo(symmetric_cipher cipher,
                                   message_digest_algorithm digest) {
 
-  size_t num_iters = rand() % 50000;
+  size_t num_iters = rand() % 50000 + 1; // at least 1 iteration
 
   peacemakr_key_t *key =
       peacemakr_key_new_from_password(cipher, digest, (uint8_t *)"abcdefghijk",

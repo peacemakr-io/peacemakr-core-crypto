@@ -77,7 +77,7 @@ if (STATIC_LIBC)
 endif()
 
 set_target_properties(peacemakr-core-crypto PROPERTIES
-        PUBLIC_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/include/peacemakr/crypto.h;${CMAKE_CURRENT_SOURCE_DIR}/include/peacemakr/random.h"
+        PUBLIC_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/include/peacemakr/crypto.h;${CMAKE_CURRENT_SOURCE_DIR}/include/peacemakr/random.h;${CMAKE_CURRENT_SOURCE_DIR}/include/peacemakr/memory.h"
 )
 
 # TODO: older versions of cmake don't have target_link_options, switch back at some point
