@@ -6,31 +6,20 @@
 # Full license at peacemakr-core-crypto/LICENSE.txt
 #
 
-FROM apiaryio/emcc:1.38.11
+FROM emscripten/emsdk
 
-RUN apt-get update && apt-get install -y --no-install-recommends perl build-essential curl wget ca-certificates linux-headers-amd64 \
+RUN apt-get update && apt-get install -y --no-install-recommends perl build-essential curl wget ca-certificates llvm \
 && apt-get remove -y cmake
 RUN wget -qO- "https://cmake.org/files/v3.14/cmake-3.14.3-Linux-x86_64.tar.gz" | tar --strip-components=1 -xz -C /usr/local
-
-ENV EMSCRIPTEN_BUILD "ON"
 
 ADD CMakeLists.txt /opt/CMakeLists.txt
 ADD src/core /opt/src/core
 ADD src/ffi/web /opt/src/ffi/web
 ADD src/ffi/CMakeLists.txt /opt/src/ffi/CMakeLists.txt
 ADD cmake /opt/cmake
+ADD bin/release-web.sh /opt/bin/release-web.sh
 
-WORKDIR /opt/src/ffi/web
-RUN cd openssl && ./build-openssl.sh && cd ..
-
-RUN mkdir -p web-build && cd web-build && mkdir -p /opt/corecrypto-build \
-&& emconfigure cmake /opt -DCMAKE_BUILD_TYPE=RELEASE -DPEACEMAKR_BUILD_WEB=ON \
-    -DOPENSSL_ROOT_DIR=/opt/src/ffi/web/openssl/build \
-    -DOPENSSL_CRYPTO_LIBRARY=/opt/src/ffi/web/openssl/build/lib/libcrypto.a \
-    -DOPENSSL_SSL_LIBRARY=/opt/src/ffi/web/openssl/build/lib/libssl.a \
-    -DOPENSSL_INCLUDE_DIR=/opt/src/ffi/web/openssl/build/include \
-    -DCMAKE_INSTALL_PREFIX=/opt/corecrypto-build \
-&& emmake make -j install && cd /opt/corecrypto-build/lib \
-&& emcc libpeacemakr-core-crypto.bc -Os -o corecrypto.js
+WORKDIR /opt
+RUN mkdir -p corecrypto-build && ./bin/release-web.sh
 
 WORKDIR /opt/corecrypto-build/
