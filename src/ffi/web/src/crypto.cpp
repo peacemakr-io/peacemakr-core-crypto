@@ -39,10 +39,9 @@ auto newSymm(symmetric_cipher s, RandomDevice &r) -> std::unique_ptr<Key> {
   return std::make_unique<Key>(s, r);
 }
 
-// TODO: this will have to change if we ever persist private keys
 auto fromBytes(symmetric_cipher s, const std::string &b)
     -> std::unique_ptr<Key> {
-  return std::make_unique<Key>(s, std::vector<uint8_t>(b.begin(), b.end()));
+  return std::make_unique<Key>(s, b);
 }
 
 auto fromPem(symmetric_cipher s, const std::string &p, const std::string &t)
