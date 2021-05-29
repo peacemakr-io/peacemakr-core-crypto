@@ -31,7 +31,7 @@ CC=emcc CXX=em++ AR=emar RANLIB=emranlib ./Configure linux-generic32 \
       no-dtls \
       no-shared \
       no-dso \
-      -DBN_DEBUG -D__STDC_NO_ATOMICS__=1 -DNO_FORK -DPEDANTIC -Oz \
+      -D__STDC_NO_ATOMICS__=1 -DNO_FORK -DPEDANTIC -Oz \
       --prefix=${INSTALL_DIR}
 
 sed 's/^CROSS_COMPILE.*$/CROSS_COMPILE=/g' Makefile
