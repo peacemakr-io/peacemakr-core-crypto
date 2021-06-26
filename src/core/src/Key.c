@@ -373,8 +373,11 @@ peacemakr_key_new_from_master(symmetric_cipher cipher,
          &result_len);
   }
 
-  // Get the first keylen bytes and uses them for the key
-  return peacemakr_key_new_bytes(cipher, output_bytes, keybytes);
+  // The output is the leftmost L bits of the last result
+  uint8_t *last_result = output_bytes + ((rounds - 1) * digestbytes);
+
+  // Get the first keylen bytes and use them for the key
+  return peacemakr_key_new_bytes(cipher, last_result, keybytes);
 }
 
 bool peacemakr_key_generate_csr(peacemakr_key_t *key, const uint8_t *org,
@@ -942,7 +945,7 @@ bool peacemakr_key_pub_to_pem(const peacemakr_key_t *key, char **buf,
 }
 
 bool peacemakr_key_to_certificate(const peacemakr_key_t *key, char **buf,
-                           size_t *bufsize) {
+                                  size_t *bufsize) {
   EXPECT_NOT_NULL_RET_VALUE(key, false, "Cannot serialize a NULL key\n")
 
   if (key->m_cfg_.mode != ASYMMETRIC) {

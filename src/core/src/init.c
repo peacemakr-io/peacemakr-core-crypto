@@ -26,7 +26,8 @@ peacemakr_calloc_cb peacemakr_global_calloc = &calloc;
 peacemakr_realloc_cb peacemakr_global_realloc = &realloc;
 peacemakr_free_cb peacemakr_global_free = &free;
 
-static void *openssl_peacemakr_global_malloc_cb(size_t size, const char *c, int i) {
+static void *openssl_peacemakr_global_malloc_cb(size_t size, const char *c,
+                                                int i) {
   (void)c;
   (void)i;
   return peacemakr_global_malloc(size);
@@ -45,23 +46,17 @@ static void openssl_free_cb(void *ptr, const char *c, int i) {
 }
 
 bool peacemakr_init() {
-  size_t bufsize = 512; // larger than any key size in bytes
-  volatile void *random_buf = alloca(bufsize);
-  arc4random_buf((void *)random_buf, bufsize);
-
-  // Short-circuit if we don't need to update the mem functions
-  if (peacemakr_global_malloc == &malloc &&
-      peacemakr_global_calloc == &calloc &&
-      peacemakr_global_realloc == &realloc && peacemakr_global_free == &free) {
-    return true;
-  }
-
   // Init openssl callbacks
   if (1 != CRYPTO_set_mem_functions(&openssl_peacemakr_global_malloc_cb,
                                     &openssl_realloc_cb, &openssl_free_cb)) {
     PEACEMAKR_OPENSSL_LOG;
     return false;
   }
+
+  // Init the RNG
+  const size_t bufsize = 512; // larger than any key size in bytes
+  volatile uint8_t random_buf[bufsize];
+  arc4random_buf((void *)random_buf, bufsize);
 
   return true;
 }
