@@ -117,14 +117,14 @@ typedef struct PeacemakrKey peacemakr_key_t;
 /**
  * Get max supported version by this library. Compile time constant.
  */
-PEACEMAKR_EXPORT inline uint32_t get_max_version() {
+PEACEMAKR_EXPORT static inline uint32_t get_max_version() {
   return PEACEMAKR_CORE_CRYPTO_VERSION_MAX;
 }
 
 /**
  * Get the current version of this library. Compile time constant.
  */
-PEACEMAKR_EXPORT inline uint32_t get_version() {
+PEACEMAKR_EXPORT static inline uint32_t get_version() {
   return PEACEMAKR_CORE_CRYPTO_VERSION;
 }
 

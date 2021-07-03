@@ -30,10 +30,6 @@ file(GLOB INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/include/peacemakr/*.h)
 file(GLOB SOURCES_H ${CMAKE_CURRENT_SOURCE_DIR}/src/*.h)
 file(GLOB SOURCES_C ${CMAKE_CURRENT_SOURCE_DIR}/src/*.c)
 
-if (DEFINED ENV{EMSCRIPTEN_BUILD})
-    set(CMAKE_SHARED_LIBRARY_SUFFIX .bc)
-endif()
-
 # Default to shared libs
 option(PEACEMAKR_STATIC_BUILD "Build peacemakr-core-crypto as a static lib" OFF)
 if (PEACEMAKR_STATIC_BUILD)
@@ -81,7 +77,7 @@ set_target_properties(peacemakr-core-crypto PROPERTIES
 )
 
 # TODO: older versions of cmake don't have target_link_options, switch back at some point
-if (((CMAKE_BUILD_TYPE MATCHES RELEASE) OR (CMAKE_BUILD_TYPE MATCHES Release)) AND BUILD_SHARED_LIBS)
+if (((CMAKE_BUILD_TYPE MATCHES RELEASE) OR (CMAKE_BUILD_TYPE MATCHES Release)) AND NOT PEACEMAKR_BUILD_WEB)
     message(STATUS "Stripping library of dead symbols")
     if (APPLE)
         target_link_libraries(peacemakr-core-crypto PRIVATE "-Wl,-dead_strip")

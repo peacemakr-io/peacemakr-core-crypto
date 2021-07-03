@@ -22,7 +22,13 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-set(CMAKE_C_FLAGS_DEBUG "-O0 -g -fstack-protector-strong")
+option(PEACEMAKR_BUILD_WEB "Whether to build the WASM bindings" OFF)
+
+if (${PEACEMAKR_BUILD_WEB})
+    set(CMAKE_C_FLAGS_DEBUG "-O0 -g")
+else()
+    set(CMAKE_C_FLAGS_DEBUG "-O0 -g -fstack-protector-strong")
+endif()
 set(CMAKE_C_FLAGS_RELEASE "-Os -fPIC -Wall -fvisibility=hidden -ffunction-sections")
 
 set(ALL_C_SOURCE_FILES "")
