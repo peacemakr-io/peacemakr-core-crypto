@@ -131,3 +131,7 @@ in the list on the left hand side.
 Make sure you have the [Android NDK installed](https://developer.android.com/ndk/guides)
 
 `cd /path/to/peacemakr-core-crypto/bin && ANDROID_NDK_ROOT=/path/to/android/ndk-bundle ./release-android.sh /where/to/put/build/artifacts [is_first_build]`
+
+## License
+
+The content of this SDK is open source under [Apache License 2.0](https://github.com/peacemakr-io/peacemakr-core-crypto/blob/master/LICENSE).
