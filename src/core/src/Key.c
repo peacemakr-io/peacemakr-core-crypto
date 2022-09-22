@@ -355,7 +355,7 @@ peacemakr_key_new_from_master(symmetric_cipher cipher,
   memcpy(input_bytes + sizeof(uint32_t) + key_id_len, &keybits,
          sizeof(uint32_t));
 
-  // Get the data out of the master key for the HMAAC
+  // Get the data out of the master key for the HMAC
   const buffer_t *master_key_buf = peacemakr_key_symmetric(master_key);
   const size_t master_keylen = buffer_get_size(master_key_buf);
   const uint8_t *master_key_bytes = buffer_get_bytes(master_key_buf, NULL);
@@ -373,11 +373,9 @@ peacemakr_key_new_from_master(symmetric_cipher cipher,
          &result_len);
   }
 
-  // The output is the leftmost L bits of the last result
-  uint8_t *last_result = output_bytes + ((rounds - 1) * digestbytes);
-
-  // Get the first keylen bytes and use them for the key
-  return peacemakr_key_new_bytes(cipher, last_result, keybytes);
+  // The output is the leftmost L bits of the last result, so we can just use it
+  // directly (NIST SP 800-108)
+  return peacemakr_key_new_bytes(cipher, output_bytes, keybytes);
 }
 
 bool peacemakr_key_generate_csr(peacemakr_key_t *key, const uint8_t *org,

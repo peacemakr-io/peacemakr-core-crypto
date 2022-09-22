@@ -160,6 +160,7 @@ void test_master_key_symmetric_algo(peacemakr_key_t *master_key,
 
   peacemakr_key_t *key = peacemakr_key_new_from_master(
       cipher, digest, master_key, (uint8_t *)"abcdefghijk", 11);
+  assert(key != NULL);
 
   ciphertext_blob_t *ciphertext = peacemakr_encrypt(key, &plaintext_in, &rand);
   assert(ciphertext != NULL);
