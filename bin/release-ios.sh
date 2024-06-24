@@ -43,7 +43,7 @@ sh build-core-crypto.sh
 popd
 
 pushd ${PROJECT_SRC}/src/ffi/swift/CoreCrypto
-xcodebuild -project CoreCrypto.xcodeproj -scheme CoreCrypto -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 8,OS=13.4.1' test
+xcodebuild -project CoreCrypto.xcodeproj -scheme CoreCrypto -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 8,OS=13.5' test
 xcodebuild -project CoreCrypto.xcodeproj BUILD_LIBRARY_FOR_DISTRIBUTION=YES CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO ONLY_ACTIVE_ARCH=NO -configuration Release -miphoneos-version-min=8.1 -sdk iphoneos
 xcodebuild -project CoreCrypto.xcodeproj BUILD_LIBRARY_FOR_DISTRIBUTION=YES CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO VALID_ARCHS="x86_64" ONLY_ACTIVE_ARCH=NO -configuration Release -miphoneos-version-min=8.1 -sdk iphonesimulator
 popd
@@ -53,7 +53,7 @@ pushd ${OUTPUT_DIR}
 rm -rf CoreCrypto.framework || true
 cp -R ${PROJECT_SRC}/src/ffi/swift/CoreCrypto/build/Release-iphoneos/CoreCrypto.framework .
 cp -R ${PROJECT_SRC}/src/ffi/swift/CoreCrypto/build/Release-iphonesimulator/CoreCrypto.framework/Modules/CoreCrypto.swiftmodule/ ${OUTPUT_DIR}/CoreCrypto.framework/Modules/CoreCrypto.swiftmodule
-defaults write ${OUTPUT_DIR}/CoreCrypto.framework/Info.plist CFBundleSupportedPlatforms -array-add "iPhoneSimulator"
+defaults write ${OUTPUT_DIR}/CoreCrypto.framework/Info.plist CFBundleSupportedPlatforms -array-add "iPhoneSimulator" # plutil -insert CFBundleSupportedPlatforms.1 -string "iPhoneSimulator" ${OUTPUT_DIR}/CoreCrypto.framework/Info.plist
 lipo -create -output "CoreCrypto.framework/CoreCrypto" "${PROJECT_SRC}/src/ffi/swift/CoreCrypto/build/Release-iphoneos/CoreCrypto.framework/CoreCrypto" "${PROJECT_SRC}/src/ffi/swift/CoreCrypto/build/Release-iphonesimulator/CoreCrypto.framework/CoreCrypto"
 install_name_tool -id "@rpath/CoreCrypto.framework/CoreCrypto" CoreCrypto.framework/CoreCrypto
 # Important: Link the libpeacemakr-core-crypto.dylib in the framework file.
